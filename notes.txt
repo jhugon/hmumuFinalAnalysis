@@ -12,6 +12,24 @@ ZH = 0.3943 +5.1% -5.0%
 BR H->mumu
 2.17e-04 +6% -6%
 
+BR H->bb
+0.57
+BR H->tautau
+0.063
+BR H->gam gam
+2.28e-03
+BR H->ZZ
+0.026
+BR H->ZZ->4l
+9.36e-5
+
+gg->H->ZZ->4l
+1.8 fb
+gg->H->gam gam
+44 fb
+VBF H->gam gam
+3.6 fb
+
 ggHmumu = 4.236e-3 +/- 6.726e-4 (+/- 15.9%)
 vbfHmumu = 3.338e-4 +2.21e-05 -2.230e-05 (+6.62% -6.71%)
 WH,Hmumu = 1.512e-4
@@ -63,6 +81,22 @@ VBF Tight Zmumu: 0.04 fb +/- 30% per 1 GeV wide bin around 125 GeV (pythia)
 ZPt>30GeV: 45 fb +/- 20% per 1 GeV wide bin around 125 GeV (pythia)
 ZPt>50GeV: 25 fb +/- 20% per 1 GeV wide bin around 125 GeV (pythia)
 ZPt>75GeV: 12 fb +/- 20% per 1 GeV wide bin around 125 GeV (pythia)
+
+################################
+#### For muon pt>45GeV |eta|<2.1
+###############################
+ggHmumu: 39.7% +/- 10.0% Using Pythia Hmumu
+ggHmumu: Dimuons passing pt_mumu>30 GeV 15.8% +/- 10.0%
+ggHmumu: Dimuons passing pt_mumu>50 GeV 9.17% +/- 10.0%
+ggHmumu: Dimuons passing pt_mumu>75 GeV 5.89% +/- 10.0%
+
+Total Inclusive ggHmumu Acceptance 4GeV Window: 34% 
+Total DiMuon Pt>30 ggHmumu Acceptance 4GeV Window: 13.6%
+Total DiMuon Pt>50 ggHmumu Acceptance 4GeV Window: 7.89%
+Total DiMuon Pt>75 ggHmumu Acceptance 4GeV Window: 5.07%
+
+Inclusive Zmumu: 90fb +/- 20% per 1 GeV wide bin around 125 GeV (pythia)
+ZPt>50GeV: 8 fb +/- 20% per 1 GeV wide bin around 125 GeV (pythia)
 
 ggHmumu Analysis:
 #######################

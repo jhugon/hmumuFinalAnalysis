@@ -38,6 +38,18 @@ histNames["etaMu2"] = {"xlabel":"Sub-Leading Muon #eta","xlimits":[-2.4,2.4]}
 histNames["etaJet1"] = {"xlabel":"Leading Jet #eta","xlimits":[-5.0,5.0]}
 histNames["etaJet2"] = {"xlabel":"Sub-Leading Jet #eta","xlimits":[-5.0,5.0]}
 
+histNames["yDiMu"] = {"xlabel":"y_{#mu#mu} [GeV]","xlimits":[-3.0,3.0]}
+histNames["yDiMuVBFSelected"] = {"xlabel":"y_{#mu#mu}, After VBF Selection [GeV]","xlimits":[-3.0,3.0]}
+histNames["yDiMuVBFLooseSelected"] = {"xlabel":"y_{#mu#mu}, After VBF-Loose Selection [GeV]","xlimits":[-3.0,3.0]}
+histNames["yDiMuZPt30Selected"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>30 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
+histNames["yDiMuZPt50Selected"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>50 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
+histNames["yDiMuZPt75Selected"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>75 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
+
+tlatex = root.TLatex()
+tlatex.SetNDC()
+tlatex.SetTextSize(0.07)
+tlatex.SetTextAlign(12)
+
 #######################################
 root.gROOT.SetBatch(True)
 setStyle()
@@ -130,6 +142,9 @@ for histName in bkgDatasetList[0].hists:
   xtitle = histNames[histName]["xlabel"]
   stack = DataMCStack(bkgHistList, dataHist, canvas, xtitle,lumi=LUMI,logy=LOGY,xlimits=histNames[histName]["xlimits"])
   leg.Draw("same")
+
+  if scaleHiggsBy != 1.0:
+    tlatex.DrawLatex(0.33,0.8,"Higgs #times {0:.0f}".format(scaleHiggsBy))
 
   saveName = histName.replace("(","")
   saveName = saveName.replace(")","")
