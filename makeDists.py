@@ -3,6 +3,8 @@
 import math
 import ROOT as root
 from helpers import *
+import matplotlib.pyplot as mpl
+import numpy
 
 xsec = {}
 xsec["ggHmumu"] = 4.236e-3
@@ -107,12 +109,12 @@ canvas = root.TCanvas("canvas")
 #canvas.SetLogx(1)
 #canvas.SetLogy(1)
 
-leg = root.TLegend(0.75,0.75,0.9,0.9)
+#leg = root.TLegend(0.75,0.75,0.9,0.9)
+leg = root.TLegend(0.23,0.6,0.5,0.9)
 leg.SetFillColor(0)
 leg.SetLineColor(0)
 
 significancePlots = {}
-sobPlots = {}
 iColor = 0
 for ana in sortedAnalysis:
   tmp = root.TGraph()
@@ -123,7 +125,6 @@ for ana in sortedAnalysis:
 
   tmp2 = root.TGraph()
   tmp2.SetLineColor(colors[iColor % len(colors)])
-  sobPlots[ana] = tmp2
   iColor += 1
 
 iPoint = 0
@@ -132,7 +133,6 @@ for lumi in lumis:
     for signal in eff[ana]:
       s, b, sosqrtb = analysis.calc(lumi,ana,signal)
       significancePlots[ana].SetPoint(iPoint,lumi,sosqrtb)
-      sobPlots[ana].SetPoint(iPoint,lumi,s/b)
       print s/b
   iPoint += 1
 
@@ -150,18 +150,22 @@ for ana in sortedAnalysis:
 leg.Draw()
 saveAs(canvas,"significance")
 
-canvas.SetLogy(1)
-firstPlot = True
+sobList = []
 for ana in sortedAnalysis:
-  if firstPlot:
-    firstPlot = False
-    sobPlots[ana].Draw("al")
-    sobPlots[ana].GetXaxis().SetTitle("Integrated Luminosity [fb^{-1}]")
-    sobPlots[ana].GetYaxis().SetTitle("S/B")
-    sobPlots[ana].GetYaxis().SetRangeUser(0.001,0.2)
-    sobPlots[ana].Draw("al")
+  for signal in eff[ana]:
+      s, b, sosqrtb = analysis.calc(lumi,ana,signal)
+      sobList.append(s/b)
+      break
 
-  else:
-    sobPlots[ana].Draw("l")
-leg.Draw()
-saveAs(canvas,"sob")
+fig = mpl.figure()
+ax1 = fig.add_subplot(111)
+ax1bounds = ax1.get_position().bounds
+ax1.set_position([0.2,0.1,0.7,0.85]) #uncomment if you need more space for names
+#ax1.set_position([0.25,0.1,0.7,0.85]) #uncomment if you need more space for names
+pos = numpy.arange(len(sortedAnalysis))
+ax1.grid(axis="x")
+ax1.set_yticks(pos+0.25)
+ax1.set_yticklabels(tuple(sortedAnalysis))
+ax1.set_xlabel("S/B")
+bars = ax1.barh(pos,sobList, 0.5,log=True)
+fig.savefig("sob.png")
