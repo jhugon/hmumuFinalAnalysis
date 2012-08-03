@@ -5,10 +5,12 @@ from helpers import *
 import ROOT as root
 import os
 
-dataDir = "data/"
+dataDir = "data/ana4GeVWindow/"
+dataDir = "data/ana2GeVWindow/"
 outDir = "output/"
 
 LOGY=False
+reverse=False
 
 histNames = {}
 histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[100.0,150.0]}
@@ -19,8 +21,8 @@ histNames["mDiMuZPt50Selected"] = {"xlabel":"m_{#mu#mu}, After p_{T}^{#mu#mu}>50
 histNames["mDiMuZPt75Selected"] = {"xlabel":"m_{#mu#mu}, After p_{T}^{#mu#mu}>75 GeV Selection [GeV]","xlimits":[100.0,150.0]}
 
 histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV]","xlimits":[0.0,200.0]}
-histNames["ptDiMuVBFSelected"] = {"xlabel":"p_{T,#mu#mu}, After VBF Selection [GeV]","xlimits":[0.0,200.0]}
-histNames["ptDiMuVBFLooseSelected"] = {"xlabel":"p_{T,#mu#mu}, After VBF-Loose Selection [GeV]","xlimits":[0.0,200.0]}
+histNames["ptDiMuVBFSelected"] = {"xlabel":"p_{T,#mu#mu}, After VBF Selection [GeV]","xlimits":[0.0,200.0],"rebin":10}
+histNames["ptDiMuVBFLooseSelected"] = {"xlabel":"p_{T,#mu#mu}, After VBF-Loose Selection [GeV]","xlimits":[0.0,200.0],"rebin":5}
 
 histNames["mDiJet"] = {"xlabel":"m_{jj} [GeV]","xlimits":[0.0,1200.0]}
 histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj} [GeV]","xlimits":[0.0,10.0]}
@@ -43,6 +45,15 @@ histNames["yDiMuVBFLooseSelected"] = {"xlabel":"y_{#mu#mu}, After VBF-Loose Sele
 histNames["yDiMuZPt30Selected"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>30 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
 histNames["yDiMuZPt50Selected"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>50 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
 histNames["yDiMuZPt75Selected"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>75 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
+
+histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1.0,1.0],"rebin":2}
+histNames["cosThetaStar2Fill"] = {"xlabel":"cos(#theta^{*}) 2Fill","xlimits":[-1.0,1.0],"rebin":2}
+histNames["cosThetaStarVBFSelected"] = {"xlabel":"cos(#theta^{*}) After VBF Selection","xlimits":[-1.0,1.0],"rebin":5}
+histNames["cosThetaStarVBFLooseSelected"] = {"xlabel":"cos(#theta^{*}) After VBF-Loose Selection","xlimits":[-1.0,1.0],"rebin":5}
+histNames["cosThetaStarVBFTightSelected"] = {"xlabel":"cos(#theta^{*}) After VBF-Tight Selection","xlimits":[-1.0,1.0],"rebin":5}
+histNames["cosThetaStarZPt30Selected"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>30 GeV Selection","xlimits":[-1.0,1.0],"rebin":2}
+histNames["cosThetaStarZPt50Selected"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>50 GeV Selection","xlimits":[-1.0,1.0],"rebin":2}
+histNames["cosThetaStarZPt75Selected"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>75 GeV Selection","xlimits":[-1.0,1.0],"rebin":2}
 
 #######################################
 root.gROOT.SetBatch(True)
@@ -103,7 +114,8 @@ for i in backgroundList:
       tmp.loadHistos(histNames)
       bkgDatasetList.append(tmp)
 
-#bkgDatasetList.reverse()
+if reverse:
+  bkgDatasetList.reverse()
 
 #######################################
 
@@ -131,6 +143,8 @@ for histName in bkgDatasetList[0].hists:
     tmpHist = ds.hists[histName]
     tmpHist.GetXaxis().SetRangeUser(*histNames[histName]["xlimits"])
     tmpHist.Scale(1.0/tmpHist.Integral())
+    if histNames[histName].has_key("rebin"):
+        tmpHist.Rebin(histNames[histName]["rebin"])
     bkgHistList.append(tmpHist)
   bkgHistList.reverse()
 
@@ -140,6 +154,8 @@ for histName in bkgDatasetList[0].hists:
   else:
     canvas.SetLogy(0)
   firstHist = True
+  ymin = 9999999.0
+  ymax = -9999999.0
   for hist in bkgHistList:
     hist.SetTitle("")
     hist.GetYaxis().SetTitle("Normalized Events")
@@ -149,6 +165,22 @@ for histName in bkgDatasetList[0].hists:
     hist.SetLineStyle(1)
     hist.SetLineWidth(2)
     hist.SetLineColor(hist.GetFillColor())
+    if ymax < hist.GetMaximum():
+      ymax = hist.GetMaximum()
+    if ymin < hist.GetMinimum():
+      ymin = hist.GetMinimum()
+    if firstHist:
+      hist.Draw()
+      firstHist = False
+    else:
+      hist.Draw("same")
+  firstHist = True
+  print ymax
+  for hist in bkgHistList:
+    hist.SetTitle("")
+    hist.GetYaxis().SetRangeUser(ymin*0.95,ymax*0.6)
+    #hist.SetMaximum(ymax*0.5)
+    #hist.SetMinimum(ymin)
     if firstHist:
       hist.Draw()
       firstHist = False

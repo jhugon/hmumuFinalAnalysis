@@ -5,7 +5,8 @@ from helpers import *
 import ROOT as root
 import os
 
-dataDir = "data/"
+dataDir = "data/ana4GeVWindow/"
+dataDir = "data/ana2GeVWindow/"
 outDir = "output/"
 
 LOGY=False
@@ -44,6 +45,16 @@ histNames["yDiMuVBFLooseSelected"] = {"xlabel":"y_{#mu#mu}, After VBF-Loose Sele
 histNames["yDiMuZPt30Selected"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>30 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
 histNames["yDiMuZPt50Selected"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>50 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
 histNames["yDiMuZPt75Selected"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>75 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
+
+histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1.0,1.0]}
+histNames["cosThetaStar2Fill"] = {"xlabel":"cos(#theta^{*}) 2Fill","xlimits":[-1.0,1.0]}
+histNames["cosThetaStarVBFSelected"] = {"xlabel":"cos(#theta^{*}) After VBF Selection","xlimits":[-1.0,1.0]}
+histNames["cosThetaStarVBFLooseSelected"] = {"xlabel":"cos(#theta^{*}) After VBF-Loose Selection","xlimits":[-1.0,1.0]}
+histNames["cosThetaStarVBFTightSelected"] = {"xlabel":"cos(#theta^{*}) After VBF-Tight Selection","xlimits":[-1.0,1.0]}
+histNames["cosThetaStarZPt30Selected"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>30 GeV Selection","xlimits":[-1.0,1.0]}
+histNames["cosThetaStarZPt50Selected"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>50 GeV Selection","xlimits":[-1.0,1.0]}
+histNames["cosThetaStarZPt75Selected"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>75 GeV Selection","xlimits":[-1.0,1.0]}
+
 
 tlatex = root.TLatex()
 tlatex.SetNDC()

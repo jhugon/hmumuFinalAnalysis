@@ -42,6 +42,7 @@ ggHmumu: 73.8% +/- 10.0% Using Pythia Hmumu
 ggHmumu Total Acceptance+Thry Uncertainty: 17.7%
 
 vbfHmumu: 13.4% +/- 10.0% Using Pythia Hmumu for VBF Selection
+vbfHmumu: 20.2% +/- 10.0% Using Pythia Hmumu for VBF-Loose Selection
 vbfHmumu: 74.6% +/- 10.0% Using Pythia Hmumu for Inclusive Selection
 vbfHmumu Total Acceptance+Thry Uncertainty: 10.4%
 
@@ -72,11 +73,13 @@ Total ggHmumu Acceptance within 4 GeV: 10.6% +/- 20.0% Pt_mumu>75 GeV
 Total vbfHmumu Acceptance within 4 GeV: 11.5% +/- 20.0% w/ VBF Selection
 Total vbfHmumu Acceptance within 2 GeV: 8.04% +/- 20.0% w/ VBF Selection
 Total vbfHmumu Acceptance within 4 GeV: 6.64% +/- 20.0% w/ VBFTight Selection
+Total vbfHmumu Acceptance within 4 GeV: 17.3% +/- 20.0% w/ VBFLoose Selection
 
 Backgrounds:
 
 Inclusive Zmumu: 0.25pb +/- 20% per 1 GeV wide bin around 125 GeV (pythia)
 VBF Zmumu: 0.2 fb +/- 30% per 1 GeV wide bin around 125 GeV (pythia)
+VBF Loose Zmumu: 0.35 fb +/- 30% per 1 GeV wide bin around 125 GeV (pythia)
 VBF Tight Zmumu: 0.04 fb +/- 30% per 1 GeV wide bin around 125 GeV (pythia)
 ZPt>30GeV: 45 fb +/- 20% per 1 GeV wide bin around 125 GeV (pythia)
 ZPt>50GeV: 25 fb +/- 20% per 1 GeV wide bin around 125 GeV (pythia)
