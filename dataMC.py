@@ -5,8 +5,10 @@ from helpers import *
 import ROOT as root
 import os
 
-dataDir = "data/ana4GeVWindow/"
-dataDir = "data/ana2GeVWindow/"
+dataDir = "data/anaAllData/"
+dataDir = "data/"
+#dataDir = "data/ana4GeVWindow/"
+#dataDir = "data/ana2GeVWindow/"
 outDir = "output/"
 
 LOGY=False
@@ -25,7 +27,7 @@ histNames["ptDiMuVBFSelected"] = {"xlabel":"p_{T,#mu#mu}, After VBF Selection [G
 histNames["ptDiMuVBFLooseSelected"] = {"xlabel":"p_{T,#mu#mu}, After VBF-Loose Selection [GeV]","xlimits":[0.0,400.0]}
 
 histNames["mDiJet"] = {"xlabel":"m_{jj} [GeV]","xlimits":[0.0,1200.0]}
-histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj} [GeV]","xlimits":[0.0,10.0]}
+histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj}","xlimits":[0.0,10.0]}
 
 histNames["ptMu1"] = {"xlabel":"Leading Muon p_{T} [GeV]","xlimits":[0.0,400.0]}
 histNames["ptMu2"] = {"xlabel":"Sub-Leading Muon p_{T} [GeV]","xlimits":[0.0,400.0]}

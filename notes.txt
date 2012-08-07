@@ -35,7 +35,6 @@ vbfHmumu = 3.338e-4 +2.21e-05 -2.230e-05 (+6.62% -6.71%)
 WH,Hmumu = 1.512e-4
 ZH,Hmumu = 8.556e-5
 
-
 Acceptance:
 
 ggHmumu: 73.8% +/- 10.0% Using Pythia Hmumu
@@ -84,6 +83,12 @@ VBF Tight Zmumu: 0.04 fb +/- 30% per 1 GeV wide bin around 125 GeV (pythia)
 ZPt>30GeV: 45 fb +/- 20% per 1 GeV wide bin around 125 GeV (pythia)
 ZPt>50GeV: 25 fb +/- 20% per 1 GeV wide bin around 125 GeV (pythia)
 ZPt>75GeV: 12 fb +/- 20% per 1 GeV wide bin around 125 GeV (pythia)
+
+From GP:
+Inclusive Zmumu: 0.164 pb per 1 GeV wide bin around 125 GeV 66% mine
+ZPt>50GeV: 18.66 fb per 1 GeV wide bin arouund 125 GeV 74% mine
+ZPt>75GeV: 8.74 fb 20% per 1 GeV wide bin around 125 GeV 72% mine
+Use 70% times mine for VBF
 
 ################################
 #### For muon pt>45GeV |eta|<2.1
@@ -153,3 +158,12 @@ Efficiency:
 
 Zmumu: 0.1 pb +/- 20%
 
+#############################
+#### MVA Stuff ##############
+#############################
+
+Inclusive MVA Pre-selection Efficiency: 70.3% (pythia6 ggHmumu Sample)
+Inclusive MVA Pre-selection Background Efficiency: 17.1% (Sherpa ZmumujetsMgt100 Sample)
+
+VBF MVA Pre-selection Efficiency: 26.8% (pythia6 vbfHmumu3 Sample)
+VBF MVA Pre-selection Background Efficiency: 2.0128e-3 (Sherpa ZmumujetsMgt100 Sample)
