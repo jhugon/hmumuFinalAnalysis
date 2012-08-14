@@ -163,7 +163,6 @@ class DataCardMaker:
         if expNum>1000.0:
             decimals = ".4e"
         rateFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+decimals+"} "
-        print rateFormatString
         rateFormatList.append(expNum)
         iParam += 1
         iProc += 1
@@ -231,18 +230,21 @@ if __name__ == "__main__":
   directory = "input/open/"
   outDir = "statsCards/"
   analysisList = [
-        ["ggHmumu125",""],
-        ["vbfHmumu125","VBFSelected"],
-        ["vbfHmumu125","VBFTightSelected"],
-        ["ggHmumu125","ZPt30Selected"],
-        ["ggHmumu125","ZPt75Selected"]
+        ["ggHmumu125","PtL30"],
+        ["ggHmumu125","Pt30to50"],
+        ["ggHmumu125","Pt50to75"],
+        ["ggHmumu125","Pt75to125"],
+        ["ggHmumu125","Pt125"],
+        ["vbfHmumu125","VBFL"],
+        ["vbfHmumu125","VBFM"],
+        ["vbfHmumu125","VBFT"]
   ]
   backgroundNames= ["DYJetsToLL","ttbar"]
   lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
 
   dataCard = DataCardMaker(directory,analysisList,backgroundNames)
   for i in lumiList:
-    dataCard.write(outDir+"combined"+str(i)+".txt",i)
+    dataCard.write(outDir+"combined_"+str(i)+".txt",i)
 
   for i in analysisList:
     title = i[1]
@@ -250,6 +252,6 @@ if __name__ == "__main__":
         title="Inc"
     dataCard = DataCardMaker(directory,[i],backgroundNames)
     for j in lumiList:
-      dataCard.write(outDir+title+str(j)+".txt",j)
+      dataCard.write(outDir+title+"_"+str(j)+".txt",j)
 
 

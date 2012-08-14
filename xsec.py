@@ -33,7 +33,8 @@ nEventsMap["ttbar"] = 6416135 # GPs Ntuples w/ my changes CMSSW_5_3_X
 backgroundList = [
 "vbfHmumu125",
 "ggHmumu125",
-"DYJetsToLL"
+"DYJetsToLL",
+"ttbar"
 ]
 
 legendEntries = {}

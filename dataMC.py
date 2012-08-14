@@ -5,24 +5,27 @@ from helpers import *
 import ROOT as root
 import os
 
-dataDir = "input/4GeVWindow/"
-#dataDir = "input/open/"
+#dataDir = "input/4GeVWindow/"
+dataDir = "input/open/"
 outDir = "output/"
 
 LOGY=False
 
 histNames = {}
-histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[100.0,150.0]}
-histNames["mDiMuVBFSelected"] = {"xlabel":"m_{#mu#mu}, After VBF Selection [GeV]","xlimits":[100.0,150.0]}
-histNames["mDiMuVBFLooseSelected"] = {"xlabel":"m_{#mu#mu}, After VBF-Loose Selection [GeV]","xlimits":[100.0,150.0]}
-histNames["mDiMuVBFTightSelected"] = {"xlabel":"m_{#mu#mu}, After VBF-Tight Selection [GeV]","xlimits":[100.0,150.0]}
-histNames["mDiMuZPt30Selected"] = {"xlabel":"m_{#mu#mu}, After p_{T}^{#mu#mu}>30 GeV Selection [GeV]","xlimits":[100.0,150.0]}
-histNames["mDiMuZPt50Selected"] = {"xlabel":"m_{#mu#mu}, After p_{T}^{#mu#mu}>50 GeV Selection [GeV]","xlimits":[100.0,150.0]}
-histNames["mDiMuZPt75Selected"] = {"xlabel":"m_{#mu#mu}, After p_{T}^{#mu#mu}>75 GeV Selection [GeV]","xlimits":[100.0,150.0]}
+histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[100.0,150.0],"rebin":4}
+histNames["mDiMuVBFM"] = {"xlabel":"m_{#mu#mu}, After VBF Medium Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
+histNames["mDiMuVBFT"] = {"xlabel":"m_{#mu#mu}, After VBF Tight Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
+histNames["mDiMuVBFL"] = {"xlabel":"m_{#mu#mu}, After VBF Loose Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
+histNames["mDiMuVBFVL"] = {"xlabel":"m_{#mu#mu}, After VBF Very Loose Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
+histNames["mDiMuPtL30"] = {"xlabel":"m_{#mu#mu}, After p_{T}^{#mu#mu}<30 GeV Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
+histNames["mDiMuPt30to50"] = {"xlabel":"m_{#mu#mu}, After 30<p_{T}^{#mu#mu}<50 GeV Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
+histNames["mDiMuPt50to75"] = {"xlabel":"m_{#mu#mu}, After 50<p_{T}^{#mu#mu}<75 GeV Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
+histNames["mDiMuPt75to125"] = {"xlabel":"m_{#mu#mu}, After 75<p_{T}^{#mu#mu}<125 GeV Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
+histNames["mDiMuPt125"] = {"xlabel":"m_{#mu#mu}, After p_{T}^{#mu#mu}>125 GeV Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
 
 histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV]","xlimits":[0.0,400.0]}
-histNames["ptDiMuVBFSelected"] = {"xlabel":"p_{T,#mu#mu}, After VBF Selection [GeV]","xlimits":[0.0,400.0]}
-histNames["ptDiMuVBFLooseSelected"] = {"xlabel":"p_{T,#mu#mu}, After VBF-Loose Selection [GeV]","xlimits":[0.0,400.0]}
+histNames["ptDiMuVBFM"] = {"xlabel":"p_{T,#mu#mu}, After VBF Selection [GeV]","xlimits":[0.0,400.0]}
+histNames["ptDiMuVBFL"] = {"xlabel":"p_{T,#mu#mu}, After VBF-Loose Selection [GeV]","xlimits":[0.0,400.0]}
 
 histNames["mDiJet"] = {"xlabel":"m_{jj} [GeV]","xlimits":[0.0,1200.0]}
 histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj}","xlimits":[0.0,10.0]}
@@ -40,19 +43,19 @@ histNames["etaJet1"] = {"xlabel":"Leading Jet #eta","xlimits":[-5.0,5.0]}
 histNames["etaJet2"] = {"xlabel":"Sub-Leading Jet #eta","xlimits":[-5.0,5.0]}
 
 histNames["yDiMu"] = {"xlabel":"y_{#mu#mu} [GeV]","xlimits":[-3.0,3.0]}
-histNames["yDiMuVBFSelected"] = {"xlabel":"y_{#mu#mu}, After VBF Selection [GeV]","xlimits":[-3.0,3.0]}
-histNames["yDiMuVBFLooseSelected"] = {"xlabel":"y_{#mu#mu}, After VBF-Loose Selection [GeV]","xlimits":[-3.0,3.0]}
-histNames["yDiMuZPt30Selected"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>30 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
-histNames["yDiMuZPt50Selected"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>50 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
-histNames["yDiMuZPt75Selected"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>75 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
+histNames["yDiMuVBFM"] = {"xlabel":"y_{#mu#mu}, After VBF Selection [GeV]","xlimits":[-3.0,3.0]}
+histNames["yDiMuVBFL"] = {"xlabel":"y_{#mu#mu}, After VBF-Loose Selection [GeV]","xlimits":[-3.0,3.0]}
+histNames["yDiMuPt30"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>30 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
+histNames["yDiMuPt50"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>50 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
+histNames["yDiMuPt75"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>75 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
 
 histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1.0,1.0]}
-histNames["cosThetaStarVBFSelected"] = {"xlabel":"cos(#theta^{*}) After VBF Selection","xlimits":[-1.0,1.0]}
-histNames["cosThetaStarVBFLooseSelected"] = {"xlabel":"cos(#theta^{*}) After VBF-Loose Selection","xlimits":[-1.0,1.0]}
-histNames["cosThetaStarVBFTightSelected"] = {"xlabel":"cos(#theta^{*}) After VBF-Tight Selection","xlimits":[-1.0,1.0]}
-histNames["cosThetaStarZPt30Selected"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>30 GeV Selection","xlimits":[-1.0,1.0]}
-histNames["cosThetaStarZPt50Selected"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>50 GeV Selection","xlimits":[-1.0,1.0]}
-histNames["cosThetaStarZPt75Selected"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>75 GeV Selection","xlimits":[-1.0,1.0]}
+histNames["cosThetaStarVBFM"] = {"xlabel":"cos(#theta^{*}) After VBF Selection","xlimits":[-1.0,1.0]}
+histNames["cosThetaStarVBFL"] = {"xlabel":"cos(#theta^{*}) After VBF-Loose Selection","xlimits":[-1.0,1.0]}
+histNames["cosThetaStarVBFT"] = {"xlabel":"cos(#theta^{*}) After VBF-Tight Selection","xlimits":[-1.0,1.0]}
+histNames["cosThetaStarPt30"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>30 GeV Selection","xlimits":[-1.0,1.0]}
+histNames["cosThetaStarPt50"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>50 GeV Selection","xlimits":[-1.0,1.0]}
+histNames["cosThetaStarPt75"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>75 GeV Selection","xlimits":[-1.0,1.0]}
 
 
 tlatex = root.TLatex()
@@ -98,6 +101,8 @@ class Dataset:
       xlimits = tmpHistInfo["xlimits"]
       tmp = self.rootFile.Get(name)
       print tmp
+      if histNames[name].has_key("rebin"):
+        tmp.Rebin(histNames[name]["rebin"])
       tmp.SetFillColor(self.color)
       tmp.Scale(self.scaleFactor)
       self.hists[name] = tmp
