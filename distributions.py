@@ -5,9 +5,8 @@ from helpers import *
 import ROOT as root
 import os
 
-dataDir = "data/anaAllData/"
-#dataDir = "data/ana4GeVWindow/"
-#dataDir = "data/ana2GeVWindow/"
+dataDir = "input/4GeVWindow/"
+#dataDir = "input/open/"
 outDir = "output/"
 
 LOGY=False
@@ -25,7 +24,7 @@ histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV]","xlimits":[0.0,200.0]}
 histNames["ptDiMuVBFSelected"] = {"xlabel":"p_{T,#mu#mu}, After VBF Selection [GeV]","xlimits":[0.0,200.0],"rebin":10}
 histNames["ptDiMuVBFLooseSelected"] = {"xlabel":"p_{T,#mu#mu}, After VBF-Loose Selection [GeV]","xlimits":[0.0,200.0],"rebin":5}
 
-histNames["mDiJet"] = {"xlabel":"m_{jj} [GeV]","xlimits":[0.0,1200.0]}
+histNames["mDiJet"] = {"xlabel":"m_{jj} [GeV]","xlimits":[0.0,1200.0],"rebin":5}
 histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj}","xlimits":[0.0,10.0]}
 
 histNames["ptMu1"] = {"xlabel":"Leading Muon p_{T} [GeV]","xlimits":[0.0,400.0]}
@@ -48,13 +47,16 @@ histNames["yDiMuZPt50Selected"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>50
 histNames["yDiMuZPt75Selected"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>75 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
 
 histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1.0,1.0],"rebin":2}
-histNames["cosThetaStar2Fill"] = {"xlabel":"cos(#theta^{*}) 2Fill","xlimits":[-1.0,1.0],"rebin":2}
 histNames["cosThetaStarVBFSelected"] = {"xlabel":"cos(#theta^{*}) After VBF Selection","xlimits":[-1.0,1.0],"rebin":5}
 histNames["cosThetaStarVBFLooseSelected"] = {"xlabel":"cos(#theta^{*}) After VBF-Loose Selection","xlimits":[-1.0,1.0],"rebin":5}
 histNames["cosThetaStarVBFTightSelected"] = {"xlabel":"cos(#theta^{*}) After VBF-Tight Selection","xlimits":[-1.0,1.0],"rebin":5}
 histNames["cosThetaStarZPt30Selected"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>30 GeV Selection","xlimits":[-1.0,1.0],"rebin":2}
 histNames["cosThetaStarZPt50Selected"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>50 GeV Selection","xlimits":[-1.0,1.0],"rebin":2}
 histNames["cosThetaStarZPt75Selected"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>75 GeV Selection","xlimits":[-1.0,1.0],"rebin":2}
+
+histNames["mDiMuEta11"] = {"xlabel":"m_{#mu#mu} Both Muons |#eta|<1.0 [GeV]","xlimits":[100.0,150.0]}
+histNames["mDiMuEta12"] = {"xlabel":"m_{#mu#mu} One Muons |#eta|<1.0, One Muon |#eta|>1.0 [GeV]","xlimits":[100.0,150.0]}
+histNames["mDiMuEta22"] = {"xlabel":"m_{#mu#mu} Both Muons |#eta|>1.0[GeV]","xlimits":[100.0,150.0]}
 
 #######################################
 root.gROOT.SetBatch(True)
@@ -143,7 +145,8 @@ for histName in bkgDatasetList[0].hists:
   for ds in bkgDatasetList:
     tmpHist = ds.hists[histName]
     tmpHist.GetXaxis().SetRangeUser(*histNames[histName]["xlimits"])
-    tmpHist.Scale(1.0/tmpHist.Integral())
+    if tmpHist.Integral() != 0.0:
+      tmpHist.Scale(1.0/tmpHist.Integral())
     if histNames[histName].has_key("rebin"):
         tmpHist.Rebin(histNames[histName]["rebin"])
     bkgHistList.append(tmpHist)
@@ -179,8 +182,8 @@ for histName in bkgDatasetList[0].hists:
   print ymax
   for hist in bkgHistList:
     hist.SetTitle("")
-    #hist.GetYaxis().SetRangeUser(ymin*0.95,ymax*0.6)
-    hist.GetYaxis().SetRangeUser(ymin*0.95,ymax*0.8)
+    hist.GetYaxis().SetRangeUser(ymin*0.95,ymax*0.6)
+    #hist.GetYaxis().SetRangeUser(ymin*0.95,ymax*0.8)
     if firstHist:
       hist.Draw()
       firstHist = False
