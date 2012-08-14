@@ -16,6 +16,7 @@ xsec["ZHmumu"] = 8.556e-5 * scaleHiggsBy
 xsec["WHmumu"] = 1.512e-4 * scaleHiggsBy
 
 xsec["DYJetsToLL"] = 3048.0   ## madgraph
+xsec["ttbar"] = 225.197   ## madgraph
 
 nEventsMap = {}
 nEventsMap["vbfHmumu125"] = 9990
@@ -27,6 +28,7 @@ nEventsMap["WHmumu"] = 10000
 #nEventsMap["DYJetsToLL"] = 36277961 # GPs Ntuples w/o my changes
 #nEventsMap["DYJetsToLL"] = 30361028 # GPs Ntuples w/ my changes CMSSW_5_2_X
 nEventsMap["DYJetsToLL"] = 30459503 # GPs Ntuples w/ my changes CMSSW_5_3_X
+nEventsMap["ttbar"] = 6416135 # GPs Ntuples w/ my changes CMSSW_5_3_X
 
 backgroundList = [
 "vbfHmumu125",
@@ -43,6 +45,7 @@ legendEntries["ggHmumu"] = "ggH->#mu#mu"
 legendEntries["ggHmumu125"] = "ggH->#mu#mu"
 legendEntries["ZHmumu"] = "ZH, H->#mu#mu"
 legendEntries["WHmumu"] = "WH, H->#mu#mu"
+legendEntries["ttbar"] = "t#bar{t}"
 
 colors = {}
 colors["DYJetsToLL"] = root.kOrange
@@ -53,5 +56,6 @@ colors["ggHmumu"] = root.kRed+1
 colors["ggHmumu125"] = root.kRed+1
 colors["ZHmumu"] = root.kGreen+1
 colors["WHmumu"] = root.kGreen+1
+colors["ttbar"] = root.kGreen-1
 
 ##################################################
