@@ -5,6 +5,7 @@ import ROOT as root
 from helpers import *
 import matplotlib.pyplot as mpl
 import numpy
+import datetime
 
 from xsec import *
 
@@ -13,7 +14,7 @@ directory = "input/open/"
 analysisList = ["","VBFSelected","VBFTightSelected","ZPt30Selected","ZPt75Selected"]
 
 signalName = "ggHmumu125"
-backgroundName = "DYJetsToLL"
+backgroundNames = ["DYJetsToLL"]
 
 scaleSignal = 1.0
 
@@ -44,20 +45,26 @@ root.kSpring-9
 BACKUNC=0.15
 
 class DataFromHists:
-  def __init__(self,directory,signalName,backgroundName,analysisList,massRange=[123,127]):
+  def __init__(self,directory,signalName,backgroundNames,analysisList,massRange=[123,127]):
     self.sigFile = root.TFile(directory+signalName+".root")
-    self.bakFile = root.TFile(directory+backgroundName+".root")
+    self.backgroundNames = backgroundNames
+    self.bakFiles = []
+    for iBak in backgroundNames:
+      self.bakFiles.append(root.TFile(directory+iBak+".root"))
     analyses = analysisList
     self.analyses = analyses
     self.sigHists = []
     self.bakHists = []
     for a in analyses:
-        self.sigHists.append(self.sigFile.Get("mDiMu"+a))
-        self.bakHists.append(self.bakFile.Get("mDiMu"+a))
+      self.sigHists.append(self.sigFile.Get("mDiMu"+a))
+      tmpList = []
+      for bak in self.bakFiles:
+        tmpList.append(bak.Get("mDiMu"+a))
+      self.bakHists.append(tmpList)
 
     effMap = {}
     xsecMap = {}
-    for sigHist,bakHist,anaName in zip(self.sigHists,self.bakHists,analyses):
+    for sigHist,bakHists,anaName in zip(self.sigHists,self.bakHists,analyses):
       axis = sigHist.GetXaxis()
       lowBin = axis.FindBin(massRange[0])
       assert(axis.GetBinLowEdge(lowBin)==massRange[0])
@@ -65,30 +72,157 @@ class DataFromHists:
       highBin -= 1
       assert(axis.GetBinUpEdge(highBin)==massRange[1])
       countsSig = sigHist.Integral(lowBin,highBin)
-      countsBak = bakHist.Integral(lowBin,highBin)
       
       effSig = countsSig/nEventsMap[signalName]
-      effBak = countsBak/nEventsMap[backgroundName]
       xsecSig = effSig*xsec[signalName]
-      xsecBak = effBak*xsec[backgroundName]
-      effMap[anaName] = {"signal":effSig,"background":effBak}
-      xsecMap[anaName] = {"signal":xsecSig,"background":xsecBak}
+      effMap[anaName] = {"signal":effSig}
+      xsecMap[anaName] = {"signal":xsecSig}
+      for bak,bakName in zip(bakHists,backgroundNames):
+        countsBak = bak.Integral(lowBin,highBin)
+        effBak = countsBak/nEventsMap[bakName]
+        xsecBak = effBak*xsec[bakName]
+        effMap[anaName]["bakName"] = effBak
+        xsecMap[anaName]["bakName"] = xsecBak
+        
     self.effMap = effMap
     self.xsecMap = xsecMap
 
   def getSigEff(self,anaName):
     return self.effMap[anaName]["signal"]
   def getBakXSec(self,anaName):
-    return self.xsecMap[anaName]["background"]
+    result = 0.0
+    for key in self.xsecMap[anaName]:
+        if key == "signal":
+            continue
+        result += self.xsecMap[anaName][key]
+    return result
 
   def calc(self,lumi,anaName,scaleSignal=1.0):
     lumi = lumi*1000.0
     s = self.xsecMap[anaName]["signal"]*lumi*scaleSignal
-    b = self.xsecMap[anaName]["background"]*lumi
+    b = self.getBakXSec(anaName)*lumi
     #fom = s/(1.5+math.sqrt(b)+self.backUnc*b)
     #sig = s/sqrt(b+s)
     sig = s/sqrt(b)
     return s, b, sig
+
+class MultiDataFromHists:
+  def __init__(self,directory,signalAnalysisPairs,backgroundNames,massRange=[123,127],nuisanceMap=None):
+  #def __init__(self,directory,signalName,backgroundNames,analysisList,massRange=[123,127]):
+    channels = []
+    self.channelNames = []
+    for pair in signalAnalysisPairs:
+      tmp = DataFromHists(directory,pair[0],backgroundNames,pair[1],massRange=massRange)
+      channels.append(tmp)
+      self.channelNames.append(pair[1])
+    self.channels = channels
+
+    if nuisanceMap == None:
+      self.nuisance = {}
+      self.nuisance["lumi"] = {"value":0.044}
+    else:
+      self.nuisance = nuisanceMap
+
+    self.largestChannelName = 0
+    for cName,channel in zip(self.channelNames,self.channels):
+      for analysis in channel.xsecMap:
+        name= cName+analysis
+        if len(name)>self.largestChannelName:
+          self.largestChannelName = len(name)
+    self.largestChannelName += 2
+
+    nChannelsTotal = 0
+    for channel in signalAnalysisPairs:
+      nChannelsTotal += len(channel[1])
+    self.nChannelsTotal = nChannelsTotal
+
+  def makeCombinationCard(self,outfilename,lumi):
+    lumi *= 1000.0
+    nuisance = self.nuisance
+    outfile = open(outfilename,"w")
+    outfile.write("# Hmumu combine datacard produced by makeTables.py\n")
+    now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
+    outfile.write("# {0}\n".format(now))
+    outfile.write("############################### \n")
+    outfile.write("############################### \n")
+    outfile.write("imax {0}\n".format(self.nChannelsTotal))
+    outfile.write("jmax {0}\n".format(len(backgroundNames)))
+    outfile.write("kmax {0}\n".format(len(nuisance)))
+    outfile.write("------------\n")
+    outfile.write("# Channels, observed N events:\n")
+    # Make Channels String
+    binFormatString = "bin           "
+    observationFormatString = "observation  "
+    binFormatList = self.channelNames
+    observationFormatList = []
+    iParam = 0
+    for channel,channelName in zip(self.channels,self.channelNames):
+      for analysis in channel.xsecMap:
+        binFormatString += "{"+str(iParam)+":<"+str(self.largestChannelName)+"} "
+        binFormatList.append(channelName+analysis)
+        observationFormatString += "{"+str(iParam)+":<"+str(self.largestChannelName)+"} "
+        observationFormatList.append(0)
+        iParam += 1
+    outfile.write(binFormatString.format(*binFormatList))
+    outfile.write(observationFormatString.format(*observationFormatList))
+    outfile.write("------------\n")
+    outfile.write("# Expected N events:\n")
+
+    binFormatString = "bin           "
+    proc1FormatString = "process       "
+    proc2FormatString = "process       "
+    rateFormatString = "rate          "
+    binFormatList = []
+    proc1FormatList = []
+    proc2FormatList = []
+    rateFormatList = []
+    for channel,channelName in zip(self.channels,self.channelNames):
+      for analysis in channel.xsecMap:
+        xsecs = channel.xsecMap[analysis]
+        iProc = 0
+        for sample in xsecs:
+          binFormatString += "{"+str(iParam)+":<"+str(self.largestChannelName)+"} "
+          binFormatList.append(channelName+analysis)
+  
+          proc1FormatString += "{"+str(iParam)+":<"+str(self.largestChannelName)+"} "
+          proc1FormatList.append(sample)
+  
+          proc2FormatString += "{"+str(iParam)+":<"+str(self.largestChannelName)+"} "
+          proc2FormatList.append(iProc)
+  
+          rateFormatString += "{"+str(iParam)+":<"+str(self.largestChannelName)+"} "
+          rateFormatList.append(xsecs[sample]*lumi)
+  
+          iParam += 1
+          iProc += 1
+    outfile.write(binFormatString.format(*binFormatList))
+    outfile.write(proc1FormatString.format(*proc1FormatList))
+    outfile.write(proc2FormatString.format(*proc2FormatList))
+    outfile.write(rateFormatString.format(*rateFormatList))
+    outfile.write("------------\n")
+    outfile.write("# Uncertainties:\n")
+    for nu in nuisance:
+      thisNu = nuisance[nu]
+      for channel,channelName in zip(self.channels,self.channelNames):
+        for analysis in channel.xsecMap:
+          xsecs = channel.xsecMap[analysis]
+          iProc = 0
+          for sample in xsecs:
+            if thisNu.has_key(sample):
+            binFormatString += "{"+str(iParam)+":<"+str(self.largestChannelName)+"} "
+            binFormatList.append(channelName+analysis)
+    
+            proc1FormatString += "{"+str(iParam)+":<"+str(self.largestChannelName)+"} "
+            proc1FormatList.append(sample)
+    
+            proc2FormatString += "{"+str(iParam)+":<"+str(self.largestChannelName)+"} "
+            proc2FormatList.append(iProc)
+    
+            rateFormatString += "{"+str(iParam)+":<"+str(self.largestChannelName)+"} "
+            rateFormatList.append(xsecs[sample]*lumi)
+    
+            iParam += 1
+            iProc += 1
 
 ###### Text Part
 
@@ -100,17 +234,17 @@ textfile.write("\nTesting Different Search Windows, Inclusive Analysis\n")
 textfile.write("{0:<13} {1:<13} {2:<13}\n".format("125+/-X [GeV]","Sig Eff","Bak Xsec [pb]"))
 for i in range(10):
   i = 0.5+0.5*i
-  data = DataFromHists(directory,signalName,backgroundName,[""],massRange=[125.-i,125.+i])
+  data = DataFromHists(directory,signalName,backgroundNames,[""],massRange=[125.-i,125.+i])
   eff = data.getSigEff("")
   back = data.getBakXSec("")
   textfile.write("{0:<13.2f} {1:<13.3e} {2:<13.3e}\n".format(i,eff,back))
 
 textfile.write("\n#######################################\n")
 
-data = DataFromHists(directory,signalName,backgroundName,analysisList)
+data = DataFromHists(directory,signalName,backgroundNames,analysisList)
 
 for ana in analysisList:
-  textfile.write("\n{0} {1} {2}\n".format(ana,signalName,backgroundName))
+  textfile.write("\n{0} {1} {2}\n".format(ana,signalName,backgroundNames))
   textfile.write("{0:<13} {1:<13}\n".format("Sig Eff","Bak Xsec [pb]"))
   eff = data.getSigEff(ana)
   back = data.getBakXSec(ana)
