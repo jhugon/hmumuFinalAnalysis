@@ -254,4 +254,18 @@ if __name__ == "__main__":
     for j in lumiList:
       dataCard.write(outDir+title+"_"+str(j)+".txt",j)
 
+  for i in range(0,20):
+    amount = 0.25+i*0.25
+    dataCard = DataCardMaker(directory,analysisList,backgroundNames,massRange=[125.0-amount,125.0+amount])
+    title = "combine125PM"+str(amount)
+    dataCard.write(outDir+title+"_"+str(20)+".txt",20)
 
+  runFile = open(outDir+"run.sh","w")
+  runFile.write("#!/bin/bash\n")
+  runFile.write("\n")
+  runFile.write("for i in *.txt; do\n")
+  runFile.write('    [[ -e "$i" ]] || continue\n')
+  runFile.write('echo "Running on "$i\n')
+  runFile.write('combine -M Asymptotic $i > $i.out\n')
+  runFile.write('done\n')
+  runFile.close()
