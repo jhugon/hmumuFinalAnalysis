@@ -126,6 +126,8 @@ titleMap = {
   "combinedVBFOnly":"Combined H#rightarrow#mu#mu VBF Channels",
   "combinedMuOnly":"Combined H#rightarrow#mu#mu Non-VBF Channels",
   "BDTCombination":"Combined BDT H#rightarrow#mu#mu",
+  "BDTVBF":"H#rightarrow#mu#mu VBF BDT",
+  "BDTMuonOnly":"H#rightarrow#mu#mu Non-VBF BDT",
   "VBFL":"H#rightarrow#mu#mu, VBFL",
   "VBFM":"H#rightarrow#mu#mu, VBFM",
   "VBFT":"H#rightarrow#mu#mu, VBFT",
@@ -186,4 +188,4 @@ for plotName in plots:
   if len(data)==0:
     continue
   incPlot = RelativePlot(data,canvas,legend,titleMap[plotName]+" L=20fb^{-1}",caption2=caption2,xlabel="BDT Cut")
-  saveAs(canvas,outDir+"BDT"+plotName)
+  saveAs(canvas,outDir+"BDTCut"+plotName)
