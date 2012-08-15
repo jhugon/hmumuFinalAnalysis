@@ -77,8 +77,12 @@ class DataCardMaker:
   #def __init__(self,directory,signalName,backgroundNames,analysisList,massRange=[123,127]):
     channels = []
     self.channelNames = []
-    for pair in signalAnalysisPairs:
-      tmp = Analysis(directory,pair[0],backgroundNames,pair[1],massRange=massRange,histNameBase=histNameBase)
+    if type(massRange[0])!=list:
+      massRange = [massRange for x in signalAnalysisPairs]
+    if len(massRange) != len(signalAnalysisPairs):
+      print("Error: DataCardMaker.__init__: massRange must either be two floats or a list of lists of the same length as signalAnalysisPairs! {0} != {1}".format(len(massRange),len(signalAnalysisPairs)))
+    for pair, mr in zip(signalAnalysisPairs,massRange):
+      tmp = Analysis(directory,pair[0],backgroundNames,pair[1],massRange=mr,histNameBase=histNameBase)
       channels.append(tmp)
       self.channelNames.append(pair[1])
     self.channels = channels
@@ -301,6 +305,11 @@ if __name__ == "__main__":
     title = "PMVBFTPM"+str(amount)
     dataCard.write(outDir+title+"_"+str(20)+".txt",20)
 
+  ## BDT Combination
+  dataCard = DataCardMaker(directory,[["ggHmumu125","MuonOnly"],["vbfHmumu125","VBF"]],backgroundNames,massRange=[[0.05,1.0],[-0.05,1.0]],histNameBase="BDTHist")
+  for i in lumiList:
+    dataCard.write(outDir+"BDTCombination"+"_"+str(i)+".txt",i)
+
   ## BDT Cut Optimization
   for i in range(0,40):
     amount = 0.2-i*0.01
@@ -308,7 +317,7 @@ if __name__ == "__main__":
     title = "BDTMuBDT"+str(amount)
     dataCard.write(outDir+title+"_"+str(20)+".txt",20)
 
-    dataCard = DataCardMaker(directory,[["ggHmumu125","VBF"]],backgroundNames,massRange=[amount,1.0],histNameBase="BDTHist")
+    dataCard = DataCardMaker(directory,[["vbfHmumu125","VBF"]],backgroundNames,massRange=[amount,1.0],histNameBase="BDTHist")
     title = "BDTVBFBDT"+str(amount)
     dataCard.write(outDir+title+"_"+str(20)+".txt",20)
 
