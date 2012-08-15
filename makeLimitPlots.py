@@ -5,6 +5,9 @@ import ROOT as root
 import glob
 import re
 
+import matplotlib.pyplot as mpl
+import numpy
+
 dirName = "statsInput/"
 caption2 = "#pm2 GeV Search Window"
 
@@ -17,7 +20,7 @@ canvas.SetLogx(1)
 canvas.SetLogy(1)
 #######################################
 
-def getData(fileString,matchString=r"_([\d]+).txt.out"):
+def getData(fileString,matchString=r"_([\d]+).txt.out",dontMatchStrings=[],doSort=True):
   def sortfun(s):
     match = re.search(matchString,s)
     result = 1e12
@@ -27,10 +30,17 @@ def getData(fileString,matchString=r"_([\d]+).txt.out"):
 
   result = []
   fNames =  glob.glob(fileString)
-  fNames.sort(key=sortfun)
+  if doSort:
+    fNames.sort(key=sortfun)
   #print fileString
   #print fNames
   for fname in fNames: 
+    dontMatch = False
+    for dont in dontMatchStrings:
+      if re.search(dont,fname):
+        dontMatch = True
+    if dontMatch:
+        continue
     tmpF = open(fname)
     match = re.search(matchString,fname)
     obs = -10.0
@@ -62,7 +72,7 @@ def getData(fileString,matchString=r"_([\d]+).txt.out"):
       if high2sigMatch:
         high2sig = high2sigMatch.group(1)
     thisPoint = [xNum,obs,low2sig,low1sig,median,high1sig,high2sig]
-    if thisPoint.count(-10.0)>0:
+    if thisPoint.count("-10.0")>0:
         continue
     #print thisPoint
     result.append(thisPoint)
@@ -120,6 +130,33 @@ class RelativePlot:
     tlatex.SetTextAlign(32)
     tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption)
 
+class ComparePlot:
+  def __init__(self,data,ylabel="Expected 95% CL Limit $\sigma/\sigma_{SM}$"):
+    fig = mpl.figure()
+    self.fig = fig
+    ax1 = fig.add_subplot(111)
+    self.ax1 = ax1
+    ax1bounds = ax1.get_position().bounds
+    ax1.set_position([0.25,0.1,0.7,0.85])
+
+    data.sort(key=lambda x: x[0].lower())
+
+    medians = [float(point[4]) for point in data]
+    high1sigs = [float(point[5])-float(point[4]) for point in data]
+    low1sigs = [float(point[4])-float(point[3]) for point in data]
+
+    xPos = numpy.arange(len(medians))
+    xLabels = [point[0] for point in data]
+    xLabels = [re.sub(r".*/","",s) for s in xLabels]
+
+    ax1.set_yticks(xPos+0.25)
+    ax1.set_yticklabels(tuple(xLabels),size="small")
+    ax1.set_xlabel(ylabel)
+    bars = ax1.barh(xPos,medians, 0.5, xerr=[low1sigs,high1sigs],ecolor="k")
+    self.bars = bars
+  def save(self,saveName):
+    self.fig.savefig(saveName+".png")
+    self.fig.savefig(saveName+".pdf")
 
 titleMap = {
   "combined":"Combined H#rightarrow#mu#mu",
@@ -139,6 +176,7 @@ titleMap = {
 }
 
 allfiles = glob.glob(dirName+"*.txt.out")
+
 ## Limit v. Lumi
 plots = set()
 for fn in allfiles:
@@ -189,3 +227,13 @@ for plotName in plots:
     continue
   incPlot = RelativePlot(data,canvas,legend,titleMap[plotName]+" L=20fb^{-1}",caption2=caption2,xlabel="BDT Cut")
   saveAs(canvas,outDir+"BDTCut"+plotName)
+
+## Compare all types of limits
+compareData = getData(dirName+"*_20.txt.out",matchString=r"(.*)_[\d]+.txt.out",dontMatchStrings=[r"BDT.+BDT",r"PM"],doSort=False)
+#print compareData
+comparePlot = ComparePlot(compareData)
+comparePlot.save(outDir+"compare")
+
+compareData = getData(dirName+"*_20.txt.out",matchString=r"(.*)_[\d]+.txt.out",dontMatchStrings=[r"BDT.+BDT",r"PM","VBFT","VBFL","VBFM","Pt"],doSort=False)
+comparePlot = ComparePlot(compareData)
+comparePlot.save(outDir+"compareGood")
