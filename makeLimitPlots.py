@@ -17,27 +17,22 @@ canvas.SetLogx(1)
 canvas.SetLogy(1)
 #######################################
 
-def getData(fileString):
-  def tryint(s):
-    try:
-        return int(s)
-    except:
-        return s
-
-  def alphanum_key(s):
-    """ Turn a string into a list of string and number chunks.
-        "z23a" -> ["z", 23, "a"]
-    """
-    return [ tryint(c) for c in re.split('([0-9]+)', s) ]
+def getData(fileString,matchString=r"_([\d]+).txt.out"):
+  def sortfun(s):
+    match = re.search(matchString,s)
+    result = 1e12
+    if match:
+      result = float(match.group(1))
+    return result
 
   result = []
   fNames =  glob.glob(fileString)
-  fNames.sort(key=alphanum_key)
+  fNames.sort(key=sortfun)
   #print fileString
   #print fNames
   for fname in fNames: 
     tmpF = open(fname)
-    match = re.search(r"_([\d]+).txt.out",fname)
+    match = re.search(matchString,fname)
     obs = -10.0
     median = -10.0
     low2sig = -10.0
@@ -118,18 +113,32 @@ class RelativePlot:
     tlatex = root.TLatex()
     tlatex.SetNDC()
     tlatex.SetTextFont(root.gStyle.GetLabelFont())
-    tlatex.SetTextSize(0.05)
+    #tlatex.SetTextSize(0.05)
+    tlatex.SetTextSize(0.04)
     tlatex.SetTextAlign(12)
     tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Preliminary")
     tlatex.SetTextAlign(32)
     tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption)
 
 
+titleMap = {
+  "combined":"Combined H#rightarrow#mu#mu",
+  "VBFL":"H#rightarrow#mu#mu, VBFL",
+  "VBFM":"H#rightarrow#mu#mu, VBFM",
+  "VBFT":"H#rightarrow#mu#mu, VBFT",
+  "PtL30":"H#rightarrow#mu#mu, p_{T}(#mu#mu) < 30 GeV",
+  "Pt30to50":"H#rightarrow#mu#mu, p_{T}(#mu#mu) #in [30,50] GeV",
+  "Pt50to75":"H#rightarrow#mu#mu, p_{T}(#mu#mu) #in [50,75] GeV",
+  "Pt75to125":"H#rightarrow#mu#mu, p_{T}(#mu#mu) #in [75,125] GeV",
+  "Pt125":"H#rightarrow#mu#mu, p_{T}(#mu#mu) > 125 GeV"
+}
+
 allfiles = glob.glob(dirName+"*.txt.out")
+## Limit v. Lumi
 plots = set()
 for fn in allfiles:
   match = re.search(r".*/(.*)_[\d]+.txt.out",fn)
-  badPlot = re.search(r"combine125PM",fn)
+  badPlot = re.search(r"PM",fn)
   if match and not badPlot:
     plots.add(match.group(1))
 
@@ -140,7 +149,22 @@ for plotName in plots:
   data = getData(dirName+plotName+"_*.txt.out")
   if len(data)==0:
     continue
-  incPlot = RelativePlot(data,canvas,legend,"H->#mu#mu",caption2=caption2)
+  incPlot = RelativePlot(data,canvas,legend,titleMap[plotName],caption2=caption2)
   saveAs(canvas,outDir+plotName)
-    
 
+#Limit v. Window
+plots = set()
+for fn in allfiles:
+  match = re.search(r".*/PM(.*)_[\d]+.txt.out",fn)
+  if match and not badPlot:
+    plots.add(match.group(1))
+
+print plots
+
+canvas.SetLogx(0)
+for plotName in plots:
+  data = getData(dirName+"PM"+plotName+"_*.txt.out")
+  if len(data)==0:
+    continue
+  incPlot = RelativePlot(data,canvas,legend,titleMap[plotName]+" L=20fb^{-1}",caption2=caption2,xlabel="Search Window: m_{#mu#mu} #in 125 GeV #pm X [GeV]")
+  saveAs(canvas,outDir+"PM"+plotName)

@@ -257,7 +257,23 @@ if __name__ == "__main__":
   for i in range(0,20):
     amount = 0.25+i*0.25
     dataCard = DataCardMaker(directory,analysisList,backgroundNames,massRange=[125.0-amount,125.0+amount])
-    title = "combine125PM"+str(amount)
+    title = "PMcombined"+str(amount)
+    dataCard.write(outDir+title+"_"+str(20)+".txt",20)
+
+    dataCard = DataCardMaker(directory,[["ggHmumu125","PtL30"]],backgroundNames,massRange=[125.0-amount,125.0+amount])
+    title = "PMPtL30"+str(amount)
+    dataCard.write(outDir+title+"_"+str(20)+".txt",20)
+
+    dataCard = DataCardMaker(directory,[["ggHmumu125","Pt125"]],backgroundNames,massRange=[125.0-amount,125.0+amount])
+    title = "PMPt125"+str(amount)
+    dataCard.write(outDir+title+"_"+str(20)+".txt",20)
+
+    dataCard = DataCardMaker(directory,[["vbfHmumu125","VBFL"]],backgroundNames,massRange=[125.0-amount,125.0+amount])
+    title = "PMVBFL"+str(amount)
+    dataCard.write(outDir+title+"_"+str(20)+".txt",20)
+
+    dataCard = DataCardMaker(directory,[["vbfHmumu125","VBFT"]],backgroundNames,massRange=[125.0-amount,125.0+amount])
+    title = "PMVBFT"+str(amount)
     dataCard.write(outDir+title+"_"+str(20)+".txt",20)
 
   runFile = open(outDir+"run.sh","w")
@@ -266,6 +282,6 @@ if __name__ == "__main__":
   runFile.write("for i in *.txt; do\n")
   runFile.write('    [[ -e "$i" ]] || continue\n')
   runFile.write('echo "Running on "$i\n')
-  runFile.write('combine -M Asymptotic $i > $i.out\n')
+  runFile.write('nice combine -M Asymptotic $i > $i.out\n')
   runFile.write('done\n')
   runFile.close()
