@@ -123,6 +123,8 @@ class RelativePlot:
 
 titleMap = {
   "combined":"Combined H#rightarrow#mu#mu",
+  "combinedVBFOnly":"Combined H#rightarrow#mu#mu VBF Channels",
+  "combinedMuOnly":"Combined H#rightarrow#mu#mu Non-VBF Channels",
   "VBFL":"H#rightarrow#mu#mu, VBFL",
   "VBFM":"H#rightarrow#mu#mu, VBFM",
   "VBFT":"H#rightarrow#mu#mu, VBFT",
@@ -139,7 +141,8 @@ plots = set()
 for fn in allfiles:
   match = re.search(r".*/(.*)_[\d]+.txt.out",fn)
   badPlot = re.search(r"PM",fn)
-  if match and not badPlot:
+  badPlot2 = re.search(r"BDT",fn)
+  if match and not (badPlot or badPlot2):
     plots.add(match.group(1))
 
 legend = root.TLegend(0.58,0.70,0.9,0.9)
@@ -155,16 +158,31 @@ for plotName in plots:
 #Limit v. Window
 plots = set()
 for fn in allfiles:
-  match = re.search(r".*/PM(.*)_[\d]+.txt.out",fn)
+  match = re.search(r".*/PM(.*)PM",fn)
   if match and not badPlot:
     plots.add(match.group(1))
 
-print plots
-
 canvas.SetLogx(0)
 for plotName in plots:
-  data = getData(dirName+"PM"+plotName+"_*.txt.out")
+  data = getData(dirName+"PM"+plotName+"PM*.txt.out",matchString=r"PM([.\d]+).*.txt.out")
   if len(data)==0:
     continue
   incPlot = RelativePlot(data,canvas,legend,titleMap[plotName]+" L=20fb^{-1}",caption2=caption2,xlabel="Search Window: m_{#mu#mu} #in 125 GeV #pm X [GeV]")
   saveAs(canvas,outDir+"PM"+plotName)
+
+#Limit v. BDT Cut
+plots = set()
+for fn in allfiles:
+  match = re.search(r".*/BDT(.*)BDT",fn)
+  if match and not badPlot:
+    plots.add(match.group(1))
+
+titleMap["Mu"] = "H#rightarrow#mu#mu Non-VBF BDT"
+titleMap["VBF"] = "H#rightarrow#mu#mu VBF BDT"
+
+for plotName in plots:
+  data = getData(dirName+"BDT"+plotName+"BDT*.txt.out",matchString=r"BDT([.\d-]+).*.txt.out")
+  if len(data)==0:
+    continue
+  incPlot = RelativePlot(data,canvas,legend,titleMap[plotName]+" L=20fb^{-1}",caption2=caption2,xlabel="BDT Cut")
+  saveAs(canvas,outDir+"BDT"+plotName)

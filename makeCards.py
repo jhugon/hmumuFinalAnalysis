@@ -4,22 +4,27 @@ import math
 import ROOT as root
 from helpers import *
 import datetime
+import sys
 
 from xsec import *
 
+if scaleHiggsBy != 1.0:
+  print("Error: higgs xsec is scaled!!! Return to 1. Exiting.")
+  sys.exit(1)
+
 class Analysis:
-  def __init__(self,directory,signalName,backgroundNames,analysis,massRange=[123,127]):
+  def __init__(self,directory,signalName,backgroundNames,analysis,massRange=[123,127],histNameBase="mDiMu"):
     self.sigFile = root.TFile(directory+signalName+".root")
     self.name = analysis
     self.bakNames = backgroundNames
-    self.sigHist = self.sigFile.Get("mDiMu"+analysis)
+    self.sigHist = self.sigFile.Get(histNameBase+analysis)
     self.sigName = signalName
 
     self.bakFiles = []
     self.bakHists = []
     for name in backgroundNames:
       tmpF = root.TFile(directory+name+".root")
-      tmpH = tmpF.Get("mDiMu"+analysis)
+      tmpH = tmpF.Get(histNameBase+analysis)
       self.bakFiles.append(tmpF)
       self.bakHists.append(tmpH)
 
@@ -27,10 +32,15 @@ class Analysis:
     xsecMap = {}
     axis = self.sigHist.GetXaxis()
     lowBin = axis.FindBin(massRange[0])
-    assert(axis.GetBinLowEdge(lowBin)==massRange[0])
+    # Hack b/c root isn't giving correct bin
+    if(abs(axis.GetBinLowEdge(lowBin)-massRange[0])>1e-8 and abs(axis.GetBinLowEdge(lowBin+1)-massRange[0])<1e-8):
+        lowBin+=1
+    elif(abs(axis.GetBinLowEdge(lowBin)-massRange[0])>1e-8 and abs(axis.GetBinLowEdge(lowBin-1)-massRange[0])<1e-8):
+        lowBin-=1
+    assert(abs(axis.GetBinLowEdge(lowBin)-massRange[0])<1e-8)
     highBin = axis.FindBin(massRange[1])
     highBin -= 1
-    assert(axis.GetBinUpEdge(highBin)==massRange[1])
+    assert(abs(axis.GetBinUpEdge(highBin)-massRange[1])<1e-8)
 
     countsSig = self.sigHist.Integral(lowBin,highBin)
     effSig = countsSig/nEventsMap[signalName]
@@ -63,12 +73,12 @@ class Analysis:
     return result
 
 class DataCardMaker:
-  def __init__(self,directory,signalAnalysisPairs,backgroundNames,massRange=[123,127],nuisanceMap=None):
+  def __init__(self,directory,signalAnalysisPairs,backgroundNames,massRange=[123,127],nuisanceMap=None,histNameBase="mDiMu"):
   #def __init__(self,directory,signalName,backgroundNames,analysisList,massRange=[123,127]):
     channels = []
     self.channelNames = []
     for pair in signalAnalysisPairs:
-      tmp = Analysis(directory,pair[0],backgroundNames,pair[1],massRange=massRange)
+      tmp = Analysis(directory,pair[0],backgroundNames,pair[1],massRange=massRange,histNameBase=histNameBase)
       channels.append(tmp)
       self.channelNames.append(pair[1])
     self.channels = channels
@@ -242,10 +252,24 @@ if __name__ == "__main__":
   backgroundNames= ["DYJetsToLL","ttbar"]
   lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
 
+  ## All Combined
   dataCard = DataCardMaker(directory,analysisList,backgroundNames)
   for i in lumiList:
     dataCard.write(outDir+"combined_"+str(i)+".txt",i)
 
+  ## Muon Only combined
+  ggHAnalysisList = [x for x in analysisList if x[0]=="ggHmumu125"]
+  dataCard = DataCardMaker(directory,ggHAnalysisList,backgroundNames)
+  for i in lumiList:
+    dataCard.write(outDir+"combinedMuOnly_"+str(i)+".txt",i)
+
+  ## VBF Only Combined
+  vbfHAnalysisList =  [x for x in analysisList if x[0]=="vbfHmumu125"]
+  dataCard = DataCardMaker(directory,vbfHAnalysisList,backgroundNames)
+  for i in lumiList:
+    dataCard.write(outDir+"combinedVBFOnly_"+str(i)+".txt",i)
+
+  ## Each Individual
   for i in analysisList:
     title = i[1]
     if title=="":
@@ -254,26 +278,38 @@ if __name__ == "__main__":
     for j in lumiList:
       dataCard.write(outDir+title+"_"+str(j)+".txt",j)
 
+  ## Mass cut window optimization
   for i in range(0,20):
     amount = 0.25+i*0.25
     dataCard = DataCardMaker(directory,analysisList,backgroundNames,massRange=[125.0-amount,125.0+amount])
-    title = "PMcombined"+str(amount)
+    title = "PMcombinedPM"+str(amount)
     dataCard.write(outDir+title+"_"+str(20)+".txt",20)
 
     dataCard = DataCardMaker(directory,[["ggHmumu125","PtL30"]],backgroundNames,massRange=[125.0-amount,125.0+amount])
-    title = "PMPtL30"+str(amount)
+    title = "PMPtL30PM"+str(amount)
     dataCard.write(outDir+title+"_"+str(20)+".txt",20)
 
     dataCard = DataCardMaker(directory,[["ggHmumu125","Pt125"]],backgroundNames,massRange=[125.0-amount,125.0+amount])
-    title = "PMPt125"+str(amount)
+    title = "PMPt125PM"+str(amount)
     dataCard.write(outDir+title+"_"+str(20)+".txt",20)
 
     dataCard = DataCardMaker(directory,[["vbfHmumu125","VBFL"]],backgroundNames,massRange=[125.0-amount,125.0+amount])
-    title = "PMVBFL"+str(amount)
+    title = "PMVBFLPM"+str(amount)
     dataCard.write(outDir+title+"_"+str(20)+".txt",20)
 
     dataCard = DataCardMaker(directory,[["vbfHmumu125","VBFT"]],backgroundNames,massRange=[125.0-amount,125.0+amount])
-    title = "PMVBFT"+str(amount)
+    title = "PMVBFTPM"+str(amount)
+    dataCard.write(outDir+title+"_"+str(20)+".txt",20)
+
+  ## BDT Cut Optimization
+  for i in range(0,40):
+    amount = 0.2-i*0.01
+    dataCard = DataCardMaker(directory,[["ggHmumu125","MuonOnly"]],backgroundNames,massRange=[amount,1.0],histNameBase="BDTHist")
+    title = "BDTMuBDT"+str(amount)
+    dataCard.write(outDir+title+"_"+str(20)+".txt",20)
+
+    dataCard = DataCardMaker(directory,[["ggHmumu125","VBF"]],backgroundNames,massRange=[amount,1.0],histNameBase="BDTHist")
+    title = "BDTVBFBDT"+str(amount)
     dataCard.write(outDir+title+"_"+str(20)+".txt",20)
 
   runFile = open(outDir+"run.sh","w")

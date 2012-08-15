@@ -61,6 +61,14 @@ histNames["mDiMuEta11"] = {"xlabel":"m_{#mu#mu} Both Muons |#eta|<1.0 [GeV]","xl
 histNames["mDiMuEta12"] = {"xlabel":"m_{#mu#mu} One Muons |#eta|<1.0, One Muon |#eta|>1.0 [GeV]","xlimits":[100.0,150.0],"rebin":4}
 histNames["mDiMuEta22"] = {"xlabel":"m_{#mu#mu} Both Muons |#eta|>1.0[GeV]","xlimits":[100.0,150.0],"rebin":4}
 
+histNames["likelihoodHistMuonOnly"] = {"xlabel":"Likelihood (Not-VBF Category)","xlimits":[-1,1],"rebin":1}
+histNames["LDHistMuonOnly"] = {"xlabel":"LD (Not-VBF Category)","xlimits":[-1,1],"rebin":1}
+histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Not-VBF Category)","xlimits":[-1,1],"rebin":1}
+
+histNames["likelihoodHistVBF"] = {"xlabel":"Likelihood (VBF Category)","xlimits":[-1,1],"rebin":1}
+histNames["LDHistVBF"] = {"xlabel":"LD (VBF Category)","xlimits":[-1,1],"rebin":1}
+histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-1,1],"rebin":1}
+
 #######################################
 root.gROOT.SetBatch(True)
 setStyle()
