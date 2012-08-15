@@ -232,8 +232,10 @@ for plotName in plots:
 compareData = getData(dirName+"*_20.txt.out",matchString=r"(.*)_[\d]+.txt.out",dontMatchStrings=[r"BDT.+BDT",r"PM"],doSort=False)
 #print compareData
 comparePlot = ComparePlot(compareData)
+comparePlot.fig.text(0.9,0.2,"$L=20$ fb$^{-1}$",horizontalalignment="right",size="x-large")
 comparePlot.save(outDir+"compare")
 
 compareData = getData(dirName+"*_20.txt.out",matchString=r"(.*)_[\d]+.txt.out",dontMatchStrings=[r"BDT.+BDT",r"PM","VBFT","VBFL","VBFM","Pt"],doSort=False)
 comparePlot = ComparePlot(compareData)
+comparePlot.fig.text(0.9,0.2,"$L=20$ fb$^{-1}$",horizontalalignment="right",size="x-large")
 comparePlot.save(outDir+"compareGood")
