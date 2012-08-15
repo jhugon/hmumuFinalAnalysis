@@ -125,6 +125,7 @@ titleMap = {
   "combined":"Combined H#rightarrow#mu#mu",
   "combinedVBFOnly":"Combined H#rightarrow#mu#mu VBF Channels",
   "combinedMuOnly":"Combined H#rightarrow#mu#mu Non-VBF Channels",
+  "BDTCombination":"Combined BDT H#rightarrow#mu#mu",
   "VBFL":"H#rightarrow#mu#mu, VBFL",
   "VBFM":"H#rightarrow#mu#mu, VBFM",
   "VBFT":"H#rightarrow#mu#mu, VBFT",
@@ -141,7 +142,7 @@ plots = set()
 for fn in allfiles:
   match = re.search(r".*/(.*)_[\d]+.txt.out",fn)
   badPlot = re.search(r"PM",fn)
-  badPlot2 = re.search(r"BDT",fn)
+  badPlot2 = re.search(r"BDT.*BDT",fn)
   if match and not (badPlot or badPlot2):
     plots.add(match.group(1))
 

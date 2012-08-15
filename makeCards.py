@@ -256,6 +256,9 @@ if __name__ == "__main__":
   backgroundNames= ["DYJetsToLL","ttbar"]
   lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
 
+  bdtAnalysisList = [["ggHmumu125","MuonOnly"],["vbfHmumu125","VBF"]]
+  bdtCutRangeList = [[0.05,1.0],[0.08,1.0]]
+
   ## All Combined
   dataCard = DataCardMaker(directory,analysisList,backgroundNames)
   for i in lumiList:
@@ -306,9 +309,15 @@ if __name__ == "__main__":
     dataCard.write(outDir+title+"_"+str(20)+".txt",20)
 
   ## BDT Combination
-  dataCard = DataCardMaker(directory,[["ggHmumu125","MuonOnly"],["vbfHmumu125","VBF"]],backgroundNames,massRange=[[0.05,1.0],[-0.05,1.0]],histNameBase="BDTHist")
+  dataCard = DataCardMaker(directory,bdtAnalysisList,backgroundNames,massRange=bdtCutRangeList,histNameBase="BDTHist")
   for i in lumiList:
     dataCard.write(outDir+"BDTCombination"+"_"+str(i)+".txt",i)
+
+  ## BDT Individual
+  for ana,cuts in zip(bdtAnalysisList,bdtCutRangeList):
+    dataCard = DataCardMaker(directory,[ana],backgroundNames,massRange=cuts,histNameBase="BDTHist")
+    for i in lumiList:
+      dataCard.write(outDir+"BDT"+ana[1]+"_"+str(i)+".txt",i)
 
   ## BDT Cut Optimization
   for i in range(0,40):
