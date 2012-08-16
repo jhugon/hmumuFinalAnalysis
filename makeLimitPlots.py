@@ -184,9 +184,35 @@ class ComparePlot:
     ax1.set_xlabel(ylabel)
     bars = ax1.barh(xPos,medians, 0.5, xerr=[low1sigs,high1sigs],ecolor="k")
     self.bars = bars
+    writeInValues = getattr(self,"writeInValues")
+    writeInValues(bars)
   def save(self,saveName):
     self.fig.savefig(saveName+".png")
     self.fig.savefig(saveName+".pdf")
+  def writeInValues(self,rects):
+    size="medium"
+    if len(rects)<5:
+      size="large"
+    elif len(rects)>12:
+      size="xx-small"
+    elif len(rects)>9:
+      size="x-small"
+    for rect in rects:
+      width = rect.get_width()
+      if (width < 5): # The bars aren't wide enough to print the ranking inside
+        xloc = width + 1 # Shift the text to the right side of the right edge
+        clr = 'black' # Black against white background
+        align = 'left'
+      else:
+        xloc = 0.98*width # Shift the text to the left side of the right edge
+        clr = 'white' # White on magenta
+        align = 'right'
+      yloc = rect.get_y()+rect.get_height()/2.0 
+      valueStr = "{0:.1f}".format(width)
+      self.ax1.text(xloc, yloc, valueStr, horizontalalignment=align,
+            verticalalignment='center', color=clr, weight='bold',size=size)
+
+    
 
 titleMap = {
   "combined":"Combined H#rightarrow#mu#mu",
@@ -276,7 +302,6 @@ for plotName in plots:
     continue
   incPlot = RelativePlot(data,canvas,legend,titleMap[plotName]+" L=20fb^{-1}",caption2=caption2,xlabel="BDT Cut",xlimits=[-1000,0.12])
   saveAs(canvas,outDir+"BDTCut"+plotName)
-  canvas.SaveAs(outDir+"BDTCut"+plotName+".root")
 
 ## Compare all types of limits
 compareData = getData(dirName+"*_20.txt.out",matchString=r"(.*)_[\d]+.txt.out",dontMatchStrings=[r"BDT.+BDT",r"PM"],doSort=False)

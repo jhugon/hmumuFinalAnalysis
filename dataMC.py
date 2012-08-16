@@ -5,8 +5,8 @@ from helpers import *
 import ROOT as root
 import os
 
-#dataDir = "input/4GeVWindow/"
-dataDir = "input/open/"
+dataDir = "input/4GeVWindow/"
+#dataDir = "input/open/"
 outDir = "output/"
 
 LOGY=False
