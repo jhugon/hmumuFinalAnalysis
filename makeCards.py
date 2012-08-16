@@ -286,7 +286,7 @@ if __name__ == "__main__":
       dataCard.write(outDir+title+"_"+str(j)+".txt",j)
 
   ## Mass cut window optimization
-  for i in range(0,20):
+  for i in range(0,50):
     amount = 0.25+i*0.25
     dataCard = DataCardMaker(directory,analysisList,backgroundNames,massRange=[125.0-amount,125.0+amount])
     title = "PMcombinedPM"+str(amount)

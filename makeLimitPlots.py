@@ -79,7 +79,7 @@ def getData(fileString,matchString=r"_([\d]+).txt.out",dontMatchStrings=[],doSor
   return result
 
 class RelativePlot:
-  def __init__(self,dataPoints, canvas, legend, caption, ylabel="Expected 95% CL Limit #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2=""):
+  def __init__(self,dataPoints, canvas, legend, caption, ylabel="Expected 95% CL Limit #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",ylimits=[],xlimits=[],vertLines=[20.0]):
     expGraph = root.TGraph()
     oneSigGraph = root.TGraphAsymmErrors()
     oneSigGraph.SetFillColor(root.kGreen)
@@ -99,6 +99,11 @@ class RelativePlot:
     ymin = 1e20
     for point in dataPoints:
       xNum = float(point[0])
+      if len(xlimits)==2:
+        if xNum<xlimits[0]:
+            continue
+        if xNum>xlimits[1]:
+            continue
       obs = float(point[1])
       median = float(point[4])
       low2sig = median - float(point[2])
@@ -113,9 +118,29 @@ class RelativePlot:
       oneGraph.SetPoint(iPoint,xNum,1.0)
       iPoint += 1
 
+    self.vertLines = []
+    self.vertLabel = []
+    for xPos in vertLines:
+      tmp = root.TGraph()
+      tmp.SetPoint(0,xPos,ymin)
+      tmp.SetPoint(1,xPos,ymax)
+      tmp.SetLineColor(root.kRed)
+      self.vertLines.append(tmp)
+      self.vertLabel.append(xPos)
+
+    label = root.TLatex()
+    #label.SetNDC()
+    label.SetTextFont(root.gStyle.GetLabelFont("X"))
+    label.SetTextSize(root.gStyle.GetLabelSize("X"))
+    label.SetTextColor(root.kRed)
+    label.SetTextAlign(22)
+    self.label=label
+
     twoSigGraph.Draw("a3")
     twoSigGraph.GetXaxis().SetTitle(xlabel)
     twoSigGraph.GetYaxis().SetTitle(ylabel)
+    if len(ylimits)==2:
+        twoSigGraph.GetYaxis().SetRangeUser(*ylimits)
     oneSigGraph.Draw("3")
     expGraph.Draw("l")
     oneGraph.Draw("l")
@@ -130,8 +155,12 @@ class RelativePlot:
     tlatex.SetTextAlign(32)
     tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption)
 
+    for g in self.vertLines:
+      g.Draw("l")
+
+
 class ComparePlot:
-  def __init__(self,data,ylabel="Expected 95% CL Limit $\sigma/\sigma_{SM}$"):
+  def __init__(self,data,ylabel="Expected 95% CL Limit $\sigma/\sigma_{SM}$",titleMap={}):
     fig = mpl.figure()
     self.fig = fig
     ax1 = fig.add_subplot(111)
@@ -148,6 +177,7 @@ class ComparePlot:
     xPos = numpy.arange(len(medians))
     xLabels = [point[0] for point in data]
     xLabels = [re.sub(r".*/","",s) for s in xLabels]
+    xLabels = [titleMap[s] if titleMap.has_key(s) else s for s in xLabels]
 
     ax1.set_yticks(xPos+0.25)
     ax1.set_yticklabels(tuple(xLabels),size="small")
@@ -175,6 +205,25 @@ titleMap = {
   "Pt125":"H#rightarrow#mu#mu, p_{T}(#mu#mu) > 125 GeV"
 }
 
+comparisonMap = {
+  "combined":"C&C Comb.",
+  "combinedVBFOnly":"C&C VBF Comb.",
+  "combinedMuOnly":"C&C !VBF Comb.",
+  "BDTCombination":"BDT Comb.",
+  "BDTVBF":"BDT VBF",
+  "BDTMuonOnly":"BDT !VBF",
+  "VBFL":"VBFL",
+  "VBFM":"VBFM",
+  "VBFT":"VBFT",
+  "PtL30":"$p_{T}^{\mu\mu} < 30$ GeV",
+  "Pt30to50":"$p_{T}^{\mu\mu} \in [30,50]$ GeV",
+  "Pt50to75":"$p_{T}^{\mu\mu} \in [50,75]$ GeV",
+  "Pt75to125":"$p_{T}^{\mu\mu} \in [75,125]$ GeV",
+  "Pt125":"$p_{T}^{\mu\mu} > 125$ GeV"
+}
+
+ylimits=[1.0,500.0]
+
 allfiles = glob.glob(dirName+"*.txt.out")
 
 ## Limit v. Lumi
@@ -193,7 +242,7 @@ for plotName in plots:
   data = getData(dirName+plotName+"_*.txt.out")
   if len(data)==0:
     continue
-  incPlot = RelativePlot(data,canvas,legend,titleMap[plotName],caption2=caption2)
+  incPlot = RelativePlot(data,canvas,legend,titleMap[plotName],caption2=caption2,ylimits=ylimits)
   saveAs(canvas,outDir+plotName)
 
 #Limit v. Window
@@ -225,17 +274,31 @@ for plotName in plots:
   data = getData(dirName+"BDT"+plotName+"BDT*.txt.out",matchString=r"BDT([.\d-]+).*.txt.out")
   if len(data)==0:
     continue
-  incPlot = RelativePlot(data,canvas,legend,titleMap[plotName]+" L=20fb^{-1}",caption2=caption2,xlabel="BDT Cut")
+  incPlot = RelativePlot(data,canvas,legend,titleMap[plotName]+" L=20fb^{-1}",caption2=caption2,xlabel="BDT Cut",xlimits=[-1000,0.12])
   saveAs(canvas,outDir+"BDTCut"+plotName)
+  canvas.SaveAs(outDir+"BDTCut"+plotName+".root")
 
 ## Compare all types of limits
 compareData = getData(dirName+"*_20.txt.out",matchString=r"(.*)_[\d]+.txt.out",dontMatchStrings=[r"BDT.+BDT",r"PM"],doSort=False)
 #print compareData
-comparePlot = ComparePlot(compareData)
+comparePlot = ComparePlot(compareData,titleMap=comparisonMap)
 comparePlot.fig.text(0.9,0.2,"$L=20$ fb$^{-1}$",horizontalalignment="right",size="x-large")
 comparePlot.save(outDir+"compare")
 
+## Compare Best Performing Limits
 compareData = getData(dirName+"*_20.txt.out",matchString=r"(.*)_[\d]+.txt.out",dontMatchStrings=[r"BDT.+BDT",r"PM","VBFT","VBFL","VBFM","Pt"],doSort=False)
-comparePlot = ComparePlot(compareData)
+comparePlot = ComparePlot(compareData,titleMap=comparisonMap)
 comparePlot.fig.text(0.9,0.2,"$L=20$ fb$^{-1}$",horizontalalignment="right",size="x-large")
 comparePlot.save(outDir+"compareGood")
+
+## Compare BDT Limits
+compareData = getData(dirName+"*BDT*_20.txt.out",matchString=r"(.*)_[\d]+.txt.out",dontMatchStrings=[r"BDT.+BDT",r"PM"],doSort=False)
+comparePlot = ComparePlot(compareData,titleMap=comparisonMap)
+comparePlot.fig.text(0.9,0.2,"$L=20$ fb$^{-1}$",horizontalalignment="right",size="x-large")
+comparePlot.save(outDir+"compareBDT")
+
+## Compare Not-BDT Limits
+compareData = getData(dirName+"*_20.txt.out",matchString=r"(.*)_[\d]+.txt.out",dontMatchStrings=[r"BDT.+BDT",r"PM",r"BDT"],doSort=False)
+comparePlot = ComparePlot(compareData,titleMap=comparisonMap)
+comparePlot.fig.text(0.9,0.2,"$L=20$ fb$^{-1}$",horizontalalignment="right",size="x-large")
+comparePlot.save(outDir+"compareNonBDT")
