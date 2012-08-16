@@ -12,7 +12,7 @@ LOGY=False
 reverse=False
 
 histNames = {}
-histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[100.0,150.0],"rebin":4}
+histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[100.0,150.0],"rebin":2}
 histNames["mDiMuVBFM"] = {"xlabel":"m_{#mu#mu}, After VBF Medium Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
 histNames["mDiMuVBFT"] = {"xlabel":"m_{#mu#mu}, After VBF Tight Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
 histNames["mDiMuVBFL"] = {"xlabel":"m_{#mu#mu}, After VBF Loose Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
@@ -57,9 +57,9 @@ histNames["cosThetaStarPt30"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>3
 histNames["cosThetaStarPt50"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>50 GeV Selection","xlimits":[-1.0,1.0],"rebin":2}
 histNames["cosThetaStarPt75"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>75 GeV Selection","xlimits":[-1.0,1.0],"rebin":2}
 
-histNames["mDiMuEta11"] = {"xlabel":"m_{#mu#mu} Both Muons |#eta|<1.0 [GeV]","xlimits":[100.0,150.0],"rebin":4}
-histNames["mDiMuEta12"] = {"xlabel":"m_{#mu#mu} One Muons |#eta|<1.0, One Muon |#eta|>1.0 [GeV]","xlimits":[100.0,150.0],"rebin":4}
-histNames["mDiMuEta22"] = {"xlabel":"m_{#mu#mu} Both Muons |#eta|>1.0[GeV]","xlimits":[100.0,150.0],"rebin":4}
+histNames["mDiMuEta11"] = {"xlabel":"m_{#mu#mu} Both Muons |#eta|<1.0 [GeV]","xlimits":[100.0,150.0],"rebin":2}
+histNames["mDiMuEta12"] = {"xlabel":"m_{#mu#mu} One Muons |#eta|<1.0, One Muon |#eta|>1.0 [GeV]","xlimits":[100.0,150.0],"rebin":2}
+histNames["mDiMuEta22"] = {"xlabel":"m_{#mu#mu} Both Muons |#eta|>1.0[GeV]","xlimits":[100.0,150.0],"rebin":2}
 
 histNames["likelihoodHistMuonOnly"] = {"xlabel":"Likelihood (Not-VBF Category)","xlimits":[-1,1],"rebin":1}
 histNames["LDHistMuonOnly"] = {"xlabel":"LD (Not-VBF Category)","xlimits":[-1,1],"rebin":1}

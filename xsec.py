@@ -2,10 +2,11 @@ import ROOT as root
 
 LUMI=20.0
 
-scaleHiggsBy = 50.0 #See in Z'
-scaleHiggsBy = 25.0 #See in Boosted Z
-scaleHiggsBy = 5.0 #See in VBF
-scaleHiggsBy = 1.0
+#scaleHiggsBy = 50.0 #See in Z'
+#scaleHiggsBy = 25.0 #See in Boosted Z
+scaleHiggsBy = 15.0
+#scaleHiggsBy = 5.0 #See in VBF
+#scaleHiggsBy = 1.0
 
 xsec = {}
 xsec["vbfHmumu125"] = 3.338e-4 * scaleHiggsBy
@@ -15,7 +16,7 @@ xsec["ggHmumu"] = xsec["ggHmumu125"]
 xsec["ZHmumu"] = 8.556e-5 * scaleHiggsBy
 xsec["WHmumu"] = 1.512e-4 * scaleHiggsBy
 
-xsec["DYJetsToLL"] = 3048.0   ## madgraph
+xsec["DYJetsToLL"] = 3503.71   ## madgraph
 xsec["ttbar"] = 225.197   ## madgraph
 
 nEventsMap = {}
