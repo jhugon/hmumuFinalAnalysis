@@ -300,7 +300,7 @@ for plotName in plots:
   data = getData(dirName+"BDT"+plotName+"BDT*.txt.out",matchString=r"BDT([.\d-]+).*.txt.out")
   if len(data)==0:
     continue
-  incPlot = RelativePlot(data,canvas,legend,titleMap[plotName]+" L=20fb^{-1}",caption2=caption2,xlabel="BDT Cut",xlimits=[-1000,0.12])
+  incPlot = RelativePlot(data,canvas,legend,titleMap[plotName]+" L=20fb^{-1}",caption2=caption2,xlabel="BDT Cut",xlimits=[-1000,0.15])
   saveAs(canvas,outDir+"BDTCut"+plotName)
 
 ## Compare all types of limits

@@ -29,6 +29,11 @@ histNames["ptDiMuVBFL"] = {"xlabel":"p_{T,#mu#mu}, After VBF-Loose Selection [Ge
 
 histNames["mDiJet"] = {"xlabel":"m_{jj} [GeV]","xlimits":[0.0,1200.0],"rebin":5}
 histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj}","xlimits":[0.0,10.0]}
+histNames["deltaRJets"] = {"xlabel":"#DeltaR_{jj}","xlimits":[0.0,10.0]}
+histNames["deltaPhiJets"] = {"xlabel":"#Delta#phi_{jj}","xlimits":[0.0,3.2]}
+histNames["deltaEtaMuons"] = {"xlabel":"#Delta#eta_{#mumu}","xlimits":[0.0,5.0]}
+histNames["deltaRMuons"] = {"xlabel":"#DeltaR_{#mu#mu}","xlimits":[0.0,6.0]}
+histNames["deltaPhiMuons"] = {"xlabel":"#Delta#phi_{#mu#mu}","xlimits":[0.0,3.2]}
 
 histNames["ptMu1"] = {"xlabel":"Leading Muon p_{T} [GeV]","xlimits":[0.0,400.0]}
 histNames["ptMu2"] = {"xlabel":"Sub-Leading Muon p_{T} [GeV]","xlimits":[0.0,400.0]}
@@ -61,13 +66,21 @@ histNames["mDiMuEta11"] = {"xlabel":"m_{#mu#mu} Both Muons |#eta|<1.0 [GeV]","xl
 histNames["mDiMuEta12"] = {"xlabel":"m_{#mu#mu} One Muons |#eta|<1.0, One Muon |#eta|>1.0 [GeV]","xlimits":[100.0,150.0],"rebin":2}
 histNames["mDiMuEta22"] = {"xlabel":"m_{#mu#mu} Both Muons |#eta|>1.0[GeV]","xlimits":[100.0,150.0],"rebin":2}
 
-histNames["likelihoodHistMuonOnly"] = {"xlabel":"Likelihood (Not-VBF Category)","xlimits":[-1,1],"rebin":1}
-histNames["LDHistMuonOnly"] = {"xlabel":"LD (Not-VBF Category)","xlimits":[-1,1],"rebin":1}
-histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Not-VBF Category)","xlimits":[-1,1],"rebin":1}
+histNames["likelihoodHistMuonOnly"] = {"xlabel":"Likelihood (Not-VBF Category)","xlimits":[-1,0.5],"rebin":20}
+histNames["LDHistMuonOnly"] = {"xlabel":"LD (Not-VBF Category)","xlimits":[-0.2,1],"rebin":20}
+histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Not-VBF Category)","xlimits":[-1,0.25],"rebin":20}
 
-histNames["likelihoodHistVBF"] = {"xlabel":"Likelihood (VBF Category)","xlimits":[-1,1],"rebin":1}
-histNames["LDHistVBF"] = {"xlabel":"LD (VBF Category)","xlimits":[-1,1],"rebin":1}
-histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-1,1],"rebin":1}
+histNames["likelihoodHistVBF"] = {"xlabel":"Likelihood (VBF Category)","xlimits":[-0.5,1.0],"rebin":20}
+histNames["LDHistVBF"] = {"xlabel":"LD (VBF Category)","xlimits":[0.0,0.75],"rebin":20}
+histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.5,0.25],"rebin":20}
+
+histNames["puJetIDSimpleDiscJet1"] = {"xlabel":"PU Jet ID Simple Discriminator--Leading Jet","xlimits":[-1,1],"rebin":1}
+histNames["puJetIDSimpleDiscJet2"] = {"xlabel":"PU Jet ID Simple Discriminator--Sub-Leading Jet","xlimits":[-1,1],"rebin":1}
+histNames["puJetIDSimpleDiscJet3"] = {"xlabel":"PU Jet ID Simple Discriminator--3rd Leading Jet","xlimits":[-1,1],"rebin":1}
+
+histNames["puJetIDSimpleJet1"] = {"xlabel":"PU Jet Simple Loose ID--Leading Jet","xlimits":[],"rebin":1}
+histNames["puJetIDSimpleJet2"] = {"xlabel":"PU Jet Simple Loose ID--Sub-Leading Jet","xlimits":[],"rebin":1}
+histNames["puJetIDSimpleJet3"] = {"xlabel":"PU Jet Simple Loose ID--3rd Leading Jet","xlimits":[],"rebin":1}
 
 #######################################
 root.gROOT.SetBatch(True)
@@ -155,11 +168,13 @@ for histName in bkgDatasetList[0].hists:
   bkgHistList = []
   for ds in bkgDatasetList:
     tmpHist = ds.hists[histName]
-    tmpHist.GetXaxis().SetRangeUser(*histNames[histName]["xlimits"])
-    if tmpHist.Integral() != 0.0:
-      tmpHist.Scale(1.0/tmpHist.Integral())
+    if histNames[histName].has_key("xlimits"):
+      if histNames[histName]["xlimits"] != []:
+        tmpHist.GetXaxis().SetRangeUser(*histNames[histName]["xlimits"])
     if histNames[histName].has_key("rebin"):
         tmpHist.Rebin(histNames[histName]["rebin"])
+    if tmpHist.Integral() != 0.0:
+      tmpHist.Scale(1.0/tmpHist.Integral())
     bkgHistList.append(tmpHist)
   bkgHistList.reverse()
 
@@ -175,7 +190,9 @@ for histName in bkgDatasetList[0].hists:
     hist.SetTitle("")
     hist.GetYaxis().SetTitle("Normalized Events")
     hist.GetXaxis().SetTitle(xtitle)
-    hist.GetXaxis().SetRangeUser(*histNames[histName]["xlimits"])
+    if histNames[histName].has_key("xlimits"):
+      if histNames[histName]["xlimits"] != []:
+        hist.GetXaxis().SetRangeUser(*histNames[histName]["xlimits"])
     hist.SetFillStyle(0)
     hist.SetLineStyle(1)
     hist.SetLineWidth(2)

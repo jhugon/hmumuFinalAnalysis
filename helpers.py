@@ -560,8 +560,9 @@ class DataMCStack:
       #print("nData: %f, nMC: %f, error: %f, pull: %f" % (nData,nMC,error,pull))
 
     #Find Maximum y-value
-    self.mcSumHist.GetXaxis().SetRangeUser(*xlimits)
-    self.dataHist.GetXaxis().SetRangeUser(*xlimits)
+    if xlimits != []:
+      self.mcSumHist.GetXaxis().SetRangeUser(*xlimits)
+      self.dataHist.GetXaxis().SetRangeUser(*xlimits)
     mcMax = self.mcSumHist.GetMaximum()
     dataMaxBin = self.dataHist.GetMaximumBin()
     dataMax = dataHist.GetBinContent(dataMaxBin)+dataHist.GetBinError(dataMaxBin)

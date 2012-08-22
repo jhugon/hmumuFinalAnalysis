@@ -5,8 +5,8 @@ from helpers import *
 import ROOT as root
 import os
 
-dataDir = "input/4GeVWindow/"
-#dataDir = "input/open/"
+#dataDir = "input/4GeVWindow/"
+dataDir = "input/open/"
 outDir = "output/"
 
 LOGY=False
@@ -29,6 +29,11 @@ histNames["ptDiMuVBFL"] = {"xlabel":"p_{T,#mu#mu}, After VBF-Loose Selection [Ge
 
 histNames["mDiJet"] = {"xlabel":"m_{jj} [GeV]","xlimits":[0.0,1200.0]}
 histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj}","xlimits":[0.0,10.0]}
+histNames["deltaRJets"] = {"xlabel":"#DeltaR_{jj}","xlimits":[0.0,10.0]}
+histNames["deltaPhiJets"] = {"xlabel":"#Delta#phi_{jj}","xlimits":[0.0,3.2]}
+histNames["deltaEtaMuons"] = {"xlabel":"#Delta#eta_{#mumu}","xlimits":[0.0,5.0]}
+histNames["deltaRMuons"] = {"xlabel":"#DeltaR_{#mu#mu}","xlimits":[0.0,6.0]}
+histNames["deltaPhiMuons"] = {"xlabel":"#Delta#phi_{#mu#mu}","xlimits":[0.0,3.2]}
 
 histNames["ptMu1"] = {"xlabel":"Leading Muon p_{T} [GeV]","xlimits":[0.0,400.0]}
 histNames["ptMu2"] = {"xlabel":"Sub-Leading Muon p_{T} [GeV]","xlimits":[0.0,400.0]}
@@ -57,14 +62,23 @@ histNames["cosThetaStarPt30"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>3
 histNames["cosThetaStarPt50"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>50 GeV Selection","xlimits":[-1.0,1.0]}
 histNames["cosThetaStarPt75"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>75 GeV Selection","xlimits":[-1.0,1.0]}
 
-histNames["likelihoodHistMuonOnly"] = {"xlabel":"Likelihood (Not-VBF Category)","xlimits":[-1,1],"rebin":10}
-histNames["LDHistMuonOnly"] = {"xlabel":"LD (Not-VBF Category)","xlimits":[-1,1],"rebin":10}
-histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Not-VBF Category)","xlimits":[-1,1],"rebin":10}
+histNames["likelihoodHistMuonOnly"] = {"xlabel":"Likelihood (Not-VBF Category)","xlimits":[-1,0.5],"rebin":20}
+histNames["LDHistMuonOnly"] = {"xlabel":"LD (Not-VBF Category)","xlimits":[-0.2,1],"rebin":20}
+histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Not-VBF Category)","xlimits":[-1,0.25],"rebin":20}
+#histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Not-VBF Category)","xlimits":[-0.2,0.15],"rebin":10}
 
-histNames["likelihoodHistVBF"] = {"xlabel":"Likelihood (VBF Category)","xlimits":[-1,1],"rebin":10}
-histNames["LDHistVBF"] = {"xlabel":"LD (VBF Category)","xlimits":[-1,1],"rebin":10}
-histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-1,1],"rebin":10}
+histNames["likelihoodHistVBF"] = {"xlabel":"Likelihood (VBF Category)","xlimits":[-0.5,1.0],"rebin":20}
+histNames["LDHistVBF"] = {"xlabel":"LD (VBF Category)","xlimits":[0.0,0.75],"rebin":20}
+histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.5,0.25],"rebin":20}
+#histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.2,0.15],"rebin":10}
 
+histNames["puJetIDSimpleDiscJet1"] = {"xlabel":"PU Jet ID Simple Discriminator--Leading Jet","xlimits":[-1,1],"rebin":1}
+histNames["puJetIDSimpleDiscJet2"] = {"xlabel":"PU Jet ID Simple Discriminator--Sub-Leading Jet","xlimits":[-1,1],"rebin":1}
+histNames["puJetIDSimpleDiscJet3"] = {"xlabel":"PU Jet ID Simple Discriminator--3rd Leading Jet","xlimits":[-1,1],"rebin":1}
+
+histNames["puJetIDSimpleJet1"] = {"xlabel":"PU Jet Simple Loose ID--Leading Jet","xlimits":[],"rebin":1}
+histNames["puJetIDSimpleJet2"] = {"xlabel":"PU Jet Simple Loose ID--Sub-Leading Jet","xlimits":[],"rebin":1}
+histNames["puJetIDSimpleJet3"] = {"xlabel":"PU Jet Simple Loose ID--3rd Leading Jet","xlimits":[],"rebin":1}
 
 tlatex = root.TLatex()
 tlatex.SetNDC()
