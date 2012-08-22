@@ -516,7 +516,7 @@ def makeWeightHist(f1,canvas,leg):
   leg.Draw("same")
 
 class DataMCStack:
-  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="Events", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False):
+  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="Events", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[]):
     nBinsX = dataHist.GetNbinsX()
     self.nBinsX = nBinsX
     self.dataHist = dataHist
@@ -529,6 +529,8 @@ class DataMCStack:
     for mcHist in mcHistList:
       #print("nBinsX data: %i, mc: %i" % (nBinsX,mcHist.GetNbinsX()))
       assert(nBinsX == mcHist.GetNbinsX())
+    for sigHist in signalsNoStack:
+      assert(nBinsX == sigHist.GetNbinsX())
   
     # Make MC Stack/sumHist
     self.stack = root.THStack()
@@ -604,6 +606,8 @@ class DataMCStack:
   
     # Main Pad
     pad1.cd();
+    xAxis = None
+    yAxis = None
     if drawStack:
       self.stack.Draw("hist")
       if xlimits != []:
@@ -637,7 +641,11 @@ class DataMCStack:
       if xlimits != []:
         self.mcSumHist.GetXaxis().SetRangeUser(*xlimits)
       self.mcSumHist.Draw("histo b")
+    for sigHist in signalsNoStack:
+      sigHist.Draw("same")
     dataHist.Draw("pe same")
+
+    pad1.RedrawAxis() # Updates Axis Lines
   
     # Pulls Pad
     pad2.cd()
@@ -659,6 +667,7 @@ class DataMCStack:
     self.pullHist.Draw("histo b")
     pad2.Update()
     pad2.GetFrame().DrawClone()
+    pad2.RedrawAxis() # Updates Axis Lines
   
     canvas.cd()
     self.tlatex.DrawLatex(0.33,0.96,"CMS Preliminary")

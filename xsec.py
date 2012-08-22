@@ -3,8 +3,8 @@ import ROOT as root
 LUMI=20.0
 
 scaleHiggsBy = 50.0 #See in Z'
-scaleHiggsBy = 25.0 #See in Boosted Z
-scaleHiggsBy = 15.0
+#scaleHiggsBy = 25.0 #See in Boosted Z
+#scaleHiggsBy = 15.0
 #scaleHiggsBy = 5.0 #See in VBF
 #scaleHiggsBy = 1.0
 
@@ -32,10 +32,13 @@ nEventsMap["DYJetsToLL"] = 30459503 # GPs Ntuples w/ my changes CMSSW_5_3_X
 nEventsMap["ttbar"] = 6416135 # GPs Ntuples w/ my changes CMSSW_5_3_X
 
 backgroundList = [
-"vbfHmumu125",
-"ggHmumu125",
 "DYJetsToLL",
 "ttbar"
+]
+
+signalList = [
+"vbfHmumu125",
+"ggHmumu125"
 ]
 
 legendEntries = {}
@@ -52,10 +55,10 @@ legendEntries["ttbar"] = "t#bar{t}"
 colors = {}
 colors["DYJetsToLL"] = root.kOrange
 colors["ttbar"] = root.kGreen+3
-colors["vbfHmumu150"] = root.kBlue+1
-colors["vbfHmumu125"] = root.kBlue+1
-colors["ggHmumu"] = root.kRed+1
-colors["ggHmumu125"] = root.kRed+1
+colors["vbfHmumu150"] = root.kBlue
+colors["vbfHmumu125"] = root.kBlue
+colors["ggHmumu"] = root.kRed
+colors["ggHmumu125"] = root.kRed
 colors["ZHmumu"] = root.kGreen+1
 colors["WHmumu"] = root.kGreen+1
 colors["ttbar"] = root.kGreen-1

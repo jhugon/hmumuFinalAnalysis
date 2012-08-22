@@ -102,7 +102,7 @@ for i in nEventsMap:
 #######################################
 
 class Dataset:
-  def __init__(self,filename,legendEntry,color,scaleFactor):
+  def __init__(self,filename,legendEntry,color,scaleFactor,isData=False,isSignal=False):
     self.filename = filename
     self.legendEntry = legendEntry
     self.color = color
@@ -112,20 +112,31 @@ class Dataset:
     self.hists = {}
     self.datasetName = os.path.basename(filename)
     self.datasetName = self.datasetName.replace(".root","")
+    self.isData=isData
+    self.isSignal=isSignal
 
   def isZombie(self):
     return self.rootFile.IsZombie()
 
   def loadHistos(self,names):
     for name in names:
-      print("In datasetName: {0}, loading histogram: {1}".format(self.datasetName,name))
+      #print("In datasetName: {0}, loading histogram: {1}".format(self.datasetName,name))
       tmpHistInfo = histNames[name]
       xlimits = tmpHistInfo["xlimits"]
       tmp = self.rootFile.Get(name)
-      print tmp
+      if type(tmp) != root.TH1F:
+        print("Warning: In datasetName: {0}, loading histogram: {1}: Object type is not TH1F!!".format(self.datasetName,name))
+        continue
+      tmp.UseCurrentStyle()
       if histNames[name].has_key("rebin"):
         tmp.Rebin(histNames[name]["rebin"])
-      tmp.SetFillColor(self.color)
+      if self.isSignal:
+        tmp.SetLineColor(self.color)
+      elif self.isData:
+        tmp.SetMarkerColor(self.color)
+        tmp.SetLineColor(self.color)
+      else:
+        tmp.SetFillColor(self.color)
       tmp.Scale(self.scaleFactor)
       self.hists[name] = tmp
 
@@ -146,6 +157,21 @@ for i in backgroundList:
       tmp.loadHistos(histNames)
       bkgDatasetList.append(tmp)
 
+sigDatasetList = []
+for i in signalList:
+  if i in scaleFactors:
+    if scaleFactors[i]>0.0:
+      filename = dataDir+i+".root"
+      if not os.path.exists(filename):
+          continue
+      tmp = Dataset(filename,legendEntries[i],colors[i],scaleFactors[i],isSignal=True)
+      if tmp.isZombie():
+        print ("Warning: file for dataset {0} is Zombie!!".format(i))
+        continue
+      print("Loading Dataset: {0}".format(i))
+      tmp.loadHistos(histNames)
+      sigDatasetList.append(tmp)
+
 #######################################
 
 urLegendPos = [0.70,0.65,0.88,0.88]
@@ -162,22 +188,33 @@ for ds in bkgDatasetList:
       leg.AddEntry(ds.hists[hname],ds.legendEntry,"f")
       uniqueLegendEntries.add(ds.legendEntry)
     break
+for ds in sigDatasetList:
+  for hname in ds.hists:
+    if ds.legendEntry not in uniqueLegendEntries:
+      leg.AddEntry(ds.hists[hname],ds.legendEntry,"f")
+      uniqueLegendEntries.add(ds.legendEntry)
+    break
 
 #######################################
 
 for histName in bkgDatasetList[0].hists:
   print("Making Histo: %s" % histName)
   bkgHistList = []
+  sigHistList = []
   for ds in bkgDatasetList:
     tmpHist = ds.hists[histName]
     bkgHistList.append(tmpHist)
   bkgHistList.reverse()
+  for ds in sigDatasetList:
+    tmpHist = ds.hists[histName]
+    sigHistList.append(tmpHist)
+  #bkgHistList.reverse()
 
   dataHist = bkgDatasetList[0].hists[histName].Clone()  ##temporary
   dataHist.Reset()
 
   xtitle = histNames[histName]["xlabel"]
-  stack = DataMCStack(bkgHistList, dataHist, canvas, xtitle,lumi=LUMI,logy=LOGY,xlimits=histNames[histName]["xlimits"])
+  stack = DataMCStack(bkgHistList, dataHist, canvas, xtitle,lumi=LUMI,logy=LOGY,xlimits=histNames[histName]["xlimits"],signalsNoStack=sigHistList)
   leg.Draw("same")
 
   if scaleHiggsBy != 1.0:

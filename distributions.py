@@ -8,6 +8,8 @@ import os
 dataDir = "input/open/"
 outDir = "output/"
 
+listToPlot = backgroundList+signalList
+
 LOGY=False
 reverse=False
 
@@ -127,7 +129,7 @@ class Dataset:
 #######################################
 
 bkgDatasetList = []
-for i in backgroundList:
+for i in listToPlot:
   if i in scaleFactors:
     if scaleFactors[i]>0.0:
       filename = dataDir+i+".root"
@@ -217,6 +219,7 @@ for histName in bkgDatasetList[0].hists:
       firstHist = False
     else:
       hist.Draw("same")
+  canvas.RedrawAxis()
   leg.Draw("same")
 
   saveName = histName.replace("(","")
