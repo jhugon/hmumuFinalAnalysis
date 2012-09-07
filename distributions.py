@@ -5,7 +5,7 @@ from helpers import *
 import ROOT as root
 import os
 
-dataDir = "input/open/"
+dataDir = "input/"
 outDir = "output/"
 
 listToPlot = backgroundList+signalList
@@ -121,7 +121,9 @@ class Dataset:
       tmpHistInfo = histNames[name]
       xlimits = tmpHistInfo["xlimits"]
       tmp = self.rootFile.Get(name)
-      print tmp
+      if type(tmp) != root.TH1F:
+        print("Warning: In datasetName: {0}, loading histogram: {1}: Object type is not TH1F!!".format(self.datasetName,name))
+        continue
       tmp.SetFillColor(self.color)
       tmp.Scale(self.scaleFactor)
       self.hists[name] = tmp
