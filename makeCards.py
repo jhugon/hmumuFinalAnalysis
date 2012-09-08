@@ -45,7 +45,8 @@ class Analysis:
     self.effSigList = []
     self.sigHists = []
     for h,name in zip(self.sigHistsRaw,signalNames):
-      counts = h.Integral(lowBin,highBin)
+      #counts = h.Integral(lowBin,highBin)
+      counts = h.Integral()
       eff = counts/nEventsMap[name]
       xs = eff*xsec[name]
       self.xsecSigTotal += xs
@@ -59,7 +60,8 @@ class Analysis:
     self.effBakList = []
     self.bakHists = []
     for h,name in zip(self.bakHistsRaw,backgroundNames):
-      counts = h.Integral(lowBin,highBin)
+      #counts = h.Integral(lowBin,highBin)
+      counts = h.Integral()
       eff = counts/nEventsMap[name]
       xs = eff*xsec[name]
       self.xsecBakTotal += xs
@@ -266,8 +268,20 @@ class DataCardMaker:
     outfile.close()
 
 class ShapeDataCardMaker(DataCardMaker):
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="mDiMu"):
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",rebin=[]):
     DataCardMaker.__init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap,histNameBase)
+    if len(rebin) == 2:
+      for channel in self.channels:
+        for hist in channel.sigHists:
+          hist.Rebin2D(*rebin)
+        for hist in channel.bakHists:
+          hist.Rebin2D(*rebin)
+    elif len(rebin) == 1:
+      for channel in self.channels:
+        for hist in channel.sigHists:
+          hist.Rebin(*rebin)
+        for hist in channel.bakHists:
+          hist.Rebin(*rebin)
 
   def write(self,outfilename,lumi):
     outRootFilename = re.sub(r"\.txt",r".root",outfilename)
@@ -423,18 +437,21 @@ if __name__ == "__main__":
 
   directory = "input/"
   outDir = "statsCards/"
-  analysisList = [
-        "",
-  ]
+  analyses = ["mDiMu","likelihoodHistMuonOnly","likelihoodHistVBF","BDTHistMuonOnly","BDTHistVBF"]
+  analyses2D = ["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass","BDTHistMuonOnlyVMass","BDTHistVBFVMass"]
   signalNames=["ggHmumu125","vbfHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar"]
   lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
   lumiList = [10,20,30,100]
 
-  ## Muon mass shape
-  dataCardMassShape = ShapeDataCardMaker(directory,[""],signalNames,backgroundNames)
-  for i in lumiList:
-    dataCardMassShape.write(outDir+"massShape_"+str(i)+".txt",i)
+  for ana in analyses:
+    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[4])
+    for i in lumiList:
+      dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i)
+  for ana in analyses2D:
+    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[4,50])
+    for i in lumiList:
+      dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i)
 
   runFile = open(outDir+"run.sh","w")
   runFile.write("#!/bin/bash\n")
