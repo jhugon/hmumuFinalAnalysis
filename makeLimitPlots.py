@@ -9,7 +9,7 @@ import matplotlib.pyplot as mpl
 import numpy
 
 dirName = "statsInput/"
-caption2 = "#pm2 GeV Search Window"
+caption2 = "Shape Analysis on m_{#mu#mu}"
 
 outDir = "statsOutput/"
 
@@ -216,36 +216,12 @@ class ComparePlot:
 
 titleMap = {
   "combined":"Combined H#rightarrow#mu#mu",
-  "combinedVBFOnly":"Combined H#rightarrow#mu#mu VBF Channels",
-  "combinedMuOnly":"Combined H#rightarrow#mu#mu Non-VBF Channels",
-  "BDTCombination":"Combined BDT H#rightarrow#mu#mu",
-  "BDTVBF":"H#rightarrow#mu#mu VBF BDT",
-  "BDTMuonOnly":"H#rightarrow#mu#mu Non-VBF BDT",
-  "VBFL":"H#rightarrow#mu#mu, VBFL",
-  "VBFM":"H#rightarrow#mu#mu, VBFM",
-  "VBFT":"H#rightarrow#mu#mu, VBFT",
-  "PtL30":"H#rightarrow#mu#mu, p_{T}(#mu#mu) < 30 GeV",
-  "Pt30to50":"H#rightarrow#mu#mu, p_{T}(#mu#mu) #in [30,50] GeV",
-  "Pt50to75":"H#rightarrow#mu#mu, p_{T}(#mu#mu) #in [50,75] GeV",
-  "Pt75to125":"H#rightarrow#mu#mu, p_{T}(#mu#mu) #in [75,125] GeV",
-  "Pt125":"H#rightarrow#mu#mu, p_{T}(#mu#mu) > 125 GeV"
+  "massShape":"H#rightarrow#mu#mu: m_{#mu#mu} Shape"
 }
 
 comparisonMap = {
-  "combined":"C&C Comb.",
-  "combinedVBFOnly":"C&C VBF Comb.",
-  "combinedMuOnly":"C&C !VBF Comb.",
-  "BDTCombination":"BDT Comb.",
-  "BDTVBF":"BDT VBF",
-  "BDTMuonOnly":"BDT !VBF",
-  "VBFL":"VBFL",
-  "VBFM":"VBFM",
-  "VBFT":"VBFT",
-  "PtL30":"$p_{T}^{\mu\mu} < 30$ GeV",
-  "Pt30to50":"$p_{T}^{\mu\mu} \in [30,50]$ GeV",
-  "Pt50to75":"$p_{T}^{\mu\mu} \in [50,75]$ GeV",
-  "Pt75to125":"$p_{T}^{\mu\mu} \in [75,125]$ GeV",
-  "Pt125":"$p_{T}^{\mu\mu} > 125$ GeV"
+  "combined":"Combination",
+  "massShape":"m_{#mu#mu} Shape"
 }
 
 ylimits=[1.0,500.0]
@@ -271,59 +247,9 @@ for plotName in plots:
   incPlot = RelativePlot(data,canvas,legend,titleMap[plotName],caption2=caption2,ylimits=ylimits)
   saveAs(canvas,outDir+plotName)
 
-#Limit v. Window
-plots = set()
-for fn in allfiles:
-  match = re.search(r".*/PM(.*)PM",fn)
-  if match and not badPlot:
-    plots.add(match.group(1))
-
-canvas.SetLogx(0)
-for plotName in plots:
-  data = getData(dirName+"PM"+plotName+"PM*.txt.out",matchString=r"PM([.\d]+).*.txt.out")
-  if len(data)==0:
-    continue
-  incPlot = RelativePlot(data,canvas,legend,titleMap[plotName]+" L=20fb^{-1}",caption2=caption2,xlabel="Search Window: m_{#mu#mu} #in 125 GeV #pm X [GeV]")
-  saveAs(canvas,outDir+"PM"+plotName)
-
-#Limit v. BDT Cut
-plots = set()
-for fn in allfiles:
-  match = re.search(r".*/BDT(.*)BDT",fn)
-  if match and not badPlot:
-    plots.add(match.group(1))
-
-titleMap["Mu"] = "H#rightarrow#mu#mu Non-VBF BDT"
-titleMap["VBF"] = "H#rightarrow#mu#mu VBF BDT"
-
-for plotName in plots:
-  data = getData(dirName+"BDT"+plotName+"BDT*.txt.out",matchString=r"BDT([.\d-]+).*.txt.out")
-  if len(data)==0:
-    continue
-  incPlot = RelativePlot(data,canvas,legend,titleMap[plotName]+" L=20fb^{-1}",caption2=caption2,xlabel="BDT Cut",xlimits=[-1000,0.15])
-  saveAs(canvas,outDir+"BDTCut"+plotName)
-
 ## Compare all types of limits
 compareData = getData(dirName+"*_20.txt.out",matchString=r"(.*)_[\d]+.txt.out",dontMatchStrings=[r"BDT.+BDT",r"PM"],doSort=False)
 #print compareData
 comparePlot = ComparePlot(compareData,titleMap=comparisonMap)
 comparePlot.fig.text(0.9,0.2,"$L=20$ fb$^{-1}$",horizontalalignment="right",size="x-large")
 comparePlot.save(outDir+"compare")
-
-## Compare Best Performing Limits
-compareData = getData(dirName+"*_20.txt.out",matchString=r"(.*)_[\d]+.txt.out",dontMatchStrings=[r"BDT.+BDT",r"PM","VBFT","VBFL","VBFM","Pt"],doSort=False)
-comparePlot = ComparePlot(compareData,titleMap=comparisonMap)
-comparePlot.fig.text(0.9,0.2,"$L=20$ fb$^{-1}$",horizontalalignment="right",size="x-large")
-comparePlot.save(outDir+"compareGood")
-
-## Compare BDT Limits
-compareData = getData(dirName+"*BDT*_20.txt.out",matchString=r"(.*)_[\d]+.txt.out",dontMatchStrings=[r"BDT.+BDT",r"PM"],doSort=False)
-comparePlot = ComparePlot(compareData,titleMap=comparisonMap)
-comparePlot.fig.text(0.9,0.2,"$L=20$ fb$^{-1}$",horizontalalignment="right",size="x-large")
-comparePlot.save(outDir+"compareBDT")
-
-## Compare Not-BDT Limits
-compareData = getData(dirName+"*_20.txt.out",matchString=r"(.*)_[\d]+.txt.out",dontMatchStrings=[r"BDT.+BDT",r"PM",r"BDT"],doSort=False)
-comparePlot = ComparePlot(compareData,titleMap=comparisonMap)
-comparePlot.fig.text(0.9,0.2,"$L=20$ fb$^{-1}$",horizontalalignment="right",size="x-large")
-comparePlot.save(outDir+"compareNonBDT")

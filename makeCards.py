@@ -429,6 +429,7 @@ if __name__ == "__main__":
   signalNames=["ggHmumu125","vbfHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar"]
   lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
+  lumiList = [10,20,30,100]
 
   ## Muon mass shape
   dataCardMassShape = ShapeDataCardMaker(directory,[""],signalNames,backgroundNames)
