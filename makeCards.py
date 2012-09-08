@@ -8,6 +8,10 @@ import sys
 import os.path
 import copy
 
+from ROOT import gSystem
+gSystem.Load('libRooFit')
+from ROOT import RooFit, RooDataHist, RooRealVar, RooArgList, RooArgSet
+
 from xsec import *
 
 if scaleHiggsBy != 1.0:
@@ -283,6 +287,23 @@ class ShapeDataCardMaker(DataCardMaker):
         for hist in channel.bakHists:
           hist.Rebin(*rebin)
 
+    self.is2D = False
+
+    for channel in self.channels:
+      for hist in channel.sigHists:
+        self.x = RooRealVar('x','x',hist.GetXaxis().GetXmin(),hist.GetXaxis().GetXmax())
+        if hist.InheritsFrom("TH2"):
+          self.y = RooRealVar('y','y',hist.GetYaxis().GetXmin(),hist.GetYaxis().GetXmax())
+          self.is2D = True
+
+  def MakeRFHistWrite(self,hist):
+    rfHist = None
+    if self.is2D:
+      rfHist = RooDataHist(hist.GetName(),hist.GetName(),RooArgList(RooArgSet(self.x,self.y)),hist)
+    else:
+      rfHist = RooDataHist(hist.GetName(),hist.GetName(),RooArgList(RooArgSet(self.x)),hist)
+    rfHist.Write()
+
   def write(self,outfilename,lumi):
     outRootFilename = re.sub(r"\.txt",r".root",outfilename)
     print("Writing Card: {0} & {1}".format(outfilename,outRootFilename))
@@ -356,7 +377,8 @@ class ShapeDataCardMaker(DataCardMaker):
 
           tmpHist = channel.getSigHist(sigName).Clone(sigName)
           tmpHist.Scale(lumi)
-          tmpHist.Write()
+          self.MakeRFHistWrite(tmpHist)
+          
           if sumAllMCHist == None:
             sumAllMCHist = tmpHist.Clone("data_obs")
           else:
@@ -383,7 +405,7 @@ class ShapeDataCardMaker(DataCardMaker):
 
           tmpHist = channel.getBakHist(bakName).Clone(bakName)
           tmpHist.Scale(lumi)
-          tmpHist.Write()
+          self.MakeRFHistWrite(tmpHist)
           if sumAllMCHist == None:
             sumAllMCHist = tmpHist.Clone("data_obs")
           else:
@@ -391,7 +413,7 @@ class ShapeDataCardMaker(DataCardMaker):
   
           iParam += 1
           iProc += 1
-        sumAllMCHist.Write()
+        self.MakeRFHistWrite(sumAllMCHist)
         outRootFile.cd()
     binFormatString+= "\n"
     proc1FormatString+= "\n"
