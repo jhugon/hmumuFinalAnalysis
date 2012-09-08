@@ -14,61 +14,58 @@ if scaleHiggsBy != 1.0:
   sys.exit(1)
 
 class Analysis:
-  def __init__(self,directory,signalNames,backgroundNames,analysis,massRange=[123,127],histNameBase="mDiMu"):
+  def __init__(self,directory,signalNames,backgroundNames,analysis,histNameBase="mDiMu"):
     self.sigNames = signalNames
     self.bakNames = backgroundNames
 
     self.sigFiles = []
-    self.sigHists = []
+    self.sigHistsRaw = []
     for name in signalNames:
       tmpF = root.TFile(directory+name+".root")
       tmpH = tmpF.Get(histNameBase+analysis)
       self.sigFiles.append(tmpF)
-      self.sigHists.append(tmpH)
+      self.sigHistsRaw.append(tmpH)
 
     self.bakFiles = []
-    self.bakHists = []
+    self.bakHistsRaw = []
     for name in backgroundNames:
       tmpF = root.TFile(directory+name+".root")
       tmpH = tmpF.Get(histNameBase+analysis)
       self.bakFiles.append(tmpF)
-      self.bakHists.append(tmpH)
+      self.bakHistsRaw.append(tmpH)
 
     effMap = {}
     xsecMap = {}
-    axis = self.sigHists[0].GetXaxis()
-    lowBin = axis.FindBin(massRange[0])
-    # Hack b/c root isn't giving correct bin
-    if(abs(axis.GetBinLowEdge(lowBin)-massRange[0])>1e-8 and abs(axis.GetBinLowEdge(lowBin+1)-massRange[0])<1e-8):
-        lowBin+=1
-    elif(abs(axis.GetBinLowEdge(lowBin)-massRange[0])>1e-8 and abs(axis.GetBinLowEdge(lowBin-1)-massRange[0])<1e-8):
-        lowBin-=1
-    assert(abs(axis.GetBinLowEdge(lowBin)-massRange[0])<1e-8)
-    highBin = axis.FindBin(massRange[1])
-    highBin -= 1
-    assert(abs(axis.GetBinUpEdge(highBin)-massRange[1])<1e-8)
+    lowBin = 0
+    highBin = self.sigHistsRaw[0].GetNbinsX()+1
 
     self.xsecSigTotal = 0.0
     self.xsecSigList = []
     self.effSigList = []
-    for h,name in zip(self.sigHists,signalNames):
+    self.sigHists = []
+    for h,name in zip(self.sigHistsRaw,signalNames):
       counts = h.Integral(lowBin,highBin)
       eff = counts/nEventsMap[name]
       xs = eff*xsec[name]
       self.xsecSigTotal += xs
       self.xsecSigList.append(xs)
       self.effSigList.append(eff)
+      h.Scale(xsec[name]/nEventsMap[name])
+      self.sigHists.append(h)
 
     self.xsecBakTotal = 0.0
     self.xsecBakList = []
     self.effBakList = []
-    for h,name in zip(self.bakHists,backgroundNames):
+    self.bakHists = []
+    for h,name in zip(self.bakHistsRaw,backgroundNames):
       counts = h.Integral(lowBin,highBin)
       eff = counts/nEventsMap[name]
       xs = eff*xsec[name]
       self.xsecBakTotal += xs
       self.xsecBakList.append(xs)
       self.effBakList.append(eff)
+      h.Scale(xsec[name]/nEventsMap[name])
+      self.bakHists.append(h)
 
   def getSigEff(self,name):
     result = -1.0
@@ -92,18 +89,25 @@ class Analysis:
         i = self.bakNames.index(bakName)
         result = self.xsecBakList[i]
     return result
+  def getSigHist(self,sigName):
+    result = -1.0
+    if self.sigNames.count(sigName)>0:
+        i = self.sigNames.index(sigName)
+        result = self.sigHists[i]
+    return result
+  def getBakHist(self,bakName):
+    result = -1.0
+    if self.bakNames.count(bakName)>0:
+        i = self.bakNames.index(bakName)
+        result = self.bakHists[i]
+    return result
 
 class DataCardMaker:
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,massRange=[123,127],nuisanceMap=None,histNameBase="mDiMu"):
-  #def __init__(self,directory,signalName,backgroundNames,analysisList,massRange=[123,127]):
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="mDiMu"):
     channels = []
     self.channelNames = copy.deepcopy(analysisNames)
-    if type(massRange[0])!=list:
-      massRange = [massRange for x in analysisNames]
-    if len(massRange) != len(analysisNames):
-      print("Error: DataCardMaker.__init__: massRange must either be two floats or a list of lists of the same length as signalAnalysisPairs! {0} != {1}".format(len(massRange),len(analysisNames)))
-    for analysis, mr in zip(analysisNames,massRange):
-      tmp = Analysis(directory,signalNames,backgroundNames,analysis,massRange=mr,histNameBase=histNameBase)
+    for analysis in analysisNames:
+      tmp = Analysis(directory,signalNames,backgroundNames,analysis,histNameBase=histNameBase)
       channels.append(tmp)
     self.channels = channels
 
@@ -260,98 +264,176 @@ class DataCardMaker:
       outfile.write(formatString.format(*formatList))
     outfile.close()
 
+class ShapeDataCardMaker(DataCardMaker):
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="mDiMu"):
+    DataCardMaker.__init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap,histNameBase)
+
+  def write(self,outfilename,lumi):
+    outRootFilename = re.sub(r"\.txt",r".root",outfilename)
+    print("Writing Card: {0} & {1}".format(outfilename,outRootFilename))
+    lumi *= 1000.0
+    nuisance = self.nuisance
+    outfile = open(outfilename,"w")
+    outRootFile = root.TFile(outRootFilename, "RECREATE")
+    outRootFile.cd()
+    outfile.write("# Hmumu shape combine datacard produced by makeTables.py\n")
+    now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
+    outfile.write("# {0}\n".format(now))
+    outfile.write("############################### \n")
+    outfile.write("############################### \n")
+    outfile.write("imax {0}\n".format(len(self.channels)))
+    #outfile.write("jmax {0}\n".format(len(backgroundNames)))
+    outfile.write("jmax {0}\n".format("*"))
+    outfile.write("kmax {0}\n".format(len(nuisance)))
+    outfile.write("------------\n")
+    outfile.write("shapes * * {0} $CHANNEL/$PROCESS $CHANNEL/$PROCESS_$SYSTEMATIC\n".format(
+                               outRootFilename))
+    outfile.write("------------\n")
+    outfile.write("# Channels, observed N events:\n")
+    # Make Channels String
+    binFormatString = "bin           "
+    observationFormatString = "observation  "
+    binFormatList = self.channelNames
+    observationFormatList = []
+    iParam = 0
+    for channel,channelName in zip(self.channels,self.channelNames):
+      binFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+      binFormatList.append(channelName)
+      observationFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+      observationFormatList.append(int(channel.getBakXSecTotal()*lumi))
+      iParam += 1
+    binFormatString+= "\n"
+    observationFormatString+= "\n"
+    outfile.write(binFormatString.format(*binFormatList))
+    outfile.write(observationFormatString.format(*observationFormatList))
+    outfile.write("------------\n")
+    outfile.write("# Expected N events:\n")
+
+    binFormatString = "bin           "
+    proc1FormatString = "process       "
+    proc2FormatString = "process       "
+    rateFormatString = "rate          "
+    binFormatList = []
+    proc1FormatList = []
+    proc2FormatList = []
+    rateFormatList = []
+    iParam = 0
+    for channel,channelName in zip(self.channels,self.channelNames):
+        iProc = -len(channel.sigNames)+1
+        sumAllMCHist = None
+        tmpDir = outRootFile.mkdir(channelName)
+        tmpDir.cd()
+        for sigName in self.sigNames:
+          binFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+          binFormatList.append(channelName)
+  
+          proc1FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+          proc1FormatList.append(sigName)
+  
+          proc2FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+          proc2FormatList.append(iProc)
+  
+          expNum = channel.getSigXSec(sigName)*lumi
+          decimals = ".4f"
+          if expNum>1000.0:
+            decimals = ".4e"
+          rateFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+decimals+"} "
+          rateFormatList.append(expNum)
+
+          tmpHist = channel.getSigHist(sigName).Clone(sigName)
+          tmpHist.Scale(lumi)
+          tmpHist.Write()
+          if sumAllMCHist == None:
+            sumAllMCHist = tmpHist.Clone("data_obs")
+          else:
+            sumAllMCHist.Add(tmpHist)
+  
+          iParam += 1
+          iProc += 1
+        for bakName in self.bakNames:
+          binFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+          binFormatList.append(channelName)
+  
+          proc1FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+          proc1FormatList.append(bakName)
+  
+          proc2FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+          proc2FormatList.append(iProc)
+  
+          expNum = channel.getBakXSec(bakName)*lumi
+          decimals = ".4f"
+          if expNum>1000.0:
+            decimals = ".4e"
+          rateFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+decimals+"} "
+          rateFormatList.append(expNum)
+
+          tmpHist = channel.getBakHist(bakName).Clone(bakName)
+          tmpHist.Scale(lumi)
+          tmpHist.Write()
+          if sumAllMCHist == None:
+            sumAllMCHist = tmpHist.Clone("data_obs")
+          else:
+            sumAllMCHist.Add(tmpHist)
+  
+          iParam += 1
+          iProc += 1
+        sumAllMCHist.Write()
+        outRootFile.cd()
+    binFormatString+= "\n"
+    proc1FormatString+= "\n"
+    proc2FormatString+= "\n"
+    rateFormatString+= "\n"
+    outfile.write(binFormatString.format(*binFormatList))
+    outfile.write(proc1FormatString.format(*proc1FormatList))
+    outfile.write(proc2FormatString.format(*proc2FormatList))
+    outfile.write(rateFormatString.format(*rateFormatList))
+    outfile.write("------------\n")
+    outfile.write("# Uncertainties:\n")
+
+    for nu in nuisance:
+      thisNu = nuisance[nu]
+      formatString = "{0:<8} {1:^4} "
+      formatList = [nu,"lnN"]
+      iParam = 2
+      for channel,channelName in zip(self.channels,self.channelNames):
+          for sigName in self.sigNames:
+            formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+            value = "-"
+            if thisNu[1].count(sigName)>0:
+              value = thisNu[0]+1.0
+            formatList.append(value)
+            iParam += 1
+          for bakName in self.bakNames:
+            formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+            value = "-"
+            if thisNu[1].count(bakName)>0:
+              value = thisNu[0]+1.0
+            formatList.append(value)
+            iParam += 1
+      formatString += "\n"
+      #print formatString
+      #print formatList
+      outfile.write(formatString.format(*formatList))
+    outfile.close()
+
+    outRootFile.Close()
+
 if __name__ == "__main__":
   print "Started makeCards.py"
 
-  directory = "input/open/"
+  directory = "input/"
   outDir = "statsCards/"
   analysisList = [
-        "PtL30",
-        "Pt30to50",
-        "Pt50to75",
-        "Pt75to125",
-        "Pt125",
-        "VBFL",
-        "VBFM",
-        "VBFT"
+        "",
   ]
   signalNames=["ggHmumu125","vbfHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar"]
   lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
 
-  bdtAnalysisList = ["MuonOnly","VBF"]
-  bdtCutRangeList = [[0.05,1.0],[0.08,1.0]]
-
-  ## All Combined
-  dataCard = DataCardMaker(directory,analysisList,signalNames,backgroundNames)
+  ## Muon mass shape
+  dataCardMassShape = ShapeDataCardMaker(directory,[""],signalNames,backgroundNames)
   for i in lumiList:
-    dataCard.write(outDir+"combined_"+str(i)+".txt",i)
-
-  ## Muon Only combined
-  ggHAnalysisList = [x for x in analysisList if not re.search(r"VBF",x)]
-  dataCard = DataCardMaker(directory,ggHAnalysisList,signalNames,backgroundNames)
-  for i in lumiList:
-    dataCard.write(outDir+"combinedMuOnly_"+str(i)+".txt",i)
-
-  ## VBF Only Combined
-  vbfHAnalysisList =  [x for x in analysisList if re.search(r"VBF",x)]
-  dataCard = DataCardMaker(directory,vbfHAnalysisList,signalNames,backgroundNames)
-  for i in lumiList:
-    dataCard.write(outDir+"combinedVBFOnly_"+str(i)+".txt",i)
-
-  ## Each Individual
-  for i in analysisList:
-    title = i
-    if title=="":
-        title="Inc"
-    dataCard = DataCardMaker(directory,[i],signalNames,backgroundNames)
-    for j in lumiList:
-      dataCard.write(outDir+title+"_"+str(j)+".txt",j)
-
-  ## Mass cut window optimization
-  for i in range(0,50):
-    amount = 0.25+i*0.25
-    dataCard = DataCardMaker(directory,analysisList,signalNames,backgroundNames,massRange=[125.0-amount,125.0+amount])
-    title = "PMcombinedPM"+str(amount)
-    dataCard.write(outDir+title+"_"+str(20)+".txt",20)
-
-    dataCard = DataCardMaker(directory,["PtL30"],signalNames,backgroundNames,massRange=[125.0-amount,125.0+amount])
-    title = "PMPtL30PM"+str(amount)
-    dataCard.write(outDir+title+"_"+str(20)+".txt",20)
-
-    dataCard = DataCardMaker(directory,["Pt125"],signalNames,backgroundNames,massRange=[125.0-amount,125.0+amount])
-    title = "PMPt125PM"+str(amount)
-    dataCard.write(outDir+title+"_"+str(20)+".txt",20)
-
-    dataCard = DataCardMaker(directory,["VBFL"],signalNames,backgroundNames,massRange=[125.0-amount,125.0+amount])
-    title = "PMVBFLPM"+str(amount)
-    dataCard.write(outDir+title+"_"+str(20)+".txt",20)
-
-    dataCard = DataCardMaker(directory,["VBFT"],signalNames,backgroundNames,massRange=[125.0-amount,125.0+amount])
-    title = "PMVBFTPM"+str(amount)
-    dataCard.write(outDir+title+"_"+str(20)+".txt",20)
-
-  ## BDT Combination
-  dataCard = DataCardMaker(directory,bdtAnalysisList,signalNames,backgroundNames,massRange=bdtCutRangeList,histNameBase="BDTHist")
-  for i in lumiList:
-    dataCard.write(outDir+"BDTCombination"+"_"+str(i)+".txt",i)
-
-  ## BDT Individual
-  for ana,cuts in zip(bdtAnalysisList,bdtCutRangeList):
-    dataCard = DataCardMaker(directory,[ana],signalNames,backgroundNames,massRange=cuts,histNameBase="BDTHist")
-    for i in lumiList:
-      dataCard.write(outDir+"BDT"+ana+"_"+str(i)+".txt",i)
-
-  ## BDT Cut Optimization
-  for i in range(0,40):
-    amount = 0.2-i*0.01
-    dataCard = DataCardMaker(directory,["MuonOnly"],signalNames,backgroundNames,massRange=[amount,1.0],histNameBase="BDTHist")
-    title = "BDTMuBDT"+str(amount)
-    dataCard.write(outDir+title+"_"+str(20)+".txt",20)
-
-    dataCard = DataCardMaker(directory,["VBF"],signalNames,backgroundNames,massRange=[amount,1.0],histNameBase="BDTHist")
-    title = "BDTVBFBDT"+str(amount)
-    dataCard.write(outDir+title+"_"+str(20)+".txt",20)
+    dataCardMassShape.write(outDir+"massShape_"+str(i)+".txt",i)
 
   runFile = open(outDir+"run.sh","w")
   runFile.write("#!/bin/bash\n")

@@ -2,11 +2,11 @@ import ROOT as root
 
 LUMI=20.0
 
-scaleHiggsBy = 50.0 #See in Z'
+#scaleHiggsBy = 50.0 #See in Z'
 #scaleHiggsBy = 25.0 #See in Boosted Z
 #scaleHiggsBy = 15.0
 #scaleHiggsBy = 5.0 #See in VBF
-#scaleHiggsBy = 1.0
+scaleHiggsBy = 1.0
 
 xsec = {}
 xsec["vbfHmumu125"] = 3.338e-4 * scaleHiggsBy
