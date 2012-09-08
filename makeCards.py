@@ -5,6 +5,7 @@ import ROOT as root
 from helpers import *
 import datetime
 import sys
+import os.path
 import copy
 
 from xsec import *
@@ -286,8 +287,7 @@ class ShapeDataCardMaker(DataCardMaker):
     outfile.write("jmax {0}\n".format("*"))
     outfile.write("kmax {0}\n".format(len(nuisance)))
     outfile.write("------------\n")
-    outfile.write("shapes * * {0} $CHANNEL/$PROCESS $CHANNEL/$PROCESS_$SYSTEMATIC\n".format(
-                               outRootFilename))
+    outfile.write("shapes * * {0} $CHANNEL/$PROCESS $CHANNEL/$PROCESS_$SYSTEMATIC\n".format( os.path.basename(outRootFilename)))
     outfile.write("------------\n")
     outfile.write("# Channels, observed N events:\n")
     # Make Channels String
