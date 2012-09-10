@@ -9,7 +9,7 @@ import matplotlib.pyplot as mpl
 import numpy
 
 dirName = "statsInput/"
-caption2 = "Shape Analysis on m_{#mu#mu}"
+caption2 = "1D Shape Analysis"
 
 outDir = "statsOutput/"
 
@@ -197,10 +197,15 @@ class ComparePlot:
       size="xx-small"
     elif len(rects)>9:
       size="x-small"
+    maxWidth = 0.0
     for rect in rects:
       width = rect.get_width()
-      if (width < 5): # The bars aren't wide enough to print the ranking inside
-        xloc = width + 1 # Shift the text to the right side of the right edge
+      if width>maxWidth:
+        maxWidth = width
+    for rect in rects:
+      width = rect.get_width()
+      if (width/maxWidth < 0.1): # The bars aren't wide enough to print the ranking inside
+        xloc = width + 0.1/maxWidth # Shift the text to the right side of the right edge
         clr = 'black' # Black against white background
         align = 'left'
       else:
@@ -216,12 +221,29 @@ class ComparePlot:
 
 titleMap = {
   "combined":"Combined H#rightarrow#mu#mu",
-  "massShape":"H#rightarrow#mu#mu: m_{#mu#mu} Shape"
+  "BDTHistMuonOnly":"H#rightarrow#mu#mu: BDT Inclusive",
+  "BDTHistVBF":"H#rightarrow#mu#mu: BDT VBF",
+  "likelihoodHistMuonOnly":"H#rightarrow#mu#mu: Likelihood Inclusive",
+  "likelihoodHistVBF":"H#rightarrow#mu#mu: Likelihood VBF",
+  "BDTHistMuonOnlyVMass":"H#rightarrow#mu#mu: BDT v. m_{#mu#mu} Inclusive",
+  "BDTHistVBFVMass":"H#rightarrow#mu#mu: BDT v. m_{#mu#mu} VBF",
+  "likelihoodHistMuonOnlyVMass":"H#rightarrow#mu#mu: Likelihood v. m_{#mu#mu} Inclusive",
+  "likelihoodHistVBFVMass":"H#rightarrow#mu#mu: Likelihood v. m_{#mu#mu} VBF",
+  "mDiMu":"H#rightarrow#mu#mu: m_{#mu#mu}"
 }
 
 comparisonMap = {
   "combined":"Combination",
-  "massShape":"m_{#mu#mu} Shape"
+  "BDTHistMuonOnly":"BDT Inc.",
+  "BDTHistVBF":"BDT VBF",
+  "likelihoodHistMuonOnly":"LH Inc.",
+  "likelihoodHistVBF":"LH VBF",
+
+  "BDTHistMuonOnlyVMass":"BDT v. $m_{\mu\mu}$ Inc.",
+  "BDTHistVBFVMass":"BDT v. $m_{\mu\mu}$ VBF",
+  "likelihoodHistMuonOnlyVMass":"LH v. $m_{\mu\mu}$ Inc.",
+  "likelihoodHistVBFVMass":"LH v. $m_{\mu\mu}$ VBF",
+  "mDiMu":"$m_{\mu\mu}$ Shape"
 }
 
 ylimits=[1.0,500.0]

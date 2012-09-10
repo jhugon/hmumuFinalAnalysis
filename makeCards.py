@@ -272,7 +272,7 @@ class DataCardMaker:
     outfile.close()
 
 class ShapeDataCardMaker(DataCardMaker):
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",rebin=[]):
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False):
     DataCardMaker.__init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap,histNameBase)
     if len(rebin) == 2:
       for channel in self.channels:
@@ -288,6 +288,7 @@ class ShapeDataCardMaker(DataCardMaker):
           hist.Rebin(*rebin)
 
     self.is2D = False
+    self.useTH1 = useTH1
 
     for channel in self.channels:
       for hist in channel.sigHists:
@@ -297,12 +298,30 @@ class ShapeDataCardMaker(DataCardMaker):
           self.is2D = True
 
   def MakeRFHistWrite(self,hist):
-    rfHist = None
-    if self.is2D:
-      rfHist = RooDataHist(hist.GetName(),hist.GetName(),RooArgList(RooArgSet(self.x,self.y)),hist)
+    if self.useTH1:
+      hist.Write()
     else:
-      rfHist = RooDataHist(hist.GetName(),hist.GetName(),RooArgList(RooArgSet(self.x)),hist)
-    rfHist.Write()
+      rfHist = None
+      if self.is2D:
+        rfHist = RooDataHist(hist.GetName(),hist.GetName(),RooArgList(RooArgSet(self.x,self.y)),hist)
+      else:
+        rfHist = RooDataHist(hist.GetName(),hist.GetName(),RooArgList(RooArgSet(self.x)),hist)
+      rfHist.Write()
+
+  def histFloor(self,hist):
+    nBinsX = hist.GetNbinsX()
+    if hist.InheritsFrom("TH2"):
+      nBinsY = hist.GetNbinsY()
+      for i in range(0,nBinsX+2):
+       for j in range(0,nBinsY+2):
+        tmp = hist.GetBinContent(i,j)
+        tmp = math.floor(tmp)
+        hist.SetBinContent(i,j,tmp)
+    else:
+      for i in range(0,nBinsX+2):
+        tmp = hist.GetBinContent(i)
+        tmp = math.floor(tmp)
+        hist.SetBinContent(i,tmp)
 
   def write(self,outfilename,lumi):
     outRootFilename = re.sub(r"\.txt",r".root",outfilename)
@@ -413,6 +432,7 @@ class ShapeDataCardMaker(DataCardMaker):
   
           iParam += 1
           iProc += 1
+        self.histFloor(sumAllMCHist)
         self.MakeRFHistWrite(sumAllMCHist)
         outRootFile.cd()
     binFormatString+= "\n"
@@ -459,19 +479,24 @@ if __name__ == "__main__":
 
   directory = "input/"
   outDir = "statsCards/"
-  analyses = ["mDiMu","likelihoodHistMuonOnly","likelihoodHistVBF","BDTHistMuonOnly","BDTHistVBF"]
+  analyses = ["likelihoodHistMuonOnly","likelihoodHistVBF","BDTHistMuonOnly","BDTHistVBF"]
   analyses2D = ["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass","BDTHistMuonOnlyVMass","BDTHistVBFVMass"]
   signalNames=["ggHmumu125","vbfHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar"]
   lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
   lumiList = [10,20,30,100]
 
+  dataCardMassShape = ShapeDataCardMaker(directory,["mDiMu"],signalNames,backgroundNames,rebin=[4])
+  for i in lumiList:
+      dataCardMassShape.write(outDir+"mDiMu"+"_"+str(i)+".txt",i)
+
   for ana in analyses:
-    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[4])
+    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[40])
     for i in lumiList:
       dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i)
+
   for ana in analyses2D:
-    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[4,50])
+    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[4,40])
     for i in lumiList:
       dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i)
 
