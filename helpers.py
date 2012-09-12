@@ -233,6 +233,17 @@ def getXBinHist(inHist, xBin):
     outHist.SetBinError(i,inHist.GetBinError(xBin,i))
   return outHist
 
+def getYBinHist(inHist, yBin):
+  outHist = inHist.ProjectionX()
+  outHist.Clear()
+  outHist.SetName(inHist.GetName()+"YSliceBin"+str(yBin))
+  outHist.Sumw2()
+  nBins = outHist.GetYaxis().GetNbins()
+  for i in range(0,nBins+2):
+    outHist.SetBinContent(i,inHist.GetBinContent(i,yBin))
+    outHist.SetBinError(i,inHist.GetBinError(i,yBin))
+  return outHist
+
 def fitSlicesTopRooFit(hist):
   #mTopBest = 172.9
   mass = root.RooRealVar("mass","m_{jjj} of Top Candidate [GeV]",20,250)

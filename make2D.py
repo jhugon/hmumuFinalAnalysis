@@ -90,6 +90,26 @@ fDataList = []
 for fname in dataList:
   fDataList.append(root.TFile(dataDir+fname+".root"))
 
+def CheckForInfSoB(sig,bak):
+  nBinsX = sig.GetNbinsX()
+  nBinsY = sig.GetNbinsY()
+  assert(nBinsX == bak.GetNbinsX())
+  assert(nBinsY == bak.GetNbinsY())
+
+  for i in range(nBinsX+2):
+    for j in range(nBinsY+2):
+      s = sig.GetBinContent(i,j)
+      b = bak.GetBinContent(i,j)
+      if s>0.0 and b==0:
+        print("SoB is inf for hist: {}, s: {}, b: {} x: {} y: {}".format(
+         sig.GetName(),
+         s,
+         b,
+         sig.GetXaxis().GetBinCenter(i),
+         sig.GetYaxis().GetBinCenter(j)
+        ))
+  
+
 for hist in histlist:
   hSig = None
   hBak = None
@@ -149,7 +169,11 @@ for hist in histlist:
   hData.Rebin2D(*(rebins[hist]))
   hData.GetXaxis().SetRangeUser(*(xranges[hist]))
   hData.GetYaxis().SetRangeUser(*(yranges[hist]))
-  
+
+  #CheckForInfSoB(hSig,hBak)
+
+  hSoB = hSig.Clone(hist+"_SoB")
+  hSoB.Divide(hBak)
   
   canvas = root.TCanvas()
   
@@ -163,7 +187,11 @@ for hist in histlist:
 
   hData.Draw(drawOpt)
   canvas.SaveAs(outDir+hist+"Data.png")
-  canvas.SaveAs(outDir+hist+"data.pdf")
+  canvas.SaveAs(outDir+hist+"Data.pdf")
+
+  hSoB.Draw(drawOpt)
+  canvas.SaveAs(outDir+hist+"SoB.png")
+  canvas.SaveAs(outDir+hist+"SoB.pdf")
 
   leg = root.TLegend(0.7,0.7,0.88,0.88)
   leg.SetFillColor(0)
@@ -192,4 +220,16 @@ for hist in histlist:
   leg.Draw()
   canvas.SaveAs(outDir+hist+"Box.png")
   canvas.SaveAs(outDir+hist+"Box.pdf")
+  
+  hBak.Draw("box")
+  hSig.Draw("box same")
+  leg.Draw()
+  canvas.SaveAs(outDir+hist+"Box.png")
+  canvas.SaveAs(outDir+hist+"Box.pdf")
+  
+  hBak.Draw("lego")
+  hSig.Draw("lego same")
+  leg.Draw()
+  canvas.SaveAs(outDir+hist+"lego.png")
+  canvas.SaveAs(outDir+hist+"lego.pdf")
   
