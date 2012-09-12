@@ -8,37 +8,32 @@ import os
 dataDir = "input/"
 outDir = "output/"
 
-LOGY=True
+LOGY=False
+
+histDirs = ["","4GeVWindow/","PtDiMu100/","VBFPresel/","IncPresel/"]
 
 histNames = {}
 histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[100.0,150.0],"rebin":4}
-histNames["mDiMuVBFM"] = {"xlabel":"m_{#mu#mu}, After VBF Medium Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
-histNames["mDiMuVBFT"] = {"xlabel":"m_{#mu#mu}, After VBF Tight Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
-histNames["mDiMuVBFL"] = {"xlabel":"m_{#mu#mu}, After VBF Loose Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
-histNames["mDiMuVBFVL"] = {"xlabel":"m_{#mu#mu}, After VBF Very Loose Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
-histNames["mDiMuPtL30"] = {"xlabel":"m_{#mu#mu}, After p_{T}^{#mu#mu}<30 GeV Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
-histNames["mDiMuPt30to50"] = {"xlabel":"m_{#mu#mu}, After 30<p_{T}^{#mu#mu}<50 GeV Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
-histNames["mDiMuPt50to75"] = {"xlabel":"m_{#mu#mu}, After 50<p_{T}^{#mu#mu}<75 GeV Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
-histNames["mDiMuPt75to125"] = {"xlabel":"m_{#mu#mu}, After 75<p_{T}^{#mu#mu}<125 GeV Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
-histNames["mDiMuPt125"] = {"xlabel":"m_{#mu#mu}, After p_{T}^{#mu#mu}>125 GeV Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
 
-histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV]","xlimits":[0.0,400.0]}
-histNames["ptDiMuVBFM"] = {"xlabel":"p_{T,#mu#mu}, After VBF Selection [GeV]","xlimits":[0.0,400.0]}
-histNames["ptDiMuVBFL"] = {"xlabel":"p_{T,#mu#mu}, After VBF-Loose Selection [GeV]","xlimits":[0.0,400.0]}
+histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV]","xlimits":[0.0,200.0],"rebin":5}
 
 histNames["mDiJet"] = {"xlabel":"m_{jj} [GeV]","xlimits":[0.0,1200.0]}
-histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj}","xlimits":[0.0,10.0]}
-histNames["deltaRJets"] = {"xlabel":"#DeltaR_{jj}","xlimits":[0.0,10.0]}
+histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj}","xlimits":[0.0,8.5]}
+histNames["deltaRJets"] = {"xlabel":"#DeltaR_{jj}","xlimits":[0.0,8.5]}
 histNames["deltaPhiJets"] = {"xlabel":"#Delta#phi_{jj}","xlimits":[0.0,3.2]}
-histNames["deltaEtaMuons"] = {"xlabel":"#Delta#eta_{#mumu}","xlimits":[0.0,5.0]}
+histNames["deltaEtaMuons"] = {"xlabel":"#Delta#eta_{#mu#mu}","xlimits":[0.0,4.5]}
 histNames["deltaRMuons"] = {"xlabel":"#DeltaR_{#mu#mu}","xlimits":[0.0,6.0]}
 histNames["deltaPhiMuons"] = {"xlabel":"#Delta#phi_{#mu#mu}","xlimits":[0.0,3.2]}
 
-histNames["ptMu1"] = {"xlabel":"Leading Muon p_{T} [GeV]","xlimits":[0.0,400.0]}
-histNames["ptMu2"] = {"xlabel":"Sub-Leading Muon p_{T} [GeV]","xlimits":[0.0,400.0]}
+histNames["ptMu1"] = {"xlabel":"Leading Muon p_{T} [GeV]","xlimits":[20.0,400.0]}
+histNames["ptMu2"] = {"xlabel":"Sub-Leading Muon p_{T} [GeV]","xlimits":[20.0,400.0]}
 
-histNames["ptJet1"] = {"xlabel":"Leading Jet p_{T} [GeV]","xlimits":[0.0,400.0]}
-histNames["ptJet2"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV]","xlimits":[0.0,400.0]}
+histNames["ptJet1"] = {"xlabel":"Leading Jet p_{T} [GeV]","xlimits":[30.0,250.0]}
+histNames["ptJet2"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV]","xlimits":[0.0,250.0]}
+histNames["ht"] = {"xlabel":"Jet H_{T} [GeV], for Jets p_{T}>30 GeV","xlimits":[0.0,1000.0]}
+histNames["htInRapidityGap"] = {"xlabel":"Jet H_{T} in Jet Rapidity Gap [GeV], for Jets p_{T}>30 GeV","xlimits":[0.0,1000.0]}
+histNames["nJets"] = {"xlabel":"N_{jets}","xlimits":[0,10]}
+histNames["nJetsInRapidityGap"] = {"xlabel":"N_{jets} in Jet Rapidity Gap [GeV]","xlimits":[0,10]}
 
 histNames["etaMu1"] = {"xlabel":"Leading Muon #eta","xlimits":[-2.4,2.4]}
 histNames["etaMu2"] = {"xlabel":"Sub-Leading Muon #eta","xlimits":[-2.4,2.4]}
@@ -46,20 +41,12 @@ histNames["etaMu2"] = {"xlabel":"Sub-Leading Muon #eta","xlimits":[-2.4,2.4]}
 histNames["etaJet1"] = {"xlabel":"Leading Jet #eta","xlimits":[-5.0,5.0]}
 histNames["etaJet2"] = {"xlabel":"Sub-Leading Jet #eta","xlimits":[-5.0,5.0]}
 
-histNames["yDiMu"] = {"xlabel":"y_{#mu#mu} [GeV]","xlimits":[-3.0,3.0]}
-histNames["yDiMuVBFM"] = {"xlabel":"y_{#mu#mu}, After VBF Selection [GeV]","xlimits":[-3.0,3.0]}
-histNames["yDiMuVBFL"] = {"xlabel":"y_{#mu#mu}, After VBF-Loose Selection [GeV]","xlimits":[-3.0,3.0]}
-histNames["yDiMuPt30"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>30 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
-histNames["yDiMuPt50"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>50 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
-histNames["yDiMuPt75"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>75 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
+histNames["yDiMu"] = {"xlabel":"y_{#mu#mu} [GeV]","xlimits":[-2.2,2.2]}
 
 histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1.0,1.0]}
-histNames["cosThetaStarVBFM"] = {"xlabel":"cos(#theta^{*}) After VBF Selection","xlimits":[-1.0,1.0]}
-histNames["cosThetaStarVBFL"] = {"xlabel":"cos(#theta^{*}) After VBF-Loose Selection","xlimits":[-1.0,1.0]}
-histNames["cosThetaStarVBFT"] = {"xlabel":"cos(#theta^{*}) After VBF-Tight Selection","xlimits":[-1.0,1.0]}
-histNames["cosThetaStarPt30"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>30 GeV Selection","xlimits":[-1.0,1.0]}
-histNames["cosThetaStarPt50"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>50 GeV Selection","xlimits":[-1.0,1.0]}
-histNames["cosThetaStarPt75"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>75 GeV Selection","xlimits":[-1.0,1.0]}
+
+histNames["relIsoMu1"] = {"xlabel":"Leading Muon Relative PF Isolation","xlimits":[0,0.3],"rebin":2}
+histNames["relIsoMu2"] = {"xlabel":"Sub-Leading Muon Relative PF Isolation","xlimits":[0,0.3],"rebin":2}
 
 histNames["likelihoodHistMuonOnly"] = {"xlabel":"Likelihood (Not-VBF Category)","xlimits":[-1,1],"rebin":40}
 histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Not-VBF Category)","xlimits":[-1,1],"rebin":40}
@@ -113,14 +100,14 @@ class Dataset:
   def isZombie(self):
     return self.rootFile.IsZombie()
 
-  def loadHistos(self,names):
+  def loadHistos(self,names,prefix=""):
     for name in names:
       #print("In datasetName: {0}, loading histogram: {1}".format(self.datasetName,name))
       tmpHistInfo = histNames[name]
       xlimits = tmpHistInfo["xlimits"]
-      tmp = self.rootFile.Get(name)
+      tmp = self.rootFile.Get(prefix+name)
       if type(tmp) != root.TH1F:
-        print("Warning: In datasetName: {0}, loading histogram: {1}: Object type is not TH1F!!".format(self.datasetName,name))
+        print("Warning: In datasetName: {0}, loading histogram: {1}: Object type is not TH1F!!".format(self.datasetName,prefix+name))
         continue
       tmp.UseCurrentStyle()
       if histNames[name].has_key("rebin"):
@@ -133,7 +120,7 @@ class Dataset:
       else:
         tmp.SetFillColor(self.color)
       tmp.Scale(self.scaleFactor)
-      self.hists[name] = tmp
+      self.hists[prefix+name] = tmp
 
 #######################################
 
@@ -149,7 +136,8 @@ for i in backgroundList:
         print ("Warning: file for dataset {0} is Zombie!!".format(i))
         continue
       print("Loading Dataset: {0}".format(i))
-      tmp.loadHistos(histNames)
+      for hDir in histDirs:
+        tmp.loadHistos(histNames,prefix=hDir)
       bkgDatasetList.append(tmp)
 
 sigDatasetList = []
@@ -164,8 +152,24 @@ for i in signalList:
         print ("Warning: file for dataset {0} is Zombie!!".format(i))
         continue
       print("Loading Dataset: {0}".format(i))
-      tmp.loadHistos(histNames)
+      for hDir in histDirs:
+        tmp.loadHistos(histNames,prefix=hDir)
       sigDatasetList.append(tmp)
+
+realDatasetList = []
+for i in dataList:
+      filename = dataDir+i+".root"
+      if not os.path.exists(filename):
+        print("Error: Data file not found {}, exiting".format(filename))
+        sys.exit(1)
+      tmp = Dataset(filename,"CMS Data 2012",1,1.0,isData=True)
+      if tmp.isZombie():
+        print ("Error: file for dataset {0} is Zombie!!".format(i))
+        sys.exit(1)
+      print("Loading Dataset: {0}".format(i))
+      for hDir in histDirs:
+        tmp.loadHistos(histNames,prefix=hDir)
+      realDatasetList.append(tmp)
 
 #######################################
 
@@ -189,6 +193,13 @@ for ds in sigDatasetList:
       leg.AddEntry(ds.hists[hname],ds.legendEntry,"f")
       uniqueLegendEntries.add(ds.legendEntry)
     break
+for ds in realDatasetList:
+  for hname in ds.hists:
+    if ds.legendEntry not in uniqueLegendEntries:
+      leg.AddEntry(ds.hists[hname],ds.legendEntry,"pe")
+      uniqueLegendEntries.add(ds.legendEntry)
+    break
+  break
 
 #######################################
 
@@ -205,11 +216,16 @@ for histName in bkgDatasetList[0].hists:
     sigHistList.append(tmpHist)
   #bkgHistList.reverse()
 
-  dataHist = bkgDatasetList[0].hists[histName].Clone()  ##temporary
+  #dataHist = bkgDatasetList[0].hists[histName].Clone()
+  #dataHist.Reset()
+  dataHist = realDatasetList[0].hists[histName].Clone()
   dataHist.Reset()
+  for realDS in realDatasetList:
+    dataHist.Add(realDS.hists[histName])
 
-  xtitle = histNames[histName]["xlabel"]
-  stack = DataMCStack(bkgHistList, dataHist, canvas, xtitle,lumi=LUMI,logy=LOGY,xlimits=histNames[histName]["xlimits"],signalsNoStack=sigHistList)
+  histBaseName = re.sub(r".*/","",histName)
+  xtitle = histNames[histBaseName]["xlabel"]
+  stack = DataMCStack(bkgHistList, dataHist, canvas, xtitle,lumi=LUMI,logy=LOGY,xlimits=histNames[histBaseName]["xlimits"],signalsNoStack=sigHistList)
   leg.Draw("same")
 
   if scaleHiggsBy != 1.0:
@@ -219,4 +235,5 @@ for histName in bkgDatasetList[0].hists:
   saveName = saveName.replace(")","")
   saveName = saveName.replace("[","")
   saveName = saveName.replace("]","")
+  saveName = saveName.replace("/","_")
   saveAs(canvas,outDir+saveName)

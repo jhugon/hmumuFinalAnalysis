@@ -479,19 +479,15 @@ if __name__ == "__main__":
 
   directory = "input/"
   outDir = "statsCards/"
-  analyses = ["likelihoodHistMuonOnly","likelihoodHistVBF","BDTHistMuonOnly","BDTHistVBF"]
+  analyses = ["mDiMu"]
   analyses2D = ["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass","BDTHistMuonOnlyVMass","BDTHistVBFVMass"]
   signalNames=["ggHmumu125","vbfHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar"]
   lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
   lumiList = [10,20,30,100]
 
-  dataCardMassShape = ShapeDataCardMaker(directory,["mDiMu"],signalNames,backgroundNames,rebin=[4])
-  for i in lumiList:
-      dataCardMassShape.write(outDir+"mDiMu"+"_"+str(i)+".txt",i)
-
   for ana in analyses:
-    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[40])
+    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[4])
     for i in lumiList:
       dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i)
 
@@ -499,6 +495,14 @@ if __name__ == "__main__":
     dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[4,40])
     for i in lumiList:
       dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i)
+
+  dataCardBDTComb = ShapeDataCardMaker(directory,["BDTHistMuonOnlyVMass","BDTHistVBFVMass"],signalNames,backgroundNames,rebin=[4,40])
+  for i in lumiList:
+      dataCardBDTComb.write(outDir+"BDTComb"+"_"+str(i)+".txt",i)
+
+  dataCardLHComb = ShapeDataCardMaker(directory,["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass"],signalNames,backgroundNames,rebin=[4,40])
+  for i in lumiList:
+      dataCardLHComb.write(outDir+"LHComb"+"_"+str(i)+".txt",i)
 
   runFile = open(outDir+"run.sh","w")
   runFile.write("#!/bin/bash\n")

@@ -1,12 +1,13 @@
 import ROOT as root
 
-LUMI=20.0
+LUMI=9.833
 
 #scaleHiggsBy = 50.0 #See in Z'
 #scaleHiggsBy = 25.0 #See in Boosted Z
 #scaleHiggsBy = 15.0
 #scaleHiggsBy = 5.0 #See in VBF
 scaleHiggsBy = 1.0
+#scaleHiggsBy = 50.0
 
 xsec = {}
 xsec["vbfHmumu125"] = 3.338e-4 * scaleHiggsBy
@@ -39,6 +40,18 @@ backgroundList = [
 signalList = [
 "vbfHmumu125",
 "ggHmumu125"
+]
+
+dataList = [
+"SingleMuRun2012Av1",
+"SingleMuRun2012Bv1",
+"SingleMuRun2012Cv1",
+"SingleMuRun2012Cv2"
+
+#"DoubleMuRun2012Av1",
+#"DoubleMuRun2012Bv1",
+#"DoubleMuRun2012Cv1",
+#"DoubleMuRun2012Cv2"
 ]
 
 legendEntries = {}
