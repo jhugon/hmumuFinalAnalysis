@@ -10,7 +10,16 @@ outDir = "output/"
 
 histPrefix = ""
 
-histlist = ["yVptDiMu","BDTHistMuonOnlyVMass","BDTHistVBFVMass","likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass"]
+histlist = [
+    "yVptDiMu",
+    "BDTHistMuonOnlyVMass",
+    "BDTHistVBFVMass",
+    "likelihoodHistMuonOnlyVMass",
+    "likelihoodHistVBFVMass"#,
+    #"yVmDiMu",
+    #"ptVmDiMu",
+    #"phiVmDiMu"
+]
 
 drawOpt = "colz"
 
@@ -19,7 +28,10 @@ xlabels = {
 "BDTHistMuonOnlyVMass":"Dimuon Mass [GeV]",
 "BDTHistVBFVMass":"Dimuon Mass [GeV]",
 "likelihoodHistMuonOnlyVMass":"Dimuon Mass [GeV]",
-"likelihoodHistVBFVMass":"Dimuon Mass [GeV]"
+"likelihoodHistVBFVMass":"Dimuon Mass [GeV]",
+    "yVmDiMu":"Dimuon Mass [GeV]",
+    "ptVmDiMu":"Dimuon Mass [GeV]",
+    "phiVmDiMu":"Dimuon Mass [GeV]"
 }
 
 ylabels = {
@@ -27,7 +39,10 @@ ylabels = {
 "BDTHistMuonOnlyVMass":"BDT Output",
 "BDTHistVBFVMass":"BDT Output",
 "likelihoodHistMuonOnlyVMass":"Likelihood",
-"likelihoodHistVBFVMass":"Likelihood"
+"likelihoodHistVBFVMass":"Likelihood",
+    "yVmDiMu":"Dimuon |y|",
+    "ptVmDiMu":"Dimuon p_{T} [GeV]",
+    "phiVmDiMu":"Dimuon #phi"
 }
 
 xranges = {
@@ -35,7 +50,10 @@ xranges = {
 "BDTHistMuonOnlyVMass":[70,150],
 "BDTHistVBFVMass":[70,150],
 "likelihoodHistMuonOnlyVMass":[70,150],
-"likelihoodHistVBFVMass":[70,150]
+"likelihoodHistVBFVMass":[70,150],
+    "yVmDiMu":[70,150],
+    "ptVmDiMu":[70,150],
+    "phiVmDiMu":[70,150]
 }
 
 yranges = {
@@ -43,7 +61,10 @@ yranges = {
 "BDTHistMuonOnlyVMass":[-1,0],
 "BDTHistVBFVMass":[-0.5,0.5],
 "likelihoodHistMuonOnlyVMass":[-0.5,0.5],
-"likelihoodHistVBFVMass":[-0.5,0.5]
+"likelihoodHistVBFVMass":[-0.5,0.5],
+    "yVmDiMu":[0,2.2],
+    "ptVmDiMu":[0,250],
+    "phiVmDiMu":[0,3.2]
 }
 
 rebins = {
@@ -51,7 +72,10 @@ rebins = {
 "BDTHistMuonOnlyVMass":[10,20],
 "BDTHistVBFVMass":[10,20],
 "likelihoodHistMuonOnlyVMass":[10,20],
-"likelihoodHistVBFVMass":[10,20]
+"likelihoodHistVBFVMass":[10,20],
+    "yVmDiMu":[10,10],
+    "ptVmDiMu":[10,10],
+    "phiVmDiMu":[10,10]
 }
 
 fSigList = []

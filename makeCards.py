@@ -18,6 +18,17 @@ if scaleHiggsBy != 1.0:
   print("Error: higgs xsec is scaled!!! Return to 1. Exiting.")
   sys.exit(1)
 
+def getIntegralAll(hist):
+  if hist.InheritsFrom("TH2"):
+    nBinsX = hist.GetXaxis().GetNbins()
+    nBinsY = hist.GetYaxis().GetNbins()
+    return hist.Integral(0,nBinsX+1,0,nBinsY+1)
+  elif hist.InheritsFrom("TH1"):
+    nBinsX = hist.GetXaxis().GetNbins()
+    return hist.Integral(0,nBinsX+1)
+  else:
+    return -1
+
 class Analysis:
   def __init__(self,directory,signalNames,backgroundNames,analysis,histNameBase="mDiMu"):
     self.sigNames = signalNames
@@ -49,8 +60,7 @@ class Analysis:
     self.effSigList = []
     self.sigHists = []
     for h,name in zip(self.sigHistsRaw,signalNames):
-      #counts = h.Integral(lowBin,highBin)
-      counts = h.Integral()
+      counts = getIntegralAll(h)
       eff = counts/nEventsMap[name]
       xs = eff*xsec[name]
       self.xsecSigTotal += xs
@@ -308,17 +318,22 @@ class ShapeDataCardMaker(DataCardMaker):
         rfHist = RooDataHist(hist.GetName(),hist.GetName(),RooArgList(RooArgSet(self.x)),hist)
       rfHist.Write()
 
-  def histFloor(self,hist):
+  def histFloor(self,hist,integral=False):
     nBinsX = hist.GetNbinsX()
-    if hist.InheritsFrom("TH2"):
-      nBinsY = hist.GetNbinsY()
-      for i in range(0,nBinsX+2):
-       for j in range(0,nBinsY+2):
-        tmp = hist.GetBinContent(i,j)
-        tmp = math.floor(tmp)
-        hist.SetBinContent(i,j,tmp)
+    if integral:
+      integral = getIntegralAll(hist)
+      desiredIntegral = math.floor(integral)
+      hist.Scale(desiredIntegral/integral)
     else:
-      for i in range(0,nBinsX+2):
+      if hist.InheritsFrom("TH2"):
+        nBinsY = hist.GetNbinsY()
+        for i in range(0,nBinsX+2):
+         for j in range(0,nBinsY+2):
+          tmp = hist.GetBinContent(i,j)
+          tmp = math.floor(tmp)
+          hist.SetBinContent(i,j,tmp)
+      else:
+       for i in range(0,nBinsX+2):
         tmp = hist.GetBinContent(i)
         tmp = math.floor(tmp)
         hist.SetBinContent(i,tmp)
@@ -355,6 +370,7 @@ class ShapeDataCardMaker(DataCardMaker):
       binFormatList.append(channelName)
       observationFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
       observationFormatList.append(int(channel.getBakXSecTotal()*lumi))
+      print("text Observed {}: {}".format(channelName,int((channel.getSigXSecTotal()+channel.getBakXSecTotal())*lumi)))
       iParam += 1
     binFormatString+= "\n"
     observationFormatString+= "\n"
@@ -432,7 +448,9 @@ class ShapeDataCardMaker(DataCardMaker):
   
           iParam += 1
           iProc += 1
-        self.histFloor(sumAllMCHist)
+        self.histFloor(sumAllMCHist,integral=True)
+        print("hist Observed generic integral: {}".format(sumAllMCHist.Integral()))
+        print("hist Observed include all integral: {}".format(getIntegralAll(sumAllMCHist)))
         self.MakeRFHistWrite(sumAllMCHist)
         outRootFile.cd()
     binFormatString+= "\n"
