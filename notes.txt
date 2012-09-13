@@ -5,12 +5,12 @@ http://arxiv.org/abs/1101.0593
 
 All for m=125GeV in pb
 ggH = 19.52 +/- 14.7%
-vbfH = 1.559 +2.8% - 3.0%
+vbfH = 1.578 +2.8% - 3.0%
 WH = 0.6966 +3.7% - 4.1%
 ZH = 0.3943 +5.1% -5.0%
 
 BR H->mumu
-2.17e-04 +6% -6%
+2.20e-04 +6% -5.9%
 
 BR H->bb
 0.57
@@ -30,140 +30,8 @@ gg->H->gam gam
 VBF H->gam gam
 3.6 fb
 
-ggHmumu = 4.236e-3 +/- 6.726e-4 (+/- 15.9%)
-vbfHmumu = 3.338e-4 +2.21e-05 -2.230e-05 (+6.62% -6.71%)
-WH,Hmumu = 1.512e-4
-ZH,Hmumu = 8.556e-5
+ggHmumu = 4.294e-3
+vbfHmumu = 3.347e-4
+WH,Hmumu = 1.533e-4
+ZH,Hmumu = 8.675e-5
 
-Acceptance:
-
-ggHmumu: 73.8% +/- 10.0% Using Pythia Hmumu
-ggHmumu Total Acceptance+Thry Uncertainty: 17.7%
-
-vbfHmumu: 13.4% +/- 10.0% Using Pythia Hmumu for VBF Selection
-vbfHmumu: 20.2% +/- 10.0% Using Pythia Hmumu for VBF-Loose Selection
-vbfHmumu: 74.6% +/- 10.0% Using Pythia Hmumu for Inclusive Selection
-vbfHmumu Total Acceptance+Thry Uncertainty: 10.4%
-
-ZHmumu: 70.6% +/- 10.0% Using Pythia for Inclusive Selection
-WHmumu: 72.3% +/- 10.0% Using Pythia for Inclusive Selection
-
-Within 4 GeV window: 86% (After Previous cuts, Little uncertainty compared than 17%)
-Within 2 GeV window: 60% (Similar Above)
-
-# Must be multiplied times Window also!!
-ggHmumu: Dimuons passing pt_mumu>30 GeV 35.7% +/- 10.0%
-ggHmumu: Dimuons passing pt_mumu>50 GeV 21.5% +/- 10.0%
-ggHmumu: Dimuons passing pt_mumu>75 GeV 12.3% +/- 10.0%
-vbfHmumu: Dimuons passing pt_mumu>30 GeV 76.2% +/- 10.0%
-vbfHmumu: Dimuons passing pt_mumu>50 GeV 38.3% +/- 10.0%
-ZHmumu: Dimuons passing pt_mumu>30 GeV 63.8% +/- 10.0%
-ZHmumu: Dimuons passing pt_mumu>50 GeV 23.0% +/- 10.0%
-WHmumu: Dimuons passing pt_mumu>30 GeV 65.1% +/- 10.0%
-WHmumu: Dimuons passing pt_mumu>50 GeV 18.0% +/- 10.0%
-
-Total ggHmumu Acceptance within 4 GeV: 63.5% +/- 20.0% Inclusive Selection
-Total ggHmumu Acceptance within 2 GeV: 44.3% +/- 20.0% Inclusive Selection
-
-Total ggHmumu Acceptance within 4 GeV: 30.7% +/- 20.0% Pt_mumu>30 GeV
-Total ggHmumu Acceptance within 4 GeV: 18.5% +/- 20.0% Pt_mumu>50 GeV
-Total ggHmumu Acceptance within 4 GeV: 10.6% +/- 20.0% Pt_mumu>75 GeV
-
-Total vbfHmumu Acceptance within 4 GeV: 11.5% +/- 20.0% w/ VBF Selection
-Total vbfHmumu Acceptance within 2 GeV: 8.04% +/- 20.0% w/ VBF Selection
-Total vbfHmumu Acceptance within 4 GeV: 6.64% +/- 20.0% w/ VBFTight Selection
-Total vbfHmumu Acceptance within 4 GeV: 17.3% +/- 20.0% w/ VBFLoose Selection
-
-Backgrounds:
-
-Inclusive Zmumu: 0.25pb +/- 20% per 1 GeV wide bin around 125 GeV (pythia)
-VBF Zmumu: 0.2 fb +/- 30% per 1 GeV wide bin around 125 GeV (pythia)
-VBF Loose Zmumu: 0.35 fb +/- 30% per 1 GeV wide bin around 125 GeV (pythia)
-VBF Tight Zmumu: 0.04 fb +/- 30% per 1 GeV wide bin around 125 GeV (pythia)
-ZPt>30GeV: 45 fb +/- 20% per 1 GeV wide bin around 125 GeV (pythia)
-ZPt>50GeV: 25 fb +/- 20% per 1 GeV wide bin around 125 GeV (pythia)
-ZPt>75GeV: 12 fb +/- 20% per 1 GeV wide bin around 125 GeV (pythia)
-
-From GP:
-Inclusive Zmumu: 0.164 pb per 1 GeV wide bin around 125 GeV 66% mine
-ZPt>50GeV: 18.66 fb per 1 GeV wide bin arouund 125 GeV 74% mine
-ZPt>75GeV: 8.74 fb 20% per 1 GeV wide bin around 125 GeV 72% mine
-Use 70% times mine for VBF
-
-################################
-#### For muon pt>45GeV |eta|<2.1
-###############################
-ggHmumu: 39.7% +/- 10.0% Using Pythia Hmumu
-ggHmumu: Dimuons passing pt_mumu>30 GeV 15.8% +/- 10.0%
-ggHmumu: Dimuons passing pt_mumu>50 GeV 9.17% +/- 10.0%
-ggHmumu: Dimuons passing pt_mumu>75 GeV 5.89% +/- 10.0%
-
-Total Inclusive ggHmumu Acceptance 4GeV Window: 34% 
-Total DiMuon Pt>30 ggHmumu Acceptance 4GeV Window: 13.6%
-Total DiMuon Pt>50 ggHmumu Acceptance 4GeV Window: 7.89%
-Total DiMuon Pt>75 ggHmumu Acceptance 4GeV Window: 5.07%
-
-Inclusive Zmumu: 90fb +/- 20% per 1 GeV wide bin around 125 GeV (pythia)
-ZPt>50GeV: 8 fb +/- 20% per 1 GeV wide bin around 125 GeV (pythia)
-
-ggHmumu Analysis:
-#######################
-
-ggHmumu = 4.236e-3 pb
-
-Efficiency:
-4 GeV Window: 0.635 +/- 20%
-2 GeV Window: 0.443 +/- 20%
-
-Zmumu: 0.25 pb +/- 20%
-
-vbfHmumu Analysis VBF Selection:
-#######################
-
-vbfHmumu = 3.338e-4 pb
-
-Efficiency:
-4 GeV Window: 0.115 +/- 20%
-2 GeV Window: 0.08 +/- 20%
-
-VBF Zmumu: 8e-4 pb +/- 30%
-
-vbfHmumu Analysis VBFTight Selection:
-#######################
-
-vbfHmumu = 3.338e-4 pb
-
-Efficiency:
-4 GeV Window: 0.0664 +/- 20%
-
-VBF Zmumu: 1.6e-4 pb +/- 30%
-
-ggHmumu ZPt>75 Analysis:
-#######################
-
-ggHmumu = 4.236e-3 pb
-
-Efficiency:
-4 GeV Window: 0.106 +/- 20%
-
-Zmumu: 4.8e-2 pb +/- 20%
-
-ggHmumu ZPt>50 Analysis:
-#######################
-
-ggHmumu = 4.236e-3 pb
-
-Efficiency:
-4 GeV Window: 0.185 +/- 20%
-
-Zmumu: 0.1 pb +/- 20%
-
-#############################
-#### MVA Stuff ##############
-#############################
-
-Inclusive MVA Pre-selection Efficiency: 70.3% (pythia6 ggHmumu Sample)
-Inclusive MVA Pre-selection Background Efficiency: 17.1% (Sherpa ZmumujetsMgt100 Sample)
-
-VBF MVA Pre-selection Efficiency: 26.8% (pythia6 vbfHmumu3 Sample)
-VBF MVA Pre-selection Background Efficiency: 2.0128e-3 (Sherpa ZmumujetsMgt100 Sample)
