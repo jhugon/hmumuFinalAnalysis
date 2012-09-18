@@ -1,6 +1,6 @@
 import ROOT as root
 
-LUMI=9.833
+LUMI=5.228
 
 #scaleHiggsBy = 50.0 #See in Z'
 #scaleHiggsBy = 25.0 #See in Boosted Z
@@ -13,8 +13,8 @@ xsec = {}
 xsec["vbfHmumu125"] = 3.347e-4 * scaleHiggsBy
 xsec["ggHmumu125"] = 4.294e-3 * scaleHiggsBy
 xsec["ggHmumu"] = xsec["ggHmumu125"]
-xsec["ZHmumu"] = 8.675e-5 * scaleHiggsBy
-xsec["WHmumu"] = 1.533e-4 * scaleHiggsBy
+xsec["zHmumu"] = 8.675e-5 * scaleHiggsBy
+xsec["wHmumu"] = 1.533e-4 * scaleHiggsBy
 
 xsec["DYJetsToLL"] = 3503.71   ## madgraph
 xsec["ttbar"] = 225.197   ## madgraph
@@ -23,8 +23,8 @@ nEventsMap = {}
 nEventsMap["vbfHmumu125"] = 9990
 nEventsMap["ggHmumu125"] = 9998
 nEventsMap["ggHmumu"] = nEventsMap["ggHmumu125"]
-nEventsMap["ZHmumu"] = 10000
-nEventsMap["WHmumu"] = 10000
+nEventsMap["zHmumu"] = 10000
+nEventsMap["wHmumu"] = 10000
 nEventsMap["DYJetsToLL"] = 30459503 # GPs Ntuples w/ my changes CMSSW_5_3_X
 nEventsMap["ttbar"] = 6416135 # GPs Ntuples w/ my changes CMSSW_5_2_X
 
@@ -41,8 +41,8 @@ signalList = [
 dataList = [
 "SingleMuRun2012Av1",
 "SingleMuRun2012Bv1",
-"SingleMuRun2012Cv1",
-"SingleMuRun2012Cv2"
+#"SingleMuRun2012Cv1",
+#"SingleMuRun2012Cv2"
 
 #"DoubleMuRun2012Av1",
 #"DoubleMuRun2012Bv1",
