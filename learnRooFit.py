@@ -13,15 +13,18 @@ import ROOT as root
 canvas = root.TCanvas()
 
 mMuMu = root.RooRealVar("mMuMu","mMuMu",110.0,150.0)
+mMuMu.setRange("low",110,120)
+mMuMu.setRange("high",130,145)
 #mva = root.RooRealVar("mva","mva",-1,1)
 mva = root.RooRealVar("mva","mva",-0.8,-0.1)
 
 a0 = root.RooRealVar("a0","a0",-10.0,10.0)
 a1 = root.RooRealVar("a1","a1",-10.0,10.0)
-a2 = root.RooRealVar("a2","a2",-10.0,10.0)
+a2 = root.RooRealVar("a2","a3",-10.0,10.0)
 a3 = root.RooRealVar("a3","a3",-10.0,10.0)
+a4 = root.RooRealVar("a4","a4",-10.0,10.0)
 
-polyArgsMmumu = root.RooArgList(a0,a1,a2)
+polyArgsMmumu = root.RooArgList(a0,a1,a2,a3)#,a4)
 polyMmumu = root.RooPolynomial("polyFunc","polyFunc",mMuMu,polyArgsMmumu)
 
 f = root.TFile("input/DYJetsToLL.root")
@@ -30,7 +33,7 @@ mDiMu = f.Get("mDiMu")
 
 templateMmumu = root.RooDataHist("template","template",root.RooArgList(mMuMu),mDiMu)
 
-polyMmumu.fitTo(templateMmumu)
+polyMmumu.fitTo(templateMmumu,root.RooFit.Range("low,high"))
 
 ###################
 

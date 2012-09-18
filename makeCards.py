@@ -10,7 +10,6 @@ import copy
 
 from ROOT import gSystem
 gSystem.Load('libRooFit')
-from ROOT import RooFit, RooDataHist, RooRealVar, RooArgList, RooArgSet
 
 from xsec import *
 
@@ -28,6 +27,110 @@ def getIntegralAll(hist):
     return hist.Integral(0,nBinsX+1)
   else:
     return -1
+
+class MVAvMassPDF:
+  def __init__(self,name,canvas,hist2D,massLowRange,massHighRange):
+    maxMass = massHighRange[1]
+    minMass = massLowRange[0]
+    mMuMu = root.RooRealVar("mMuMu","mMuMu",minMass,maxMass)
+    mMuMu.setRange("low",massLowRange[0],massLowRange[1])
+    mMuMu.setRange("high",massHighRange[0],massHighRange[1])
+    mMuMu.setRange("signal",massLowRange[1],massLowRange[0])
+    mva = root.RooRealVar("mva","mva",-1,1)
+    
+    a0 = root.RooRealVar("a0","a0",-10.0,10.0)
+    a1 = root.RooRealVar("a1","a1",-10.0,10.0)
+    a2 = root.RooRealVar("a2","a2",-10.0,10.0)
+    
+    polyArgsMmumu = root.RooArgList(a0,a1,a2)
+    polyMmumu = root.RooPolynomial("polyFunc","polyFunc",mMuMu,polyArgsMmumu)
+    
+    tmpAxis = hist2D.GetXaxis()
+    lowBin = tmpAxis.FindBin(minMass)
+    highBin = tmpAxis.FindBin(maxMass)
+    mMuMuHist = hist2D.ProjectionX("_mMuMuHist",lowBin,highBin)
+    mMuMuRooDataHist = root.RooDataHist("mMuMuRooDataHist","mMuMuRooDataHist",root.RooArgList(mMuMu),mMuMuHist)
+    
+    pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("low,high"))
+
+    ###################
+    
+    mvaHistLow = hist2D.ProjectionY("_mvaLow",lowBin,tmpAxis.FindBin(massLowRange[1]))
+    mvaHistHigh = hist2D.ProjectionY("_mvaHigh",tmpAxis.FindBin(massHighRange[0]),highBin)
+    
+    mvaHist = mvaHistLow.Clone()
+    mvaHist.Add(mvaHistHigh)
+    
+    mvaRooDataHist = root.RooDataHist("mvaRooDataHist","mvaRooDataHist",root.RooArgList(mva),mvaHist)
+    
+    pdfMva = root.RooHistPdf("pdfMva","pdfMva",root.RooArgSet(mva),mvaRooDataHist)
+    
+    pdfMva.fitTo(mvaRooDataHist)
+
+    ###################
+
+    pdf2d = root.RooProdPdf("pdf2d","pdf2d",RooArgList(pdfMmumu,pdfMva))
+
+    ###################
+
+    plotMmumu = mMuMu.frame()
+    plotMmva = mva.frame()
+
+    mMuMuRooDataHist.plotOn(plotMmumu)
+    pdfMmumu.plotOn(plotMmumu)
+
+    mvaRooDataHist.plotOn(plotMva)
+    pdfMva.plotOn(plotMva)
+
+    plotMmumu.Draw()
+    saveAs(canvas,name+"_mMuMu")
+    plotMva.Draw()
+    saveAs(canvas,name+"_mva")
+    
+    mMuMuBinning = root.RooFit.Binning(mMuMuHist.GetNbinsX(),minMass,maxMass)
+    mvaBinning = root.RooFit.Binning(mvaHist.GetNbinsX(),-1,1)
+    pdf2dHist = pdf2d.createHistogram("pdf2dHist",mMuMu,mMuMuBinning,root.RooFit.YVar(mva,mvaBinning))
+
+    canvas.Clear()
+    canvas.Divide(2,2)
+
+    canvas.cd(1)
+    pdf2dHist.SetLineColor(root.kRed)
+    pdf2dHist.Draw("surf")
+    hist2d.GetXaxis().SetRangeUser(minMass,maxMass)
+    hist2d.GetYaxis().SetRangeUser(-1,1)
+    hist2d.Draw("surf same")
+
+    canvas.cd(2)
+    hist2d.Draw("colz")
+    canvas.cd(3)
+    pdf2dHist.Draw("colz")
+
+    saveAs(canvas,name+"_2d")
+
+    #########################
+
+    self.maxMass = maxMass
+
+    self.maxMass = maxMass
+    self.minMass = minMass
+    self.mMuMu = mMuMu
+    self.mva = mva
+    self.a0 = a0
+    self.a1 = a1
+    self.a2 = a2
+    self.polyMmumu = polyMmumu
+    self.mMuMuHist = mMuMuHist
+    self.mMuMuRooDataHist = mMuMuRooDataHist
+    self.mvaHistLow = mvaHistLow
+    self.mvaHistHigh = mvaHistHigh
+    self.mvaHist = mvaHist
+    self.mvaRooDataHist = mvaRooDataHist
+    self.pdfMva = pdfMva
+    self.pdf2d = pdf2d
+    self.plotMmumu = plotMmumu
+    self.plotMmva = plotMmva
+    self.pdf2dHist = pdf2dHist
 
 class Analysis:
   def __init__(self,directory,signalNames,backgroundNames,analysis,histNameBase="mDiMu"):
