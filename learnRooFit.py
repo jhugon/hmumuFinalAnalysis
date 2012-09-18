@@ -1,12 +1,14 @@
 #! /usr/bin/env python
+
+from ROOT import gSystem
+
 import sys
 import os
 import re
 import math
 from ROOT import *
+gSystem.Load('libRooFit')
 import ROOT as root
-
-root.gSystem.Load("libRooFit")
 
 canvas = root.TCanvas()
 
@@ -32,10 +34,20 @@ polyMmumu.fitTo(templateMmumu)
 
 ###################
 
-BDTHistMuonOnly = f.Get("BDTHistMuonOnly")
-BDTHistMuonOnly.Rebin(10)
+BDTHistMuonOnlyVMass = f.Get("BDTHistMuonOnlyVMass")
+tmpHist = BDTHistMuonOnlyVMass.Clone("tmpHist")
+tmpAxis = tmpHist.GetXaxis()
+BDTHistLowControl = tmpHist.ProjectionY("_LowControl",tmpAxis.FindBin(110.0),tmpAxis.FindBin(115.0))
+BDTHistHighControl = tmpHist.ProjectionY("_HighControl",tmpAxis.FindBin(125.0),tmpAxis.FindBin(150.0))
 
-templateMva = root.RooDataHist("templateMva","templateMva",root.RooArgList(mva),BDTHistMuonOnly)
+print("N Events in Low Control: {0:.1f}, in High Control: {1:.1f}".format(BDTHistLowControl.Integral(),BDTHistHighControl.Integral()))
+
+BDTHist = BDTHistLowControl.Clone()
+BDTHist.Add(BDTHistHighControl)
+
+BDTHist.Rebin(BDTHist.GetNbinsX()/100)
+
+templateMva = root.RooDataHist("templateMva","templateMva",root.RooArgList(mva),BDTHist)
 
 pdfMva = root.RooHistPdf("pdfMva","pdfMva",root.RooArgSet(mva),templateMva)
 
@@ -59,6 +71,42 @@ canvas.SaveAs("learnMva.png")
 
 ###################
 
-BDTHistMuonOnlyVMass = f.Get("BDTHistMuonOnlyVMass")
+canvas.Clear()
+canvas.Divide(2,2)
 
 multipdf = root.RooProdPdf("multipdf","multipdf",RooArgList(polyMmumu,pdfMva))
+
+mDiMuBinning = root.RooFit.Binning(50,110,150)
+yvar = root.RooFit.YVar(mva,root.RooFit.Binning(50,-1,1))
+print mDiMu
+print mDiMuBinning
+print yvar
+multipdfHist = multipdf.createHistogram("hh_model_1",mMuMu,mDiMuBinning,yvar)
+
+canvas.cd(3)
+
+multipdfHist.GetXaxis().SetRangeUser(110,150)
+multipdfHist.Draw("surf")
+BDTHistMuonOnlyVMass.SetLineColor(kRed)
+BDTHistMuonOnlyVMass.Rebin2D(BDTHistMuonOnlyVMass.GetNbinsX()/400,BDTHistMuonOnlyVMass.GetNbinsY()/50)
+BDTHistMuonOnlyVMass.GetXaxis().SetRangeUser(110,150)
+BDTHistMuonOnlyVMass.Draw("surf same")
+
+#canvas.SaveAs("learn2D.png")
+
+BDTHistMuonOnlyVMass.Draw("surf")
+multipdfHist.GetXaxis().SetRangeUser(110,150)
+multipdfHist.Draw("surf same")
+
+canvas.cd(1)
+BDTHistMuonOnlyVMass.Draw("surf")
+multipdfHist.Draw("surf same")
+
+canvas.cd(2)
+BDTHistMuonOnlyVMass.Draw("colz")
+
+canvas.cd(4)
+multipdfHist.Draw("colz")
+
+canvas.SaveAs("learn2D.png")
+

@@ -132,6 +132,7 @@ for hist in histlist:
   nSlices = 40
   rebinX = hBak.GetNbinsX()/nSlices
   rebinY = 100
+  rebinY = 20
   hBak.RebinX(rebinX)
   hSig.RebinX(rebinX)
   hData.RebinX(rebinX)
@@ -151,7 +152,11 @@ for hist in histlist:
   leg = root.TLegend(0.7,0.65,0.89,0.89)
   leg.SetFillColor(0)
   leg.SetLineColor(0)
-  for i in range(12,15):
+  for i in range(1,nSlices):
+    if hBak.GetXaxis().GetBinLowEdge(i)<110.0:
+      continue
+    elif hBak.GetXaxis().GetBinUpEdge(i)>150.0:
+      continue
     legendEntry = "m_{{#mu#mu}} #in [{:.0f},{:.0f}]".format(hSig.GetXaxis().GetBinLowEdge(i),hSig.GetXaxis().GetBinUpEdge(i))
 
     tmp = getXBinHist( hSig, i)
@@ -184,20 +189,44 @@ for hist in histlist:
 
   canvas = root.TCanvas()
   canvas.SetLogy(1)
-  slicesBak[0].GetYaxis().SetRangeUser(1e-6,maxValue)
+  #slicesBak[0].GetYaxis().SetRangeUser(1e-6,maxValue)
   slicesBak[0].GetXaxis().SetTitle(ylabels[hist])
   slicesBak[0].GetYaxis().SetTitle("Counts")
-  slicesBak[0].Draw("")
+  slicesBak[0].Draw("hist M")
   for i in slicesBak:
-    i.Draw("same")
+    i.Draw("hist same M")
   for i in slicesSig:
-    i.Draw("same")
+    i.Draw("hist same M")
   #for i in slicesData:
   #  i.Draw("same")
 
   leg.Draw()
 
   saveAs(canvas,outDir+"slices_"+hist)
+
+  ####################################
+  # background shapes
+
+  canvas.SetLogy(0)
+
+  maxValue = 0.0
+  for i in slicesBak:
+    normalizeHist(i)
+    i.SetLineStyle(1)
+    i.SetLineWidth(2)
+    i.SetMarkerStyle(0)
+    i.SetLineColor(i.GetMarkerColor())
+    if i.GetMaximum()>maxValue:
+        maxValue = i.GetMaximum()
+
+  slicesBak[0].GetYaxis().SetRangeUser(0,maxValue*1.1)
+  slicesBak[0].GetYaxis().SetTitle("Normalized Counts")
+  slicesBak[0].Draw("hist L")
+  for i in slicesBak:
+    i.Draw("hist same L")
+  leg.Draw()
+  saveAs(canvas,outDir+"slices_bak_"+hist)
+
 
   ################################################
   ################################################
@@ -260,6 +289,7 @@ for hist in histlist:
   leg.Draw()
 
   saveAs(canvas,outDir+"slices_y_"+hist)
+
 
 #class PlotOfSlices:
 #  def __init__(self, hist2D, xtitle, ytitle, canvas, xlimits=[], ylimits=[],sliceLabelPrefix="",isPreliminary=True,is7TeV=False):
