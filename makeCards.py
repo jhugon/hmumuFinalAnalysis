@@ -465,7 +465,7 @@ class ShapeDataCardMaker(DataCardMaker):
         tmp = math.floor(tmp)
         hist.SetBinContent(i,tmp)
 
-  def write(self,outfilename,lumi,sumAllBak=True,writeBakPDF=True,smooth=False):
+  def write(self,outfilename,lumi,sumAllBak=True,writeBakPDF=True,smooth=False,includeSigInAllMC=False):
     outRootFilename = re.sub(r"\.txt",r".root",outfilename)
     print("Writing Card: {0} & {1}".format(outfilename,outRootFilename))
     lumi *= 1000.0
@@ -496,8 +496,11 @@ class ShapeDataCardMaker(DataCardMaker):
       binFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
       binFormatList.append(channelName)
       observationFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-      observationFormatList.append(int(channel.getBakXSecTotal()*lumi))
-      print("text Observed {}: {}".format(channelName,int((channel.getSigXSecTotal()+channel.getBakXSecTotal())*lumi)))
+      observedNumber = int(channel.getBakXSecTotal()*lumi)
+      if includeSigInAllMC:
+        observedNumber = int((channel.getSigXSecTotal()+channel.getBakXSecTotal())*lumi)
+      observationFormatList.append(observedNumber)
+      print("text Observed {}: {}".format(channelName,observedNumber))
       iParam += 1
     binFormatString+= "\n"
     observationFormatString+= "\n"
@@ -541,13 +544,15 @@ class ShapeDataCardMaker(DataCardMaker):
           tmpHist.Scale(lumi)
           self.MakeRFHistWrite(tmpHist)
           
-          if sumAllMCHist == None:
-            sumAllMCHist = tmpHist.Clone("data_obs")
-          else:
-            sumAllMCHist.Add(tmpHist)
+          if includeSigInAllMC:
+            if sumAllMCHist == None:
+              sumAllMCHist = tmpHist.Clone("data_obs")
+            else:
+              sumAllMCHist.Add(tmpHist)
   
           iParam += 1
           iProc += 1
+
         if sumAllBak:
           sumAllBakMCHist = None
           for bakName in self.bakNames:
