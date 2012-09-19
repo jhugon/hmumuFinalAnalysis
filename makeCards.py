@@ -38,12 +38,10 @@ class MVAvMassPDF:
     mMuMu.setRange("signal",massLowRange[1],massLowRange[0])
     mva = root.RooRealVar("mva","mva",-1,1)
     
-    a0 = root.RooRealVar("a0","a0",-10.0,10.0)
-    a1 = root.RooRealVar("a1","a1",-10.0,10.0)
-    a2 = root.RooRealVar("a2","a2",-10.0,10.0)
-    
-    polyArgsMmumu = root.RooArgList(a0,a1,a2)
-    polyMmumu = root.RooPolynomial("polyFunc","polyFunc",mMuMu,polyArgsMmumu)
+    bwWidth = root.RooRealVar("bwWidth","bwWidth",0.0,30.0)
+    bwmZ = root.RooRealVar("bwmZ","bwmZ",85,95)
+    pdfMmumu = root.RooBreitWigner("pdfMmumu","pdfMmumu",mMuMu,bwmZ,bwWidth)
+
     
     tmpAxis = hist2D.GetXaxis()
     lowBin = tmpAxis.FindBin(minMass)
@@ -116,10 +114,9 @@ class MVAvMassPDF:
     self.minMass = minMass
     self.mMuMu = mMuMu
     self.mva = mva
-    self.a0 = a0
-    self.a1 = a1
-    self.a2 = a2
-    self.polyMmumu = polyMmumu
+    self.bwWidth = bwWidth
+    self.bwmZ = bwmZ
+    self.pdfMmumu = pdfMmumu
     self.mMuMuHist = mMuMuHist
     self.mMuMuRooDataHist = mMuMuRooDataHist
     self.mvaHistLow = mvaHistLow
@@ -405,9 +402,9 @@ class ShapeDataCardMaker(DataCardMaker):
 
     for channel in self.channels:
       for hist in channel.sigHists:
-        self.x = RooRealVar('x','x',hist.GetXaxis().GetXmin(),hist.GetXaxis().GetXmax())
+        self.x = root.RooRealVar('x','x',hist.GetXaxis().GetXmin(),hist.GetXaxis().GetXmax())
         if hist.InheritsFrom("TH2"):
-          self.y = RooRealVar('y','y',hist.GetYaxis().GetXmin(),hist.GetYaxis().GetXmax())
+          self.y = root.RooRealVar('y','y',hist.GetYaxis().GetXmin(),hist.GetYaxis().GetXmax())
           self.is2D = True
 
   def MakeRFHistWrite(self,hist):
@@ -416,9 +413,9 @@ class ShapeDataCardMaker(DataCardMaker):
     else:
       rfHist = None
       if self.is2D:
-        rfHist = RooDataHist(hist.GetName(),hist.GetName(),RooArgList(RooArgSet(self.x,self.y)),hist)
+        rfHist = root.RooDataHist(hist.GetName(),hist.GetName(),root.RooArgList(root.RooArgSet(self.x,self.y)),hist)
       else:
-        rfHist = RooDataHist(hist.GetName(),hist.GetName(),RooArgList(RooArgSet(self.x)),hist)
+        rfHist = root.RooDataHist(hist.GetName(),hist.GetName(),root.RooArgList(root.RooArgSet(self.x)),hist)
       rfHist.Write()
 
   def histFloor(self,hist,integral=False):
