@@ -28,7 +28,9 @@ def getIntegralAll(hist):
   else:
     return -1
 
-class MVAvMassPDF:
+###################################################################################
+
+class MVAvMassPDFBak:
   def __init__(self,name,canvas,hist2D,massLowRange,massHighRange):
     maxMass = massHighRange[1]
     minMass = massLowRange[0]
@@ -129,6 +131,8 @@ class MVAvMassPDF:
     self.plotMmva = plotMmva
     self.pdf2dHist = pdf2dHist
 
+###################################################################################
+
 class Analysis:
   def __init__(self,directory,signalNames,backgroundNames,analysis,histNameBase="mDiMu"):
     self.sigNames = signalNames
@@ -218,6 +222,8 @@ class Analysis:
         i = self.bakNames.index(bakName)
         result = self.bakHists[i]
     return result
+
+###################################################################################
 
 class DataCardMaker:
   def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="mDiMu"):
@@ -380,6 +386,8 @@ class DataCardMaker:
       #print formatList
       outfile.write(formatString.format(*formatList))
     outfile.close()
+
+###################################################################################
 
 class ShapeDataCardMaker(DataCardMaker):
   def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False):
@@ -591,6 +599,12 @@ class ShapeDataCardMaker(DataCardMaker):
     outfile.close()
 
     outRootFile.Close()
+
+###################################################################################
+###################################################################################
+###################################################################################
+###################################################################################
+###################################################################################
 
 if __name__ == "__main__":
   print "Started makeCards.py"

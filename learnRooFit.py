@@ -47,7 +47,8 @@ lognormalMmumu = root.RooLognormal("lognormalMmumu","lognormalMmumu",mMuMu,lnA,l
 pdfMmumu = bwMmumu
 #pdfMmumu = voitMmumu
 
-f = root.TFile("input/DYJetsToLL.root")
+#f = root.TFile("input/DYJetsToLL.root")
+f = root.TFile("input/ttbar.root")
 
 mDiMu = f.Get("mDiMu")
 mDiMu.Rebin(2)
