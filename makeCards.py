@@ -43,12 +43,11 @@ class MVAvMassPDFBak:
     bwWidth = root.RooRealVar("bwWidth","bwWidth",0.0,30.0)
     bwmZ = root.RooRealVar("bwmZ","bwmZ",85,95)
     pdfMmumu = root.RooBreitWigner("pdfMmumu","pdfMmumu",mMuMu,bwmZ,bwWidth)
-
     
     tmpAxis = hist2D.GetXaxis()
     lowBin = tmpAxis.FindBin(minMass)
     highBin = tmpAxis.FindBin(maxMass)
-    mMuMuHist = hist2D.ProjectionX("_mMuMuHist",lowBin,highBin)
+    mMuMuHist = hist2D.ProjectionX("_mMuMuHist")
     mMuMuRooDataHist = root.RooDataHist("mMuMuRooDataHist","mMuMuRooDataHist",root.RooArgList(mMuMu),mMuMuHist)
     
     pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("low,high"))
@@ -69,12 +68,12 @@ class MVAvMassPDFBak:
 
     ###################
 
-    pdf2d = root.RooProdPdf("pdf2d","pdf2d",RooArgList(pdfMmumu,pdfMva))
+    pdf2d = root.RooProdPdf("pdf2d","pdf2d",root.RooArgList(pdfMmumu,pdfMva))
 
     ###################
 
     plotMmumu = mMuMu.frame()
-    plotMmva = mva.frame()
+    plotMva = mva.frame()
 
     mMuMuRooDataHist.plotOn(plotMmumu)
     pdfMmumu.plotOn(plotMmumu)
@@ -97,13 +96,13 @@ class MVAvMassPDFBak:
     canvas.cd(1)
     pdf2dHist.SetLineColor(root.kRed)
     pdf2dHist.Draw("surf")
-    hist2d.GetXaxis().SetRangeUser(minMass,maxMass)
-    hist2d.GetYaxis().SetRangeUser(-1,1)
-    hist2d.Draw("surf same")
+    hist2D.GetXaxis().SetRangeUser(minMass,maxMass)
+    hist2D.GetYaxis().SetRangeUser(-1,1)
+    hist2D.Draw("surf same")
 
     canvas.cd(2)
-    hist2d.Draw("colz")
-    canvas.cd(3)
+    hist2D.Draw("colz")
+    canvas.cd(4)
     pdf2dHist.Draw("colz")
 
     saveAs(canvas,name+"_2d")
@@ -128,7 +127,7 @@ class MVAvMassPDFBak:
     self.pdfMva = pdfMva
     self.pdf2d = pdf2d
     self.plotMmumu = plotMmumu
-    self.plotMmva = plotMmva
+    self.plotMva = plotMva
     self.pdf2dHist = pdf2dHist
 
 ###################################################################################
@@ -390,7 +389,7 @@ class DataCardMaker:
 ###################################################################################
 
 class ShapeDataCardMaker(DataCardMaker):
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False):
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False,controlRegionLow=[110,115],controlRegionHigh=[135,150]):
     DataCardMaker.__init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap,histNameBase)
     if len(rebin) == 2:
       for channel in self.channels:
@@ -407,6 +406,8 @@ class ShapeDataCardMaker(DataCardMaker):
 
     self.is2D = False
     self.useTH1 = useTH1
+    self.controlRegionHigh = controlRegionHigh
+    self.controlRegionLow = controlRegionLow
 
     for channel in self.channels:
       for hist in channel.sigHists:
@@ -446,7 +447,7 @@ class ShapeDataCardMaker(DataCardMaker):
         tmp = math.floor(tmp)
         hist.SetBinContent(i,tmp)
 
-  def write(self,outfilename,lumi,sumAllBak=True):
+  def write(self,outfilename,lumi,sumAllBak=True,writeBakPDF=True):
     outRootFilename = re.sub(r"\.txt",r".root",outfilename)
     print("Writing Card: {0} & {1}".format(outfilename,outRootFilename))
     lumi *= 1000.0
@@ -555,7 +556,14 @@ class ShapeDataCardMaker(DataCardMaker):
           rateFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+decimals+"} "
           rateFormatList.append(expNum)
 
-          self.MakeRFHistWrite(sumAllBakMCHist)
+          if writeBakPDF:
+            c1 = root.TCanvas("c1")
+            bakPDFMaker = MVAvMassPDFBak("pdfHists_"+channelName,c1,sumAllBakMCHist,
+                                self.controlRegionLow, self.controlRegionHigh)
+            bakPDFMaker.pdf2d.SetName("bak")
+            bakPDFMaker.pdf2d.Write()
+          else:
+            self.MakeRFHistWrite(sumAllBakMCHist)
 
           if sumAllMCHist == None:
             sumAllMCHist = sumAllBakMCHist.Clone("data_obs")
@@ -644,20 +652,15 @@ class ShapeDataCardMaker(DataCardMaker):
 
 if __name__ == "__main__":
   print "Started makeCards.py"
+  root.gROOT.SetBatch(True)
 
   directory = "input/"
   outDir = "statsCards/"
-  analyses = ["mDiMu"]
   analyses2D = ["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass","BDTHistMuonOnlyVMass","BDTHistVBFVMass"]
   signalNames=["ggHmumu125","vbfHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar"]
   lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
   lumiList = [10,20,30,100]
-
-  for ana in analyses:
-    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[4])
-    for i in lumiList:
-      dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i)
 
   for ana in analyses2D:
     dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[4,40])
