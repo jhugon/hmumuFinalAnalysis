@@ -99,7 +99,7 @@ canvas.SaveAs("learnMva.png")
 canvas.Clear()
 canvas.Divide(2,2)
 
-multipdf = root.RooProdPdf("multipdf","multipdf",RooArgList(landauMmumu,pdfMva))
+multipdf = root.RooProdPdf("multipdf","multipdf",RooArgList(pdfMmumu,pdfMva))
 
 mDiMuBinning = root.RooFit.Binning(50,110,150)
 yvar = root.RooFit.YVar(mva,root.RooFit.Binning(50,-1,1))
