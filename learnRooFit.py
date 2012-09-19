@@ -12,28 +12,57 @@ import ROOT as root
 
 canvas = root.TCanvas()
 
-mMuMu = root.RooRealVar("mMuMu","mMuMu",110.0,150.0)
+mMuMu = root.RooRealVar("mMuMu","mMuMu",110.0,180.0)
 mMuMu.setRange("low",110,120)
-mMuMu.setRange("high",130,145)
+mMuMu.setRange("high",130,180)
 #mva = root.RooRealVar("mva","mva",-1,1)
 mva = root.RooRealVar("mva","mva",-0.8,-0.1)
 
-a0 = root.RooRealVar("a0","a0",-10.0,10.0)
-a1 = root.RooRealVar("a1","a1",-10.0,10.0)
-a2 = root.RooRealVar("a2","a3",-10.0,10.0)
-a3 = root.RooRealVar("a3","a3",-10.0,10.0)
-a4 = root.RooRealVar("a4","a4",-10.0,10.0)
+lmZ = root.RooRealVar("lmZ","lmZ",85,95)
+lWidth = root.RooRealVar("lWidth","lWidth",0.0,30.0)
 
-polyArgsMmumu = root.RooArgList(a0,a1,a2,a3)#,a4)
-polyMmumu = root.RooPolynomial("polyFunc","polyFunc",mMuMu,polyArgsMmumu)
+landauMmumu = root.RooLandau("landauMmumu","landauMmumu",mMuMu,lmZ,lWidth)
+
+gWidth = root.RooRealVar("gWidth","gWidth",0.0,10.0)
+gmZ = root.RooRealVar("gmZ","gmZ",0.0)
+gausMmumu = root.RooGaussian("gausMmumu","gausMmumu",mMuMu,gmZ,gWidth)
+
+bwWidth = root.RooRealVar("bwWidth","bwWidth",0.0,30.0)
+bwmZ = root.RooRealVar("bwmZ","bwmZ",85,95)
+bwMmumu = root.RooBreitWigner("bwMmumu","bwMmumu",mMuMu,bwmZ,bwWidth)
+
+voitWidth = root.RooRealVar("voitWidth","voitWidth",0.0,30.0)
+voitmZ = root.RooRealVar("voitmZ","voitmZ",85,95)
+voitSig = root.RooRealVar("voitSig","voitSig",0.0,30.0)
+voitMmumu = root.RooVoigtian("voitMmumu","voitMmumu",mMuMu,voitmZ,voitWidth,voitSig)
+
+lnA = root.RooRealVar("lnA","lnA",0,100)
+lnB = root.RooRealVar("lnB","lnB",0.0,30.0)
+lognormalMmumu = root.RooLognormal("lognormalMmumu","lognormalMmumu",mMuMu,lnA,lnB)
+
+#pdfMmumu = root.RooFFTConvPdf("pdfMmumu","pdfMmumu",mMuMu,landauMmumu,gausMmumu)
+#pdfMmumu = landauMmumu
+#pdfMmumu = lognormalMmumu
+#pdfMmumu = root.RooAddPdf("pdfMmumu","pdfMmumu",root.RooArgList(landauMmumu,bwMmumu))
+pdfMmumu = bwMmumu
+#pdfMmumu = voitMmumu
 
 f = root.TFile("input/DYJetsToLL.root")
 
 mDiMu = f.Get("mDiMu")
+mDiMu.Rebin(2)
 
 templateMmumu = root.RooDataHist("template","template",root.RooArgList(mMuMu),mDiMu)
 
-polyMmumu.fitTo(templateMmumu,root.RooFit.Range("low,high"))
+pdfMmumu.fitTo(templateMmumu,root.RooFit.Range("low,high"))
+#pdfMmumu.fitTo(templateMmumu)
+
+plotMmumu = mMuMu.frame()
+
+templateMmumu.plotOn(plotMmumu)
+pdfMmumu.plotOn(plotMmumu)
+plotMmumu.Draw()
+canvas.SaveAs("learnMmumu.png")
 
 ###################
 
@@ -58,13 +87,6 @@ pdfMva.fitTo(templateMva)
 
 ###################
 
-plotMmumu = mMuMu.frame()
-
-templateMmumu.plotOn(plotMmumu)
-polyMmumu.plotOn(plotMmumu)
-plotMmumu.Draw()
-canvas.SaveAs("learnMmumu.png")
-
 plotMva = mva.frame()
 
 templateMva.plotOn(plotMva)
@@ -77,7 +99,7 @@ canvas.SaveAs("learnMva.png")
 canvas.Clear()
 canvas.Divide(2,2)
 
-multipdf = root.RooProdPdf("multipdf","multipdf",RooArgList(polyMmumu,pdfMva))
+multipdf = root.RooProdPdf("multipdf","multipdf",RooArgList(landauMmumu,pdfMva))
 
 mDiMuBinning = root.RooFit.Binning(50,110,150)
 yvar = root.RooFit.YVar(mva,root.RooFit.Binning(50,-1,1))
