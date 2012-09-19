@@ -31,7 +31,11 @@ def getIntegralAll(hist):
 ###################################################################################
 
 class MVAvMassPDFBak:
-  def __init__(self,name,canvas,hist2D,massLowRange,massHighRange):
+  def __init__(self,name,canvas,hist2D,massLowRange,massHighRange,smooth=False):
+    hist2DSmooth = hist2D.Clone(hist2D.GetName()+"_smoothed")
+    if smooth:
+      hist2DSmooth.Smooth()
+
     maxMass = massHighRange[1]
     minMass = massLowRange[0]
     mMuMu = root.RooRealVar("mMuMu","mMuMu",minMass,maxMass)
@@ -47,24 +51,31 @@ class MVAvMassPDFBak:
     tmpAxis = hist2D.GetXaxis()
     lowBin = tmpAxis.FindBin(minMass)
     highBin = tmpAxis.FindBin(maxMass)
+
     mMuMuHist = hist2D.ProjectionX("_mMuMuHist")
     mMuMuRooDataHist = root.RooDataHist("mMuMuRooDataHist","mMuMuRooDataHist",root.RooArgList(mMuMu),mMuMuHist)
+    mMuMuHistSmooth = hist2DSmooth.ProjectionX("_mMuMuHist")
+    mMuMuRooDataHistSmooth = root.RooDataHist("mMuMuRooDataHistSmooth","mMuMuRooDataHistSmooth",root.RooArgList(mMuMu),mMuMuHistSmooth)
     
-    pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("low,high"))
+    pdfMmumu.fitTo(mMuMuRooDataHistSmooth,root.RooFit.Range("low,high"))
 
     ###################
     
     mvaHistLow = hist2D.ProjectionY("_mvaLow",lowBin,tmpAxis.FindBin(massLowRange[1]))
     mvaHistHigh = hist2D.ProjectionY("_mvaHigh",tmpAxis.FindBin(massHighRange[0]),highBin)
-    
     mvaHist = mvaHistLow.Clone()
     mvaHist.Add(mvaHistHigh)
-    
     mvaRooDataHist = root.RooDataHist("mvaRooDataHist","mvaRooDataHist",root.RooArgList(mva),mvaHist)
+
+
+    mvaHistLowSmooth = hist2DSmooth.ProjectionY("_mvaLow",lowBin,tmpAxis.FindBin(massLowRange[1]))
+    mvaHistHighSmooth = hist2DSmooth.ProjectionY("_mvaHigh",tmpAxis.FindBin(massHighRange[0]),highBin)
+    mvaHistSmooth = mvaHistLowSmooth.Clone()
+    mvaHistSmooth.Add(mvaHistHighSmooth)
+    mvaRooDataHistSmooth = root.RooDataHist("mvaRooDataHistSmooth","mvaRooDataHistSmooth",root.RooArgList(mva),mvaHistSmooth)
     
-    pdfMva = root.RooHistPdf("pdfMva","pdfMva",root.RooArgSet(mva),mvaRooDataHist)
-    
-    pdfMva.fitTo(mvaRooDataHist)
+    pdfMva = root.RooHistPdf("pdfMva","pdfMva",root.RooArgSet(mva),mvaRooDataHistSmooth)
+    pdfMva.fitTo(mvaRooDataHistSmooth)
 
     ###################
 
@@ -109,7 +120,14 @@ class MVAvMassPDFBak:
 
     #########################
 
-    self.maxMass = maxMass
+    self.hist2D = hist2D
+    self.hist2DSmooth = hist2DSmooth
+    self.mMuMuHistSmooth = mMuMuHistSmooth
+    self.mMuMuRooDataHistSmooth = mMuMuRooDataHistSmooth
+    self.mvaHistLowSmooth = mvaHistLowSmooth
+    self.mvaHistHighSmooth = mvaHistHighSmooth
+    self.mvaHistSmooth = mvaHistSmooth
+    self.mvaRooDataHistSmooth = mvaRooDataHistSmooth
 
     self.maxMass = maxMass
     self.minMass = minMass
@@ -447,7 +465,7 @@ class ShapeDataCardMaker(DataCardMaker):
         tmp = math.floor(tmp)
         hist.SetBinContent(i,tmp)
 
-  def write(self,outfilename,lumi,sumAllBak=True,writeBakPDF=True):
+  def write(self,outfilename,lumi,sumAllBak=True,writeBakPDF=True,smooth=False):
     outRootFilename = re.sub(r"\.txt",r".root",outfilename)
     print("Writing Card: {0} & {1}".format(outfilename,outRootFilename))
     lumi *= 1000.0
@@ -559,9 +577,12 @@ class ShapeDataCardMaker(DataCardMaker):
           if writeBakPDF:
             c1 = root.TCanvas("c1")
             bakPDFMaker = MVAvMassPDFBak("pdfHists_"+channelName,c1,sumAllBakMCHist,
-                                self.controlRegionLow, self.controlRegionHigh)
+                                self.controlRegionLow, self.controlRegionHigh,smooth=smooth)
             bakPDFMaker.pdf2d.SetName("bak")
             bakPDFMaker.pdf2d.Write()
+
+            outfile.write("# Background Debug: Breit-Wigner mZ    = {0:.4g}\n".format(bakPDFMaker.bwmZ.getVal()))
+            outfile.write("# Background Debug: Breit-Wigner width = {0:.4g}\n".format(bakPDFMaker.bwWidth.getVal()))
           else:
             self.MakeRFHistWrite(sumAllBakMCHist)
 
