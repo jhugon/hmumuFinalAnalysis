@@ -446,7 +446,7 @@ class ShapeDataCardMaker(DataCardMaker):
         tmp = math.floor(tmp)
         hist.SetBinContent(i,tmp)
 
-  def write(self,outfilename,lumi):
+  def write(self,outfilename,lumi,sumAllBak=True):
     outRootFilename = re.sub(r"\.txt",r".root",outfilename)
     print("Writing Card: {0} & {1}".format(outfilename,outRootFilename))
     lumi *= 1000.0
@@ -529,33 +529,69 @@ class ShapeDataCardMaker(DataCardMaker):
   
           iParam += 1
           iProc += 1
-        for bakName in self.bakNames:
+        if sumAllBak:
+          sumAllBakMCHist = None
+          for bakName in self.bakNames:
+            tmpHist = channel.getBakHist(bakName).Clone(bakName)
+            tmpHist.Scale(lumi)
+            if sumAllBakMCHist == None:
+              sumAllBakMCHist = tmpHist.Clone("bak")
+            else:
+              sumAllBakMCHist.Add(tmpHist)
+
           binFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
           binFormatList.append(channelName)
-  
+    
           proc1FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-          proc1FormatList.append(bakName)
-  
+          proc1FormatList.append("bak")
+    
           proc2FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
           proc2FormatList.append(iProc)
-  
-          expNum = channel.getBakXSec(bakName)*lumi
+
+          expNum = channel.getBakXSecTotal()*lumi
           decimals = ".4f"
           if expNum>1000.0:
             decimals = ".4e"
           rateFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+decimals+"} "
           rateFormatList.append(expNum)
 
-          tmpHist = channel.getBakHist(bakName).Clone(bakName)
-          tmpHist.Scale(lumi)
-          self.MakeRFHistWrite(tmpHist)
+          self.MakeRFHistWrite(sumAllBakMCHist)
+
           if sumAllMCHist == None:
-            sumAllMCHist = tmpHist.Clone("data_obs")
+            sumAllMCHist = sumAllBakMCHist.Clone("data_obs")
           else:
-            sumAllMCHist.Add(tmpHist)
-  
+            sumAllMCHist.Add(sumAllBakMCHist)
+      
           iParam += 1
           iProc += 1
+        else:
+          for bakName in self.bakNames:
+            binFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+            binFormatList.append(channelName)
+    
+            proc1FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+            proc1FormatList.append(bakName)
+    
+            proc2FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+            proc2FormatList.append(iProc)
+    
+            expNum = channel.getBakXSec(bakName)*lumi
+            decimals = ".4f"
+            if expNum>1000.0:
+              decimals = ".4e"
+            rateFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+decimals+"} "
+            rateFormatList.append(expNum)
+  
+            tmpHist = channel.getBakHist(bakName).Clone(bakName)
+            tmpHist.Scale(lumi)
+            self.MakeRFHistWrite(tmpHist)
+            if sumAllMCHist == None:
+              sumAllMCHist = tmpHist.Clone("data_obs")
+            else:
+              sumAllMCHist.Add(tmpHist)
+    
+            iParam += 1
+            iProc += 1
         self.histFloor(sumAllMCHist,integral=True)
         print("hist Observed generic integral: {}".format(sumAllMCHist.Integral()))
         print("hist Observed include all integral: {}".format(getIntegralAll(sumAllMCHist)))
