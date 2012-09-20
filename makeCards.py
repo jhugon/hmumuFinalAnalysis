@@ -31,7 +31,7 @@ def getIntegralAll(hist):
 ###################################################################################
 
 class MVAvMassPDFBak:
-  def __init__(self,name,canvas,hist2D,massLowRange,massHighRange,smooth=False):
+  def __init__(self,name,hist2D,massLowRange,massHighRange,smooth=False):
     hist2DSmooth = hist2D.Clone(hist2D.GetName()+"_smoothed")
     if smooth:
       hist2DSmooth.Smooth()
@@ -92,31 +92,9 @@ class MVAvMassPDFBak:
     mvaRooDataHist.plotOn(plotMva)
     pdfMva.plotOn(plotMva)
 
-    plotMmumu.Draw()
-    saveAs(canvas,name+"_mMuMu")
-    plotMva.Draw()
-    saveAs(canvas,name+"_mva")
-    
     mMuMuBinning = root.RooFit.Binning(mMuMuHist.GetNbinsX(),minMass,maxMass)
     mvaBinning = root.RooFit.Binning(mvaHist.GetNbinsX(),-1,1)
     pdf2dHist = pdf2d.createHistogram("pdf2dHist",mMuMu,mMuMuBinning,root.RooFit.YVar(mva,mvaBinning))
-
-    canvas.Clear()
-    canvas.Divide(2,2)
-
-    canvas.cd(1)
-    pdf2dHist.SetLineColor(root.kRed)
-    pdf2dHist.Draw("surf")
-    hist2D.GetXaxis().SetRangeUser(minMass,maxMass)
-    hist2D.GetYaxis().SetRangeUser(-1,1)
-    hist2D.Draw("surf same")
-
-    canvas.cd(2)
-    hist2D.Draw("colz")
-    canvas.cd(4)
-    pdf2dHist.Draw("colz")
-
-    saveAs(canvas,name+"_2d")
 
     #########################
 
@@ -147,6 +125,55 @@ class MVAvMassPDFBak:
     self.plotMmumu = plotMmumu
     self.plotMva = plotMva
     self.pdf2dHist = pdf2dHist
+    self.name = name
+
+  def writeDebugHists(self,canvas,compareHist=None):
+    canvas.cd()
+    self.plotMmumu.Draw()
+    saveAs(canvas,self.name+"_mMuMu")
+    self.plotMva.Draw()
+    saveAs(canvas,self.name+"_mva")
+
+    canvas.Clear()
+    canvas.Divide(2,2)
+
+    canvas.cd(1)
+    self.pdf2dHist.SetLineColor(root.kRed)
+    self.pdf2dHist.Draw("surf")
+    self.hist2D.GetXaxis().SetRangeUser(self.minMass,self.maxMass)
+    self.hist2D.GetYaxis().SetRangeUser(-1,1)
+    self.hist2D.Draw("surf same")
+
+    canvas.cd(2)
+    self.hist2D.Draw("colz")
+    canvas.cd(4)
+    self.pdf2dHist.Draw("colz")
+
+    if compareHist != None:
+      compareHist = compareHist.Clone("mySig")
+      compareHist.Scale(self.pdf2dHist.Integral()/compareHist.Integral())
+      canvas.cd(3)
+      self.pdf2dHist.Draw("colz")
+      compareHist.SetFillStyle(0)
+      compareHist.SetFillColor(0)
+      compareHist.SetLineStyle(1)
+      compareHist.SetLineColor(1)
+      compareHist.Draw("box same")
+
+    saveAs(canvas,self.name+"_2d")
+
+    debugFileName = "pdfHists_debug_"+self.name+".root"
+    tmpFile = root.TFile(debugFileName,"RECREATE")
+    tmpFile.cd()
+    self.pdf2dHist.Write()
+    self.hist2D.Write()
+    if compareHist != None:
+      compareHist.Write()
+    self.plotMmumu.Write()
+    self.plotMva.Write()
+    tmpFile.Close()
+    
+
 
 ###################################################################################
 
@@ -434,7 +461,9 @@ class ShapeDataCardMaker(DataCardMaker):
           self.y = root.RooRealVar('y','y',hist.GetYaxis().GetXmin(),hist.GetYaxis().GetXmax())
           self.is2D = True
 
-  def MakeRFHistWrite(self,hist):
+  def MakeRFHistWrite(self,hist,thisDir=None):
+    if thisDir != None:
+      thisDir.cd()
     if self.useTH1:
       hist.Write()
     else:
@@ -523,6 +552,7 @@ class ShapeDataCardMaker(DataCardMaker):
         sumAllMCHist = None
         tmpDir = outRootFile.mkdir(channelName)
         tmpDir.cd()
+        sumAllSigMCHist = None
         for sigName in self.sigNames:
           binFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
           binFormatList.append(channelName)
@@ -542,13 +572,17 @@ class ShapeDataCardMaker(DataCardMaker):
 
           tmpHist = channel.getSigHist(sigName).Clone(sigName)
           tmpHist.Scale(lumi)
-          self.MakeRFHistWrite(tmpHist)
+          self.MakeRFHistWrite(tmpHist,tmpDir)
           
           if includeSigInAllMC:
             if sumAllMCHist == None:
               sumAllMCHist = tmpHist.Clone("data_obs")
             else:
               sumAllMCHist.Add(tmpHist)
+          if sumAllMCHist == None:
+            sumAllSigMCHist = tmpHist.Clone("sig")
+          else:
+            sumAllSigMCHist.Add(tmpHist)
   
           iParam += 1
           iProc += 1
@@ -581,15 +615,17 @@ class ShapeDataCardMaker(DataCardMaker):
 
           if writeBakPDF:
             c1 = root.TCanvas("c1")
-            bakPDFMaker = MVAvMassPDFBak("pdfHists_"+channelName,c1,sumAllBakMCHist,
+            bakPDFMaker = MVAvMassPDFBak("pdfHists_"+channelName,sumAllBakMCHist,
                                 self.controlRegionLow, self.controlRegionHigh,smooth=smooth)
+            bakPDFMaker.writeDebugHists(c1,compareHist=sumAllSigMCHist)
             bakPDFMaker.pdf2d.SetName("bak")
+            tmpDir.cd()
             bakPDFMaker.pdf2d.Write()
 
             outfile.write("# Background Debug: Breit-Wigner mZ    = {0:.4g}\n".format(bakPDFMaker.bwmZ.getVal()))
             outfile.write("# Background Debug: Breit-Wigner width = {0:.4g}\n".format(bakPDFMaker.bwWidth.getVal()))
           else:
-            self.MakeRFHistWrite(sumAllBakMCHist)
+            self.MakeRFHistWrite(sumAllBakMCHist,tmpDir)
 
           if sumAllMCHist == None:
             sumAllMCHist = sumAllBakMCHist.Clone("data_obs")
@@ -618,7 +654,7 @@ class ShapeDataCardMaker(DataCardMaker):
   
             tmpHist = channel.getBakHist(bakName).Clone(bakName)
             tmpHist.Scale(lumi)
-            self.MakeRFHistWrite(tmpHist)
+            self.MakeRFHistWrite(tmpHist,tmpDir)
             if sumAllMCHist == None:
               sumAllMCHist = tmpHist.Clone("data_obs")
             else:
@@ -629,7 +665,7 @@ class ShapeDataCardMaker(DataCardMaker):
         self.histFloor(sumAllMCHist,integral=True)
         print("hist Observed generic integral: {}".format(sumAllMCHist.Integral()))
         print("hist Observed include all integral: {}".format(getIntegralAll(sumAllMCHist)))
-        self.MakeRFHistWrite(sumAllMCHist)
+        self.MakeRFHistWrite(sumAllMCHist,tmpDir)
         outRootFile.cd()
     binFormatString+= "\n"
     proc1FormatString+= "\n"
