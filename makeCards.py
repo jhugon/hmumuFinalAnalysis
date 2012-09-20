@@ -74,7 +74,14 @@ class MVAvMassPDFBak:
     mvaHistSmooth.Add(mvaHistHighSmooth)
     mvaRooDataHistSmooth = root.RooDataHist("mvaRooDataHistSmooth","mvaRooDataHistSmooth",root.RooArgList(mva),mvaHistSmooth)
     
-    pdfMva = root.RooHistPdf("pdfMva","pdfMva",root.RooArgSet(mva),mvaRooDataHistSmooth)
+    templatePdfMva = root.RooHistPdf("templatePdfMva","templatePdfMva",root.RooArgSet(mva),mvaRooDataHistSmooth)
+
+    gMvaWidth = root.RooRealVar("gMvaWidth","gMvaWidth",0.0,10)
+    gMvaMean = root.RooRealVar("gMvaMean","gMvaMean",-1,1)
+    gausPdfMva = root.RooGaussian("gausPdfMva","gausPdfMva",mva,gMvaMean,gMvaWidth)
+
+    pdfMva = root.RooFFTConvPdf("pdfMva","pdfMva",mva,templatePdfMva,gausPdfMva)
+
     pdfMva.fitTo(mvaRooDataHistSmooth)
 
     ###################
@@ -127,6 +134,11 @@ class MVAvMassPDFBak:
     self.pdf2dHist = pdf2dHist
     self.name = name
 
+    self.templatePdfMva = templatePdfMva
+    self.gMvaWidth = gMvaWidth
+    self.gMvaMean = gMvaMean
+    self.gausPdfMva = gausPdfMva
+
   def writeDebugHists(self,canvas,compareHist=None):
     canvas.cd()
     self.plotMmumu.Draw()
@@ -171,6 +183,9 @@ class MVAvMassPDFBak:
       compareHist.Write()
     self.plotMmumu.Write()
     self.plotMva.Write()
+    self.pdfMmumu.Write()
+    self.pdfMva.Write()
+    self.pdf2d.Write()
     tmpFile.Close()
     
 
@@ -284,8 +299,8 @@ class DataCardMaker:
       self.nuisance["xs_ggH"] = (0.147,["ggHmumu125"])
       self.nuisance["xs_vbfH"] = (0.03,["vbfHmumu125"])
       self.nuisance["br_Hmm"] = (0.06,["ggHmumu125","vbfHmumu125"])
-      self.nuisance["bg_dy"] = (0.05,["DYJetsToLL"])
-      self.nuisance["bg_tt"] = (0.05,["ttbar"])
+      #self.nuisance["bg_dy"] = (0.05,["DYJetsToLL"])
+      #self.nuisance["bg_tt"] = (0.05,["ttbar"])
     else:
       self.nuisance = nuisanceMap
 
@@ -691,13 +706,22 @@ class ShapeDataCardMaker(DataCardMaker):
               value = thisNu[0]+1.0
             formatList.append(value)
             iParam += 1
-          for bakName in self.bakNames:
-            formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-            value = "-"
-            if thisNu[1].count(bakName)>0:
-              value = thisNu[0]+1.0
-            formatList.append(value)
-            iParam += 1
+          if sumAllBak:
+              bakName="bak"
+              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+              value = "-"
+              if thisNu[1].count(bakName)>0:
+                value = thisNu[0]+1.0
+              formatList.append(value)
+              iParam += 1
+          else:
+            for bakName in self.bakNames:
+              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+              value = "-"
+              if thisNu[1].count(bakName)>0:
+                value = thisNu[0]+1.0
+              formatList.append(value)
+              iParam += 1
       formatString += "\n"
       #print formatString
       #print formatList

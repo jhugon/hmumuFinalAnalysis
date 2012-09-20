@@ -47,8 +47,8 @@ lognormalMmumu = root.RooLognormal("lognormalMmumu","lognormalMmumu",mMuMu,lnA,l
 pdfMmumu = bwMmumu
 #pdfMmumu = voitMmumu
 
-#f = root.TFile("input/DYJetsToLL.root")
-f = root.TFile("input/ttbar.root")
+f = root.TFile("input/DYJetsToLL.root")
+#f = root.TFile("input/ttbar.root")
 
 mDiMu = f.Get("mDiMu")
 mDiMu.Rebin(2)
@@ -82,7 +82,14 @@ BDTHist.Rebin(BDTHist.GetNbinsX()/100)
 
 templateMva = root.RooDataHist("templateMva","templateMva",root.RooArgList(mva),BDTHist)
 
-pdfMva = root.RooHistPdf("pdfMva","pdfMva",root.RooArgSet(mva),templateMva)
+templatePdfMva = root.RooHistPdf("templatePdfMva","templatePdfMva",root.RooArgSet(mva),templateMva)
+
+gMvaWidth = root.RooRealVar("gMvaWidth","gMvaWidth",0.0,10)
+gMvaMean = root.RooRealVar("gMvaMean","gMvaMean",-1,1)
+gausPdfMva = root.RooGaussian("gausPdfMva","gausPdfMva",mva,gMvaMean,gMvaWidth)
+
+pdfMva = root.RooFFTConvPdf("pdfMva","pdfMva",mva,templatePdfMva,gausPdfMva)
+#pdfMva = templatePdfMva
 
 pdfMva.fitTo(templateMva)
 
@@ -92,6 +99,7 @@ plotMva = mva.frame()
 
 templateMva.plotOn(plotMva)
 pdfMva.plotOn(plotMva)
+templatePdfMva.plotOn(plotMva,root.RooFit.LineStyle(root.kDashed))
 plotMva.Draw()
 canvas.SaveAs("learnMva.png")
 
