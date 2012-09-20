@@ -141,6 +141,7 @@ class MVAvMassPDFBak:
 
   def writeDebugHists(self,canvas,compareHist=None):
     canvas.cd()
+    canvas.SetLogy(1)
     self.plotMmumu.Draw()
     saveAs(canvas,self.name+"_mMuMu")
     self.plotMva.Draw()
@@ -188,6 +189,7 @@ class MVAvMassPDFBak:
     self.pdf2d.Write()
     tmpFile.Close()
     
+    canvas.SetLogy(0)
 
 
 ###################################################################################
@@ -762,11 +764,55 @@ if __name__ == "__main__":
       dataCardLHComb.write(outDir+"LHComb"+"_"+str(i)+".txt",i)
 
   runFile = open(outDir+"run.sh","w")
-  runFile.write("#!/bin/bash\n")
-  runFile.write("\n")
-  runFile.write("for i in *.txt; do\n")
-  runFile.write('    [[ -e "$i" ]] || continue\n')
-  runFile.write('echo "Running on "$i\n')
-  runFile.write('nice combine -M Asymptotic $i > $i.out\n')
-  runFile.write('done\n')
+  batchString = \
+"""#!/bin/bash
+
+chmod +x lxbatch.sh
+
+for i in *.txt; do
+    [[ -e "$i" ]] || continue
+echo "Running on "$i
+bsub lxbatch.sh $i
+#bsub -q 1nh lxbatch.sh $i
+done
+"""
+  runFile.write(batchString)
+  runFile.close()
+
+  runFile = open(outDir+"lxbatch.sh","w")
+  batchString = \
+"""#!/bin/bash
+echo "Sourcing cmsset_default.sh"
+cd /afs/cern.ch/cms/sw
+source cmsset_default.sh
+export SCRAM_ARCH=slc5_amd64_gcc462
+echo "SCRAM_ARCH is $SCRAM_ARCH"
+cd $LS_SUBCWD
+echo "In Directory: "
+pwd
+eval `scramv1 runtime -sh`
+echo "cmsenv success!"
+date
+
+TXTSUFFIX=".txt"
+FILENAME=$1
+DIRNAME="Dir"$1"Dir"
+ROOTFILENAME=${1%$TXTSUFFIX}.root
+
+mkdir $DIRNAME
+cp $FILENAME $DIRNAME/
+cp $ROOTFILENAME $DIRNAME/
+cd $DIRNAME
+
+echo "executing combine -M Asymptotic $FILENAME >& $FILENAME.out"
+
+combine -M Asymptotic $FILENAME >& $FILENAME.out
+
+cp $FILENAME.out ..
+
+
+echo "done"
+date
+"""
+  runFile.write(batchString)
   runFile.close()
