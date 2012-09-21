@@ -232,7 +232,12 @@ titleMap = {
   "BDTHistVBFVMass":"H#rightarrow#mu#mu: BDT v. m_{#mu#mu} VBF",
   "likelihoodHistMuonOnlyVMass":"H#rightarrow#mu#mu: Likelihood v. m_{#mu#mu} Inclusive",
   "likelihoodHistVBFVMass":"H#rightarrow#mu#mu: Likelihood v. m_{#mu#mu} VBF",
-  "mDiMu":"H#rightarrow#mu#mu: m_{#mu#mu}"
+  "mDiMu":"H#rightarrow#mu#mu: m_{#mu#mu}",
+
+  "THBDTHistMuonOnlyVMass":"TH2 H#rightarrow#mu#mu: BDT v. m_{#mu#mu} Inclusive",
+  "THBDTHistVBFVMass":"TH2 H#rightarrow#mu#mu: BDT v. m_{#mu#mu} VBF",
+  "THlikelihoodHistMuonOnlyVMass":"TH2 H#rightarrow#mu#mu: Likelihood v. m_{#mu#mu} Inclusive",
+  "THlikelihoodHistVBFVMass":"TH2 H#rightarrow#mu#mu: Likelihood v. m_{#mu#mu} VBF"
 }
 
 comparisonMap = {
@@ -249,7 +254,12 @@ comparisonMap = {
   "BDTHistVBFVMass":"BDT v. $m_{\mu\mu}$ VBF",
   "likelihoodHistMuonOnlyVMass":"LH v. $m_{\mu\mu}$ Inc.",
   "likelihoodHistVBFVMass":"LH v. $m_{\mu\mu}$ VBF",
-  "mDiMu":"$m_{\mu\mu}$ Shape"
+  "mDiMu":"$m_{\mu\mu}$ Shape",
+
+  "THBDTHistMuonOnlyVMass":"TH2 BDT v. $m_{\mu\mu}$ Inc.",
+  "THBDTHistVBFVMass":"TH2 BDT v. $m_{\mu\mu}$ VBF",
+  "THlikelihoodHistMuonOnlyVMass":"TH2 LH v. $m_{\mu\mu}$ Inc.",
+  "THlikelihoodHistVBFVMass":"TH2 LH v. $m_{\mu\mu}$ VBF"
 }
 
 ylimits=[1.0,500.0]

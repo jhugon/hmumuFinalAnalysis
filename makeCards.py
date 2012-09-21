@@ -74,13 +74,14 @@ class MVAvMassPDFBak:
     mvaHistSmooth.Add(mvaHistHighSmooth)
     mvaRooDataHistSmooth = root.RooDataHist("mvaRooDataHistSmooth","mvaRooDataHistSmooth",root.RooArgList(mva),mvaHistSmooth)
     
-    templatePdfMva = root.RooHistPdf("templatePdfMva","templatePdfMva",root.RooArgSet(mva),mvaRooDataHistSmooth)
+    #templatePdfMva = root.RooHistPdf("templatePdfMva","templatePdfMva",root.RooArgSet(mva),mvaRooDataHistSmooth)
+    pdfMva = root.RooHistPdf("pdfMva","pdfMva",root.RooArgSet(mva),mvaRooDataHistSmooth)
 
-    gMvaWidth = root.RooRealVar("gMvaWidth","gMvaWidth",0.0,10)
-    gMvaMean = root.RooRealVar("gMvaMean","gMvaMean",-1,1)
-    gausPdfMva = root.RooGaussian("gausPdfMva","gausPdfMva",mva,gMvaMean,gMvaWidth)
+    #gMvaWidth = root.RooRealVar("gMvaWidth","gMvaWidth",0.0,10)
+    #gMvaMean = root.RooRealVar("gMvaMean","gMvaMean",-1,1)
+    #gausPdfMva = root.RooGaussian("gausPdfMva","gausPdfMva",mva,gMvaMean,gMvaWidth)
 
-    pdfMva = root.RooFFTConvPdf("pdfMva","pdfMva",mva,templatePdfMva,gausPdfMva)
+    #pdfMva = root.RooFFTConvPdf("pdfMva","pdfMva",mva,templatePdfMva,gausPdfMva)
 
     pdfMva.fitTo(mvaRooDataHistSmooth)
 
@@ -134,14 +135,14 @@ class MVAvMassPDFBak:
     self.pdf2dHist = pdf2dHist
     self.name = name
 
-    self.templatePdfMva = templatePdfMva
-    self.gMvaWidth = gMvaWidth
-    self.gMvaMean = gMvaMean
-    self.gausPdfMva = gausPdfMva
+    #self.templatePdfMva = templatePdfMva
+    #self.gMvaWidth = gMvaWidth
+    #self.gMvaMean = gMvaMean
+    #self.gausPdfMva = gausPdfMva
 
   def writeDebugHists(self,debugDir,canvas,compareHist=None):
     canvas.cd()
-    canvas.SetLogy(1)
+    #canvas.SetLogy(1)
     self.plotMmumu.Draw()
     saveAs(canvas,debugDir+self.name+"_mMuMu")
     self.plotMva.Draw()
@@ -189,7 +190,7 @@ class MVAvMassPDFBak:
     self.pdf2d.Write()
     tmpFile.Close()
     
-    canvas.SetLogy(0)
+    #canvas.SetLogy(0)
 
 
 ###################################################################################
@@ -780,23 +781,21 @@ if __name__ == "__main__":
   lumiList = [10,20,30,100]
 
   MassRebin = 4 # 4 Bins per GeV originally
-  MVARebin = 20 #200 works, but is huge! 2000 bins originally
-  writeBakPDF = True
-
-  for ana in analyses:
-    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[MVARebin])
-    for i in lumiList:
-      dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i,writeBakPDF=writeBakPDF,statsDebugDir="statsDebug/")
-
-  bdtComb1d = ShapeDataCardMaker(directory,["BDTHistMuonOnly","BDTHistVBF"],signalNames,backgroundNames,rebin=[MVARebin])
-  for i in lumiList:
-      bdtComb1d.write(outDir+"BDTComb1d"+"_"+str(i)+".txt",i,writeBakPDF=writeBakPDF,statsDebugDir="statsDebug/")
+  MVARebin = 200 #200 works, but is huge! 2000 bins originally
+  #writeBakPDF = True
 
   for ana in analyses2D:
     dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[MassRebin,MVARebin])
     for i in lumiList:
-      dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i,writeBakPDF=writeBakPDF,statsDebugDir="statsDebug/")
+      dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i,writeBakPDF=True,statsDebugDir="statsDebug/")
 
+  ## Do with just histograms to compare
+  for ana in analyses2D:
+    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[MassRebin,MVARebin])
+    for i in lumiList:
+      dataCardMassShape.write(outDir+"TH"+ana+"_"+str(i)+".txt",i,writeBakPDF=False,statsDebugDir="statsDebug/")
+
+  """
   dataCardBDTComb = ShapeDataCardMaker(directory,["BDTHistMuonOnlyVMass","BDTHistVBFVMass"],signalNames,backgroundNames,rebin=[MassRebin,MVARebin])
   for i in lumiList:
       dataCardBDTComb.write(outDir+"BDTComb"+"_"+str(i)+".txt",i,writeBakPDF=writeBakPDF,statsDebugDir="statsDebug/")
@@ -804,6 +803,7 @@ if __name__ == "__main__":
   dataCardLHComb = ShapeDataCardMaker(directory,["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass"],signalNames,backgroundNames,rebin=[MassRebin,MVARebin])
   for i in lumiList:
       dataCardLHComb.write(outDir+"LHComb"+"_"+str(i)+".txt",i,writeBakPDF=writeBakPDF,statsDebugDir="statsDebug/")
+  """
 
   runFile = open(outDir+"run.sh","w")
   batchString = \
@@ -855,6 +855,19 @@ cp $FILENAME.out ..
 
 echo "done"
 date
+"""
+  runFile.write(batchString)
+  runFile.close()
+
+  runFile = open(outDir+"getStatus.sh","w")
+  batchString = \
+"""#!/bin/bash
+
+echo "==========================="
+echo "Files Found: `ls *.out | wc -l` of `ls *.txt | wc -l`"
+echo "==========================="
+for i in *.out; do wc $i; done
+echo "==========================="
 """
   runFile.write(batchString)
   runFile.close()
