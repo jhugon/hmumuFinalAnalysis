@@ -12,30 +12,39 @@ scaleHiggsBy = 1.0
 xsec = {}
 xsec["vbfHmumu125"] = 3.347e-4 * scaleHiggsBy
 xsec["ggHmumu125"] = 4.294e-3 * scaleHiggsBy
-xsec["ggHmumu"] = xsec["ggHmumu125"]
-xsec["zHmumu"] = 8.675e-5 * scaleHiggsBy
-xsec["wHmumu"] = 1.533e-4 * scaleHiggsBy
+xsec["zHmumu125"] = 8.675e-5 * scaleHiggsBy
+xsec["wHmumu125"] = 1.533e-4 * scaleHiggsBy
 
 xsec["DYJetsToLL"] = 3503.71   ## madgraph
 xsec["ttbar"] = 225.197   ## madgraph
 
+xsec["DYToTauTau"] = 5745.25/3.0   ## powheg
+xsec["WZ"] =   33.21 
+xsec["ZZ"] =  17.654 
+
 nEventsMap = {}
 nEventsMap["vbfHmumu125"] = 9990
 nEventsMap["ggHmumu125"] = 9998
-nEventsMap["ggHmumu"] = nEventsMap["ggHmumu125"]
-nEventsMap["zHmumu"] = 10000
-nEventsMap["wHmumu"] = 10000
+nEventsMap["zHmumu125"] = 10000
+nEventsMap["wHmumu125"] = 10000
 nEventsMap["DYJetsToLL"] = 30459503 # GPs Ntuples w/ my changes CMSSW_5_3_X
 nEventsMap["ttbar"] = 6416135 # GPs Ntuples w/ my changes CMSSW_5_2_X
+nEventsMap["DYToTauTau"] = 3295238
+nEventsMap["WZ"] =  10000283 
+nEventsMap["ZZ"] = 9799908
 
 backgroundList = [
 "DYJetsToLL",
-"ttbar"
+"ttbar",
+"WZ",
+"ZZ"
 ]
 
 signalList = [
+"ggHmumu125",
 "vbfHmumu125",
-"ggHmumu125"
+"wHmumu125",
+"zHmumu125"
 ]
 
 dataList = [
@@ -54,23 +63,24 @@ legendEntries = {}
 legendEntries["DYJetsToLL"] = "Z+Jets"
 legendEntries["ttbar"] = "t#bar{t}"
 legendEntries["vbfHmumu125"] = "VBF H->#mu#mu"
-legendEntries["vbfHmumu150"] = "VBF H->#mu#mu m_{H}=150 GeV"
-legendEntries["ggHmumu"] = "ggH->#mu#mu"
 legendEntries["ggHmumu125"] = "ggH->#mu#mu"
-legendEntries["ZHmumu"] = "ZH, H->#mu#mu"
-legendEntries["WHmumu"] = "WH, H->#mu#mu"
+legendEntries["zHmumu125"] = "ZH, H->#mu#mu"
+legendEntries["wHmumu125"] = "WH, H->#mu#mu"
 legendEntries["ttbar"] = "t#bar{t}"
+legendEntries["DYToTauTau"] = "DY->#tau#tau"
+legendEntries["WZ"] = "WZ"
+legendEntries["ZZ"] = "ZZ"
 
 colors = {}
 colors["DYJetsToLL"] = root.kOrange
-colors["ttbar"] = root.kGreen+3
-colors["vbfHmumu150"] = root.kBlue
 colors["vbfHmumu125"] = root.kBlue
-colors["ggHmumu"] = root.kRed
 colors["ggHmumu125"] = root.kRed
-colors["ZHmumu"] = root.kGreen+1
-colors["WHmumu"] = root.kGreen+1
+colors["zHmumu125"] = root.kGreen+1
+colors["wHmumu125"] = root.kGreen+1
 colors["ttbar"] = root.kGreen-1
+colors["DYToTauTau"] = root.kOrange+3 #brown
+colors["WZ"] = root.kPink+9
+colors["ZZ"] = root.kPink+9
 
 ##################################################
 

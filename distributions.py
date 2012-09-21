@@ -10,7 +10,7 @@ outDir = "output/"
 
 listToPlot = backgroundList+signalList
 
-LOGY=False
+LOGY=True
 reverse=False
 
 histNames = {}
@@ -68,13 +68,13 @@ histNames["mDiMuEta11"] = {"xlabel":"m_{#mu#mu} Both Muons |#eta|<1.0 [GeV]","xl
 histNames["mDiMuEta12"] = {"xlabel":"m_{#mu#mu} One Muons |#eta|<1.0, One Muon |#eta|>1.0 [GeV]","xlimits":[100.0,150.0],"rebin":2}
 histNames["mDiMuEta22"] = {"xlabel":"m_{#mu#mu} Both Muons |#eta|>1.0[GeV]","xlimits":[100.0,150.0],"rebin":2}
 
-histNames["likelihoodHistMuonOnly"] = {"xlabel":"Likelihood (Not-VBF Category)","xlimits":[-1,0.5],"rebin":20}
-histNames["LDHistMuonOnly"] = {"xlabel":"LD (Not-VBF Category)","xlimits":[-0.2,1],"rebin":20}
-histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Not-VBF Category)","xlimits":[-1,0.25],"rebin":20}
+histNames["likelihoodHistMuonOnly"] = {"xlabel":"Likelihood (Not-VBF Category)","xlimits":[-1,0.5],"rebin":200}
+histNames["LDHistMuonOnly"] = {"xlabel":"LD (Not-VBF Category)","xlimits":[-0.2,1],"rebin":200}
+histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Not-VBF Category)","xlimits":[-1,0.25],"rebin":200}
 
-histNames["likelihoodHistVBF"] = {"xlabel":"Likelihood (VBF Category)","xlimits":[-0.5,1.0],"rebin":20}
-histNames["LDHistVBF"] = {"xlabel":"LD (VBF Category)","xlimits":[0.0,0.75],"rebin":20}
-histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.5,0.25],"rebin":20}
+histNames["likelihoodHistVBF"] = {"xlabel":"Likelihood (VBF Category)","xlimits":[-0.5,1.0],"rebin":200}
+histNames["LDHistVBF"] = {"xlabel":"LD (VBF Category)","xlimits":[0.0,0.75],"rebin":200}
+histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.5,0.25],"rebin":200}
 
 histNames["puJetIDSimpleDiscJet1"] = {"xlabel":"PU Jet ID Simple Discriminator--Leading Jet","xlimits":[-1,1],"rebin":1}
 histNames["puJetIDSimpleDiscJet2"] = {"xlabel":"PU Jet ID Simple Discriminator--Sub-Leading Jet","xlimits":[-1,1],"rebin":1}
@@ -206,10 +206,10 @@ for histName in bkgDatasetList[0].hists:
     if ymin < hist.GetMinimum():
       ymin = hist.GetMinimum()
     if firstHist:
-      hist.Draw()
+      hist.Draw("hist")
       firstHist = False
     else:
-      hist.Draw("same")
+      hist.Draw("hist same")
   firstHist = True
   print ymax
   for hist in bkgHistList:
@@ -217,10 +217,10 @@ for histName in bkgDatasetList[0].hists:
     hist.GetYaxis().SetRangeUser(ymin*0.95,ymax*0.6)
     #hist.GetYaxis().SetRangeUser(ymin*0.95,ymax*0.8)
     if firstHist:
-      hist.Draw()
+      hist.Draw("hist")
       firstHist = False
     else:
-      hist.Draw("same")
+      hist.Draw("hist same")
   canvas.RedrawAxis()
   leg.Draw("same")
 

@@ -48,11 +48,11 @@ histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1.0,1.0]}
 histNames["relIsoMu1"] = {"xlabel":"Leading Muon Relative PF Isolation","xlimits":[0,0.3],"rebin":2}
 histNames["relIsoMu2"] = {"xlabel":"Sub-Leading Muon Relative PF Isolation","xlimits":[0,0.3],"rebin":2}
 
-histNames["likelihoodHistMuonOnly"] = {"xlabel":"Likelihood (Not-VBF Category)","xlimits":[-1,1],"rebin":40}
-histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Not-VBF Category)","xlimits":[-1,1],"rebin":40}
+histNames["likelihoodHistMuonOnly"] = {"xlabel":"Likelihood (Not-VBF Category)","xlimits":[-1,1],"rebin":200}
+histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Not-VBF Category)","xlimits":[-1,1],"rebin":200}
 
-histNames["likelihoodHistVBF"] = {"xlabel":"Likelihood (VBF Category)","xlimits":[-1,1.0],"rebin":40}
-histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-1,1],"rebin":40}
+histNames["likelihoodHistVBF"] = {"xlabel":"Likelihood (VBF Category)","xlimits":[-1,1.0],"rebin":200}
+histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-1,1],"rebin":200}
 
 histNames["puJetIDSimpleDiscJet1"] = {"xlabel":"PU Jet ID Simple Discriminator--Leading Jet","xlimits":[-1,1],"rebin":1}
 histNames["puJetIDSimpleDiscJet2"] = {"xlabel":"PU Jet ID Simple Discriminator--Sub-Leading Jet","xlimits":[-1,1],"rebin":1}
