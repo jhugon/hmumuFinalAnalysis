@@ -32,7 +32,6 @@ def getIntegralAll(hist):
 
 class MVAvMassPDFBak:
   def __init__(self,name,hist2D,massLowRange,massHighRange,smooth=False):
-    self.debugDir = debugDir
     hist2DSmooth = hist2D.Clone(hist2D.GetName()+"_smoothed")
     if smooth:
       hist2DSmooth.Smooth()
@@ -538,6 +537,8 @@ class ShapeDataCardMaker(DataCardMaker):
         hist.SetBinContent(i,tmp)
 
   def write(self,outfilename,lumi,sumAllBak=True,writeBakPDF=True,smooth=False,includeSigInAllMC=False,statsDebugDir=None):
+    if not self.is2D:
+      writeBakPDF=False
     outRootFilename = re.sub(r"\.txt",r".root",outfilename)
     print("Writing Card: {0} & {1}".format(outfilename,outRootFilename))
     lumi *= 1000.0
@@ -660,8 +661,8 @@ class ShapeDataCardMaker(DataCardMaker):
             c1 = root.TCanvas("c1")
             bakPDFMaker = MVAvMassPDFBak("pdfHists_"+channelName,sumAllBakMCHist,
                                 self.controlRegionLow, self.controlRegionHigh,smooth=smooth)
-            if debugDir != None:
-              bakPDFMaker.writeDebugHists(debugDir,c1,compareHist=sumAllSigMCHist)
+            if statsDebugDir != None:
+              bakPDFMaker.writeDebugHists(statsDebugDir,c1,compareHist=sumAllSigMCHist)
             bakPDFMaker.pdf2d.SetName("bak")
             tmpDir.cd()
             bakPDFMaker.pdf2d.Write()
@@ -778,29 +779,31 @@ if __name__ == "__main__":
   #lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
   lumiList = [10,20,30,100]
 
+  MassRebin = 4 # 4 Bins per GeV originally
   MVARebin = 20 #200 works, but is huge! 2000 bins originally
+  writeBakPDF = True
 
   for ana in analyses:
     dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[MVARebin])
     for i in lumiList:
-      dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i,writeBakPDF=False,statsDebugDir="statsDebug/")
+      dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i,writeBakPDF=writeBakPDF,statsDebugDir="statsDebug/")
 
   bdtComb1d = ShapeDataCardMaker(directory,["BDTHistMuonOnly","BDTHistVBF"],signalNames,backgroundNames,rebin=[MVARebin])
   for i in lumiList:
-      bdtComb1d.write(outDir+"BDTComb1d"+"_"+str(i)+".txt",i,writeBakPDF=False,statsDebugDir="statsDebug/")
+      bdtComb1d.write(outDir+"BDTComb1d"+"_"+str(i)+".txt",i,writeBakPDF=writeBakPDF,statsDebugDir="statsDebug/")
 
   for ana in analyses2D:
-    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[4,MVARebin])
+    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[MassRebin,MVARebin])
     for i in lumiList:
-      dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i,writeBakPDF=False,statsDebugDir="statsDebug/")
+      dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i,writeBakPDF=writeBakPDF,statsDebugDir="statsDebug/")
 
-  dataCardBDTComb = ShapeDataCardMaker(directory,["BDTHistMuonOnlyVMass","BDTHistVBFVMass"],signalNames,backgroundNames,rebin=[4,MVARebin])
+  dataCardBDTComb = ShapeDataCardMaker(directory,["BDTHistMuonOnlyVMass","BDTHistVBFVMass"],signalNames,backgroundNames,rebin=[MassRebin,MVARebin])
   for i in lumiList:
-      dataCardBDTComb.write(outDir+"BDTComb"+"_"+str(i)+".txt",i,writeBakPDF=False,statsDebugDir="statsDebug/")
+      dataCardBDTComb.write(outDir+"BDTComb"+"_"+str(i)+".txt",i,writeBakPDF=writeBakPDF,statsDebugDir="statsDebug/")
 
-  dataCardLHComb = ShapeDataCardMaker(directory,["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass"],signalNames,backgroundNames,rebin=[4,MVARebin])
+  dataCardLHComb = ShapeDataCardMaker(directory,["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass"],signalNames,backgroundNames,rebin=[MassRebin,MVARebin])
   for i in lumiList:
-      dataCardLHComb.write(outDir+"LHComb"+"_"+str(i)+".txt",i,writeBakPDF=False,statsDebugDir="statsDebug/")
+      dataCardLHComb.write(outDir+"LHComb"+"_"+str(i)+".txt",i,writeBakPDF=writeBakPDF,statsDebugDir="statsDebug/")
 
   runFile = open(outDir+"run.sh","w")
   batchString = \
