@@ -32,6 +32,7 @@ def getIntegralAll(hist):
 
 class MVAvMassPDFBak:
   def __init__(self,name,hist2D,massLowRange,massHighRange,smooth=False):
+    self.debugDir = debugDir
     hist2DSmooth = hist2D.Clone(hist2D.GetName()+"_smoothed")
     if smooth:
       hist2DSmooth.Smooth()
@@ -139,13 +140,13 @@ class MVAvMassPDFBak:
     self.gMvaMean = gMvaMean
     self.gausPdfMva = gausPdfMva
 
-  def writeDebugHists(self,canvas,compareHist=None):
+  def writeDebugHists(self,debugDir,canvas,compareHist=None):
     canvas.cd()
     canvas.SetLogy(1)
     self.plotMmumu.Draw()
-    saveAs(canvas,self.name+"_mMuMu")
+    saveAs(canvas,debugDir+self.name+"_mMuMu")
     self.plotMva.Draw()
-    saveAs(canvas,self.name+"_mva")
+    saveAs(canvas,debugDir+self.name+"_mva")
 
     canvas.Clear()
     canvas.Divide(2,2)
@@ -173,9 +174,9 @@ class MVAvMassPDFBak:
       compareHist.SetLineColor(1)
       compareHist.Draw("box same")
 
-    saveAs(canvas,self.name+"_2d")
+    saveAs(canvas,debugDir+self.name+"_2d")
 
-    debugFileName = "pdfHists_debug_"+self.name+".root"
+    debugFileName = debugDir+"pdfHists_debug_"+self.name+".root"
     tmpFile = root.TFile(debugFileName,"RECREATE")
     tmpFile.cd()
     self.pdf2dHist.Write()
@@ -297,10 +298,12 @@ class DataCardMaker:
 
     if nuisanceMap == None:
       self.nuisance = {}
-      self.nuisance["lumi"] = (0.044,["vbfHmumu125","ggHmumu125"])
+      self.nuisance["lumi"] = (0.044,["vbfHmumu125","ggHmumu125","wHmumu125","zHmumu125"])
       self.nuisance["xs_ggH"] = (0.147,["ggHmumu125"])
       self.nuisance["xs_vbfH"] = (0.03,["vbfHmumu125"])
-      self.nuisance["br_Hmm"] = (0.06,["ggHmumu125","vbfHmumu125"])
+      self.nuisance["xs_wH"] = (0.041,["wHmumu125"])
+      self.nuisance["xs_zH"] = (0.051,["zHmumu125"])
+      self.nuisance["br_Hmm"] = (0.06,["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"])
       #self.nuisance["bg_dy"] = (0.05,["DYJetsToLL"])
       #self.nuisance["bg_tt"] = (0.05,["ttbar"])
     else:
@@ -478,18 +481,41 @@ class ShapeDataCardMaker(DataCardMaker):
           self.y = root.RooRealVar('y','y',hist.GetYaxis().GetXmin(),hist.GetYaxis().GetXmax())
           self.is2D = True
 
-  def MakeRFHistWrite(self,hist,thisDir=None):
-    if thisDir != None:
-      thisDir.cd()
+  def MakeRFHistWrite(self,hist,thisDir,isData=False):
+    thisDir.cd()
     if self.useTH1:
       hist.Write()
     else:
       rfHist = None
+      rfHistPdf = None
       if self.is2D:
         rfHist = root.RooDataHist(hist.GetName(),hist.GetName(),root.RooArgList(root.RooArgSet(self.x,self.y)),hist)
+        rfHistPdf = root.RooHistPdf(hist.GetName(),hist.GetName(),root.RooArgSet(self.x,self.y),rfHist)
       else:
         rfHist = root.RooDataHist(hist.GetName(),hist.GetName(),root.RooArgList(root.RooArgSet(self.x)),hist)
-      rfHist.Write()
+        rfHistPdf = root.RooHistPdf(hist.GetName(),hist.GetName(),root.RooArgSet(self.x),rfHist)
+      if isData:
+        rfHist.Write()
+      else:
+        rfHistPdf.Write()
+    debugDir = thisDir.FindObject('debug')
+    if  debugDir==None:
+      debugDir = thisDir.mkdir("debug")
+    debugDir.cd()
+    hist.Write()
+    if self.is2D:
+      xBinning = root.RooFit.Binning(hist.GetNbinsX())
+      yBinning = root.RooFit.Binning(hist.GetNbinsY())
+      rfHistTH2 = rfHist.createHistogram(hist.GetName()+"rfHist2d",self.x,xBinning,root.RooFit.YVar(self.y,yBinning))
+      rfHistPdfTH2 = rfHistPdf.createHistogram(hist.GetName()+"rfHistPdf2d",self.x,xBinning,root.RooFit.YVar(self.y,yBinning))
+      rfHistTH2.Write()
+      rfHistPdfTH2.Write()
+    else:
+      plot = self.x.frame()
+      rfHist.plotOn(plot)
+      rfHistPdf.plotOn(plot)
+      plot.SetName(hist.GetName())
+      plot.Write()
 
   def histFloor(self,hist,integral=False):
     nBinsX = hist.GetNbinsX()
@@ -511,7 +537,7 @@ class ShapeDataCardMaker(DataCardMaker):
         tmp = math.floor(tmp)
         hist.SetBinContent(i,tmp)
 
-  def write(self,outfilename,lumi,sumAllBak=True,writeBakPDF=True,smooth=False,includeSigInAllMC=False):
+  def write(self,outfilename,lumi,sumAllBak=True,writeBakPDF=True,smooth=False,includeSigInAllMC=False,statsDebugDir=None):
     outRootFilename = re.sub(r"\.txt",r".root",outfilename)
     print("Writing Card: {0} & {1}".format(outfilename,outRootFilename))
     lumi *= 1000.0
@@ -634,7 +660,8 @@ class ShapeDataCardMaker(DataCardMaker):
             c1 = root.TCanvas("c1")
             bakPDFMaker = MVAvMassPDFBak("pdfHists_"+channelName,sumAllBakMCHist,
                                 self.controlRegionLow, self.controlRegionHigh,smooth=smooth)
-            bakPDFMaker.writeDebugHists(c1,compareHist=sumAllSigMCHist)
+            if debugDir != None:
+              bakPDFMaker.writeDebugHists(debugDir,c1,compareHist=sumAllSigMCHist)
             bakPDFMaker.pdf2d.SetName("bak")
             tmpDir.cd()
             bakPDFMaker.pdf2d.Write()
@@ -682,7 +709,7 @@ class ShapeDataCardMaker(DataCardMaker):
         self.histFloor(sumAllMCHist,integral=True)
         print("hist Observed generic integral: {}".format(sumAllMCHist.Integral()))
         print("hist Observed include all integral: {}".format(getIntegralAll(sumAllMCHist)))
-        self.MakeRFHistWrite(sumAllMCHist,tmpDir)
+        self.MakeRFHistWrite(sumAllMCHist,tmpDir,isData=True)
         outRootFile.cd()
     binFormatString+= "\n"
     proc1FormatString+= "\n"
@@ -744,24 +771,36 @@ if __name__ == "__main__":
 
   directory = "input/"
   outDir = "statsCards/"
+  analyses = ["BDTHistMuonOnly","BDTHistVBF","mDiMu"]
   analyses2D = ["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass","BDTHistMuonOnlyVMass","BDTHistVBFVMass"]
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar","WZ","ZZ"]
-  lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
+  #lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
   lumiList = [10,20,30,100]
 
-  for ana in analyses2D:
-    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[4,200])
+  MVARebin = 20 #200 works, but is huge! 2000 bins originally
+
+  for ana in analyses:
+    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[MVARebin])
     for i in lumiList:
-      dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i)
+      dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i,writeBakPDF=False,statsDebugDir="statsDebug/")
 
-  dataCardBDTComb = ShapeDataCardMaker(directory,["BDTHistMuonOnlyVMass","BDTHistVBFVMass"],signalNames,backgroundNames,rebin=[4,200])
+  bdtComb1d = ShapeDataCardMaker(directory,["BDTHistMuonOnly","BDTHistVBF"],signalNames,backgroundNames,rebin=[MVARebin])
   for i in lumiList:
-      dataCardBDTComb.write(outDir+"BDTComb"+"_"+str(i)+".txt",i)
+      bdtComb1d.write(outDir+"BDTComb1d"+"_"+str(i)+".txt",i,writeBakPDF=False,statsDebugDir="statsDebug/")
 
-  dataCardLHComb = ShapeDataCardMaker(directory,["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass"],signalNames,backgroundNames,rebin=[4,160])
+  for ana in analyses2D:
+    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[4,MVARebin])
+    for i in lumiList:
+      dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i,writeBakPDF=False,statsDebugDir="statsDebug/")
+
+  dataCardBDTComb = ShapeDataCardMaker(directory,["BDTHistMuonOnlyVMass","BDTHistVBFVMass"],signalNames,backgroundNames,rebin=[4,MVARebin])
   for i in lumiList:
-      dataCardLHComb.write(outDir+"LHComb"+"_"+str(i)+".txt",i)
+      dataCardBDTComb.write(outDir+"BDTComb"+"_"+str(i)+".txt",i,writeBakPDF=False,statsDebugDir="statsDebug/")
+
+  dataCardLHComb = ShapeDataCardMaker(directory,["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass"],signalNames,backgroundNames,rebin=[4,MVARebin])
+  for i in lumiList:
+      dataCardLHComb.write(outDir+"LHComb"+"_"+str(i)+".txt",i,writeBakPDF=False,statsDebugDir="statsDebug/")
 
   runFile = open(outDir+"run.sh","w")
   batchString = \
@@ -772,8 +811,8 @@ chmod +x lxbatch.sh
 for i in *.txt; do
     [[ -e "$i" ]] || continue
 echo "Running on "$i
-#bsub lxbatch.sh $i
-bsub -q 1nh lxbatch.sh $i
+bsub lxbatch.sh $i
+#bsub -q 1nh lxbatch.sh $i
 done
 """
   runFile.write(batchString)

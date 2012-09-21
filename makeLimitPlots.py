@@ -222,6 +222,7 @@ class ComparePlot:
 titleMap = {
   "combined":"Combined H#rightarrow#mu#mu",
   "BDTComb":"Combined BDT H#rightarrow#mu#mu",
+  "BDTComb1d":"Combined BDT 1D H#rightarrow#mu#mu",
   "LHComb":"Combined BDT H#rightarrow#mu#mu",
   "BDTHistMuonOnly":"H#rightarrow#mu#mu: BDT Inclusive",
   "BDTHistVBF":"H#rightarrow#mu#mu: BDT VBF",
@@ -237,6 +238,7 @@ titleMap = {
 comparisonMap = {
   "combined":"Combination",
   "BDTComb":"BDT Comb.",
+  "BDTComb1d":"BDT 1D Comb.",
   "LHComb":"LH Comb.",
   "BDTHistMuonOnly":"BDT Inc.",
   "BDTHistVBF":"BDT VBF",
