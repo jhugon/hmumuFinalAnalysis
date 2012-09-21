@@ -115,6 +115,9 @@ class MVAvMassPDFBak:
     self.mvaHistSmooth = mvaHistSmooth
     self.mvaRooDataHistSmooth = mvaRooDataHistSmooth
 
+    self.smooth = smooth
+    self.massLowRange = massLowRange
+    self.massHighRange = massHighRange
     self.maxMass = maxMass
     self.minMass = minMass
     self.mMuMu = mMuMu
@@ -140,33 +143,38 @@ class MVAvMassPDFBak:
     #self.gMvaMean = gMvaMean
     #self.gausPdfMva = gausPdfMva
 
-  def writeDebugHists(self,debugDir,canvas,compareHist=None):
+  def writeDebugHistsToCurrTDir(self,compareHist=None):
+    canvas = root.TCanvas("canvas")
     canvas.cd()
     #canvas.SetLogy(1)
     self.plotMmumu.Draw()
-    saveAs(canvas,debugDir+self.name+"_mMuMu")
+    canvas.SetName("plotMmumuCanvas")
+    canvas.Write()
     self.plotMva.Draw()
-    saveAs(canvas,debugDir+self.name+"_mva")
+    canvas.SetName("plotMvaCanvas")
+    canvas.Write()
 
     canvas.Clear()
     canvas.Divide(2,2)
 
-    canvas.cd(1)
-    self.pdf2dHist.SetLineColor(root.kRed)
-    self.pdf2dHist.Draw("surf")
-    self.hist2D.GetXaxis().SetRangeUser(self.minMass,self.maxMass)
-    self.hist2D.GetYaxis().SetRangeUser(-1,1)
-    self.hist2D.Draw("surf same")
-
     canvas.cd(2)
+    self.hist2D.SetTitle("Original 2D Hist")
     self.hist2D.Draw("colz")
     canvas.cd(4)
+    self.pdf2dHist.SetTitle("PDF Assuming M & MVA Uncorrelated")
     self.pdf2dHist.Draw("colz")
 
     if compareHist != None:
       compareHist = compareHist.Clone("mySig")
       compareHist.Scale(self.pdf2dHist.Integral()/compareHist.Integral())
       canvas.cd(3)
+      
+      tlatex = root.TLatex()
+      tlatex.SetNDC()
+      tlatex.SetTextSize(0.035)
+      tlatex.SetTextAlign(22)
+      tlatex.DrawLatex(0.5,0.5,"Signal in Black Boxes")
+
       self.pdf2dHist.Draw("colz")
       compareHist.SetFillStyle(0)
       compareHist.SetFillColor(0)
@@ -174,11 +182,35 @@ class MVAvMassPDFBak:
       compareHist.SetLineColor(1)
       compareHist.Draw("box same")
 
-    saveAs(canvas,debugDir+self.name+"_2d")
+    canvas.cd(1)
+    self.pdf2dHist.SetLineColor(root.kRed)
+    self.pdf2dHist.GetXaxis().SetRangeUser(110,self.maxMass)
+    self.pdf2dHist.GetYaxis().SetRangeUser(-1,1)
+    self.pdf2dHist.SetTitle("Blue Original TH2, Red Final 2D PDF")
+    self.pdf2dHist.Draw("surf")
+    self.hist2D.GetXaxis().SetRangeUser(110,self.maxMass)
+    self.hist2D.GetYaxis().SetRangeUser(-1,1)
+    self.hist2D.Draw("surf same")
 
-    debugFileName = debugDir+"pdfHists_debug_"+self.name+".root"
-    tmpFile = root.TFile(debugFileName,"RECREATE")
-    tmpFile.cd()
+    canvas.SetName("2dCanvas")
+    canvas.Write()
+
+    tmpPave = root.TPaveText(0,0,1,1)
+    tmpPave.SetFillColor(0)
+    tmpPave.SetLineColor(1)
+    tmpPave.AddText("HistName: "+self.hist2D.GetName())
+    tmpPave.AddText("Smoothed: {}".format(self.smooth))
+    tmpPave.AddText("Control Region Low: {}".format(self.massLowRange))
+    tmpPave.AddText("Control Region High: {}".format(self.massHighRange))
+    tmpPave.AddText("pdfMmumu:")
+    tmpPave.AddText("  BW mZ: {0:.2g} +/- {1:.2g}".format(self.bwmZ.getVal(),self.bwmZ.getError()))
+    tmpPave.AddText("  BW Width: {0:.2g} +/- {1:.2g}".format(self.bwWidth.getVal(),self.bwWidth.getError()))
+
+    canvas.Clear()
+    tmpPave.Draw()
+    canvas.SetName("infoCanvas")
+    canvas.Write()
+
     self.pdf2dHist.Write()
     self.hist2D.Write()
     if compareHist != None:
@@ -188,7 +220,6 @@ class MVAvMassPDFBak:
     self.pdfMmumu.Write()
     self.pdfMva.Write()
     self.pdf2d.Write()
-    tmpFile.Close()
     
     #canvas.SetLogy(0)
 
@@ -454,7 +485,7 @@ class DataCardMaker:
 ###################################################################################
 
 class ShapeDataCardMaker(DataCardMaker):
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False,controlRegionLow=[110,115],controlRegionHigh=[135,150]):
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False,controlRegionLow=[80,115],controlRegionHigh=[135,150]):
     DataCardMaker.__init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap,histNameBase)
     if len(rebin) == 2:
       for channel in self.channels:
@@ -537,7 +568,7 @@ class ShapeDataCardMaker(DataCardMaker):
         tmp = math.floor(tmp)
         hist.SetBinContent(i,tmp)
 
-  def write(self,outfilename,lumi,sumAllBak=True,writeBakPDF=True,smooth=False,includeSigInAllMC=False,statsDebugDir=None):
+  def write(self,outfilename,lumi,sumAllBak=True,writeBakPDF=True,smooth=False,includeSigInAllMC=False):
     if not self.is2D:
       writeBakPDF=False
     outRootFilename = re.sub(r"\.txt",r".root",outfilename)
@@ -662,11 +693,15 @@ class ShapeDataCardMaker(DataCardMaker):
             c1 = root.TCanvas("c1")
             bakPDFMaker = MVAvMassPDFBak("pdfHists_"+channelName,sumAllBakMCHist,
                                 self.controlRegionLow, self.controlRegionHigh,smooth=smooth)
-            if statsDebugDir != None:
-              bakPDFMaker.writeDebugHists(statsDebugDir,c1,compareHist=sumAllSigMCHist)
             bakPDFMaker.pdf2d.SetName("bak")
             tmpDir.cd()
             bakPDFMaker.pdf2d.Write()
+            tmpdebugDir = tmpDir.FindObject('debug')
+            if tmpdebugDir==None:
+              tmpdebugDir = tmpDir.mkdir("debug")
+            tmpdebugDir.cd()
+            bakPDFMaker.writeDebugHistsToCurrTDir(compareHist=sumAllSigMCHist)
+            tmpDir.cd()
 
             outfile.write("# Background Debug: Breit-Wigner mZ    = {0:.4g}\n".format(bakPDFMaker.bwmZ.getVal()))
             outfile.write("# Background Debug: Breit-Wigner width = {0:.4g}\n".format(bakPDFMaker.bwWidth.getVal()))
@@ -787,22 +822,22 @@ if __name__ == "__main__":
   for ana in analyses2D:
     dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[MassRebin,MVARebin])
     for i in lumiList:
-      dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i,writeBakPDF=True,statsDebugDir="statsDebug/")
+      dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i,writeBakPDF=True)
 
   ## Do with just histograms to compare
   for ana in analyses2D:
     dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[MassRebin,MVARebin])
     for i in lumiList:
-      dataCardMassShape.write(outDir+"TH"+ana+"_"+str(i)+".txt",i,writeBakPDF=False,statsDebugDir="statsDebug/")
+      dataCardMassShape.write(outDir+"TH"+ana+"_"+str(i)+".txt",i,writeBakPDF=False)
 
   """
   dataCardBDTComb = ShapeDataCardMaker(directory,["BDTHistMuonOnlyVMass","BDTHistVBFVMass"],signalNames,backgroundNames,rebin=[MassRebin,MVARebin])
   for i in lumiList:
-      dataCardBDTComb.write(outDir+"BDTComb"+"_"+str(i)+".txt",i,writeBakPDF=writeBakPDF,statsDebugDir="statsDebug/")
+      dataCardBDTComb.write(outDir+"BDTComb"+"_"+str(i)+".txt",i,writeBakPDF=writeBakPDF)
 
   dataCardLHComb = ShapeDataCardMaker(directory,["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass"],signalNames,backgroundNames,rebin=[MassRebin,MVARebin])
   for i in lumiList:
-      dataCardLHComb.write(outDir+"LHComb"+"_"+str(i)+".txt",i,writeBakPDF=writeBakPDF,statsDebugDir="statsDebug/")
+      dataCardLHComb.write(outDir+"LHComb"+"_"+str(i)+".txt",i,writeBakPDF=writeBakPDF)
   """
 
   runFile = open(outDir+"run.sh","w")

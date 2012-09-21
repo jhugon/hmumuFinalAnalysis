@@ -144,3 +144,15 @@ multipdfHist.Draw("colz")
 
 canvas.SaveAs("learn2D.png")
 
+
+############################################
+
+canvas.Clear()
+plotMmumu = mMuMu.frame()
+
+pdfMmumu.paramOn(plotMmumu)
+pdfMva.paramOn(plotMmumu)
+multipdf.paramOn(plotMmumu)
+plotMmumu.Draw()
+canvas.SaveAs("learnParams.png")
+
