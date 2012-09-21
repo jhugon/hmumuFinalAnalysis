@@ -31,7 +31,7 @@ def getIntegralAll(hist):
 ###################################################################################
 
 class MVAvMassPDFBak:
-  def __init__(self,name,hist2D,massLowRange,massHighRange,smooth=False):
+  def __init__(self,name,hist2D,massLowRange,massHighRange,smooth=False,hack=True):
     hist2DSmooth = hist2D.Clone(hist2D.GetName()+"_smoothed")
     if smooth:
       hist2DSmooth.Smooth()
@@ -46,7 +46,9 @@ class MVAvMassPDFBak:
     
     bwWidth = root.RooRealVar("bwWidth","bwWidth",0.0,30.0)
     bwmZ = root.RooRealVar("bwmZ","bwmZ",85,95)
-    pdfMmumu = root.RooBreitWigner("pdfMmumu","pdfMmumu",mMuMu,bwmZ,bwWidth)
+    #pdfMmumu = root.RooBreitWigner("pdfMmumu","pdfMmumu",mMuMu,bwmZ,bwWidth)
+    voitSigma = root.RooRealVar("voitSigma","voitSigma",0.0,80.0)
+    pdfMmumu = root.RooVoigtian("pdfMmumu","pdfMmumu",mMuMu,bwmZ,bwWidth,voitSigma)
     
     tmpAxis = hist2D.GetXaxis()
     lowBin = tmpAxis.FindBin(minMass)
@@ -124,6 +126,7 @@ class MVAvMassPDFBak:
     self.mva = mva
     self.bwWidth = bwWidth
     self.bwmZ = bwmZ
+    self.voitSigma = voitSigma
     self.pdfMmumu = pdfMmumu
     self.mMuMuHist = mMuMuHist
     self.mMuMuRooDataHist = mMuMuRooDataHist
@@ -142,6 +145,11 @@ class MVAvMassPDFBak:
     #self.gMvaWidth = gMvaWidth
     #self.gMvaMean = gMvaMean
     #self.gausPdfMva = gausPdfMva
+
+    if hack:
+      hackHist = pdf2dHist.Clone("hackHist")
+      hackHist.Scale(hist2D.Integral()/hackHist.Integral())
+      self.pdf2d = root.RooDataHist(hist2D.GetName(),hist2D.GetName(),root.RooArgList(mMuMu,mva),hackHist)
 
   def writeDebugHistsToCurrTDir(self,compareHist=None):
     canvas = root.TCanvas("canvas")
@@ -205,6 +213,7 @@ class MVAvMassPDFBak:
     tmpPave.AddText("pdfMmumu:")
     tmpPave.AddText("  BW mZ: {0:.2g} +/- {1:.2g}".format(self.bwmZ.getVal(),self.bwmZ.getError()))
     tmpPave.AddText("  BW Width: {0:.2g} +/- {1:.2g}".format(self.bwWidth.getVal(),self.bwWidth.getError()))
+    tmpPave.AddText("  Voit Sigma: {0:.2g} +/- {1:.2g}".format(self.voitSigma.getVal(),self.voitSigma.getError()))
 
     canvas.Clear()
     tmpPave.Draw()
