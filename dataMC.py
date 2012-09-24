@@ -14,7 +14,7 @@ LOGY=False
 histDirs = ["NotBlindWindow/"]
 
 histNames = {}
-histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[100.0,150.0],"rebin":4}
+histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[110.0,150.0],"rebin":4}
 
 histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV]","xlimits":[0.0,200.0],"rebin":5}
 

@@ -31,18 +31,22 @@ def getIntegralAll(hist):
 ###################################################################################
 
 class MVAvMassPDFBak:
-  def __init__(self,name,hist2D,massLowRange,massHighRange,smooth=False,hackXY=None,rooVars=None):
+  def __init__(self,name,hist2D,massLowRange,massHighRange,rooVars=None,smooth=False,hack=False):
+    if rooVars == None:
+        print("Error: MVAvMassPDFBak requires rooVars list of variables, exiting.")
+        sys.exit(1)
+
     hist2DSmooth = hist2D.Clone(hist2D.GetName()+"_smoothed")
     if smooth:
       hist2DSmooth.Smooth()
 
     maxMass = massHighRange[1]
     minMass = massLowRange[0]
-    mMuMu = root.RooRealVar("mMuMu","mMuMu",minMass,maxMass)
+    mMuMu = rooVars[0]
     mMuMu.setRange("low",massLowRange[0],massLowRange[1])
     mMuMu.setRange("high",massHighRange[0],massHighRange[1])
     mMuMu.setRange("signal",massLowRange[1],massLowRange[0])
-    mva = root.RooRealVar("mva","mva",-1,1)
+    mva = rooVars[1]
     
     bwWidth = root.RooRealVar("bwWidth","bwWidth",0.0,30.0)
     bwmZ = root.RooRealVar("bwmZ","bwmZ",85,95)
@@ -147,11 +151,11 @@ class MVAvMassPDFBak:
     #self.gausPdfMva = gausPdfMva
 
     self.hackHist = None
-    if hackXY != None:
+    if hack:
       hackHist = pdf2dHist.Clone("hackHist")
       hackHist.Scale(hist2D.Integral()/hackHist.Integral())
       self.hackHist = hackHist
-      self.pdf2d = root.RooDataHist(hist2D.GetName(),hist2D.GetName(),root.RooArgList(*hackXY),hackHist)
+      self.pdf2d = root.RooDataHist(hist2D.GetName(),hist2D.GetName(),root.RooArgList(mMuMu,mva),hackHist)
 
   def writeDebugHistsToCurrTDir(self,compareHist=None):
     canvas = root.TCanvas("canvas")
@@ -362,11 +366,11 @@ class Analysis:
 ###################################################################################
 
 class DataCardMaker:
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="mDiMu",controlRegionLow=[80,115],controlRegionHigh=[135,150]):
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="mDiMu",controlRegionLow=[80,115],controlRegionHigh=[135,150],bakShape=False):
     channels = []
     self.channelNames = copy.deepcopy(analysisNames)
     for analysis in analysisNames:
-      tmp = Analysis(directory,signalNames,backgroundNames,analysis,controlRegionLow,controlRegionHigh,histNameBase=histNameBase)
+      tmp = Analysis(directory,signalNames,backgroundNames,analysis,controlRegionLow,controlRegionHigh,histNameBase=histNameBase,bakShape=bakShape)
       channels.append(tmp)
     self.channels = channels
 
@@ -528,8 +532,8 @@ class DataCardMaker:
 ###################################################################################
 
 class ShapeDataCardMaker(DataCardMaker):
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False,controlRegionLow=[80,115],controlRegionHigh=[135,150]):
-    DataCardMaker.__init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap,histNameBase,controlRegionLow,controlRegionHigh)
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False,controlRegionLow=[80,115],controlRegionHigh=[135,150],bakShape=False):
+    DataCardMaker.__init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap,histNameBase,controlRegionLow,controlRegionHigh,bakShape=bakShape)
     if len(rebin) == 2:
       for channel in self.channels:
         for hist in channel.sigHists:
@@ -547,73 +551,107 @@ class ShapeDataCardMaker(DataCardMaker):
     self.controlRegionHigh = controlRegionHigh
     self.controlRegionLow = controlRegionLow
 
-  def MakeRFHistWrite(self,hist,thisDir,isData=False):
-    """
+  def makeRFHistWrite(self,channel,hist,thisDir,isData=False):
     thisDir.cd()
-    if self.useTH1:
-      hist.Write()
+    is2D = hist.InheritsFrom("TH2")
+    if self.useTH1 and not is2D:
+        hist.Write()
+        return
+    x = channel.x
+    y = None
+    if is2D:
+      y = channel.y
+    rfHist = None
+    rfHistPdf = None
+    if is2D:
+      rfHist = root.RooDataHist(hist.GetName(),hist.GetName(),root.RooArgList(root.RooArgSet(x,y)),hist)
+      rfHistPdf = root.RooHistPdf(hist.GetName(),hist.GetName(),root.RooArgSet(x,y),rfHist)
     else:
-      rfHist = None
-      rfHistPdf = None
-      if self.is2D:
-        rfHist = root.RooDataHist(hist.GetName(),hist.GetName(),root.RooArgList(root.RooArgSet(self.x,self.y)),hist)
-        rfHistPdf = root.RooHistPdf(hist.GetName(),hist.GetName(),root.RooArgSet(self.x,self.y),rfHist)
-      else:
-        rfHist = root.RooDataHist(hist.GetName(),hist.GetName(),root.RooArgList(root.RooArgSet(self.x)),hist)
-        rfHistPdf = root.RooHistPdf(hist.GetName(),hist.GetName(),root.RooArgSet(self.x),rfHist)
-      if isData:
-        rfHist.Write()
-      else:
-        rfHistPdf.Write()
+      rfHist = root.RooDataHist(hist.GetName(),hist.GetName(),root.RooArgList(root.RooArgSet(x)),hist)
+      rfHistPdf = root.RooHistPdf(hist.GetName(),hist.GetName(),root.RooArgSet(x),rfHist)
+    if isData:
+      rfHist.Write()
+    else:
+      rfHistPdf.Write()
     debugDir = thisDir.FindObject('debug')
     if  debugDir==None:
       debugDir = thisDir.mkdir("debug")
     debugDir.cd()
     hist.Write()
-    if self.is2D:
+    if is2D:
       xBinning = root.RooFit.Binning(hist.GetNbinsX())
       yBinning = root.RooFit.Binning(hist.GetNbinsY())
-      rfHistTH2 = rfHist.createHistogram(hist.GetName()+"rfHist2d",self.x,xBinning,root.RooFit.YVar(self.y,yBinning))
-      rfHistPdfTH2 = rfHistPdf.createHistogram(hist.GetName()+"rfHistPdf2d",self.x,xBinning,root.RooFit.YVar(self.y,yBinning))
+      rfHistTH2 = rfHist.createHistogram(hist.GetName()+"rfHist2d",x,xBinning,root.RooFit.YVar(y,yBinning))
+      rfHistPdfTH2 = rfHistPdf.createHistogram(hist.GetName()+"rfHistPdf2d",x,xBinning,root.RooFit.YVar(y,yBinning))
       rfHistTH2.Write()
       rfHistPdfTH2.Write()
     else:
-      plot = self.x.frame()
+      plot = x.frame()
       rfHist.plotOn(plot)
       rfHistPdf.plotOn(plot)
       plot.SetName(hist.GetName())
       plot.Write()
-    """
-    pass
 
-  def histFloor(self,hist,integral=False):
-    nBinsX = hist.GetNbinsX()
-    if integral:
-      integral = getIntegralAll(hist)
-      desiredIntegral = math.floor(integral)
-      hist.Scale(desiredIntegral/integral)
-    else:
-      if hist.InheritsFrom("TH2"):
-        nBinsY = hist.GetNbinsY()
-        for i in range(0,nBinsX+2):
-         for j in range(0,nBinsY+2):
-          tmp = hist.GetBinContent(i,j)
-          tmp = math.floor(tmp)
-          hist.SetBinContent(i,j,tmp)
-      else:
-       for i in range(0,nBinsX+2):
-        tmp = hist.GetBinContent(i)
-        tmp = math.floor(tmp)
-        hist.SetBinContent(i,tmp)
-
-  def write(self,outfilename,lumi,sumAllBak=True,writeBakPDF=True,smooth=False,includeSigInAllMC=False):
-    outRootFilename = re.sub(r"\.txt",r".root",outfilename)
-    print("Writing Card: {0} & {1}".format(outfilename,outRootFilename))
+  def write(self,outfilename,lumi,sumAllBak=True,includeSigInAllMC=False):
     lumi *= 1000.0
     nuisance = self.nuisance
-    outfile = open(outfilename,"w")
+
+    ### ROOT Part
+    ##########################################################
+    outRootFilename = re.sub(r"\.txt",r".root",outfilename)
     outRootFile = root.TFile(outRootFilename, "RECREATE")
     outRootFile.cd()
+
+    for channel,channelName in zip(self.channels,self.channelNames):
+        tmpDir = outRootFile.mkdir(channelName)
+        tmpDir.cd()
+        sumAllMCHist = None
+        sumAllSigMCHist = None
+        sumAllBakMCHist = None
+        for sigName in self.sigNames:
+          tmpHist = channel.getSigHist(sigName).Clone(sigName)
+          tmpHist.Scale(lumi)
+          self.makeRFHistWrite(channel,tmpHist,tmpDir)
+          
+          if includeSigInAllMC:
+            if sumAllMCHist == None:
+              sumAllMCHist = tmpHist.Clone("data_obs")
+            else:
+              sumAllMCHist.Add(tmpHist)
+          if sumAllSigMCHist == None:
+            sumAllSigMCHist = tmpHist.Clone("sig")
+          else:
+            sumAllSigMCHist.Add(tmpHist)
+  
+        if sumAllBak:
+          sumAllBakMCHist = channel.getBakHistTotal().Clone("bak")
+          sumAllBakMCHist.Scale(lumi)
+
+          #self.makeRFHistWrite(channel,sumAllBakMCHist,tmpDir) Done Below
+
+          if sumAllMCHist == None:
+            sumAllMCHist = sumAllBakMCHist.Clone("data_obs")
+          else:
+            sumAllMCHist.Add(sumAllBakMCHist)
+        else:
+          for bakName in self.bakNames:
+            tmpHist = channel.getBakHist(bakName).Clone(bakName)
+            tmpHist.Scale(lumi)
+            self.makeRFHistWrite(channel,tmpHist,tmpDir)
+            
+            if sumAllMCHist == None:
+                sumAllMCHist = tmpHist.Clone("data_obs")
+            else:
+                sumAllMCHist.Add(tmpHist)
+        self.makeRFHistWrite(channel,sumAllMCHist,tmpDir)
+        self.makeRFHistWrite(channel,sumAllSigMCHist,tmpDir)
+        self.makeRFHistWrite(channel,sumAllBakMCHist,tmpDir)
+
+    ### Text Part
+    ##########################################################
+
+    print("Writing Card: {0} & {1}".format(outfilename,outRootFilename))
+    outfile = open(outfilename,"w")
     outfile.write("# Hmumu shape combine datacard produced by makeTables.py\n")
     now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
     outfile.write("# {0}\n".format(now))
@@ -661,10 +699,6 @@ class ShapeDataCardMaker(DataCardMaker):
     iParam = 0
     for channel,channelName in zip(self.channels,self.channelNames):
         iProc = -len(channel.sigNames)+1
-        sumAllMCHist = None
-        tmpDir = outRootFile.mkdir(channelName)
-        tmpDir.cd()
-        sumAllSigMCHist = None
         for sigName in self.sigNames:
           binFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
           binFormatList.append(channelName)
@@ -681,33 +715,11 @@ class ShapeDataCardMaker(DataCardMaker):
             decimals = ".4e"
           rateFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+decimals+"} "
           rateFormatList.append(expNum)
-
-          tmpHist = channel.getSigHist(sigName).Clone(sigName)
-          tmpHist.Scale(lumi)
-          self.MakeRFHistWrite(tmpHist,tmpDir)
-          
-          if includeSigInAllMC:
-            if sumAllMCHist == None:
-              sumAllMCHist = tmpHist.Clone("data_obs")
-            else:
-              sumAllMCHist.Add(tmpHist)
-          if sumAllMCHist == None:
-            sumAllSigMCHist = tmpHist.Clone("sig")
-          else:
-            sumAllSigMCHist.Add(tmpHist)
   
           iParam += 1
           iProc += 1
 
         if sumAllBak:
-          sumAllBakMCHist = None
-          for bakName in self.bakNames:
-            tmpHist = channel.getBakHist(bakName).Clone(bakName)
-            tmpHist.Scale(lumi)
-            if sumAllBakMCHist == None:
-              sumAllBakMCHist = tmpHist.Clone("bak")
-            else:
-              sumAllBakMCHist.Add(tmpHist)
 
           binFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
           binFormatList.append(channelName)
@@ -724,33 +736,6 @@ class ShapeDataCardMaker(DataCardMaker):
             decimals = ".4e"
           rateFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+decimals+"} "
           rateFormatList.append(expNum)
-
-          if writeBakPDF:
-            c1 = root.TCanvas("c1")
-            bakPDFMaker = MVAvMassPDFBak("pdfHists_"+channelName,
-                sumAllBakMCHist,self.controlRegionLow,
-                self.controlRegionHigh,smooth=smooth,
-                hackXY=[self.x,self.y]
-                )
-            bakPDFMaker.pdf2d.SetName("bak")
-            tmpDir.cd()
-            bakPDFMaker.pdf2d.Write()
-            tmpdebugDir = tmpDir.FindObject('debug')
-            if tmpdebugDir==None:
-              tmpdebugDir = tmpDir.mkdir("debug")
-            tmpdebugDir.cd()
-            bakPDFMaker.writeDebugHistsToCurrTDir(compareHist=sumAllSigMCHist)
-            tmpDir.cd()
-
-            outfile.write("# Background Debug {0}: Breit-Wigner mZ    = {1:.4g}\n".format(channelName,bakPDFMaker.bwmZ.getVal()))
-            outfile.write("# Background Debug {0}: Breit-Wigner width = {1:.4g}\n".format(channelName,bakPDFMaker.bwWidth.getVal()))
-          else:
-            self.MakeRFHistWrite(sumAllBakMCHist,tmpDir)
-
-          if sumAllMCHist == None:
-            sumAllMCHist = sumAllBakMCHist.Clone("data_obs")
-          else:
-            sumAllMCHist.Add(sumAllBakMCHist)
       
           iParam += 1
           iProc += 1
@@ -771,22 +756,9 @@ class ShapeDataCardMaker(DataCardMaker):
               decimals = ".4e"
             rateFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+decimals+"} "
             rateFormatList.append(expNum)
-  
-            tmpHist = channel.getBakHist(bakName).Clone(bakName)
-            tmpHist.Scale(lumi)
-            self.MakeRFHistWrite(tmpHist,tmpDir)
-            if sumAllMCHist == None:
-              sumAllMCHist = tmpHist.Clone("data_obs")
-            else:
-              sumAllMCHist.Add(tmpHist)
     
             iParam += 1
             iProc += 1
-        self.histFloor(sumAllMCHist,integral=True)
-        print("hist Observed generic integral: {}".format(sumAllMCHist.Integral()))
-        print("hist Observed include all integral: {}".format(getIntegralAll(sumAllMCHist)))
-        self.MakeRFHistWrite(sumAllMCHist,tmpDir,isData=True)
-        outRootFile.cd()
     binFormatString+= "\n"
     proc1FormatString+= "\n"
     proc2FormatString+= "\n"
@@ -858,18 +830,11 @@ if __name__ == "__main__":
 
   MassRebin = 4 # 4 Bins per GeV originally
   MVARebin = 200 #200 works, but is huge! 2000 bins originally
-  #writeBakPDF = True
 
   for ana in analyses2D:
     dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[MassRebin,MVARebin])
     for i in lumiList:
-      dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i,writeBakPDF=True)
-
-  ## Do with just histograms to compare
-  for ana in analyses2D:
-    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[MassRebin,MVARebin])
-    for i in lumiList:
-      dataCardMassShape.write(outDir+"TH"+ana+"_"+str(i)+".txt",i,writeBakPDF=False)
+      dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i)
 
   """
   dataCardBDTComb = ShapeDataCardMaker(directory,["BDTHistMuonOnlyVMass","BDTHistVBFVMass"],signalNames,backgroundNames,rebin=[MassRebin,MVARebin])
