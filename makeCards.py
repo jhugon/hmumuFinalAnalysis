@@ -31,7 +31,7 @@ def getIntegralAll(hist):
 ###################################################################################
 
 class MVAvMassPDFBak:
-  def __init__(self,name,hist2D,massLowRange,massHighRange,smooth=False,hack=True):
+  def __init__(self,name,hist2D,massLowRange,massHighRange,smooth=False,hackXY=None):
     hist2DSmooth = hist2D.Clone(hist2D.GetName()+"_smoothed")
     if smooth:
       hist2DSmooth.Smooth()
@@ -146,10 +146,12 @@ class MVAvMassPDFBak:
     #self.gMvaMean = gMvaMean
     #self.gausPdfMva = gausPdfMva
 
-    if hack:
+    self.hackHist = None
+    if hackXY != None:
       hackHist = pdf2dHist.Clone("hackHist")
       hackHist.Scale(hist2D.Integral()/hackHist.Integral())
-      self.pdf2d = root.RooDataHist(hist2D.GetName(),hist2D.GetName(),root.RooArgList(mMuMu,mva),hackHist)
+      self.hackHist = hackHist
+      self.pdf2d = root.RooDataHist(hist2D.GetName(),hist2D.GetName(),root.RooArgList(*hackXY),hackHist)
 
   def writeDebugHistsToCurrTDir(self,compareHist=None):
     canvas = root.TCanvas("canvas")
@@ -229,7 +231,10 @@ class MVAvMassPDFBak:
     self.pdfMmumu.Write()
     self.pdfMva.Write()
     self.pdf2d.Write()
-    
+    if self.hackHist != None:
+        self.hackHist.SetName("hackHist")
+        self.hackHist.Write()
+
     #canvas.SetLogy(0)
 
 
@@ -700,8 +705,11 @@ class ShapeDataCardMaker(DataCardMaker):
 
           if writeBakPDF:
             c1 = root.TCanvas("c1")
-            bakPDFMaker = MVAvMassPDFBak("pdfHists_"+channelName,sumAllBakMCHist,
-                                self.controlRegionLow, self.controlRegionHigh,smooth=smooth)
+            bakPDFMaker = MVAvMassPDFBak("pdfHists_"+channelName,
+                sumAllBakMCHist,self.controlRegionLow,
+                self.controlRegionHigh,smooth=smooth,
+                hackXY=[self.x,self.y]
+                )
             bakPDFMaker.pdf2d.SetName("bak")
             tmpDir.cd()
             bakPDFMaker.pdf2d.Write()
@@ -712,8 +720,8 @@ class ShapeDataCardMaker(DataCardMaker):
             bakPDFMaker.writeDebugHistsToCurrTDir(compareHist=sumAllSigMCHist)
             tmpDir.cd()
 
-            outfile.write("# Background Debug: Breit-Wigner mZ    = {0:.4g}\n".format(bakPDFMaker.bwmZ.getVal()))
-            outfile.write("# Background Debug: Breit-Wigner width = {0:.4g}\n".format(bakPDFMaker.bwWidth.getVal()))
+            outfile.write("# Background Debug {0}: Breit-Wigner mZ    = {1:.4g}\n".format(channelName,bakPDFMaker.bwmZ.getVal()))
+            outfile.write("# Background Debug {0}: Breit-Wigner width = {1:.4g}\n".format(channelName,bakPDFMaker.bwWidth.getVal()))
           else:
             self.MakeRFHistWrite(sumAllBakMCHist,tmpDir)
 

@@ -986,7 +986,7 @@ def saveAs(canvas,name):
   canvas.SaveAs(name+".png")
   canvas.SaveAs(name+".pdf")
   #canvas.SaveAs(name+".eps")
-  #canvas.SaveAs(name+".root")
+  canvas.SaveAs(name+".root")
 
 def setLegPos(leg,legPos):
   leg.SetX1NDC(legPos[0])

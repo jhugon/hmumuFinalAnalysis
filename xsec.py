@@ -49,7 +49,7 @@ signalList = [
 
 dataList = [
 "SingleMuRun2012Av1",
-"SingleMuRun2012Bv1",
+"SingleMuRun2012Bv1"
 #"SingleMuRun2012Cv1",
 #"SingleMuRun2012Cv2"
 
