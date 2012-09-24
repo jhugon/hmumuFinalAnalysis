@@ -639,6 +639,7 @@ class DataMCStack:
       self.mcSumHist.SetLineColor(856)
       self.mcSumHist.SetMarkerColor(856)
       self.mcSumHist.SetFillStyle(1001)
+      self.mcSumHist.SetTitle("")
       self.mcSumHist.GetXaxis().SetTitle("")
       self.mcSumHist.GetXaxis().SetLabelSize(0)
       self.mcSumHist.GetYaxis().SetTitle(ytitle)
@@ -653,7 +654,7 @@ class DataMCStack:
         self.mcSumHist.GetXaxis().SetRangeUser(*xlimits)
       self.mcSumHist.Draw("histo b")
     for sigHist in signalsNoStack:
-      sigHist.Draw("same")
+      sigHist.Draw("histo same")
     dataHist.Draw("pe same")
 
     pad1.RedrawAxis() # Updates Axis Lines
