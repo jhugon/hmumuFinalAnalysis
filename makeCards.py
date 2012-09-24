@@ -28,7 +28,34 @@ def getIntegralAll(hist):
   else:
     return -1
 
+def getRooVars(directory,signalNames,histNameBase,analysis):
+    hist = None
+    is2D = False
+    for name in signalNames:
+      tmpF = root.TFile(directory+name+".root")
+      hist = tmpF.Get(histNameBase+analysis)
+      break
+      self.sigFiles.append(tmpF)
+      self.sigHistsRaw.append(tmpH)
+    if hist.InheritsFrom("TH2"):
+      is2D = True
+
+    x = root.RooRealVar('x','x',
+                    hist.GetXaxis().GetXmin(),
+                    hist.GetXaxis().GetXmax()
+                    )
+    if is2D:
+      y = root.RooRealVar('y','y',
+                    hist.GetYaxis().GetXmin(),
+                    hist.GetYaxis().GetXmax()
+                    )
+    if is2D:
+      return [x,y]
+    else:
+      return [x]
+
 ###################################################################################
+
 
 class MVAvMassPDFBak:
   def __init__(self,name,hist2D,massLowRange,massHighRange,rooVars=None,smooth=False,hack=False):
@@ -244,12 +271,17 @@ class MVAvMassPDFBak:
 
 ###################################################################################
 
+
 class Analysis:
-  def __init__(self,directory,signalNames,backgroundNames,analysis,controlRegionLow,controlRegionHigh,histNameBase="mDiMu",bakShape=False):
+  def __init__(self,directory,signalNames,backgroundNames,analysis,x,y,controlRegionLow,controlRegionHigh,histNameBase="mDiMu",bakShape=False):
     self.sigNames = signalNames
     self.bakNames = backgroundNames
 
     self.is2D = False
+    if y != None:
+      self.is2D = True
+    self.x = x
+    self.y = y
 
     self.sigFiles = []
     self.sigHistsRaw = []
@@ -308,15 +340,6 @@ class Analysis:
       else:
         self.bakHistTotal.Add(h)
 
-    self.x = root.RooRealVar('x','x',
-                    self.bakHistTotal.GetXaxis().GetXmin(),
-                    self.bakHistTotal.GetXaxis().GetXmax()
-                    )
-    if self.is2D:
-      self.y = root.RooRealVar('y','y',
-                    self.bakHistTotal.GetYaxis().GetXmin(),
-                    self.bakHistTotal.GetYaxis().GetXmax()
-                    )
     if bakShape and self.is2D:
       bakShapeMkr = MVAvMassPDFBak("pdfHists_"+analysis,
                                 self.bakHistTotal,
@@ -369,8 +392,21 @@ class DataCardMaker:
   def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="mDiMu",controlRegionLow=[80,115],controlRegionHigh=[135,150],bakShape=False):
     channels = []
     self.channelNames = copy.deepcopy(analysisNames)
+    self.is2D = False
+
+    x = None
+    y = None
     for analysis in analysisNames:
-      tmp = Analysis(directory,signalNames,backgroundNames,analysis,controlRegionLow,controlRegionHigh,histNameBase=histNameBase,bakShape=bakShape)
+      tmpList = getRooVars(directory,signalNames,histNameBase,analysis)
+      x = tmpList[0]
+      if len(tmpList)==2:
+        self.is2D = True
+        y = tmpList[1]
+    self.x = x
+    self.y = y
+
+    for analysis in analysisNames:
+      tmp = Analysis(directory,signalNames,backgroundNames,analysis,x,y,controlRegionLow,controlRegionHigh,histNameBase=histNameBase,bakShape=bakShape)
       channels.append(tmp)
     self.channels = channels
 
