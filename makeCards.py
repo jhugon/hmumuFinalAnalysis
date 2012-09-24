@@ -31,7 +31,7 @@ def getIntegralAll(hist):
 ###################################################################################
 
 class MVAvMassPDFBak:
-  def __init__(self,name,hist2D,massLowRange,massHighRange,smooth=False,hackXY=None):
+  def __init__(self,name,hist2D,massLowRange,massHighRange,smooth=False,hackXY=None,rooVars=None):
     hist2DSmooth = hist2D.Clone(hist2D.GetName()+"_smoothed")
     if smooth:
       hist2DSmooth.Smooth()
@@ -241,9 +241,11 @@ class MVAvMassPDFBak:
 ###################################################################################
 
 class Analysis:
-  def __init__(self,directory,signalNames,backgroundNames,analysis,histNameBase="mDiMu"):
+  def __init__(self,directory,signalNames,backgroundNames,analysis,controlRegionLow,controlRegionHigh,histNameBase="mDiMu",bakShape=False):
     self.sigNames = signalNames
     self.bakNames = backgroundNames
+
+    self.is2D = False
 
     self.sigFiles = []
     self.sigHistsRaw = []
@@ -252,6 +254,8 @@ class Analysis:
       tmpH = tmpF.Get(histNameBase+analysis)
       self.sigFiles.append(tmpF)
       self.sigHistsRaw.append(tmpH)
+      if tmpH.InheritsFrom("TH2"):
+        self.is2D = True
 
     self.bakFiles = []
     self.bakHistsRaw = []
@@ -284,6 +288,7 @@ class Analysis:
     self.xsecBakList = []
     self.effBakList = []
     self.bakHists = []
+    self.bakHistTotal = None
     for h,name in zip(self.bakHistsRaw,backgroundNames):
       #counts = h.Integral(lowBin,highBin)
       counts = h.Integral()
@@ -294,6 +299,28 @@ class Analysis:
       self.effBakList.append(eff)
       h.Scale(xsec[name]/nEventsMap[name])
       self.bakHists.append(h)
+      if self.bakHistTotal == None:
+        self.bakHistTotal = h.Clone("bak")
+      else:
+        self.bakHistTotal.Add(h)
+
+    self.x = root.RooRealVar('x','x',
+                    self.bakHistTotal.GetXaxis().GetXmin(),
+                    self.bakHistTotal.GetXaxis().GetXmax()
+                    )
+    if self.is2D:
+      self.y = root.RooRealVar('y','y',
+                    self.bakHistTotal.GetYaxis().GetXmin(),
+                    self.bakHistTotal.GetYaxis().GetXmax()
+                    )
+    if bakShape and self.is2D:
+      bakShapeMkr = MVAvMassPDFBak("pdfHists_"+analysis,
+                                self.bakHistTotal,
+                                controlRegionLow,controlRegionHigh,
+                                rooVars = [self.x,self.y]
+                                )
+      self.bakHistTotal = bakShapeMkr.pdf2d
+      self.xsecBakTotal = self.bakHistTotal.GetIntegral()
 
   def getSigEff(self,name):
     result = -1.0
@@ -329,15 +356,17 @@ class Analysis:
         i = self.bakNames.index(bakName)
         result = self.bakHists[i]
     return result
+  def getBakHistTotal(self):
+    return self.bakHistTotal
 
 ###################################################################################
 
 class DataCardMaker:
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="mDiMu"):
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="mDiMu",controlRegionLow=[80,115],controlRegionHigh=[135,150]):
     channels = []
     self.channelNames = copy.deepcopy(analysisNames)
     for analysis in analysisNames:
-      tmp = Analysis(directory,signalNames,backgroundNames,analysis,histNameBase=histNameBase)
+      tmp = Analysis(directory,signalNames,backgroundNames,analysis,controlRegionLow,controlRegionHigh,histNameBase=histNameBase)
       channels.append(tmp)
     self.channels = channels
 
@@ -500,7 +529,7 @@ class DataCardMaker:
 
 class ShapeDataCardMaker(DataCardMaker):
   def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False,controlRegionLow=[80,115],controlRegionHigh=[135,150]):
-    DataCardMaker.__init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap,histNameBase)
+    DataCardMaker.__init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap,histNameBase,controlRegionLow,controlRegionHigh)
     if len(rebin) == 2:
       for channel in self.channels:
         for hist in channel.sigHists:
@@ -514,19 +543,12 @@ class ShapeDataCardMaker(DataCardMaker):
         for hist in channel.bakHists:
           hist.Rebin(*rebin)
 
-    self.is2D = False
     self.useTH1 = useTH1
     self.controlRegionHigh = controlRegionHigh
     self.controlRegionLow = controlRegionLow
 
-    for channel in self.channels:
-      for hist in channel.sigHists:
-        self.x = root.RooRealVar('x','x',hist.GetXaxis().GetXmin(),hist.GetXaxis().GetXmax())
-        if hist.InheritsFrom("TH2"):
-          self.y = root.RooRealVar('y','y',hist.GetYaxis().GetXmin(),hist.GetYaxis().GetXmax())
-          self.is2D = True
-
   def MakeRFHistWrite(self,hist,thisDir,isData=False):
+    """
     thisDir.cd()
     if self.useTH1:
       hist.Write()
@@ -561,6 +583,8 @@ class ShapeDataCardMaker(DataCardMaker):
       rfHistPdf.plotOn(plot)
       plot.SetName(hist.GetName())
       plot.Write()
+    """
+    pass
 
   def histFloor(self,hist,integral=False):
     nBinsX = hist.GetNbinsX()
@@ -583,8 +607,6 @@ class ShapeDataCardMaker(DataCardMaker):
         hist.SetBinContent(i,tmp)
 
   def write(self,outfilename,lumi,sumAllBak=True,writeBakPDF=True,smooth=False,includeSigInAllMC=False):
-    if not self.is2D:
-      writeBakPDF=False
     outRootFilename = re.sub(r"\.txt",r".root",outfilename)
     print("Writing Card: {0} & {1}".format(outfilename,outRootFilename))
     lumi *= 1000.0
@@ -826,11 +848,13 @@ if __name__ == "__main__":
   directory = "input/"
   outDir = "statsCards/"
   analyses = ["BDTHistMuonOnly","BDTHistVBF","mDiMu"]
-  analyses2D = ["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass","BDTHistMuonOnlyVMass","BDTHistVBFVMass"]
+  #analyses2D = ["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass","BDTHistMuonOnlyVMass","BDTHistVBFVMass"]
+  analyses2D = ["likelihoodHistMuonOnlyVMass","BDTHistVBFVMass"]
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar","WZ","ZZ"]
   #lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
-  lumiList = [10,20,30,100]
+  #lumiList = [10,20,30,100]
+  lumiList = [20]
 
   MassRebin = 4 # 4 Bins per GeV originally
   MVARebin = 200 #200 works, but is huge! 2000 bins originally
