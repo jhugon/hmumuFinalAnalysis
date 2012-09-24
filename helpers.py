@@ -527,7 +527,7 @@ def makeWeightHist(f1,canvas,leg):
   leg.Draw("same")
 
 class DataMCStack:
-  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="Events", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[]):
+  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="Events", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=False):
     nBinsX = dataHist.GetNbinsX()
     self.nBinsX = nBinsX
     self.dataHist = dataHist
@@ -558,6 +558,10 @@ class DataMCStack:
 
     if showOverflow:
         showHistOverflow(dataHist)
+
+    # Get chi^2 Prob Data/MC
+    self.chi2Prob = dataHist.Chi2Test(self.mcSumHist,"UW")
+    self.KSProb = dataHist.KolmogorovTest(self.mcSumHist)
   
     # Make Pull Hist
     self.pullHist = dataHist.Clone("pullHist"+dataHist.GetName())
@@ -565,7 +569,7 @@ class DataMCStack:
     for i in range(1,self.pullHist.GetNbinsX()):
       nData = dataHist.GetBinContent(i)
       nMC = self.mcSumHist.GetBinContent(i)
-      error = dataHist.GetBinContent(i)
+      error = dataHist.GetBinError(i)
       pull = 0.0
       if error != 0.0:
         pull = (nData -nMC)/error
@@ -677,6 +681,16 @@ class DataMCStack:
     self.pullHist.SetFillColor(856)
     self.pullHist.SetFillStyle(1001)
     self.pullHist.Draw("histo b")
+
+    if showCompatabilityTests:
+      self.problatex = root.TLatex()
+      self.problatex.SetNDC()
+      self.problatex.SetTextFont(root.gStyle.GetLabelFont())
+      self.problatex.SetTextSize(self.pullHist.GetYaxis().GetLabelSize())
+      self.problatex.SetTextAlign(12)
+      self.problatex.DrawLatex(0.18,0.50,"#chi^{{2}}  Prob: {0:.3g}".format(self.chi2Prob))
+      self.problatex.DrawLatex(0.18,0.41,"KS Prob: {0:.3g}".format(self.KSProb))
+
     pad2.Update()
     pad2.GetFrame().DrawClone()
     pad2.RedrawAxis() # Updates Axis Lines

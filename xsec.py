@@ -60,7 +60,7 @@ dataList = [
 ]
 
 legendEntries = {}
-legendEntries["DYJetsToLL"] = "Z+Jets"
+legendEntries["DYJetsToLL"] = "DY+Jets"
 legendEntries["ttbar"] = "t#bar{t}"
 legendEntries["vbfHmumu125"] = "VBF H->#mu#mu"
 legendEntries["ggHmumu125"] = "ggH->#mu#mu"
@@ -68,15 +68,15 @@ legendEntries["zHmumu125"] = "ZH, H->#mu#mu"
 legendEntries["wHmumu125"] = "WH, H->#mu#mu"
 legendEntries["ttbar"] = "t#bar{t}"
 legendEntries["DYToTauTau"] = "DY->#tau#tau"
-legendEntries["WZ"] = "WZ"
-legendEntries["ZZ"] = "ZZ"
+legendEntries["WZ"] = "VV"
+legendEntries["ZZ"] = "VV"
 
 colors = {}
 colors["DYJetsToLL"] = root.kOrange
 colors["vbfHmumu125"] = root.kBlue
 colors["ggHmumu125"] = root.kRed
 colors["zHmumu125"] = root.kGreen+1
-colors["wHmumu125"] = root.kGreen+1
+colors["wHmumu125"] = root.kOrange+7
 colors["ttbar"] = root.kGreen-1
 colors["DYToTauTau"] = root.kOrange+3 #brown
 colors["WZ"] = root.kPink+9
