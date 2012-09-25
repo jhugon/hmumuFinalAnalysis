@@ -40,12 +40,12 @@ def getRooVars(directory,signalNames,histNameBase,analysis):
     if hist.InheritsFrom("TH2"):
       is2D = True
 
-    x = root.RooRealVar('x','x',
+    x = root.RooRealVar('mMuMu','mMuMu',
                     hist.GetXaxis().GetXmin(),
                     hist.GetXaxis().GetXmax()
                     )
     if is2D:
-      y = root.RooRealVar('y','y',
+      y = root.RooRealVar('mva','mva',
                     hist.GetYaxis().GetXmin(),
                     hist.GetYaxis().GetXmax()
                     )
@@ -58,7 +58,7 @@ def getRooVars(directory,signalNames,histNameBase,analysis):
 
 
 class MVAvMassPDFBak:
-  def __init__(self,name,hist2D,massLowRange,massHighRange,rooVars=None,smooth=False,hack=False):
+  def __init__(self,name,hist2D,massLowRange,massHighRange,rooVars=None,smooth=False,hack=True):
     if rooVars == None:
         print("Error: MVAvMassPDFBak requires rooVars list of variables, exiting.")
         sys.exit(1)
@@ -346,7 +346,7 @@ class Analysis:
                                 controlRegionLow,controlRegionHigh,
                                 rooVars = [self.x,self.y]
                                 )
-      self.bakHistTotal = bakShapeMkr.pdf2d
+      self.bakHistTotal = bakShapeMkr.hackHist
       self.xsecBakTotal = self.bakHistTotal.GetIntegral()
 
   def getSigEff(self,name):
@@ -587,7 +587,7 @@ class ShapeDataCardMaker(DataCardMaker):
     self.controlRegionHigh = controlRegionHigh
     self.controlRegionLow = controlRegionLow
 
-  def makeRFHistWrite(self,channel,hist,thisDir,isData=False):
+  def makeRFHistWrite(self,channel,hist,thisDir,isData=True):
     thisDir.cd()
     is2D = hist.InheritsFrom("TH2")
     if self.useTH1 and not is2D:
@@ -638,6 +638,8 @@ class ShapeDataCardMaker(DataCardMaker):
     outRootFile = root.TFile(outRootFilename, "RECREATE")
     outRootFile.cd()
 
+    rootDebugString = ""
+
     for channel,channelName in zip(self.channels,self.channelNames):
         tmpDir = outRootFile.mkdir(channelName)
         tmpDir.cd()
@@ -679,9 +681,11 @@ class ShapeDataCardMaker(DataCardMaker):
                 sumAllMCHist = tmpHist.Clone("data_obs")
             else:
                 sumAllMCHist.Add(tmpHist)
-        self.makeRFHistWrite(channel,sumAllMCHist,tmpDir)
-        self.makeRFHistWrite(channel,sumAllSigMCHist,tmpDir)
-        self.makeRFHistWrite(channel,sumAllBakMCHist,tmpDir)
+        self.makeRFHistWrite(channel,sumAllMCHist,tmpDir) #Pretend Data
+        self.makeRFHistWrite(channel,sumAllSigMCHist,tmpDir) #Pretend Signal
+        self.makeRFHistWrite(channel,sumAllBakMCHist,tmpDir) #Background Sum
+
+    outRootFile.Close()
 
     ### Text Part
     ##########################################################
@@ -715,7 +719,7 @@ class ShapeDataCardMaker(DataCardMaker):
       if includeSigInAllMC:
         observedNumber = int((channel.getSigXSecTotal()+channel.getBakXSecTotal())*lumi)
       observationFormatList.append(observedNumber)
-      print("text Observed {}: {}".format(channelName,observedNumber))
+      #print("text Observed {}: {}".format(channelName,observedNumber))
       iParam += 1
     binFormatString+= "\n"
     observationFormatString+= "\n"
@@ -839,9 +843,19 @@ class ShapeDataCardMaker(DataCardMaker):
       #print formatString
       #print formatList
       outfile.write(formatString.format(*formatList))
-    outfile.close()
 
-    outRootFile.Close()
+    #Debugging
+    outfile.write("#################################\n")
+    for channel,channelName in zip(self.channels,self.channelNames):
+        outfile.write("#\n")
+        outfile.write("#info: channel {0}: \n".format(channelName))
+        outfile.write("#  x var name: {0} \n".format(channel.x.GetName()))
+        outfile.write("#  x var range: [{0:.3g},{1:.3g}] \n".format(channel.x.getMin(),channel.x.getMax()))
+        if channel.is2D:
+          outfile.write("#  y var name: {0} \n".format(channel.y.GetName()))
+          outfile.write("#  y var range: [{0:.3g},{1:.3g}] \n".format(channel.y.getMin(),channel.y.getMax()))
+    outfile.write(rootDebugString)
+    outfile.close()
 
 ###################################################################################
 ###################################################################################
@@ -858,8 +872,10 @@ if __name__ == "__main__":
   analyses = ["BDTHistMuonOnly","BDTHistVBF","mDiMu"]
   #analyses2D = ["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass","BDTHistMuonOnlyVMass","BDTHistVBFVMass"]
   analyses2D = ["likelihoodHistMuonOnlyVMass","BDTHistVBFVMass"]
-  signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
-  backgroundNames= ["DYJetsToLL","ttbar","WZ","ZZ"]
+  #signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
+  signalNames=["ggHmumu125"]
+  #backgroundNames= ["DYJetsToLL","ttbar","WZ","ZZ"]
+  backgroundNames= ["DYJetsToLL"]
   #lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
   #lumiList = [10,20,30,100]
   lumiList = [20]
@@ -868,9 +884,14 @@ if __name__ == "__main__":
   MVARebin = 200 #200 works, but is huge! 2000 bins originally
 
   for ana in analyses2D:
-    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[MassRebin,MVARebin])
+    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[MassRebin,MVARebin],bakShape=True)
     for i in lumiList:
       dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i)
+
+  for ana in analyses2D:
+    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[MassRebin,MVARebin],bakShape=False)
+    for i in lumiList:
+      dataCardMassShape.write(outDir+"TH"+ana+"_"+str(i)+".txt",i)
 
   """
   dataCardBDTComb = ShapeDataCardMaker(directory,["BDTHistMuonOnlyVMass","BDTHistVBFVMass"],signalNames,backgroundNames,rebin=[MassRebin,MVARebin])
