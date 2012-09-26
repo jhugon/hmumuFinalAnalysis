@@ -7,11 +7,16 @@ import datetime
 import sys
 import os.path
 import copy
+import multiprocessing
+import time
+myThread = multiprocessing.Process
 
 from ROOT import gSystem
 gSystem.Load('libRooFit')
 
 #root.gErrorIgnoreLevel = root.kWarning
+
+NPROCS = 2
 
 from xsec import *
 
@@ -921,6 +926,27 @@ class ShapeDataCardMaker(DataCardMaker):
     outfile.write(rootDebugString)
     outfile.close()
 
+class ThreadedCardMaker(myThread):
+  def __init__(self,*args,**dictArgs):
+    myThread.__init__(self)
+    self.writeArgs = (dictArgs["outfilename"],dictArgs["lumi"])
+    self.writeArgsDict = {}
+    if dictArgs.has_key("sumAllBak"):
+        self.writeArgsDict["sumAllBak"] = dictArgs["sumAllBak"]
+    if dictArgs.has_key("includeSigInAllMC"):
+        self.writeArgsDict["includeSigInAllMC"] = dictArgs["includeSigInAllMC"]
+    self.args = args
+    dictArgs.pop("sumAllBak",None)
+    dictArgs.pop("includeSigInallMC",None)
+    dictArgs.pop("outfilename",None)
+    dictArgs.pop("lumi",None)
+    self.dictArgs = dictArgs
+    self.started = False
+  def run(self):
+    self.started = True
+    dataCardMassShape = ShapeDataCardMaker(*(self.args),**(self.dictArgs))
+    dataCardMassShape.write(*(self.writeArgs),**(self.writeArgsDict))
+
 ###################################################################################
 ###################################################################################
 ###################################################################################
@@ -939,24 +965,53 @@ if __name__ == "__main__":
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar","WZ","ZZ"]
   #lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
-  #lumiList = [10,20,30,100]
-  lumiList = [20]
+  lumiList = [10,20,30,100]
 
   MassRebin = 4 # 4 Bins per GeV originally
   MVARebin = 200 #200 works, but is huge! 2000 bins originally
 
+  print("Creating Threads...")
+  threads = []
   for ana in analyses2D:
-    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[MassRebin,MVARebin],bakShape=True)
     for i in lumiList:
-      dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i)
+      tmp = ThreadedCardMaker(
+        #__init__ args:
+        directory,[ana],signalNames,backgroundNames,rebin=[MassRebin,MVARebin],bakShape=True,
+        #write args:
+        outfilename=outDir+ana+"_"+str(i)+".txt",lumi=i
+        )
+      threads.append(tmp)
 
-  """
-  for ana in analyses2D:
-    dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[MassRebin,MVARebin],bakShape=False)
-    for i in lumiList:
-      dataCardMassShape.write(outDir+"TH"+ana+"_"+str(i)+".txt",i)
-  """
+  nThreads = len(threads)
+  print("nProcs: {0}".format(NPROCS))
+  print("nCards: {0}".format(nThreads))
 
+  threadsNotStarted = copy.copy(threads)
+  threadsRunning = []
+  threadsDone = []
+  while True:
+    iThread = 0
+    while iThread < len(threadsRunning):
+        alive = threadsRunning[iThread].is_alive()
+        if not alive:
+          tmp = threadsRunning.pop(iThread)
+          threadsDone.append(tmp)
+        else:
+          iThread += 1
+
+    nRunning = len(threadsRunning)
+    if nRunning < NPROCS and len(threadsNotStarted) > 0:
+        tmp = threadsNotStarted.pop()
+        tmp.start()
+        threadsRunning.append(tmp)
+
+    nRunning = len(threadsRunning)
+    nNotStarted = len(threadsNotStarted)
+    if nRunning == 0 and nNotStarted == 0:
+        break
+
+    time.sleep(0.1)
+      
   """
   dataCardBDTComb = ShapeDataCardMaker(directory,["BDTHistMuonOnlyVMass","BDTHistVBFVMass"],signalNames,backgroundNames,rebin=[MassRebin,MVARebin])
   for i in lumiList:
