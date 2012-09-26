@@ -399,6 +399,26 @@ class Analysis:
       print("justin bakShapeMkr.hackhist: {0}\n\n".format(bakShapeMkr.hackHist))
       self.xsecBakTotal = self.bakHistTotal.Integral()
 
+  def rebin(self,rb):
+    if type(rb) != list:
+      print("Error: Analysis.rebin: argument must be len 1 or 2 list!!  Exiting.")
+      sys.exit(1)
+    if len(rb) == 2:
+        for hist in self.sigHists:
+          hist.Rebin2D(*rb)
+        for hist in self.bakHists:
+          hist.Rebin2D(*rb)
+        self.bakHistTotal.Rebin2D(*rb)
+    elif len(rb) == 1:
+        for hist in self.sigHists:
+          hist.Rebin(*rb)
+        for hist in self.bakHists:
+          hist.Rebin(*rb)
+        self.bakHistTotal.Rebin2D(*rb)
+    else:
+      print("Error: Analysis.rebin: argument must be len 1 or 2 list!!  Exiting.")
+      sys.exit(1)
+
   def getSigEff(self,name):
     result = -1.0
     if self.sigNames.count(name)>0:
@@ -635,18 +655,8 @@ class DataCardMaker:
 class ShapeDataCardMaker(DataCardMaker):
   def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False,controlRegionLow=[80,115],controlRegionHigh=[135,150],bakShape=False):
     DataCardMaker.__init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap,histNameBase,controlRegionLow,controlRegionHigh,bakShape=bakShape)
-    if len(rebin) == 2:
-      for channel in self.channels:
-        for hist in channel.sigHists:
-          hist.Rebin2D(*rebin)
-        for hist in channel.bakHists:
-          hist.Rebin2D(*rebin)
-    elif len(rebin) == 1:
-      for channel in self.channels:
-        for hist in channel.sigHists:
-          hist.Rebin(*rebin)
-        for hist in channel.bakHists:
-          hist.Rebin(*rebin)
+    for channel in self.channels:
+      channel.rebin(rebin)
 
     self.useTH1 = useTH1
     self.controlRegionHigh = controlRegionHigh
@@ -966,6 +976,7 @@ if __name__ == "__main__":
   backgroundNames= ["DYJetsToLL","ttbar","WZ","ZZ"]
   #lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
   lumiList = [10,20,30,100]
+  lumiList = [20]
 
   MassRebin = 4 # 4 Bins per GeV originally
   MVARebin = 200 #200 works, but is huge! 2000 bins originally
