@@ -970,21 +970,38 @@ if __name__ == "__main__":
   directory = "input/"
   outDir = "statsCards/"
   analyses = ["BDTHistMuonOnly","BDTHistVBF","mDiMu"]
-  #analyses2D = ["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass","BDTHistMuonOnlyVMass","BDTHistVBFVMass"]
-  analyses2D = ["BDTHistVBFVMass","BDTHistMuonOnlyVMass"]
+  analyses2D = ["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass","BDTHistMuonOnlyVMass","BDTHistVBFVMass"]
+  #analyses2D = ["BDTHistVBFVMass","BDTHistMuonOnlyVMass"]
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar","WZ","ZZ"]
   #lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
   lumiList = [10,20,30,100]
-  lumiList = [20]
 
   MassRebin = 4 # 4 Bins per GeV originally
-  MVARebin = 200 #200 works, but is huge! 2000 bins originally
+  MVARebin = 20 #200 works, but is huge! 2000 bins originally
 
   print("Creating Threads...")
   threads = []
-  for ana in analyses2D:
-    for i in lumiList:
+  for i in lumiList:
+    threads.append(
+      ThreadedCardMaker(
+        #__init__ args:
+        directory,["BDTHistMuonOnlyVMass","BDTHistVBFVMass"],signalNames,backgroundNames,
+        rebin=[MassRebin,MVARebin], bakShape=True,
+        #write args:
+        outfilename=outDir+"BDTComb"+"_"+str(i)+".txt",lumi=i
+      )
+    )
+    threads.append(
+      ThreadedCardMaker(
+        #__init__ args:
+        directory,["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass"],signalNames,backgroundNames,
+        rebin=[MassRebin,MVARebin], bakShape=True,
+        #write args:
+        outfilename=outDir+"LHComb"+"_"+str(i)+".txt",lumi=i
+      )
+    )
+    for ana in analyses2D:
       tmp = ThreadedCardMaker(
         #__init__ args:
         directory,[ana],signalNames,backgroundNames,rebin=[MassRebin,MVARebin],bakShape=True,
@@ -992,6 +1009,7 @@ if __name__ == "__main__":
         outfilename=outDir+ana+"_"+str(i)+".txt",lumi=i
         )
       threads.append(tmp)
+
 
   nThreads = len(threads)
   print("nProcs: {0}".format(NPROCS))
@@ -1023,15 +1041,6 @@ if __name__ == "__main__":
 
     time.sleep(0.1)
       
-  """
-  dataCardBDTComb = ShapeDataCardMaker(directory,["BDTHistMuonOnlyVMass","BDTHistVBFVMass"],signalNames,backgroundNames,rebin=[MassRebin,MVARebin])
-  for i in lumiList:
-      dataCardBDTComb.write(outDir+"BDTComb"+"_"+str(i)+".txt",i,writeBakPDF=writeBakPDF)
-
-  dataCardLHComb = ShapeDataCardMaker(directory,["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass"],signalNames,backgroundNames,rebin=[MassRebin,MVARebin])
-  for i in lumiList:
-      dataCardLHComb.write(outDir+"LHComb"+"_"+str(i)+".txt",i,writeBakPDF=writeBakPDF)
-  """
 
   runFile = open(outDir+"run.sh","w")
   batchString = \
