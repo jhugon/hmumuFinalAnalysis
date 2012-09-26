@@ -11,6 +11,8 @@ import copy
 from ROOT import gSystem
 gSystem.Load('libRooFit')
 
+#root.gErrorIgnoreLevel = root.kWarning
+
 from xsec import *
 
 if scaleHiggsBy != 1.0:
@@ -63,7 +65,7 @@ class MVAvMassPDFBak:
         print("Error: MVAvMassPDFBak requires rooVars list of variables, exiting.")
         sys.exit(1)
 
-    hist2DSmooth = hist2D.Clone(hist2D.GetName()+"_smoothed")
+    hist2DSmooth = hist2D.Clone(name+hist2D.GetName()+"_smoothed")
     if smooth:
       hist2DSmooth.Smooth()
 
@@ -86,9 +88,9 @@ class MVAvMassPDFBak:
     highBin = tmpAxis.FindBin(maxMass)
 
     mMuMuHist = hist2D.ProjectionX("_mMuMuHist")
-    mMuMuRooDataHist = root.RooDataHist("mMuMuRooDataHist","mMuMuRooDataHist",root.RooArgList(mMuMu),mMuMuHist)
-    mMuMuHistSmooth = hist2DSmooth.ProjectionX("_mMuMuHist")
-    mMuMuRooDataHistSmooth = root.RooDataHist("mMuMuRooDataHistSmooth","mMuMuRooDataHistSmooth",root.RooArgList(mMuMu),mMuMuHistSmooth)
+    mMuMuRooDataHist = root.RooDataHist(name+"mMuMuRooDataHist","mMuMuRooDataHist",root.RooArgList(mMuMu),mMuMuHist)
+    mMuMuHistSmooth = hist2DSmooth.ProjectionX("_mMuMuHistSmooth")
+    mMuMuRooDataHistSmooth = root.RooDataHist(name+"mMuMuRooDataHistSmooth","mMuMuRooDataHistSmooth",root.RooArgList(mMuMu),mMuMuHistSmooth)
     
     pdfMmumu.fitTo(mMuMuRooDataHistSmooth,root.RooFit.Range("low,high"))
 
@@ -98,14 +100,14 @@ class MVAvMassPDFBak:
     mvaHistHigh = hist2D.ProjectionY("_mvaHigh",tmpAxis.FindBin(massHighRange[0]),highBin)
     mvaHist = mvaHistLow.Clone()
     mvaHist.Add(mvaHistHigh)
-    mvaRooDataHist = root.RooDataHist("mvaRooDataHist","mvaRooDataHist",root.RooArgList(mva),mvaHist)
+    mvaRooDataHist = root.RooDataHist(name+"mvaRooDataHist","mvaRooDataHist",root.RooArgList(mva),mvaHist)
 
 
-    mvaHistLowSmooth = hist2DSmooth.ProjectionY("_mvaLow",lowBin,tmpAxis.FindBin(massLowRange[1]))
-    mvaHistHighSmooth = hist2DSmooth.ProjectionY("_mvaHigh",tmpAxis.FindBin(massHighRange[0]),highBin)
+    mvaHistLowSmooth = hist2DSmooth.ProjectionY("_mvaLowSmooth",lowBin,tmpAxis.FindBin(massLowRange[1]))
+    mvaHistHighSmooth = hist2DSmooth.ProjectionY("_mvaHighSmooth",tmpAxis.FindBin(massHighRange[0]),highBin)
     mvaHistSmooth = mvaHistLowSmooth.Clone()
     mvaHistSmooth.Add(mvaHistHighSmooth)
-    mvaRooDataHistSmooth = root.RooDataHist("mvaRooDataHistSmooth","mvaRooDataHistSmooth",root.RooArgList(mva),mvaHistSmooth)
+    mvaRooDataHistSmooth = root.RooDataHist(name+"mvaRooDataHistSmooth","mvaRooDataHistSmooth",root.RooArgList(mva),mvaHistSmooth)
     
     #templatePdfMva = root.RooHistPdf("templatePdfMva","templatePdfMva",root.RooArgSet(mva),mvaRooDataHistSmooth)
     pdfMva = root.RooHistPdf("pdfMva","pdfMva",root.RooArgSet(mva),mvaRooDataHistSmooth)
@@ -182,7 +184,46 @@ class MVAvMassPDFBak:
       hackHist = pdf2dHist.Clone("hackHist")
       hackHist.Scale(hist2D.Integral()/hackHist.Integral())
       self.hackHist = hackHist
+      print("\n\njustin pdf2dHist: {0}".format(self.pdf2dHist))
+      print("justin hackhist: {0}\n\n".format(self.hackHist))
       self.pdf2d = root.RooDataHist(hist2D.GetName(),hist2D.GetName(),root.RooArgList(mMuMu,mva),hackHist)
+
+  def dump(self):
+    print("#####################################")
+    print("MVAvMassPDFBak Dump: ")
+    print("name: {0}".format(self.name))
+    print("hist2D: {0}".format(self.hist2D))
+    print("hist2DSmooth: {0}".format(self.hist2DSmooth))
+    print("mMuMuHistSmooth: {0}".format(self.mMuMuHistSmooth))
+    print("mMuMuRooDataHistSmooth: {0}".format(self.mMuMuRooDataHistSmooth))
+    print("mvaHistLowSmooth: {0}".format(self.mvaHistLowSmooth))
+    print("mvaHistHighSmooth: {0}".format(self.mvaHistHighSmooth))
+    print("mvaHistSmooth: {0}".format(self.mvaHistSmooth))
+    print("mvaRooDataHistSmooth: {0}".format(self.mvaRooDataHistSmooth))
+    print("smooth: {0}".format(self.smooth))
+    print("massLowRange: {0}".format(self.massLowRange))
+    print("massHighRange: {0}".format(self.massHighRange))
+    print("maxMass: {0}".format(self.maxMass))
+    print("minMass: {0}".format(self.minMass))
+    print("mMuMu: {0}".format(self.mMuMu))
+    print("mva: {0}".format(self.mva))
+    print("bwWidth: {0}".format(self.bwWidth))
+    print("bwmZ: {0}".format(self.bwmZ))
+    print("voitSigma: {0}".format(self.voitSigma))
+    print("pdfMmumu: {0}".format(self.pdfMmumu))
+    print("mMuMuHist: {0}".format(self.mMuMuHist))
+    print("mMuMuRooDataHist: {0}".format(self.mMuMuRooDataHist))
+    print("mvaHistLow: {0}".format(self.mvaHistLow))
+    print("mvaHistHigh: {0}".format(self.mvaHistHigh))
+    print("mvaHist: {0}".format(self.mvaHist))
+    print("mvaRooDataHist: {0}".format(self.mvaRooDataHist))
+    print("pdfMva: {0}".format(self.pdfMva))
+    print("pdf2d: {0}".format(self.pdf2d))
+    print("plotMmumu: {0}".format(self.plotMmumu))
+    print("plotMva: {0}".format(self.plotMva))
+    print("pdf2dHist: {0}".format(self.pdf2dHist))
+    print("hackHist: {0}".format(self.hackHist))
+    print("#####################################")
 
   def writeDebugHistsToCurrTDir(self,compareHist=None):
     canvas = root.TCanvas("canvas")
@@ -274,6 +315,7 @@ class MVAvMassPDFBak:
 
 class Analysis:
   def __init__(self,directory,signalNames,backgroundNames,analysis,x,y,controlRegionLow,controlRegionHigh,histNameBase="mDiMu",bakShape=False):
+    self.bakShape = bakShape
     self.sigNames = signalNames
     self.bakNames = backgroundNames
 
@@ -340,14 +382,17 @@ class Analysis:
       else:
         self.bakHistTotal.Add(h)
 
+    self.bakShapeMkr = None
     if bakShape and self.is2D:
       bakShapeMkr = MVAvMassPDFBak("pdfHists_"+analysis,
                                 self.bakHistTotal,
                                 controlRegionLow,controlRegionHigh,
                                 rooVars = [self.x,self.y]
                                 )
+      self.bakShapeMkr = bakShapeMkr
       self.bakHistTotal = bakShapeMkr.hackHist
-      self.xsecBakTotal = self.bakHistTotal.GetIntegral()
+      print("justin bakShapeMkr.hackhist: {0}\n\n".format(bakShapeMkr.hackHist))
+      self.xsecBakTotal = self.bakHistTotal.Integral()
 
   def getSigEff(self,name):
     result = -1.0
@@ -385,6 +430,21 @@ class Analysis:
     return result
   def getBakHistTotal(self):
     return self.bakHistTotal
+  def dump(self):
+    print("##########################################")
+    print("SigXSecTotal: {0}".format(self.xsecSigTotal))
+    print("BakXSecTotal: {0}".format(self.xsecBakTotal))
+    print("signames: {0}".format(self.sigNames))
+    print("baknames: {0}".format(self.bakNames))
+    print("sighists: {0}".format(self.sigHists))
+    for i in self.sigHists:
+        i.Print()
+    print("bakhists: {0}".format(self.bakHists))
+    for i in self.bakHists:
+        i.Print()
+    print("bakHistTotal: {0}".format(self.bakHistTotal))
+    self.bakHistTotal.Print()
+    print("##########################################")
 
 ###################################################################################
 
@@ -587,7 +647,7 @@ class ShapeDataCardMaker(DataCardMaker):
     self.controlRegionHigh = controlRegionHigh
     self.controlRegionLow = controlRegionLow
 
-  def makeRFHistWrite(self,channel,hist,thisDir,isData=True):
+  def makeRFHistWrite(self,channel,hist,thisDir,isData=True,compareHist=None):
     thisDir.cd()
     is2D = hist.InheritsFrom("TH2")
     if self.useTH1 and not is2D:
@@ -621,6 +681,8 @@ class ShapeDataCardMaker(DataCardMaker):
       rfHistPdfTH2 = rfHistPdf.createHistogram(hist.GetName()+"rfHistPdf2d",x,xBinning,root.RooFit.YVar(y,yBinning))
       rfHistTH2.Write()
       rfHistPdfTH2.Write()
+#      if channel.bakShape:
+#        channel.bakShapeMkr.writeDebugHistsToCurrTDir(compareHist)
     else:
       plot = x.frame()
       rfHist.plotOn(plot)
@@ -662,6 +724,8 @@ class ShapeDataCardMaker(DataCardMaker):
             sumAllSigMCHist.Add(tmpHist)
   
         if sumAllBak:
+          channel.bakShapeMkr.dump()
+          channel.dump()
           sumAllBakMCHist = channel.getBakHistTotal().Clone("bak")
           sumAllBakMCHist.Scale(lumi)
 
@@ -683,7 +747,7 @@ class ShapeDataCardMaker(DataCardMaker):
                 sumAllMCHist.Add(tmpHist)
         self.makeRFHistWrite(channel,sumAllMCHist,tmpDir) #Pretend Data
         self.makeRFHistWrite(channel,sumAllSigMCHist,tmpDir) #Pretend Signal
-        self.makeRFHistWrite(channel,sumAllBakMCHist,tmpDir) #Background Sum
+        self.makeRFHistWrite(channel,sumAllBakMCHist,tmpDir,compareHist=sumAllSigMCHist) #Background Sum
 
     outRootFile.Close()
 
@@ -871,11 +935,9 @@ if __name__ == "__main__":
   outDir = "statsCards/"
   analyses = ["BDTHistMuonOnly","BDTHistVBF","mDiMu"]
   #analyses2D = ["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass","BDTHistMuonOnlyVMass","BDTHistVBFVMass"]
-  analyses2D = ["likelihoodHistMuonOnlyVMass","BDTHistVBFVMass"]
-  #signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
-  signalNames=["ggHmumu125"]
-  #backgroundNames= ["DYJetsToLL","ttbar","WZ","ZZ"]
-  backgroundNames= ["DYJetsToLL"]
+  analyses2D = ["BDTHistVBFVMass","BDTHistMuonOnlyVMass"]
+  signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
+  backgroundNames= ["DYJetsToLL","ttbar","WZ","ZZ"]
   #lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
   #lumiList = [10,20,30,100]
   lumiList = [20]
@@ -888,10 +950,12 @@ if __name__ == "__main__":
     for i in lumiList:
       dataCardMassShape.write(outDir+ana+"_"+str(i)+".txt",i)
 
+  """
   for ana in analyses2D:
     dataCardMassShape = ShapeDataCardMaker(directory,[ana],signalNames,backgroundNames,rebin=[MassRebin,MVARebin],bakShape=False)
     for i in lumiList:
       dataCardMassShape.write(outDir+"TH"+ana+"_"+str(i)+".txt",i)
+  """
 
   """
   dataCardBDTComb = ShapeDataCardMaker(directory,["BDTHistMuonOnlyVMass","BDTHistVBFVMass"],signalNames,backgroundNames,rebin=[MassRebin,MVARebin])

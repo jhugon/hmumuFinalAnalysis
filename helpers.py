@@ -696,7 +696,7 @@ class DataMCStack:
     pad2.RedrawAxis() # Updates Axis Lines
   
     canvas.cd()
-    self.tlatex.DrawLatex(0.33,0.96,"CMS Preliminary")
+    self.tlatex.DrawLatex(0.33,0.96,"CMS Internal")
     self.tlatex.DrawLatex(0.75,0.96,"#sqrt{s}=8 TeV, L=%.2f fb^{-1}" % lumi)
 
 class CompareTwoHists:
