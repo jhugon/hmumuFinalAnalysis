@@ -16,7 +16,7 @@ gSystem.Load('libRooFit')
 
 #root.gErrorIgnoreLevel = root.kWarning
 
-NPROCS = 2
+NPROCS = 1
 
 from xsec import *
 
@@ -189,8 +189,6 @@ class MVAvMassPDFBak:
       hackHist = pdf2dHist.Clone("hackHist")
       hackHist.Scale(hist2D.Integral()/hackHist.Integral())
       self.hackHist = hackHist
-      print("\n\njustin pdf2dHist: {0}".format(self.pdf2dHist))
-      print("justin hackhist: {0}\n\n".format(self.hackHist))
       self.pdf2d = root.RooDataHist(hist2D.GetName(),hist2D.GetName(),root.RooArgList(mMuMu,mva),hackHist)
 
   def dump(self):
@@ -231,6 +229,7 @@ class MVAvMassPDFBak:
     print("#####################################")
 
   def writeDebugHistsToCurrTDir(self,compareHist=None):
+    print("justin writeDebugHistsToCurrTDir")
     canvas = root.TCanvas("canvas")
     canvas.cd()
     #canvas.SetLogy(1)
@@ -246,23 +245,31 @@ class MVAvMassPDFBak:
 
     canvas.cd(2)
     self.hist2D.SetTitle("Original 2D Hist")
+    self.hist2D.SetStats(False)
+    self.hist2D.GetXaxis().SetTitle("mMuMu")
+    self.hist2D.GetYaxis().SetTitle("MVA")
     self.hist2D.Draw("colz")
     canvas.cd(4)
-    self.pdf2dHist.SetTitle("PDF Assuming M & MVA Uncorrelated")
-    self.pdf2dHist.Draw("colz")
+    self.pdf2dHist.SetTitle("")
+    self.pdf2dHist.SetStats(False)
 
+    tmp2 = self.pdf2dHist.Clone("tmp2Hist")
+    tmp2.SetTitle("PDF Assuming M & MVA Uncorrelated")
+    tmp2.GetXaxis().SetRangeUser(110,self.maxMass)
+    tmp2.GetYaxis().SetRangeUser(-1,1)
+    tmp2.Draw("colz")
+
+    tmp3 = None
     if compareHist != None:
       compareHist = compareHist.Clone("mySig")
       compareHist.Scale(self.pdf2dHist.Integral()/compareHist.Integral())
       canvas.cd(3)
       
-      tlatex = root.TLatex()
-      tlatex.SetNDC()
-      tlatex.SetTextSize(0.035)
-      tlatex.SetTextAlign(22)
-      tlatex.DrawLatex(0.5,0.5,"Signal in Black Boxes")
-
-      self.pdf2dHist.Draw("colz")
+      tmp3 = self.pdf2dHist.Clone("tmp3Hist")
+      tmp3.SetTitle("PDF, Compare Signal in Black Boxes")
+      tmp3.GetXaxis().SetRangeUser(110,self.maxMass)
+      tmp3.GetYaxis().SetRangeUser(-1,1)
+      tmp3.Draw("colz")
       compareHist.SetFillStyle(0)
       compareHist.SetFillColor(0)
       compareHist.SetLineStyle(1)
@@ -270,11 +277,12 @@ class MVAvMassPDFBak:
       compareHist.Draw("box same")
 
     canvas.cd(1)
-    self.pdf2dHist.SetLineColor(root.kRed)
-    self.pdf2dHist.GetXaxis().SetRangeUser(110,self.maxMass)
-    self.pdf2dHist.GetYaxis().SetRangeUser(-1,1)
-    self.pdf2dHist.SetTitle("Blue Original TH2, Red Final 2D PDF")
-    self.pdf2dHist.Draw("surf")
+    tmp1 = self.pdf2dHist.Clone("tmp1Hist")
+    tmp1.SetLineColor(root.kRed)
+    tmp1.GetXaxis().SetRangeUser(110,self.maxMass)
+    tmp1.GetYaxis().SetRangeUser(-1,1)
+    tmp1.SetTitle("Blue Original TH2, Red Final 2D PDF")
+    tmp1.Draw("surf")
     self.hist2D.GetXaxis().SetRangeUser(110,self.maxMass)
     self.hist2D.GetYaxis().SetRangeUser(-1,1)
     self.hist2D.Draw("surf same")
@@ -319,7 +327,7 @@ class MVAvMassPDFBak:
 
 
 class Analysis:
-  def __init__(self,directory,signalNames,backgroundNames,analysis,x,y,controlRegionLow,controlRegionHigh,histNameBase="mDiMu",bakShape=False):
+  def __init__(self,directory,signalNames,backgroundNames,analysis,x,y,controlRegionLow,controlRegionHigh,histNameBase="mDiMu",bakShape=False,rebin=[]):
     self.bakShape = bakShape
     self.sigNames = signalNames
     self.bakNames = backgroundNames
@@ -347,6 +355,28 @@ class Analysis:
       tmpH = tmpF.Get(histNameBase+analysis)
       self.bakFiles.append(tmpF)
       self.bakHistsRaw.append(tmpH)
+
+    #Rebin
+    rb = rebin
+    if type(rb) != list:
+      print("Error: Analysis.rebin: argument must be a list!!  Exiting.")
+      sys.exit(1)
+    if len(rb) == 2 and self.is2D:
+        for hist in self.sigHistsRaw:
+          hist.Rebin2D(*rb)
+        for hist in self.bakHistsRaw:
+          hist.Rebin2D(*rb)
+    elif len(rb) == 1 and not self.is2D:
+        for hist in self.sigHistsRaw:
+          hist.Rebin(*rb)
+        for hist in self.bakHistsRaw:
+          hist.Rebin(*rb)
+    elif len(rb) == 0:
+      pass
+    else:
+      print("Error: Analysis.rebin: argument must be len 0, 1, or 2 list!!  Exiting.")
+      print("  Must also be same length as dimension of hist, if not 0.")
+      sys.exit(1)
 
     effMap = {}
     xsecMap = {}
@@ -396,28 +426,7 @@ class Analysis:
                                 )
       self.bakShapeMkr = bakShapeMkr
       self.bakHistTotal = bakShapeMkr.hackHist
-      print("justin bakShapeMkr.hackhist: {0}\n\n".format(bakShapeMkr.hackHist))
       self.xsecBakTotal = self.bakHistTotal.Integral()
-
-  def rebin(self,rb):
-    if type(rb) != list:
-      print("Error: Analysis.rebin: argument must be len 1 or 2 list!!  Exiting.")
-      sys.exit(1)
-    if len(rb) == 2:
-        for hist in self.sigHists:
-          hist.Rebin2D(*rb)
-        for hist in self.bakHists:
-          hist.Rebin2D(*rb)
-        self.bakHistTotal.Rebin2D(*rb)
-    elif len(rb) == 1:
-        for hist in self.sigHists:
-          hist.Rebin(*rb)
-        for hist in self.bakHists:
-          hist.Rebin(*rb)
-        self.bakHistTotal.Rebin2D(*rb)
-    else:
-      print("Error: Analysis.rebin: argument must be len 1 or 2 list!!  Exiting.")
-      sys.exit(1)
 
   def getSigEff(self,name):
     result = -1.0
@@ -474,7 +483,7 @@ class Analysis:
 ###################################################################################
 
 class DataCardMaker:
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="mDiMu",controlRegionLow=[80,115],controlRegionHigh=[135,150],bakShape=False):
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="mDiMu",controlRegionLow=[80,115],controlRegionHigh=[135,150],bakShape=False,rebin=[]):
     channels = []
     self.channelNames = copy.deepcopy(analysisNames)
     self.is2D = False
@@ -491,7 +500,7 @@ class DataCardMaker:
     self.y = y
 
     for analysis in analysisNames:
-      tmp = Analysis(directory,signalNames,backgroundNames,analysis,x,y,controlRegionLow,controlRegionHigh,histNameBase=histNameBase,bakShape=bakShape)
+      tmp = Analysis(directory,signalNames,backgroundNames,analysis,x,y,controlRegionLow,controlRegionHigh,histNameBase=histNameBase,bakShape=bakShape,rebin=rebin)
       channels.append(tmp)
     self.channels = channels
 
@@ -654,9 +663,7 @@ class DataCardMaker:
 
 class ShapeDataCardMaker(DataCardMaker):
   def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False,controlRegionLow=[80,115],controlRegionHigh=[135,150],bakShape=False):
-    DataCardMaker.__init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap,histNameBase,controlRegionLow,controlRegionHigh,bakShape=bakShape)
-    for channel in self.channels:
-      channel.rebin(rebin)
+    DataCardMaker.__init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap,histNameBase,controlRegionLow,controlRegionHigh,bakShape=bakShape,rebin=rebin)
 
     self.useTH1 = useTH1
     self.controlRegionHigh = controlRegionHigh
@@ -696,8 +703,8 @@ class ShapeDataCardMaker(DataCardMaker):
       rfHistPdfTH2 = rfHistPdf.createHistogram(hist.GetName()+"rfHistPdf2d",x,xBinning,root.RooFit.YVar(y,yBinning))
       rfHistTH2.Write()
       rfHistPdfTH2.Write()
-#      if channel.bakShape:
-#        channel.bakShapeMkr.writeDebugHistsToCurrTDir(compareHist)
+      if channel.bakShape and compareHist != None:
+        channel.bakShapeMkr.writeDebugHistsToCurrTDir(compareHist)
     else:
       plot = x.frame()
       rfHist.plotOn(plot)
@@ -739,8 +746,8 @@ class ShapeDataCardMaker(DataCardMaker):
             sumAllSigMCHist.Add(tmpHist)
   
         if sumAllBak:
-          channel.bakShapeMkr.dump()
-          channel.dump()
+          #channel.bakShapeMkr.dump()
+          #channel.dump()
           sumAllBakMCHist = channel.getBakHistTotal().Clone("bak")
           sumAllBakMCHist.Scale(lumi)
 
@@ -967,7 +974,7 @@ if __name__ == "__main__":
   print "Started makeCards.py"
   root.gROOT.SetBatch(True)
 
-  directory = "input/"
+  directory = "input/old/"
   outDir = "statsCards/"
   analyses = ["BDTHistMuonOnly","BDTHistVBF","mDiMu"]
   analyses2D = ["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass","BDTHistMuonOnlyVMass","BDTHistVBFVMass"]
@@ -976,6 +983,7 @@ if __name__ == "__main__":
   backgroundNames= ["DYJetsToLL","ttbar","WZ","ZZ"]
   #lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
   lumiList = [10,20,30,100]
+  lumiList = [20]
 
   MassRebin = 4 # 4 Bins per GeV originally
   MVARebin = 20 #200 works, but is huge! 2000 bins originally
@@ -992,6 +1000,7 @@ if __name__ == "__main__":
         outfilename=outDir+"BDTComb"+"_"+str(i)+".txt",lumi=i
       )
     )
+    """
     threads.append(
       ThreadedCardMaker(
         #__init__ args:
@@ -1009,6 +1018,7 @@ if __name__ == "__main__":
         outfilename=outDir+ana+"_"+str(i)+".txt",lumi=i
         )
       threads.append(tmp)
+    """
 
 
   nThreads = len(threads)
