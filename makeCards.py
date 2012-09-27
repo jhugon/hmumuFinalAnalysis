@@ -16,7 +16,7 @@ gSystem.Load('libRooFit')
 
 #root.gErrorIgnoreLevel = root.kWarning
 
-NPROCS = 1
+NPROCS = 2
 
 from xsec import *
 
@@ -82,7 +82,7 @@ class MVAvMassPDFBak:
     mMuMu.setRange("signal",massLowRange[1],massLowRange[0])
     mva = rooVars[1]
     
-    bwWidth = root.RooRealVar("bwWidth","bwWidth",0.0,30.0)
+    bwWidth = root.RooRealVar("bwWidth","bwWidth",2.4952)
     bwmZ = root.RooRealVar("bwmZ","bwmZ",85,95)
     #pdfMmumu = root.RooBreitWigner("pdfMmumu","pdfMmumu",mMuMu,bwmZ,bwWidth)
     voitSigma = root.RooRealVar("voitSigma","voitSigma",0.0,80.0)
@@ -662,7 +662,7 @@ class DataCardMaker:
 ###################################################################################
 
 class ShapeDataCardMaker(DataCardMaker):
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False,controlRegionLow=[80,115],controlRegionHigh=[135,150],bakShape=False):
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False,controlRegionLow=[80,115],controlRegionHigh=[135,200],bakShape=False):
     DataCardMaker.__init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap,histNameBase,controlRegionLow,controlRegionHigh,bakShape=bakShape,rebin=rebin)
 
     self.useTH1 = useTH1
@@ -987,6 +987,8 @@ if __name__ == "__main__":
 
   MassRebin = 4 # 4 Bins per GeV originally
   MVARebin = 20 #200 works, but is huge! 2000 bins originally
+  controlRegionLow=[95,115]
+  controlRegionHigh=[135,200]
 
   print("Creating Threads...")
   threads = []
@@ -996,30 +998,32 @@ if __name__ == "__main__":
         #__init__ args:
         directory,["BDTHistMuonOnlyVMass","BDTHistVBFVMass"],signalNames,backgroundNames,
         rebin=[MassRebin,MVARebin], bakShape=True,
+        controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
         #write args:
         outfilename=outDir+"BDTComb"+"_"+str(i)+".txt",lumi=i
       )
     )
-    """
     threads.append(
       ThreadedCardMaker(
         #__init__ args:
         directory,["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass"],signalNames,backgroundNames,
         rebin=[MassRebin,MVARebin], bakShape=True,
+        controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
         #write args:
         outfilename=outDir+"LHComb"+"_"+str(i)+".txt",lumi=i
       )
     )
+    """
     for ana in analyses2D:
       tmp = ThreadedCardMaker(
         #__init__ args:
         directory,[ana],signalNames,backgroundNames,rebin=[MassRebin,MVARebin],bakShape=True,
+        controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
         #write args:
         outfilename=outDir+ana+"_"+str(i)+".txt",lumi=i
         )
       threads.append(tmp)
     """
-
 
   nThreads = len(threads)
   print("nProcs: {0}".format(NPROCS))
