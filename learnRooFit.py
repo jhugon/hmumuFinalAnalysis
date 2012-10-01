@@ -27,7 +27,8 @@ gWidth = root.RooRealVar("gWidth","gWidth",0.0,10.0)
 gmZ = root.RooRealVar("gmZ","gmZ",0.0)
 gausMmumu = root.RooGaussian("gausMmumu","gausMmumu",mMuMu,gmZ,gWidth)
 
-bwWidth = root.RooRealVar("bwWidth","bwWidth",0.0,30.0)
+#bwWidth = root.RooRealVar("bwWidth","bwWidth",0.0,30.0)
+bwWidth = root.RooRealVar("bwWidth","bwWidth",2.4952)
 bwmZ = root.RooRealVar("bwmZ","bwmZ",85,95)
 bwMmumu = root.RooBreitWigner("bwMmumu","bwMmumu",mMuMu,bwmZ,bwWidth)
 
@@ -40,14 +41,30 @@ lnA = root.RooRealVar("lnA","lnA",0,100)
 lnB = root.RooRealVar("lnB","lnB",0.0,30.0)
 lognormalMmumu = root.RooLognormal("lognormalMmumu","lognormalMmumu",mMuMu,lnA,lnB)
 
+expParam = root.RooRealVar("expParam","expParam",0,1)
+expMmumu = root.RooExponential("expMmumu","expMmumu",mMuMu,expParam)
+expTimesVoig = root.RooProdPdf("expTimesVoig","expTimesVoig",root.RooArgList(expMmumu,voitMmumu))
+
+dyPdf1 = root.RooGenericPdf("dyPdf1","dyPdf1","gmZ*TMath::Power(mMuMu*mMuMu-gmZ*gmZ,2)/(TMath::Power(mMuMu*mMuMu-gmZ*gmZ,2)+mMuMu*mMuMu*gWidth*gWidth/gmZ/gmZ)",RooArgList(mMuMu,gmZ,gWidth))
+
+dyPdf2 = root.RooProdPdf("dyPdf2","dyPdf2",root.RooArgList(expMmumu,dyPdf1))
+dyPdf = root.RooAddPdf("dyPdf","dyPdf",root.RooArgList(dyPdf2,expTimesVoig))
+
+alpha = root.RooRealVar("alpha","alpha",0,50)
+kappa = root.RooRealVar("kappa","kappa",0,5)
+dyHighMassPdf = root.RooGenericPdf("dyHighMassPdf","dyHighMassPdf","TMath::Exp(-alpha*TMath::Power(mMuMu,kappa))",root.RooArgList(mMuMu,alpha,kappa))
+
 #pdfMmumu = root.RooFFTConvPdf("pdfMmumu","pdfMmumu",mMuMu,landauMmumu,gausMmumu)
 #pdfMmumu = landauMmumu
+#pdfMmumu = expTimesVoig
+#pdfMmumu = dyPdf
+pdfMmumu = dyHighMassPdf
 #pdfMmumu = lognormalMmumu
 #pdfMmumu = root.RooAddPdf("pdfMmumu","pdfMmumu",root.RooArgList(landauMmumu,bwMmumu))
-pdfMmumu = bwMmumu
+#pdfMmumu = bwMmumu
 #pdfMmumu = voitMmumu
 
-f = root.TFile("input/DYJetsToLL.root")
+f = root.TFile("input/old/DYJetsToLL.root")
 #f = root.TFile("input/ttbar.root")
 
 mDiMu = f.Get("mDiMu")

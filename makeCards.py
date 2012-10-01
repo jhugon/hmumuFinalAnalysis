@@ -136,6 +136,7 @@ class MVAvMassPDFBak:
 
     mMuMuRooDataHist.plotOn(plotMmumu)
     pdfMmumu.plotOn(plotMmumu)
+    pdfMmumu.plotOn(plotMmumu,root.RooFit.LineStyle(2),root.RooFit.Range(minMass,maxMass))
 
     mvaRooDataHist.plotOn(plotMva)
     pdfMva.plotOn(plotMva)
@@ -143,6 +144,27 @@ class MVAvMassPDFBak:
     mMuMuBinning = root.RooFit.Binning(mMuMuHist.GetNbinsX(),minMass,maxMass)
     mvaBinning = root.RooFit.Binning(mvaHist.GetNbinsX(),-1,1)
     pdf2dHist = pdf2d.createHistogram("pdf2dHist",mMuMu,mMuMuBinning,root.RooFit.YVar(mva,mvaBinning))
+
+    """
+    #####
+    ## mMuMu Errors
+
+    mMuMu.setRange("lowErr1Low",80.0,massLowRange[1])
+    mMuMu.setRange("lowErr1High",105.0,145.0)
+
+    bwmZErr = root.RooRealVar("bwmZErr","bwmZErr",60,120)
+    voitSigmaErr = root.RooRealVar("voitSigmaErr","voitSigmaErr",0.0,200.0)
+    pdfMmumuErr = root.RooVoigtian("pdfMmumuErr","pdfMmumuErr",mMuMu,bwmZErr,bwWidth,voitSigmaErr)
+
+    pdfMmumuErr.fitTo(mMuMuRooDataHistSmooth,root.RooFit.Range("lowErr1Low,high"))
+    pdfMmumuErr.plotOn(plotMmumu,root.RooFit.LineColor(root.kRed+1))
+    pdfMmumuErr.fitTo(mMuMuRooDataHistSmooth,root.RooFit.Range("lowErr1High,high"))
+    pdfMmumuErr.plotOn(plotMmumu,root.RooFit.LineColor(root.kRed+1))
+
+    self.bwmZErr = bwmZErr
+    self.voitSigmaErr = voitSigmaErr
+    self.pdfMmumuErr = pdfMmumuErr
+    """
 
     #########################
 
@@ -229,6 +251,8 @@ class MVAvMassPDFBak:
     print("#####################################")
 
   def writeDebugHistsToCurrTDir(self,compareHist=None):
+
+    plottingMassRange = [110,150]
     print("justin writeDebugHistsToCurrTDir")
     canvas = root.TCanvas("canvas")
     canvas.cd()
@@ -243,13 +267,13 @@ class MVAvMassPDFBak:
     canvas.Clear()
     canvas.Divide(2,2)
 
-    canvas.cd(2)
+    canvas.cd(1)
     self.hist2D.SetTitle("Original 2D Hist")
     self.hist2D.SetStats(False)
     self.hist2D.GetXaxis().SetTitle("mMuMu")
     self.hist2D.GetYaxis().SetTitle("MVA")
     self.hist2D.Draw("colz")
-    canvas.cd(4)
+    canvas.cd(3)
     self.pdf2dHist.SetTitle("")
     self.pdf2dHist.SetStats(False)
 
@@ -263,11 +287,11 @@ class MVAvMassPDFBak:
     if compareHist != None:
       compareHist = compareHist.Clone("mySig")
       compareHist.Scale(self.pdf2dHist.Integral()/compareHist.Integral())
-      canvas.cd(3)
+      canvas.cd(4)
       
       tmp3 = self.pdf2dHist.Clone("tmp3Hist")
       tmp3.SetTitle("PDF, Compare Signal in Black Boxes")
-      tmp3.GetXaxis().SetRangeUser(110,self.maxMass)
+      tmp3.GetXaxis().SetRangeUser(*plottingMassRange)
       tmp3.GetYaxis().SetRangeUser(-1,1)
       tmp3.Draw("colz")
       compareHist.SetFillStyle(0)
@@ -276,14 +300,14 @@ class MVAvMassPDFBak:
       compareHist.SetLineColor(1)
       compareHist.Draw("box same")
 
-    canvas.cd(1)
+    canvas.cd(2)
     tmp1 = self.pdf2dHist.Clone("tmp1Hist")
     tmp1.SetLineColor(root.kRed)
-    tmp1.GetXaxis().SetRangeUser(110,self.maxMass)
+    tmp1.GetXaxis().SetRangeUser(*plottingMassRange)
     tmp1.GetYaxis().SetRangeUser(-1,1)
     tmp1.SetTitle("Blue Original TH2, Red Final 2D PDF")
     tmp1.Draw("surf")
-    self.hist2D.GetXaxis().SetRangeUser(110,self.maxMass)
+    self.hist2D.GetXaxis().SetRangeUser(*plottingMassRange)
     self.hist2D.GetYaxis().SetRangeUser(-1,1)
     self.hist2D.Draw("surf same")
 
@@ -983,7 +1007,6 @@ if __name__ == "__main__":
   backgroundNames= ["DYJetsToLL","ttbar","WZ","ZZ"]
   #lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
   lumiList = [10,20,30,100]
-  lumiList = [20]
 
   MassRebin = 4 # 4 Bins per GeV originally
   MVARebin = 20 #200 works, but is huge! 2000 bins originally
@@ -1013,7 +1036,6 @@ if __name__ == "__main__":
         outfilename=outDir+"LHComb"+"_"+str(i)+".txt",lumi=i
       )
     )
-    """
     for ana in analyses2D:
       tmp = ThreadedCardMaker(
         #__init__ args:
@@ -1023,7 +1045,6 @@ if __name__ == "__main__":
         outfilename=outDir+ana+"_"+str(i)+".txt",lumi=i
         )
       threads.append(tmp)
-    """
 
   nThreads = len(threads)
   print("nProcs: {0}".format(NPROCS))

@@ -5,7 +5,7 @@ from helpers import *
 import ROOT as root
 import os
 
-dataDir = "input/"
+dataDir = "input/old/"
 outDir = "output/"
 
 LOGY=False
@@ -18,10 +18,11 @@ ccLegendPos = [0.46,0.47,0.64,0.7]
 stdLegendPos = urLegendPos
 
 #histDirs = ["","4GeVWindow/","PtDiMu100/","VBFPresel/","IncPresel/","NotBlindWindow/"]
-histDirs = ["NotBlindWindow/"]
+histDirs = ["4GeVWindow/"]
 
 histNames = {}
 histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[110.0,150.0],"rebin":4}
+#histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[80.0,150.0],"rebin":4}
 
 histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV]","xlimits":[0.0,200.0],"rebin":5}
 

@@ -5,7 +5,7 @@ from helpers import *
 import ROOT as root
 import os
 
-dataDir = "input/"
+dataDir = "input/old/"
 outDir = "output/"
 
 listToPlot = backgroundList+signalList
