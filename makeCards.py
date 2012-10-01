@@ -24,14 +24,22 @@ if scaleHiggsBy != 1.0:
   print("Error: higgs xsec is scaled!!! Return to 1. Exiting.")
   sys.exit(1)
 
-def getIntegralAll(hist):
+def getIntegralAll(hist,boundaries=[]):
+  xbinLow = None
+  xbinHigh = None
+  if len(boundaries)==0:
+    xbinLow = 0
+    xbinHigh = hist.GetXaxis().GetNbins()
+  elif len(boundaries)==2:
+    xbinLow = hist.GetXaxis().FindBin(boundaries[0])
+    xbinHigh = hist.GetXaxis().FindBin(boundaries[1])
+  else:
+    return -1
   if hist.InheritsFrom("TH2"):
-    nBinsX = hist.GetXaxis().GetNbins()
     nBinsY = hist.GetYaxis().GetNbins()
-    return hist.Integral(0,nBinsX+1,0,nBinsY+1)
+    return hist.Integral(xbinLow,xbinHigh,0,nBinsY+1)
   elif hist.InheritsFrom("TH1"):
-    nBinsX = hist.GetXaxis().GetNbins()
-    return hist.Integral(0,nBinsX+1)
+    return hist.Integral(xbinLow,xbinHigh)
   else:
     return -1
 
@@ -406,13 +414,14 @@ class Analysis:
     xsecMap = {}
     lowBin = 0
     highBin = self.sigHistsRaw[0].GetNbinsX()+1
+    massBounds = [controlRegionLow[0],controlRegionHigh[1]]
 
     self.xsecSigTotal = 0.0
     self.xsecSigList = []
     self.effSigList = []
     self.sigHists = []
     for h,name in zip(self.sigHistsRaw,signalNames):
-      counts = getIntegralAll(h)
+      counts = getIntegralAll(h,boundaries=massBounds)
       eff = counts/nEventsMap[name]
       xs = eff*xsec[name]
       self.xsecSigTotal += xs
@@ -427,8 +436,7 @@ class Analysis:
     self.bakHists = []
     self.bakHistTotal = None
     for h,name in zip(self.bakHistsRaw,backgroundNames):
-      #counts = h.Integral(lowBin,highBin)
-      counts = h.Integral()
+      counts = getIntegralAll(h,boundaries=massBounds)
       eff = counts/nEventsMap[name]
       xs = eff*xsec[name]
       self.xsecBakTotal += xs
@@ -450,7 +458,7 @@ class Analysis:
                                 )
       self.bakShapeMkr = bakShapeMkr
       self.bakHistTotal = bakShapeMkr.hackHist
-      self.xsecBakTotal = self.bakHistTotal.Integral()
+      self.xsecBakTotal = getIntegralAll(self.bakHistTotal,boundaries=massBounds)
 
   def getSigEff(self,name):
     result = -1.0
@@ -754,10 +762,12 @@ class ShapeDataCardMaker(DataCardMaker):
         sumAllMCHist = None
         sumAllSigMCHist = None
         sumAllBakMCHist = None
+        rootDebugString += "# channelName: {0}\n".format(channelName)
         for sigName in self.sigNames:
           tmpHist = channel.getSigHist(sigName).Clone(sigName)
           tmpHist.Scale(lumi)
           self.makeRFHistWrite(channel,tmpHist,tmpDir)
+          #rootDebugString += "#     {0}: {1}\n".format(sigName,getIntegralAll(tmpHist))
           
           if includeSigInAllMC:
             if sumAllMCHist == None:
@@ -786,6 +796,7 @@ class ShapeDataCardMaker(DataCardMaker):
             tmpHist = channel.getBakHist(bakName).Clone(bakName)
             tmpHist.Scale(lumi)
             self.makeRFHistWrite(channel,tmpHist,tmpDir)
+            #rootDebugString += "#     {0}: {1}\n".format(bakName,getIntegralAll(tmpHist,boundaries=massBounds))
             
             if sumAllMCHist == None:
                 sumAllMCHist = tmpHist.Clone("data_obs")
@@ -794,6 +805,9 @@ class ShapeDataCardMaker(DataCardMaker):
         self.makeRFHistWrite(channel,sumAllMCHist,tmpDir) #Pretend Data
         self.makeRFHistWrite(channel,sumAllSigMCHist,tmpDir) #Pretend Signal
         self.makeRFHistWrite(channel,sumAllBakMCHist,tmpDir,compareHist=sumAllSigMCHist) #Background Sum
+        #rootDebugString += "#     Pretend Obs: {0}\n".format(getIntegralAll(sumAllMCHist,boundaries=massBounds))
+        #rootDebugString += "#     All Signal:  {0}\n".format(getIntegralAll(sumAllSigMCHist,boundaries=massBounds))
+        #rootDebugString += "#     All Bak:     {0}\n".format(getIntegralAll(sumAllBakMCHist,boundaries=massBounds))
 
     outRootFile.Close()
 
