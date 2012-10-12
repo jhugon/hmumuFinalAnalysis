@@ -1016,8 +1016,8 @@ if __name__ == "__main__":
 
   MassRebin = 4 # 4 Bins per GeV originally
   MVARebin = 20 #200 works, but is huge! 2000 bins originally
-  controlRegionLow=[95,115]
-  controlRegionHigh=[135,200]
+  controlRegionLow=[80,115]
+  controlRegionHigh=[135,160]
 
   print("Creating Threads...")
   threads = []
