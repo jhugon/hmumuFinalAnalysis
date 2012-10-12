@@ -153,27 +153,18 @@ class MVAvMassPDFBak:
     mvaBinning = root.RooFit.Binning(mvaHist.GetNbinsX(),-1,1)
     pdf2dHist = pdf2d.createHistogram("pdf2dHist",mMuMu,mMuMuBinning,root.RooFit.YVar(mva,mvaBinning))
 
-    """
     #####
     ## mMuMu Errors
+    
+    for var,col in zip([bwmZ,voitSigma],[root.kRed,root.kGreen]):
+      original = var.getVal()
+      err = var.getError()
+      var.setVal(original+err)
+      pdfMmumu.plotOn(plotMmumu,root.RooFit.LineStyle(2),root.RooFit.LineColor(col),root.RooFit.NormRange("low,high"),root.RooFit.Range(minMass,maxMass))
 
-    mMuMu.setRange("lowErr1Low",80.0,massLowRange[1])
-    mMuMu.setRange("lowErr1High",105.0,145.0)
-
-    bwmZErr = root.RooRealVar("bwmZErr","bwmZErr",60,120)
-    voitSigmaErr = root.RooRealVar("voitSigmaErr","voitSigmaErr",0.0,200.0)
-    pdfMmumuErr = root.RooVoigtian("pdfMmumuErr","pdfMmumuErr",mMuMu,bwmZErr,bwWidth,voitSigmaErr)
-
-    pdfMmumuErr.fitTo(mMuMuRooDataHistSmooth,root.RooFit.Range("lowErr1Low,high"))
-    pdfMmumuErr.plotOn(plotMmumu,root.RooFit.LineColor(root.kRed+1))
-    pdfMmumuErr.fitTo(mMuMuRooDataHistSmooth,root.RooFit.Range("lowErr1High,high"))
-    pdfMmumuErr.plotOn(plotMmumu,root.RooFit.LineColor(root.kRed+1))
-
-    self.bwmZErr = bwmZErr
-    self.voitSigmaErr = voitSigmaErr
-    self.pdfMmumuErr = pdfMmumuErr
-    """
-
+      var.setVal(original-err)
+      pdfMmumu.plotOn(plotMmumu,root.RooFit.LineStyle(2),root.RooFit.LineColor(col),root.RooFit.NormRange("low,high"),root.RooFit.Range(minMass,maxMass))
+      var.setVal(original)
     #########################
 
     self.hist2D = hist2D
@@ -1012,7 +1003,7 @@ if __name__ == "__main__":
   print "Started makeCards.py"
   root.gROOT.SetBatch(True)
 
-  directory = "input/old/"
+  directory = "input/"
   outDir = "statsCards/"
   analyses = ["BDTHistMuonOnly","BDTHistVBF","mDiMu"]
   analyses2D = ["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass","BDTHistMuonOnlyVMass","BDTHistVBFVMass"]
@@ -1021,6 +1012,7 @@ if __name__ == "__main__":
   backgroundNames= ["DYJetsToLL","ttbar","WZ","ZZ"]
   #lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
   lumiList = [10,20,30,100]
+  lumiList = [20]
 
   MassRebin = 4 # 4 Bins per GeV originally
   MVARebin = 20 #200 works, but is huge! 2000 bins originally
@@ -1050,6 +1042,7 @@ if __name__ == "__main__":
         outfilename=outDir+"LHComb"+"_"+str(i)+".txt",lumi=i
       )
     )
+    """
     for ana in analyses2D:
       tmp = ThreadedCardMaker(
         #__init__ args:
@@ -1059,6 +1052,7 @@ if __name__ == "__main__":
         outfilename=outDir+ana+"_"+str(i)+".txt",lumi=i
         )
       threads.append(tmp)
+    """
 
   nThreads = len(threads)
   print("nProcs: {0}".format(NPROCS))

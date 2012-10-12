@@ -5,29 +5,18 @@ from helpers import *
 import ROOT as root
 import os
 
-dataDir = "input/old/"
+dataDir = "input/"
 outDir = "output/"
 
 listToPlot = backgroundList+signalList
 
-LOGY=True
+LOGY=False
 reverse=False
 
 histNames = {}
 histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[100.0,150.0],"rebin":2}
-histNames["mDiMuVBFM"] = {"xlabel":"m_{#mu#mu}, After VBF Medium Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
-histNames["mDiMuVBFT"] = {"xlabel":"m_{#mu#mu}, After VBF Tight Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
-histNames["mDiMuVBFL"] = {"xlabel":"m_{#mu#mu}, After VBF Loose Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
-histNames["mDiMuVBFVL"] = {"xlabel":"m_{#mu#mu}, After VBF Very Loose Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
-histNames["mDiMuPtL30"] = {"xlabel":"m_{#mu#mu}, After p_{T}^{#mu#mu}<30 GeV Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
-histNames["mDiMuPt30to50"] = {"xlabel":"m_{#mu#mu}, After 30<p_{T}^{#mu#mu}<50 GeV Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
-histNames["mDiMuPt50to75"] = {"xlabel":"m_{#mu#mu}, After 50<p_{T}^{#mu#mu}<75 GeV Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
-histNames["mDiMuPt75to125"] = {"xlabel":"m_{#mu#mu}, After 75<p_{T}^{#mu#mu}<125 GeV Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
-histNames["mDiMuPt125"] = {"xlabel":"m_{#mu#mu}, After p_{T}^{#mu#mu}>125 GeV Selection [GeV]","xlimits":[100.0,150.0],"rebin":4}
 
 histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV]","xlimits":[0.0,200.0]}
-histNames["ptDiMuVBFM"] = {"xlabel":"p_{T,#mu#mu}, After VBF Medium Selection [GeV]","xlimits":[0.0,200.0],"rebin":10}
-histNames["ptDiMuVBFL"] = {"xlabel":"p_{T,#mu#mu}, After VBF-Loose Selection [GeV]","xlimits":[0.0,200.0],"rebin":5}
 
 histNames["mDiJet"] = {"xlabel":"m_{jj} [GeV]","xlimits":[0.0,1200.0],"rebin":5}
 histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj}","xlimits":[0.0,10.0]}
@@ -50,31 +39,15 @@ histNames["etaJet1"] = {"xlabel":"Leading Jet #eta","xlimits":[-5.0,5.0]}
 histNames["etaJet2"] = {"xlabel":"Sub-Leading Jet #eta","xlimits":[-5.0,5.0]}
 
 histNames["yDiMu"] = {"xlabel":"y_{#mu#mu} [GeV]","xlimits":[-3.0,3.0]}
-histNames["yDiMuVBFM"] = {"xlabel":"y_{#mu#mu}, After VBF Selection [GeV]","xlimits":[-3.0,3.0]}
-histNames["yDiMuVBFL"] = {"xlabel":"y_{#mu#mu}, After VBF-Loose Selection [GeV]","xlimits":[-3.0,3.0]}
-histNames["yDiMuPt30"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>30 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
-histNames["yDiMuPt50"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>50 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
-histNames["yDiMuPt75"] = {"xlabel":"y_{#mu#mu}, After p_{T}^{#mu#mu}>75 GeV Selection [GeV]","xlimits":[-3.0,3.0]}
 
 histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1.0,1.0],"rebin":2}
-histNames["cosThetaStarVBFM"] = {"xlabel":"cos(#theta^{*}) After VBF Selection","xlimits":[-1.0,1.0],"rebin":5}
-histNames["cosThetaStarVBFL"] = {"xlabel":"cos(#theta^{*}) After VBF-Loose Selection","xlimits":[-1.0,1.0],"rebin":5}
-histNames["cosThetaStarVBFT"] = {"xlabel":"cos(#theta^{*}) After VBF-Tight Selection","xlimits":[-1.0,1.0],"rebin":5}
-histNames["cosThetaStarPt30"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>30 GeV Selection","xlimits":[-1.0,1.0],"rebin":2}
-histNames["cosThetaStarPt50"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>50 GeV Selection","xlimits":[-1.0,1.0],"rebin":2}
-histNames["cosThetaStarPt75"] = {"xlabel":"cos(#theta^{*}) After p_{T}(#mu#mu)>75 GeV Selection","xlimits":[-1.0,1.0],"rebin":2}
+histNames["cosThetaStarCS"] = {"xlabel":"cos(#theta^{*}_{CS})","xlimits":[-1.0,1.0],"rebin":2}
 
-histNames["mDiMuEta11"] = {"xlabel":"m_{#mu#mu} Both Muons |#eta|<1.0 [GeV]","xlimits":[100.0,150.0],"rebin":2}
-histNames["mDiMuEta12"] = {"xlabel":"m_{#mu#mu} One Muons |#eta|<1.0, One Muon |#eta|>1.0 [GeV]","xlimits":[100.0,150.0],"rebin":2}
-histNames["mDiMuEta22"] = {"xlabel":"m_{#mu#mu} Both Muons |#eta|>1.0[GeV]","xlimits":[100.0,150.0],"rebin":2}
+histNames["likelihoodHistMuonOnly"] = {"xlabel":"Likelihood (Not-VBF Category)","xlimits":[-1,0.5],"rebin":20}
+histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Inclusive Category)","xlimits":[-1,0.25],"rebin":20}
 
-histNames["likelihoodHistMuonOnly"] = {"xlabel":"Likelihood (Not-VBF Category)","xlimits":[-1,0.5],"rebin":200}
-histNames["LDHistMuonOnly"] = {"xlabel":"LD (Inclusive Category)","xlimits":[-0.2,1],"rebin":200}
-histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Inclusive Category)","xlimits":[-1,0.25],"rebin":200}
-
-histNames["likelihoodHistVBF"] = {"xlabel":"Likelihood (VBF Category)","xlimits":[-0.5,1.0],"rebin":200}
-histNames["LDHistVBF"] = {"xlabel":"LD (VBF Category)","xlimits":[0.0,0.75],"rebin":200}
-histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.5,0.25],"rebin":200}
+histNames["likelihoodHistVBF"] = {"xlabel":"Likelihood (VBF Category)","xlimits":[-0.5,1.0],"rebin":20}
+histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.5,0.25],"rebin":20}
 
 histNames["puJetIDSimpleDiscJet1"] = {"xlabel":"PU Jet ID Simple Discriminator--Leading Jet","xlimits":[-1,1],"rebin":1}
 histNames["puJetIDSimpleDiscJet2"] = {"xlabel":"PU Jet ID Simple Discriminator--Sub-Leading Jet","xlimits":[-1,1],"rebin":1}

@@ -4,11 +4,13 @@ from xsec import *
 from helpers import *
 import ROOT as root
 import os
+import sys
 
-dataDir = "input/old/"
+dataDir = "input/"
 outDir = "output/"
 
 LOGY=False
+integralPlot=True
 
 urLegendPos = [0.70,0.65,0.88,0.88]
 ulLegendPos = [0.20,0.65,0.38,0.88]
@@ -18,7 +20,8 @@ ccLegendPos = [0.46,0.47,0.64,0.7]
 stdLegendPos = urLegendPos
 
 #histDirs = ["","4GeVWindow/","PtDiMu100/","VBFPresel/","IncPresel/","NotBlindWindow/"]
-histDirs = ["4GeVWindow/"]
+histDirs = ["VBFPresel/"]
+#histDirs = ["","PtDiMu100/","VBFPresel/","IncPresel/"]
 
 histNames = {}
 histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[110.0,150.0],"rebin":4}
@@ -27,7 +30,9 @@ histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[110.0,150.0],"rebin
 histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV]","xlimits":[0.0,200.0],"rebin":5}
 
 histNames["mDiJet"] = {"xlabel":"m_{jj} [GeV]","xlimits":[0.0,1200.0],"rebin":5}
+histNames["mDiJet"] = {"xlabel":"m_{jj} [GeV]","xlimits":[300.0,1200.0],"rebin":5}
 histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj}","xlimits":[0.0,8.5]}
+histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj}","xlimits":[3.0,8.5]}
 histNames["deltaRJets"] = {"xlabel":"#DeltaR_{jj}","xlimits":[0.0,8.5]}
 histNames["deltaPhiJets"] = {"xlabel":"#Delta#phi_{jj}","xlimits":[0.0,3.2],"leg":ulLegendPos}
 histNames["deltaEtaMuons"] = {"xlabel":"#Delta#eta_{#mu#mu}","xlimits":[0.0,4.5]}
@@ -70,6 +75,8 @@ histNames["puJetIDSimpleDiscJet3"] = {"xlabel":"PU Jet ID Simple Discriminator--
 histNames["puJetIDSimpleJet1"] = {"xlabel":"PU Jet Simple Loose ID--Leading Jet","xlimits":[],"rebin":1}
 histNames["puJetIDSimpleJet2"] = {"xlabel":"PU Jet Simple Loose ID--Sub-Leading Jet","xlimits":[],"rebin":1}
 histNames["puJetIDSimpleJet3"] = {"xlabel":"PU Jet Simple Loose ID--3rd Leading Jet","xlimits":[],"rebin":1}
+
+histNames["nVtx"] = {"xlabel":"N_{vtx}","xlimits":[0,40],"leg":stdLegendPos}
 
 tlatex = root.TLatex()
 tlatex.SetNDC()
@@ -231,7 +238,7 @@ for histName in bkgDatasetList[0].hists:
 
   histBaseName = re.sub(r".*/","",histName)
   xtitle = histNames[histBaseName]["xlabel"]
-  stack = DataMCStack(bkgHistList, dataHist, canvas, xtitle,lumi=LUMI,logy=LOGY,xlimits=histNames[histBaseName]["xlimits"],signalsNoStack=sigHistList)
+  stack = DataMCStack(bkgHistList, dataHist, canvas, xtitle,lumi=LUMI,logy=LOGY,xlimits=histNames[histBaseName]["xlimits"],signalsNoStack=sigHistList,integralPlot=integralPlot)
   if histNames[histBaseName].has_key("leg"):
     setLegPos(leg,(histNames[histBaseName]["leg"]))
   else:

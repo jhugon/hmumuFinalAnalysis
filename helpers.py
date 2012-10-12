@@ -527,7 +527,7 @@ def makeWeightHist(f1,canvas,leg):
   leg.Draw("same")
 
 class DataMCStack:
-  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="Events", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=False):
+  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="Events", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=False,integralPlot=False):
     nBinsX = dataHist.GetNbinsX()
     self.nBinsX = nBinsX
     self.dataHist = dataHist
@@ -542,6 +542,19 @@ class DataMCStack:
       assert(nBinsX == mcHist.GetNbinsX())
     for sigHist in signalsNoStack:
       assert(nBinsX == sigHist.GetNbinsX())
+
+    if integralPlot:
+      dataHist = getIntegralHist(dataHist,True)
+      self.dataHist = dataHist
+      newMcHistList = []
+      for i in mcHistList:
+        newMcHistList.append(getIntegralHist(i))
+      mcHistList = newMcHistList
+      newSigHistList = []
+      for i in signalsNoStack:
+        newSigHistList.append(getIntegralHist(i))
+      signalsNoStack = newSigHistList
+      ytitle = "Integral of "+ytitle+" #geq X"
   
     # Make MC Stack/sumHist
     self.stack = root.THStack()
@@ -996,6 +1009,18 @@ class PlotOfSlices:
       leg.AddEntry(hist,tmpLabel,"l")
       xBin += 1
     leg.Draw("same")
+
+def getIntegralHist(hist,setErrors=False):
+  result = hist.Clone(hist.GetName()+"_Integral")
+  nBins = result.GetNbinsX()
+  for i in range(nBins+1):
+    tmpSum = 0.0
+    for j in range(i,nBins+2):
+      tmpSum += result.GetBinContent(j)
+    result.SetBinContent(i,tmpSum)
+    if setErrors:
+        result.SetBinError(i,tmpSum**0.5)
+  return result
 
 def saveAs(canvas,name):
   canvas.SaveAs(name+".png")
