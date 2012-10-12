@@ -12,7 +12,7 @@ import ROOT as root
 
 canvas = root.TCanvas()
 
-mMuMu = root.RooRealVar("mMuMu","mMuMu",110,140.0)
+mMuMu = root.RooRealVar("mMuMu","mMuMu",100,180.0)
 #mMuMu.setRange("low",110,120)
 #mMuMu.setRange("high",130,180)
 mMuMu.setRange("low",110,124)
@@ -60,15 +60,19 @@ kappa = root.RooRealVar("kappa","kappa",0,5)
 dyHighMassPdf = root.RooGenericPdf("dyHighMassPdf","dyHighMassPdf","TMath::Exp(-alpha*TMath::Power(mMuMu,kappa))",root.RooArgList(mMuMu,alpha,kappa))
 """
 
-a1 = root.RooRealVar("a1","a1",-5,5)
-a2 = root.RooRealVar("a2","a2",-5,5)
-a3 = root.RooRealVar("a3","a3",-5,5)
-a4 = root.RooRealVar("a4","a4",-5,5)
-a5 = root.RooRealVar("a5","a5",-5,5)
-a6 = root.RooRealVar("a6","a6",-5,5)
-a7 = root.RooRealVar("a7","a7",-5,5)
-polyMmumu = root.RooChebychev("polyMmumu","polyMmumu",mMuMu,root.RooArgList(a1,a2))
-#polyMmumu = root.RooPolynomial("polyMmumu","polyMmumu",mMuMu,root.RooArgList(a1,a2,a3,a4,a5,a6,a7))
+a1 = root.RooRealVar("a1","a1",-2.0,2.0)
+a2 = root.RooRealVar("a2","a2",-2.0,2.0)
+a3 = root.RooRealVar("a3","a3",-2.0,2.0)
+a4 = root.RooRealVar("a4","a4",-2.0,2.0)
+a5 = root.RooRealVar("a5","a5",-2.0,2.0)
+a6 = root.RooRealVar("a6","a6",-2.0,2.0)
+a7 = root.RooRealVar("a7","a7",-2.0,2.0)
+a8 = root.RooRealVar("a8","a8",-2.0,2.0)
+a9 = root.RooRealVar("a9","a9",-2.0,2.0)
+a10 = root.RooRealVar("a10","a10",-2.0,2.0)
+#polyMmumu = root.RooBernstein("polyMmumu","polyMmumu",mMuMu,root.RooArgList(a1,a2,a3,a4))
+polyMmumu = root.RooChebychev("polyMmumu","polyMmumu",mMuMu,root.RooArgList(a1,a2,a3,a4,a5,a6,a7))
+#polyMmumu = root.RooPolynomial("polyMmumu","polyMmumu",mMuMu,root.RooArgList(a1,a2,a3,a4,a5))
 
 bwCoef = root.RooRealVar("bwCoef","bwCoef",0,1)
 expCoef = root.RooRealVar("expCoef","expCoef",0,1)
@@ -84,9 +88,9 @@ gausPlusExp = root.RooAddPdf("gausPlusExp","bwPlusExp",root.RooArgList(expMmumu,
 #pdfMmumu = root.RooAddPdf("pdfMmumu","pdfMmumu",root.RooArgList(landauMmumu,bwMmumu))
 #pdfMmumu = bwMmumu
 #pdfMmumu = voitMmumu
-#pdfMmumu = polyMmumu
+pdfMmumu = polyMmumu
 #pdfMmumu = expMmumu
-pdfMmumu = gausPlusExp
+#pdfMmumu = gausPlusExp
 #pdfMmumu = polyPlusExp
 
 
