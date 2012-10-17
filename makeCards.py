@@ -16,7 +16,7 @@ gSystem.Load('libRooFit')
 
 #root.gErrorIgnoreLevel = root.kWarning
 
-NPROCS = 2
+NPROCS = 1
 
 from xsec import *
 
@@ -77,6 +77,7 @@ class MVAvMassPDFBak:
     if rooVars == None:
         print("Error: MVAvMassPDFBak requires rooVars list of variables, exiting.")
         sys.exit(1)
+    print("original hist bins X: {} Y: {}".format(hist2D.GetNbinsX(),hist2D.GetNbinsY()))
 
     hist2DSmooth = hist2D.Clone(name+hist2D.GetName()+"_smoothed")
     if smooth:
@@ -149,13 +150,14 @@ class MVAvMassPDFBak:
     mvaRooDataHist.plotOn(plotMva)
     pdfMva.plotOn(plotMva)
 
-    mMuMuBinning = root.RooFit.Binning(mMuMuHist.GetNbinsX(),minMass,maxMass)
+    nBinsX = hist2D.GetXaxis().FindBin(maxMass) - hist2D.GetXaxis().FindBin(minMass)
+
+    mMuMuBinning = root.RooFit.Binning(nBinsX,minMass,maxMass)
     mvaBinning = root.RooFit.Binning(mvaHist.GetNbinsX(),-1,1)
     pdf2dHist = pdf2d.createHistogram("pdf2dHist",mMuMu,mMuMuBinning,root.RooFit.YVar(mva,mvaBinning))
 
     #####
     ## mMuMu Errors
-    
     for var,col in zip([bwmZ,voitSigma],[root.kRed,root.kGreen]):
       original = var.getVal()
       err = var.getError()
@@ -165,6 +167,7 @@ class MVAvMassPDFBak:
       var.setVal(original-err)
       pdfMmumu.plotOn(plotMmumu,root.RooFit.LineStyle(2),root.RooFit.LineColor(col),root.RooFit.NormRange("low,high"),root.RooFit.Range(minMass,maxMass))
       var.setVal(original)
+
     #########################
 
     self.hist2D = hist2D
@@ -205,12 +208,44 @@ class MVAvMassPDFBak:
     #self.gMvaMean = gMvaMean
     #self.gausPdfMva = gausPdfMva
 
+    histForErrs = pdf2dHist
     self.hackHist = None
     if hack:
       hackHist = pdf2dHist.Clone("hackHist")
       hackHist.Scale(hist2D.Integral()/hackHist.Integral())
       self.hackHist = hackHist
       self.pdf2d = root.RooDataHist(hist2D.GetName(),hist2D.GetName(),root.RooArgList(mMuMu,mva),hackHist)
+      histForErrs = hackHist
+
+    lowPertBin = pdf2dHist.GetXaxis().FindBin(120.0)
+    highPertBin = pdf2dHist.GetXaxis().FindBin(131.0)
+    self.nuisanceNames = []
+    self.pdf2dHistErrs = {}
+    print("pdf2dHist bins X: {} Y: {}".format(pdf2dHist.GetNbinsX(),pdf2dHist.GetNbinsY()))
+    for xBin in range(lowPertBin,highPertBin):
+      print("xbin: {} bincenter: {}".format(xBin,pdf2dHist.GetXaxis().GetBinCenter(xBin)))
+      plus = pdf2dHist.Clone("xShift"+str(xBin)+"Up")
+      minus = pdf2dHist.Clone("xShift"+str(xBin)+"Down")
+      for yBin in range(0,pdf2dHist.GetNbinsY()+2):
+        orig = plus.GetBinContent(xBin,yBin)
+        plus.SetBinContent(xBin,yBin,orig*1.05)
+        minus.SetBinContent(xBin,yBin,orig*0.95)
+      self.pdf2dHistErrs[plus.GetName()] = plus
+      self.pdf2dHistErrs[minus.GetName()] = minus
+      self.nuisanceNames.append("xShift"+str(xBin))
+    """
+    for yBin in range(0,pdf2dHist.GetNbinsY()+2):
+      plus = pdf2dHist.Clone("yShift"+str(yBin)+"Up")
+      minus = pdf2dHist.Clone("yShift"+str(yBin)+"Down")
+      for xBin in range(0,pdf2dHist.GetNbinsX()+2):
+        orig = plus.GetBinContent(xBin,yBin)
+        plus.SetBinContent(xBin,yBin,orig*1.05)
+        minus.SetBinContent(xBin,yBin,orig*0.95)
+      self.pdf2dHistErrs[plus.GetName()] = plus
+      self.pdf2dHistErrs[minus.GetName()] = minus
+      self.nuisanceNames.append("yShift"+str(yBin))
+    """
+      
 
   def dump(self):
     print("#####################################")
@@ -343,6 +378,11 @@ class MVAvMassPDFBak:
         self.hackHist.SetName("hackHist")
         self.hackHist.Write()
 
+    first = True
+    for key in self.pdf2dHistErrs:
+      hist = self.pdf2dHistErrs[key]
+      #hist.Add(self.pdf2dHist,-1.0)
+      hist.Write()
     #canvas.SetLogy(0)
 
 
@@ -796,6 +836,13 @@ class ShapeDataCardMaker(DataCardMaker):
         self.makeRFHistWrite(channel,sumAllMCHist,tmpDir) #Pretend Data
         self.makeRFHistWrite(channel,sumAllSigMCHist,tmpDir) #Pretend Signal
         self.makeRFHistWrite(channel,sumAllBakMCHist,tmpDir,compareHist=sumAllSigMCHist) #Background Sum
+        for nuisanceName in channel.bakShapeMkr.nuisanceNames:
+          nuisanceHistUp = channel.bakShapeMkr.pdf2dHistErrs[nuisanceName+"Up"]
+          nuisanceHistDown = channel.bakShapeMkr.pdf2dHistErrs[nuisanceName+"Down"]
+          nuisanceHistUp.SetName("bak_"+nuisanceHistUp.GetName())
+          nuisanceHistDown.SetName("bak_"+nuisanceHistDown.GetName())
+          self.makeRFHistWrite(channel,nuisanceHistUp,tmpDir)
+          self.makeRFHistWrite(channel,nuisanceHistDown,tmpDir)
         #rootDebugString += "#     Pretend Obs: {0}\n".format(getIntegralAll(sumAllMCHist,boundaries=massBounds))
         #rootDebugString += "#     All Signal:  {0}\n".format(getIntegralAll(sumAllSigMCHist,boundaries=massBounds))
         #rootDebugString += "#     All Bak:     {0}\n".format(getIntegralAll(sumAllBakMCHist,boundaries=massBounds))
@@ -959,6 +1006,36 @@ class ShapeDataCardMaker(DataCardMaker):
       #print formatList
       outfile.write(formatString.format(*formatList))
 
+    # Shape Uncertainties (All Correlated)
+    for channel,channelName in zip(self.channels,self.channelNames):
+      for nuisanceName in channel.bakShapeMkr.nuisanceNames:
+        formatString = "{0:<8} {1:^4} "
+        formatList = [nuisanceName,"shape"]
+        iParam = 2
+        for channel2,channelName2 in zip(self.channels,self.channelNames):
+          for sigName in self.sigNames:
+            formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+            value = "-"
+            formatList.append(value)
+            iParam += 1
+          if sumAllBak:
+              bakName="bak"
+              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+              value = "1"
+              formatList.append(value)
+              iParam += 1
+          else:
+            for bakName in self.bakNames:
+              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+              value = "-"
+              formatList.append(value)
+              iParam += 1
+        formatString += "\n"
+        #print formatString
+        #print formatList
+        outfile.write(formatString.format(*formatList))
+      break
+
     #Debugging
     outfile.write("#################################\n")
     for channel,channelName in zip(self.channels,self.channelNames):
@@ -1006,8 +1083,8 @@ if __name__ == "__main__":
   directory = "input/"
   outDir = "statsCards/"
   analyses = ["BDTHistMuonOnly","BDTHistVBF","mDiMu"]
-  analyses2D = ["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass","BDTHistMuonOnlyVMass","BDTHistVBFVMass"]
-  #analyses2D = ["BDTHistVBFVMass","BDTHistMuonOnlyVMass"]
+  #analyses2D = ["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass","BDTHistMuonOnlyVMass","BDTHistVBFVMass"]
+  analyses2D = ["BDTHistVBFVMass","BDTHistMuonOnlyVMass"]
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar","WZ","ZZ"]
   #lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
