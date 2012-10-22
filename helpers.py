@@ -5,6 +5,7 @@ from ROOT import gStyle as gStyle
 import re
 from math import sqrt
 import array
+import sys
 
 def fit2DResHist(hist,color):
   histName = hist.GetName()
@@ -1022,6 +1023,29 @@ def getIntegralHist(hist,setErrors=False):
         result.SetBinError(i,tmpSum**0.5)
   return result
 
+def hist2to1(hist):
+  assert(hist.InheritsFrom("TH1"))
+  result = None
+  nBinsX = hist.GetNbinsX()
+  nBinsY = hist.GetNbinsY()
+  totalBins = (nBinsX+2)*(nBinsY+2) - 2 #include underflow/overflow
+  if hist.InheritsFrom("TH2F"):
+    result = root.TH1F(hist.GetName()+"_1d","",totalBins,0,totalBins)
+  elif hist.InheritsFrom("TH2D"):
+    result = root.TH1D(hist.GetName()+"_1d","",totalBins,0,totalBins)
+  else:
+    print("Error: hist2to1: Input hist must be TH2F or TH2D, exiting.")
+    sys.exit(1)
+  k = 0
+  for i in range(nBinsX+2):
+    for j in range(nBinsY+2):
+      tmp = hist.GetBinContent(i,j)
+      tmpErr = hist.GetBinError(i,j)
+      result.SetBinContent(k,tmp)
+      result.SetBinError(k,tmpErr)
+      k += 1
+  return result
+
 def saveAs(canvas,name):
   canvas.SaveAs(name+".png")
   canvas.SaveAs(name+".pdf")
@@ -1033,3 +1057,15 @@ def setLegPos(leg,legPos):
   leg.SetX2NDC(legPos[2])
   leg.SetY1NDC(legPos[1])
   leg.SetY2NDC(legPos[3])
+
+if __name__ == "__main__":
+
+  tmp = root.TH2D("tmp","tmp",3,0,3,3,0,3)
+  tmp.Fill(1.5,1.5,23)
+  tmp.Fill(0.5,1.5,3)
+  tmp.Fill(1.5,0.5,2)
+  tmp.Fill(100,100,200)
+  tmp1d = hist2to1(tmp)
+
+  tmp.Print("all")
+  tmp1d.Print("all")

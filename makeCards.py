@@ -402,6 +402,7 @@ class Analysis:
       self.is2D = True
     self.x = x
     self.y = y
+    self.x1d = None
 
     self.sigFiles = []
     self.sigHistsRaw = []
@@ -741,17 +742,14 @@ class ShapeDataCardMaker(DataCardMaker):
         hist.Write()
         return
     x = channel.x
-    y = None
+    origHist = hist
     if is2D:
-      y = channel.y
-    rfHist = None
-    rfHistPdf = None
-    if is2D:
-      rfHist = root.RooDataHist(hist.GetName(),hist.GetName(),root.RooArgList(root.RooArgSet(x,y)),hist)
-      rfHistPdf = root.RooHistPdf(hist.GetName(),hist.GetName(),root.RooArgSet(x,y),rfHist)
-    else:
-      rfHist = root.RooDataHist(hist.GetName(),hist.GetName(),root.RooArgList(root.RooArgSet(x)),hist)
-      rfHistPdf = root.RooHistPdf(hist.GetName(),hist.GetName(),root.RooArgSet(x),rfHist)
+      hist = hist2to1(hist)
+      if channel.x1d == None:
+        channel.x1d = root.RooRealVar("x1d","x1d",0,hist.GetNbinsX()+2)
+      x = channel.x1d
+    rfHist = root.RooDataHist(hist.GetName(),hist.GetName(),root.RooArgList(root.RooArgSet(x)),hist)
+    rfHistPdf = root.RooHistPdf(hist.GetName(),hist.GetName(),root.RooArgSet(x),rfHist)
     if isData:
       rfHist.Write()
     else:
@@ -762,12 +760,15 @@ class ShapeDataCardMaker(DataCardMaker):
     debugDir.cd()
     hist.Write()
     if is2D:
-      xBinning = root.RooFit.Binning(hist.GetNbinsX())
-      yBinning = root.RooFit.Binning(hist.GetNbinsY())
-      rfHistTH2 = rfHist.createHistogram(hist.GetName()+"rfHist2d",x,xBinning,root.RooFit.YVar(y,yBinning))
-      rfHistPdfTH2 = rfHistPdf.createHistogram(hist.GetName()+"rfHistPdf2d",x,xBinning,root.RooFit.YVar(y,yBinning))
+      xBinning = root.RooFit.Binning(origHist.GetNbinsX())
+      yBinning = root.RooFit.Binning(origHist.GetNbinsY())
+      x = channel.x
+      y = channel.y
+      rfHistTH2 = rfHist.createHistogram(origHist.GetName()+"rfHist2d",x,xBinning,root.RooFit.YVar(y,yBinning))
+      rfHistPdfTH2 = rfHistPdf.createHistogram(origHist.GetName()+"rfHistPdf2d",x,xBinning,root.RooFit.YVar(y,yBinning))
       rfHistTH2.Write()
       rfHistPdfTH2.Write()
+      hist.Write()
       if channel.bakShape and compareHist != None:
         channel.bakShapeMkr.writeDebugHistsToCurrTDir(compareHist)
     else:
