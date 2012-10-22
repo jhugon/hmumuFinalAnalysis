@@ -217,6 +217,7 @@ class MVAvMassPDFBak:
       self.pdf2d = root.RooDataHist(hist2D.GetName(),hist2D.GetName(),root.RooArgList(mMuMu,mva),hackHist)
       histForErrs = hackHist
 
+    """
     lowPertBin = pdf2dHist.GetXaxis().FindBin(120.0)
     highPertBin = pdf2dHist.GetXaxis().FindBin(131.0)
     self.nuisanceNames = []
@@ -233,7 +234,6 @@ class MVAvMassPDFBak:
       self.pdf2dHistErrs[plus.GetName()] = plus
       self.pdf2dHistErrs[minus.GetName()] = minus
       self.nuisanceNames.append("xShift"+str(xBin))
-    """
     for yBin in range(0,pdf2dHist.GetNbinsY()+2):
       plus = pdf2dHist.Clone("yShift"+str(yBin)+"Up")
       minus = pdf2dHist.Clone("yShift"+str(yBin)+"Down")
@@ -378,11 +378,13 @@ class MVAvMassPDFBak:
         self.hackHist.SetName("hackHist")
         self.hackHist.Write()
 
+    """
     first = True
     for key in self.pdf2dHistErrs:
       hist = self.pdf2dHistErrs[key]
       #hist.Add(self.pdf2dHist,-1.0)
       hist.Write()
+    """
     #canvas.SetLogy(0)
 
 
@@ -836,6 +838,7 @@ class ShapeDataCardMaker(DataCardMaker):
         self.makeRFHistWrite(channel,sumAllMCHist,tmpDir) #Pretend Data
         self.makeRFHistWrite(channel,sumAllSigMCHist,tmpDir) #Pretend Signal
         self.makeRFHistWrite(channel,sumAllBakMCHist,tmpDir,compareHist=sumAllSigMCHist) #Background Sum
+        """
         for nuisanceName in channel.bakShapeMkr.nuisanceNames:
           nuisanceHistUp = channel.bakShapeMkr.pdf2dHistErrs[nuisanceName+"Up"]
           nuisanceHistDown = channel.bakShapeMkr.pdf2dHistErrs[nuisanceName+"Down"]
@@ -843,6 +846,7 @@ class ShapeDataCardMaker(DataCardMaker):
           nuisanceHistDown.SetName("bak_"+nuisanceHistDown.GetName())
           self.makeRFHistWrite(channel,nuisanceHistUp,tmpDir)
           self.makeRFHistWrite(channel,nuisanceHistDown,tmpDir)
+        """
         #rootDebugString += "#     Pretend Obs: {0}\n".format(getIntegralAll(sumAllMCHist,boundaries=massBounds))
         #rootDebugString += "#     All Signal:  {0}\n".format(getIntegralAll(sumAllSigMCHist,boundaries=massBounds))
         #rootDebugString += "#     All Bak:     {0}\n".format(getIntegralAll(sumAllBakMCHist,boundaries=massBounds))
@@ -1006,6 +1010,7 @@ class ShapeDataCardMaker(DataCardMaker):
       #print formatList
       outfile.write(formatString.format(*formatList))
 
+    """
     # Shape Uncertainties (All Correlated)
     for channel,channelName in zip(self.channels,self.channelNames):
       for nuisanceName in channel.bakShapeMkr.nuisanceNames:
@@ -1035,6 +1040,7 @@ class ShapeDataCardMaker(DataCardMaker):
         #print formatList
         outfile.write(formatString.format(*formatList))
       break
+    """
 
     #Debugging
     outfile.write("#################################\n")
@@ -1085,7 +1091,8 @@ if __name__ == "__main__":
   analyses = ["BDTHistMuonOnly","BDTHistVBF","mDiMu"]
   #analyses2D = ["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass","BDTHistMuonOnlyVMass","BDTHistVBFVMass"]
   analyses2D = ["BDTHistVBFVMass","BDTHistMuonOnlyVMass"]
-  signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
+  #signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
+  signalNames=["ggHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar","WZ","ZZ"]
   #lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
   lumiList = [10,20,30,100]
@@ -1099,6 +1106,7 @@ if __name__ == "__main__":
   print("Creating Threads...")
   threads = []
   for i in lumiList:
+    """
     threads.append(
       ThreadedCardMaker(
         #__init__ args:
@@ -1129,7 +1137,6 @@ if __name__ == "__main__":
         outfilename=outDir+ana+"_"+str(i)+".txt",lumi=i
         )
       threads.append(tmp)
-    """
 
   nThreads = len(threads)
   print("nProcs: {0}".format(NPROCS))

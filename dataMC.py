@@ -10,6 +10,7 @@ dataDir = "input/"
 outDir = "output/"
 
 LOGY=False
+integralPlot=False
 integralPlot=True
 
 urLegendPos = [0.70,0.65,0.88,0.88]
@@ -20,7 +21,8 @@ ccLegendPos = [0.46,0.47,0.64,0.7]
 stdLegendPos = urLegendPos
 
 #histDirs = ["","4GeVWindow/","PtDiMu100/","VBFPresel/","IncPresel/","NotBlindWindow/"]
-histDirs = ["VBFPresel/"]
+histDirs = [""]
+histDirs = ["NotBlindWindow/"]
 #histDirs = ["","PtDiMu100/","VBFPresel/","IncPresel/"]
 
 histNames = {}
