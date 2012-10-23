@@ -18,6 +18,8 @@ gSystem.Load('libRooFit')
 
 NPROCS = 1
 
+BAKUNC = 1.0
+
 from xsec import *
 
 if scaleHiggsBy != 1.0:
@@ -217,7 +219,6 @@ class MVAvMassPDFBak:
       self.pdf2d = root.RooDataHist(hist2D.GetName(),hist2D.GetName(),root.RooArgList(mMuMu,mva),hackHist)
       histForErrs = hackHist
 
-    """
     lowPertBin = pdf2dHist.GetXaxis().FindBin(120.0)
     highPertBin = pdf2dHist.GetXaxis().FindBin(131.0)
     self.nuisanceNames = []
@@ -229,8 +230,8 @@ class MVAvMassPDFBak:
       minus = pdf2dHist.Clone("xShift"+str(xBin)+"Down")
       for yBin in range(0,pdf2dHist.GetNbinsY()+2):
         orig = plus.GetBinContent(xBin,yBin)
-        plus.SetBinContent(xBin,yBin,orig*1.05)
-        minus.SetBinContent(xBin,yBin,orig*0.95)
+        plus.SetBinContent(xBin,yBin,orig*(1.+BAKUNC))
+        minus.SetBinContent(xBin,yBin,orig*(1.-BAKUNC))
       self.pdf2dHistErrs[plus.GetName()] = plus
       self.pdf2dHistErrs[minus.GetName()] = minus
       self.nuisanceNames.append("xShift"+str(xBin))
@@ -244,7 +245,6 @@ class MVAvMassPDFBak:
       self.pdf2dHistErrs[plus.GetName()] = plus
       self.pdf2dHistErrs[minus.GetName()] = minus
       self.nuisanceNames.append("yShift"+str(yBin))
-    """
       
 
   def dump(self):
@@ -745,6 +745,7 @@ class ShapeDataCardMaker(DataCardMaker):
     origHist = hist
     if is2D:
       hist = hist2to1(hist)
+      hist.SetName(re.sub("_1d","",hist.GetName()))
       if channel.x1d == None:
         channel.x1d = root.RooRealVar("x1d","x1d",0,hist.GetNbinsX()+2)
       x = channel.x1d
@@ -839,7 +840,13 @@ class ShapeDataCardMaker(DataCardMaker):
         self.makeRFHistWrite(channel,sumAllMCHist,tmpDir) #Pretend Data
         self.makeRFHistWrite(channel,sumAllSigMCHist,tmpDir) #Pretend Signal
         self.makeRFHistWrite(channel,sumAllBakMCHist,tmpDir,compareHist=sumAllSigMCHist) #Background Sum
-        """
+        print("*************************************************************************")
+        print("*************************************************************************")
+        print("*************************************************************************")
+        print channel.bakShapeMkr.nuisanceNames
+        print("*************************************************************************")
+        print("*************************************************************************")
+        print("*************************************************************************")
         for nuisanceName in channel.bakShapeMkr.nuisanceNames:
           nuisanceHistUp = channel.bakShapeMkr.pdf2dHistErrs[nuisanceName+"Up"]
           nuisanceHistDown = channel.bakShapeMkr.pdf2dHistErrs[nuisanceName+"Down"]
@@ -847,7 +854,6 @@ class ShapeDataCardMaker(DataCardMaker):
           nuisanceHistDown.SetName("bak_"+nuisanceHistDown.GetName())
           self.makeRFHistWrite(channel,nuisanceHistUp,tmpDir)
           self.makeRFHistWrite(channel,nuisanceHistDown,tmpDir)
-        """
         #rootDebugString += "#     Pretend Obs: {0}\n".format(getIntegralAll(sumAllMCHist,boundaries=massBounds))
         #rootDebugString += "#     All Signal:  {0}\n".format(getIntegralAll(sumAllSigMCHist,boundaries=massBounds))
         #rootDebugString += "#     All Bak:     {0}\n".format(getIntegralAll(sumAllBakMCHist,boundaries=massBounds))
@@ -867,7 +873,7 @@ class ShapeDataCardMaker(DataCardMaker):
     outfile.write("imax {0}\n".format(len(self.channels)))
     #outfile.write("jmax {0}\n".format(len(backgroundNames)))
     outfile.write("jmax {0}\n".format("*"))
-    outfile.write("kmax {0}\n".format(len(nuisance)))
+    outfile.write("kmax {0}\n".format("*"))
     outfile.write("------------\n")
     outfile.write("shapes * * {0} $CHANNEL/$PROCESS $CHANNEL/$PROCESS_$SYSTEMATIC\n".format( os.path.basename(outRootFilename)))
     outfile.write("------------\n")
@@ -1011,7 +1017,6 @@ class ShapeDataCardMaker(DataCardMaker):
       #print formatList
       outfile.write(formatString.format(*formatList))
 
-    """
     # Shape Uncertainties (All Correlated)
     for channel,channelName in zip(self.channels,self.channelNames):
       for nuisanceName in channel.bakShapeMkr.nuisanceNames:
@@ -1041,7 +1046,6 @@ class ShapeDataCardMaker(DataCardMaker):
         #print formatList
         outfile.write(formatString.format(*formatList))
       break
-    """
 
     #Debugging
     outfile.write("#################################\n")
@@ -1099,8 +1103,8 @@ if __name__ == "__main__":
   lumiList = [10,20,30,100]
   lumiList = [20]
 
-  MassRebin = 4 # 4 Bins per GeV originally
-  MVARebin = 20 #200 works, but is huge! 2000 bins originally
+  MassRebin = 8 # 4 Bins per GeV originally
+  MVARebin = 400 #200 works, but is huge! 2000 bins originally
   controlRegionLow=[80,115]
   controlRegionHigh=[135,160]
 
