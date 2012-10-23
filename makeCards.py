@@ -227,12 +227,17 @@ class MVAvMassPDFBak:
     pdf2dHist.Sumw2()
     bakPlus = pdf2dHist.Clone("bakUnc"+"Up")
     bakMinus = pdf2dHist.Clone("bakUnc"+"Down")
+    errIntNominal = 0.
     for xBin in range(lowPertBin,highPertBin):
       for yBin in range(0,pdf2dHist.GetNbinsY()+2):
         orig = pdf2dHist.GetBinContent(xBin,yBin)
         err = pdf2dHist.GetBinError(xBin,yBin)*BAKUNC
         bakPlus.SetBinContent(xBin,yBin,orig+err)
         bakMinus.SetBinContent(xBin,yBin,orig-err)
+        errIntNominal += pdf2dHist.GetBinError(xBin,yBin)**2
+    errIntNominal = sqrt(errIntNominal)
+    bakMinus.Scale((pdf2dHist.GetSumOfWeights()-errIntNominal)/bakMinus.GetSumOfWeights())
+    bakPlus.Scale((pdf2dHist.GetSumOfWeights()+errIntNominal)/bakMinus.GetSumOfWeights())
     self.pdf2dHistErrs[bakPlus.GetName()] = bakPlus
     self.pdf2dHistErrs[bakMinus.GetName()] = bakMinus
     self.nuisanceNames.append("bakUnc")
