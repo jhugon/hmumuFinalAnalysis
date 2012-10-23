@@ -221,31 +221,21 @@ class MVAvMassPDFBak:
 
     lowPertBin = pdf2dHist.GetXaxis().FindBin(120.0)
     highPertBin = pdf2dHist.GetXaxis().FindBin(131.0)
+    print("pdf2dHist bins X: {} Y: {}".format(pdf2dHist.GetNbinsX(),pdf2dHist.GetNbinsY()))
     self.nuisanceNames = []
     self.pdf2dHistErrs = {}
-    print("pdf2dHist bins X: {} Y: {}".format(pdf2dHist.GetNbinsX(),pdf2dHist.GetNbinsY()))
+    pdf2dHist.Sumw2()
+    bakPlus = pdf2dHist.Clone("bakUnc"+"Up")
+    bakMinus = pdf2dHist.Clone("bakUnc"+"Down")
     for xBin in range(lowPertBin,highPertBin):
-      print("xbin: {} bincenter: {}".format(xBin,pdf2dHist.GetXaxis().GetBinCenter(xBin)))
-      plus = pdf2dHist.Clone("xShift"+str(xBin)+"Up")
-      minus = pdf2dHist.Clone("xShift"+str(xBin)+"Down")
       for yBin in range(0,pdf2dHist.GetNbinsY()+2):
-        orig = plus.GetBinContent(xBin,yBin)
-        plus.SetBinContent(xBin,yBin,orig*(1.+BAKUNC))
-        minus.SetBinContent(xBin,yBin,orig*(1.-BAKUNC))
-      self.pdf2dHistErrs[plus.GetName()] = plus
-      self.pdf2dHistErrs[minus.GetName()] = minus
-      self.nuisanceNames.append("xShift"+str(xBin))
-    for yBin in range(0,pdf2dHist.GetNbinsY()+2):
-      plus = pdf2dHist.Clone("yShift"+str(yBin)+"Up")
-      minus = pdf2dHist.Clone("yShift"+str(yBin)+"Down")
-      for xBin in range(0,pdf2dHist.GetNbinsX()+2):
-        orig = plus.GetBinContent(xBin,yBin)
-        plus.SetBinContent(xBin,yBin,orig*1.05)
-        minus.SetBinContent(xBin,yBin,orig*0.95)
-      self.pdf2dHistErrs[plus.GetName()] = plus
-      self.pdf2dHistErrs[minus.GetName()] = minus
-      self.nuisanceNames.append("yShift"+str(yBin))
-      
+        orig = pdf2dHist.GetBinContent(xBin,yBin)
+        err = pdf2dHist.GetBinError(xBin,yBin)*BAKUNC
+        bakPlus.SetBinContent(xBin,yBin,orig+err)
+        bakMinus.SetBinContent(xBin,yBin,orig-err)
+    self.pdf2dHistErrs[bakPlus.GetName()] = bakPlus
+    self.pdf2dHistErrs[bakMinus.GetName()] = bakMinus
+    self.nuisanceNames.append("bakUnc")
 
   def dump(self):
     print("#####################################")
@@ -1103,8 +1093,8 @@ if __name__ == "__main__":
   lumiList = [10,20,30,100]
   lumiList = [20]
 
-  MassRebin = 8 # 4 Bins per GeV originally
-  MVARebin = 400 #200 works, but is huge! 2000 bins originally
+  MassRebin = 4 # 4 Bins per GeV originally
+  MVARebin = 20 #200 works, but is huge! 2000 bins originally
   controlRegionLow=[80,115]
   controlRegionHigh=[135,160]
 
