@@ -80,7 +80,7 @@ class MassPDFBak:
         sys.exit(1)
 
     hist.Sumw2()
-    hist.Scale(10000.0)
+    #hist.Scale(10000.0)
 
     maxMass = massHighRange[1]
     minMass = massLowRange[0]
@@ -89,10 +89,12 @@ class MassPDFBak:
     mMuMu.setRange("high",massHighRange[0],massHighRange[1])
     mMuMu.setRange("signal",massLowRange[1],massHighRange[0])
     
-    a1 = root.RooRealVar("a1","a1",-0.02,-1,1)
-    a2 = root.RooRealVar("a2","a2",0.0,-1,1)
+    a1 = root.RooRealVar("a1","a1",-1,1)
+    a2 = root.RooRealVar("a2","a2",-1,1)
     a3 = root.RooRealVar("a3","a3",-1,1)
-    pdfMmumu = root.RooPolynomial("pdfMmumu","pdfMmumu",mMuMu,root.RooArgList(a1,a2))
+    shift = root.RooRealVar("shift","shift",-125)
+    shiftedX = root.RooFormulaVar("shiftedX","shiftedX","mMuMu+shift",root.RooArgList(mMuMu,shift))
+    pdfMmumu = root.RooPolynomial("pdfMmumu","pdfMmumu",shiftedX,root.RooArgList(a1,a2))
     #pdfMmumu = root.RooChebychev("pdfMmumu","pdfMmumu",mMuMu,root.RooArgList(a1,a2))
     
     tmpAxis = hist.GetXaxis()
@@ -102,7 +104,7 @@ class MassPDFBak:
 
     mMuMuRooDataHist = root.RooDataHist(name+"DataHist",name+"DataHist",root.RooArgList(mMuMu),hist)
     
-    pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("low,signal,high"),root.RooFit.SumW2Error(True))
+    pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(True))
     chi2 = pdfMmumu.createChi2(mMuMuRooDataHist)
 
     plotMmumu = mMuMu.frame()
@@ -123,6 +125,8 @@ class MassPDFBak:
     self.a1 = a1
     self.a2 = a2
     self.a3 = a3
+    self.shift = shift
+    self.shiftedX = shiftedX
     self.pdfMmumu = pdfMmumu
     self.mMuMuBinning = mMuMuBinning
     self.nominalHist = nominalHist
@@ -1144,8 +1148,8 @@ if __name__ == "__main__":
 
   MassRebin = 4 # 4 Bins per GeV originally
   MassRebin = 1 # 4 Bins per GeV originally
-  controlRegionLow=[115,120]
-  controlRegionHigh=[130,135]
+  controlRegionLow=[115,125]
+  controlRegionHigh=[125,135]
 
   print("Creating Threads...")
   threads = []

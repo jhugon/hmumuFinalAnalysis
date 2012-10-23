@@ -42,8 +42,11 @@ a4 = root.RooRealVar("a4","a4",-5,5)
 a5 = root.RooRealVar("a5","a5",-5,5)
 a6 = root.RooRealVar("a6","a6",-5,5)
 a7 = root.RooRealVar("a7","a7",-5,5)
+shift = root.RooRealVar("shift","shift",-110)
+shiftedX = root.RooFormulaVar("shiftedX","shiftedX","mMuMu+shift",root.RooArgList(mMuMu,shift))
+
 #polyMmumu = root.RooChebychev("polyMmumu","polyMmumu",mMuMu,root.RooArgList(a1,a2,a3))
-polyMmumu = root.RooPolynomial("polyMmumu","polyMmumu",mMuMu,root.RooArgList(a1,a2))
+polyMmumu = root.RooPolynomial("polyMmumu","polyMmumu",shiftedX,root.RooArgList(a1,a2))
 
 b1 = root.RooRealVar("b1","b1",-50,50)
 b2 = root.RooRealVar("b2","b2",-50,50)
