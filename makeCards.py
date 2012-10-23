@@ -73,6 +73,79 @@ def getRooVars(directory,signalNames,histNameBase,analysis):
 
 ###################################################################################
 
+class MassPDFBak:
+  def __init__(self,name,hist,massLowRange,massHighRange,rooVars=None,smooth=False,hack=True):
+    if rooVars == None:
+        print("Error: MVAvMassPDFBak requires rooVars list of variables, exiting.")
+        sys.exit(1)
+
+    hist.Sumw2()
+    hist.Scale(10000.0)
+
+    maxMass = massHighRange[1]
+    minMass = massLowRange[0]
+    mMuMu = rooVars[0]
+    mMuMu.setRange("low",massLowRange[0],massLowRange[1])
+    mMuMu.setRange("high",massHighRange[0],massHighRange[1])
+    mMuMu.setRange("signal",massLowRange[1],massHighRange[0])
+    
+    a1 = root.RooRealVar("a1","a1",-0.02,-1,1)
+    a2 = root.RooRealVar("a2","a2",0.0,-1,1)
+    a3 = root.RooRealVar("a3","a3",-1,1)
+    pdfMmumu = root.RooPolynomial("pdfMmumu","pdfMmumu",mMuMu,root.RooArgList(a1,a2))
+    #pdfMmumu = root.RooChebychev("pdfMmumu","pdfMmumu",mMuMu,root.RooArgList(a1,a2))
+    
+    tmpAxis = hist.GetXaxis()
+    lowBin = tmpAxis.FindBin(minMass)
+    highBin = tmpAxis.FindBin(maxMass)
+    nBinsX = highBin - lowBin
+
+    mMuMuRooDataHist = root.RooDataHist(name+"DataHist",name+"DataHist",root.RooArgList(mMuMu),hist)
+    
+    pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("low,signal,high"),root.RooFit.SumW2Error(True))
+    chi2 = pdfMmumu.createChi2(mMuMuRooDataHist)
+
+    plotMmumu = mMuMu.frame()
+
+    mMuMuRooDataHist.plotOn(plotMmumu)
+    pdfMmumu.plotOn(plotMmumu)
+    pdfMmumu.plotOn(plotMmumu,root.RooFit.LineStyle(2),root.RooFit.Range(minMass,maxMass))
+
+    mMuMuBinning = root.RooFit.Binning(nBinsX,minMass,maxMass)
+    nominalHist = pdfMmumu.createHistogram("pdf2dHist",mMuMu,mMuMuBinning)
+
+    self.name = name
+    self.hist = hist
+    self.mMuMuRooDataHist = mMuMuRooDataHist
+    self.lowBin = lowBin
+    self.highBin = highBin
+    self.nBinsX = nBinsX
+    self.a1 = a1
+    self.a2 = a2
+    self.a3 = a3
+    self.pdfMmumu = pdfMmumu
+    self.mMuMuBinning = mMuMuBinning
+    self.nominalHist = nominalHist
+    self.maxMass = maxMass
+    self.minMass = minMass
+    self.mMuMu = mMuMu
+    self.plotMmumu = plotMmumu
+    self.debug = ""
+    self.chi2 = chi2
+
+    self.debug += "### MassPDFBak: "+name+"\n"
+    self.debug += "# a1: {0:.3g} +/- {1:.3g}\n".format(a1.getVal(),a1.getError())
+    self.debug += "# a2: {0:.3g} +/- {1:.3g}\n".format(a2.getVal(),a2.getError())
+    self.debug += "# a3: {0:.3g} +/- {1:.3g}\n".format(a3.getVal(),a3.getError())
+    self.debug += "# chi2/ndf: {0:.3g}\n".format(chi2.getVal()/(nBinsX-1))
+
+  def writeDebugHistsToCurrTDir(self,compareHist=None):
+    canvas = root.TCanvas("canvas")
+    canvas.cd()
+    #canvas.SetLogy(1)
+    self.plotMmumu.Draw()
+    canvas.SetName(self.name+"Canvas")
+    canvas.Write()
 
 class MVAvMassPDFBak:
   def __init__(self,name,hist2D,massLowRange,massHighRange,rooVars=None,smooth=False,hack=True):
@@ -90,7 +163,7 @@ class MVAvMassPDFBak:
     mMuMu = rooVars[0]
     mMuMu.setRange("low",massLowRange[0],massLowRange[1])
     mMuMu.setRange("high",massHighRange[0],massHighRange[1])
-    mMuMu.setRange("signal",massLowRange[1],massLowRange[0])
+    mMuMu.setRange("signal",massLowRange[1],massHighRange[0])
     mva = rooVars[1]
     
     bwWidth = root.RooRealVar("bwWidth","bwWidth",2.4952)
@@ -204,6 +277,7 @@ class MVAvMassPDFBak:
     self.plotMva = plotMva
     self.pdf2dHist = pdf2dHist
     self.name = name
+    self.debug = ""
 
     #self.templatePdfMva = templatePdfMva
     #self.gMvaWidth = gMvaWidth
@@ -488,6 +562,15 @@ class Analysis:
       self.bakShapeMkr = bakShapeMkr
       self.bakHistTotal = bakShapeMkr.hackHist
       self.xsecBakTotal = getIntegralAll(self.bakHistTotal,boundaries=massBounds)
+    elif bakShape:
+      bakShapeMkr = MassPDFBak("pdfHists_"+analysis,
+                                self.bakHistTotal,
+                                controlRegionLow,controlRegionHigh,
+                                rooVars = [self.x]
+                                )
+      self.bakShapeMkr = bakShapeMkr
+      self.bakHistTotal = bakShapeMkr.nominalHist
+      self.xsecBakTotal = getIntegralAll(self.bakHistTotal,boundaries=massBounds)
 
   def getSigEff(self,name):
     result = -1.0
@@ -559,6 +642,7 @@ class DataCardMaker:
         y = tmpList[1]
     self.x = x
     self.y = y
+    self.shape = bakShape
 
     for analysis in analysisNames:
       tmp = Analysis(directory,signalNames,backgroundNames,analysis,x,y,controlRegionLow,controlRegionHigh,histNameBase=histNameBase,bakShape=bakShape,rebin=rebin)
@@ -773,6 +857,8 @@ class ShapeDataCardMaker(DataCardMaker):
       rfHistPdf.plotOn(plot)
       plot.SetName(hist.GetName())
       plot.Write()
+      if channel.bakShape:
+        channel.bakShapeMkr.writeDebugHistsToCurrTDir()
 
   def write(self,outfilename,lumi,sumAllBak=True,includeSigInAllMC=False):
     lumi *= 1000.0
@@ -811,6 +897,8 @@ class ShapeDataCardMaker(DataCardMaker):
   
         if sumAllBak:
           #channel.bakShapeMkr.dump()
+          if self.shape:
+            rootDebugString += channel.bakShapeMkr.debug
           #channel.dump()
           sumAllBakMCHist = channel.getBakHistTotal().Clone("bak")
           sumAllBakMCHist.Scale(lumi)
@@ -835,20 +923,6 @@ class ShapeDataCardMaker(DataCardMaker):
         self.makeRFHistWrite(channel,sumAllMCHist,tmpDir) #Pretend Data
         self.makeRFHistWrite(channel,sumAllSigMCHist,tmpDir) #Pretend Signal
         self.makeRFHistWrite(channel,sumAllBakMCHist,tmpDir,compareHist=sumAllSigMCHist) #Background Sum
-        print("*************************************************************************")
-        print("*************************************************************************")
-        print("*************************************************************************")
-        print channel.bakShapeMkr.nuisanceNames
-        print("*************************************************************************")
-        print("*************************************************************************")
-        print("*************************************************************************")
-        for nuisanceName in channel.bakShapeMkr.nuisanceNames:
-          nuisanceHistUp = channel.bakShapeMkr.pdf2dHistErrs[nuisanceName+"Up"]
-          nuisanceHistDown = channel.bakShapeMkr.pdf2dHistErrs[nuisanceName+"Down"]
-          nuisanceHistUp.SetName("bak_"+nuisanceHistUp.GetName())
-          nuisanceHistDown.SetName("bak_"+nuisanceHistDown.GetName())
-          self.makeRFHistWrite(channel,nuisanceHistUp,tmpDir)
-          self.makeRFHistWrite(channel,nuisanceHistDown,tmpDir)
         #rootDebugString += "#     Pretend Obs: {0}\n".format(getIntegralAll(sumAllMCHist,boundaries=massBounds))
         #rootDebugString += "#     All Signal:  {0}\n".format(getIntegralAll(sumAllSigMCHist,boundaries=massBounds))
         #rootDebugString += "#     All Bak:     {0}\n".format(getIntegralAll(sumAllBakMCHist,boundaries=massBounds))
@@ -1012,36 +1086,6 @@ class ShapeDataCardMaker(DataCardMaker):
       #print formatList
       outfile.write(formatString.format(*formatList))
 
-    # Shape Uncertainties (All Correlated)
-    for channel,channelName in zip(self.channels,self.channelNames):
-      for nuisanceName in channel.bakShapeMkr.nuisanceNames:
-        formatString = "{0:<8} {1:^4} "
-        formatList = [nuisanceName,"shape"]
-        iParam = 2
-        for channel2,channelName2 in zip(self.channels,self.channelNames):
-          for sigName in self.sigNames:
-            formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-            value = "-"
-            formatList.append(value)
-            iParam += 1
-          if sumAllBak:
-              bakName="bak"
-              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-              value = "1"
-              formatList.append(value)
-              iParam += 1
-          else:
-            for bakName in self.bakNames:
-              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-              value = "-"
-              formatList.append(value)
-              iParam += 1
-        formatString += "\n"
-        #print formatString
-        #print formatList
-        outfile.write(formatString.format(*formatList))
-      break
-
     #Debugging
     outfile.write("#################################\n")
     for channel,channelName in zip(self.channels,self.channelNames):
@@ -1090,7 +1134,7 @@ if __name__ == "__main__":
   outDir = "statsCards/"
   analyses = ["BDTHistMuonOnly","BDTHistVBF","mDiMu"]
   #analyses2D = ["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass","BDTHistMuonOnlyVMass","BDTHistVBFVMass"]
-  analyses2D = ["BDTHistVBFVMass","BDTHistMuonOnlyVMass"]
+  analyses2D = ["mDiMu"]
   #signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
   signalNames=["ggHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar","WZ","ZZ"]
@@ -1099,9 +1143,9 @@ if __name__ == "__main__":
   lumiList = [20]
 
   MassRebin = 4 # 4 Bins per GeV originally
-  MVARebin = 20 #200 works, but is huge! 2000 bins originally
-  controlRegionLow=[80,115]
-  controlRegionHigh=[135,160]
+  MassRebin = 1 # 4 Bins per GeV originally
+  controlRegionLow=[115,120]
+  controlRegionHigh=[130,135]
 
   print("Creating Threads...")
   threads = []
@@ -1111,7 +1155,7 @@ if __name__ == "__main__":
       ThreadedCardMaker(
         #__init__ args:
         directory,["BDTHistMuonOnlyVMass","BDTHistVBFVMass"],signalNames,backgroundNames,
-        rebin=[MassRebin,MVARebin], bakShape=True,
+        rebin=[MassRebin], bakShape=True,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
         #write args:
         outfilename=outDir+"BDTComb"+"_"+str(i)+".txt",lumi=i
@@ -1121,7 +1165,7 @@ if __name__ == "__main__":
       ThreadedCardMaker(
         #__init__ args:
         directory,["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass"],signalNames,backgroundNames,
-        rebin=[MassRebin,MVARebin], bakShape=True,
+        rebin=[MassRebin], bakShape=True,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
         #write args:
         outfilename=outDir+"LHComb"+"_"+str(i)+".txt",lumi=i
@@ -1131,7 +1175,7 @@ if __name__ == "__main__":
     for ana in analyses2D:
       tmp = ThreadedCardMaker(
         #__init__ args:
-        directory,[ana],signalNames,backgroundNames,rebin=[MassRebin,MVARebin],bakShape=True,
+        directory,[ana],signalNames,backgroundNames,rebin=[MassRebin],bakShape=True,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
         #write args:
         outfilename=outDir+ana+"_"+str(i)+".txt",lumi=i
