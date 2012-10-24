@@ -892,6 +892,8 @@ class ShapeDataCardMaker(DataCardMaker):
     if self.useTH1 and not is2D:
         hist.Write()
         return
+    if not is2D:
+      hist = shrinkTH1(hist,self.controlRegionLow[0],self.controlRegionHigh[1])
     x = channel.x
     origHist = hist
     if is2D:

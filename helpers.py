@@ -1046,6 +1046,32 @@ def hist2to1(hist):
       k += 1
   return result
 
+def shrinkTH1(hist,xlow,xhigh,deleteOld=False):
+  assert(hist.InheritsFrom("TH1"))
+  taxis=hist.GetXaxis()
+  oldXlow=taxis.GetXmin()
+  oldXhigh=taxis.GetXmax()
+  assert(xlow >= oldXlow)
+  assert(xhigh <= oldXhigh)
+  lowBin = taxis.FindBin(xlow)
+  highBin = taxis.FindBin(xhigh)
+  xlow = taxis.GetBinLowEdge(lowBin)
+  xhigh = taxis.GetBinUpEdge(highBin)
+  oldN = hist.GetNbinsX()
+  newN = int((xhigh-xlow)/(oldXhigh-oldXlow)*oldN)
+  name = hist.GetName()
+  title = hist.GetTitle()
+  hist.SetName(name+"_Old")
+  newHist = root.TH1F(name,title,newN,xlow,xhigh)
+  newHist.GetXaxis().SetTitle(hist.GetXaxis().GetTitle())
+  newHist.GetYaxis().SetTitle(hist.GetYaxis().GetTitle())
+  for iOld,iNew in zip(range(lowBin,highBin+1),range(1,newN+1)):
+    newHist.SetBinContent(iNew,hist.GetBinContent(iOld))
+    newHist.SetBinError(iNew,hist.GetBinError(iOld))
+  if deleteOld:
+    hist.Delete()
+  return newHist
+
 def saveAs(canvas,name):
   canvas.SaveAs(name+".png")
   canvas.SaveAs(name+".pdf")
@@ -1060,12 +1086,13 @@ def setLegPos(leg,legPos):
 
 if __name__ == "__main__":
 
-  tmp = root.TH2D("tmp","tmp",3,0,3,3,0,3)
-  tmp.Fill(1.5,1.5,23)
-  tmp.Fill(0.5,1.5,3)
-  tmp.Fill(1.5,0.5,2)
-  tmp.Fill(100,100,200)
-  tmp1d = hist2to1(tmp)
+  tmp = root.TH1F("tmp","tmp",4,-10,10)
+  tmp.FillRandom("gaus",10000)
+
+  out = shrinkTH1(tmp,-7,7)
+
+  #out.Draw()
+  #raw_input("press enter...")
 
   tmp.Print("all")
-  tmp1d.Print("all")
+  out.Print("all")
