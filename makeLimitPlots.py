@@ -74,6 +74,8 @@ def getData(fileString,matchString=r"_([\d]+).txt.out",dontMatchStrings=[],doSor
     thisPoint = [xNum,obs,low2sig,low1sig,median,high1sig,high2sig]
     if thisPoint.count("-10.0")>0:
         continue
+    if thisPoint.count(-10.0)>0:
+        continue
     #print thisPoint
     result.append(thisPoint)
   return result
@@ -220,46 +222,43 @@ class ComparePlot:
     
 
 titleMap = {
-  "combined":"Combined H#rightarrow#mu#mu",
-  "BDTComb":"Combined BDT H#rightarrow#mu#mu",
-  "BDTComb1d":"Combined BDT 1D H#rightarrow#mu#mu",
-  "LHComb":"Combined BDT H#rightarrow#mu#mu",
-  "BDTHistMuonOnly":"H#rightarrow#mu#mu: BDT Inclusive",
-  "BDTHistVBF":"H#rightarrow#mu#mu: BDT VBF",
-  "likelihoodHistMuonOnly":"H#rightarrow#mu#mu: Likelihood Inclusive",
-  "likelihoodHistVBF":"H#rightarrow#mu#mu: Likelihood VBF",
-  "BDTHistMuonOnlyVMass":"H#rightarrow#mu#mu: BDT v. m_{#mu#mu} Inclusive",
-  "BDTHistVBFVMass":"H#rightarrow#mu#mu: BDT v. m_{#mu#mu} VBF",
-  "likelihoodHistMuonOnlyVMass":"H#rightarrow#mu#mu: Likelihood v. m_{#mu#mu} Inclusive",
-  "likelihoodHistVBFVMass":"H#rightarrow#mu#mu: Likelihood v. m_{#mu#mu} VBF",
-  "mDiMu":"H#rightarrow#mu#mu: m_{#mu#mu}",
+  "AllCat":"All Categories Comb.",
+  "IncCat":"Inclusive Categories Comb.",
+  "VBFCat":"VBF Categories Comb.",
 
-  "THBDTHistMuonOnlyVMass":"TH2 H#rightarrow#mu#mu: BDT v. m_{#mu#mu} Inclusive",
-  "THBDTHistVBFVMass":"TH2 H#rightarrow#mu#mu: BDT v. m_{#mu#mu} VBF",
-  "THlikelihoodHistMuonOnlyVMass":"TH2 H#rightarrow#mu#mu: Likelihood v. m_{#mu#mu} Inclusive",
-  "THlikelihoodHistVBFVMass":"TH2 H#rightarrow#mu#mu: Likelihood v. m_{#mu#mu} VBF"
+  "IncPresel":"Inclusive Preselection",
+  "VBFPresel":"VBF Preselection",
+
+  "Pt0to30":"p_{T}^{#mu#mu} #in [0,30]",
+  "Pt30to50":"p_{T}^{#mu#mu} #in [30,50]",
+  "Pt50to125":"p_{T}^{#mu#mu} #in [50,125]",
+  "Pt125to250":"p_{T}^{#mu#mu} #in [125,250]",
+  "Pt250":"p_{T}^{#mu#mu}>250",
+
+  "VBFLoose":"VBFL",
+  "VBFMedium":"VBFM",
+  "VBFTight":"VBFT",
+  "VBFVeryTight":"VBFVT"
 }
 
 comparisonMap = {
-  "combined":"Combination",
-  "BDTComb":"BDT Comb.",
-  "BDTComb1d":"BDT 1D Comb.",
-  "LHComb":"LH Comb.",
-  "BDTHistMuonOnly":"BDT Inc.",
-  "BDTHistVBF":"BDT VBF",
-  "likelihoodHistMuonOnly":"LH Inc.",
-  "likelihoodHistVBF":"LH VBF",
+  "AllCat":"All Cat. Comb.",
+  "IncCat":"Inc. Cat. Comb.",
+  "VBFCat":"VBF Cat. Comb.",
 
-  "BDTHistMuonOnlyVMass":"BDT v. $m_{\mu\mu}$ Inc.",
-  "BDTHistVBFVMass":"BDT v. $m_{\mu\mu}$ VBF",
-  "likelihoodHistMuonOnlyVMass":"LH v. $m_{\mu\mu}$ Inc.",
-  "likelihoodHistVBFVMass":"LH v. $m_{\mu\mu}$ VBF",
-  "mDiMu":"$m_{\mu\mu}$ Shape",
+  "IncPresel":"Inc. Presel.",
+  "VBFPresel":"VBF Presel.",
 
-  "THBDTHistMuonOnlyVMass":"TH2 BDT v. $m_{\mu\mu}$ Inc.",
-  "THBDTHistVBFVMass":"TH2 BDT v. $m_{\mu\mu}$ VBF",
-  "THlikelihoodHistMuonOnlyVMass":"TH2 LH v. $m_{\mu\mu}$ Inc.",
-  "THlikelihoodHistVBFVMass":"TH2 LH v. $m_{\mu\mu}$ VBF"
+  "Pt0to30":"$p_{T}^{\mu\mu} \in [0,30]$",
+  "Pt30to50":"$p_{T}^{\mu\mu} \in [30,50]$",
+  "Pt50to125":"$p_{T}^{\mu\mu} \in [50,125]$",
+  "Pt125to250":"$p_{T}^{\mu\mu} \in [125,250]$",
+  "Pt250":"$p_{T}^{\mu\mu}>250$",
+
+  "VBFLoose":"VBFL",
+  "VBFMedium":"VBFM",
+  "VBFTight":"VBFT",
+  "VBFVeryTight":"VBFVT"
 }
 
 ylimits=[1.0,500.0]
