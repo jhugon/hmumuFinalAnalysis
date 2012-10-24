@@ -80,7 +80,6 @@ class MassPDFBak:
         sys.exit(1)
 
     hist.Sumw2()
-    #hist.Scale(10000.0)
 
     maxMass = massHighRange[1]
     minMass = massLowRange[0]
@@ -94,7 +93,8 @@ class MassPDFBak:
     a3 = root.RooRealVar("a3","a3",-1,1)
     a4 = root.RooRealVar("a4","a4",-1,1)
     a5 = root.RooRealVar("a5","a5",-1,1)
-    shift = root.RooRealVar("shift","shift",-125)
+    #shift = root.RooRealVar("shift","shift",-125)
+    shift = root.RooRealVar("shift","shift",-140)
     shiftedX = root.RooFormulaVar("shiftedX","shiftedX","mMuMu+shift",root.RooArgList(mMuMu,shift))
     pdfMmumu = root.RooPolynomial("pdfMmumu","pdfMmumu",shiftedX,root.RooArgList(a1,a2))
     #pdfMmumu = root.RooChebychev("pdfMmumu","pdfMmumu",shiftedX,root.RooArgList(a1,a2))
@@ -151,27 +151,40 @@ class MassPDFBak:
 
     ## Error time
 
-    """
     a1val = a1.getVal()
     a2val = a2.getVal()
-    a1Err = a1.getError()
-    a2Err = a2.getError()
+    a1Err = a1.getError()/10.0
+    a2Err = a2.getError()/10.0
     a1.setVal(a1val+a1Err)
+    a1UpHist = pdfMmumu.createHistogram("a1Up",mMuMu,mMuMuBinning)
     pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
     a1.setVal(a1val-a1Err)
+    a1DownHist = pdfMmumu.createHistogram("a1Down",mMuMu,mMuMuBinning)
     pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
     plotMmumu.Draw()
     a1.setVal(a1val)
     a2.setVal(a2val+a2Err)
+    a2UpHist = pdfMmumu.createHistogram("a2Up",mMuMu,mMuMuBinning)
     pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kRed-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
     a2.setVal(a2val-a2Err)
+    a2DownHist = pdfMmumu.createHistogram("a2Down",mMuMu,mMuMuBinning)
     pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kRed-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
 
     a1.setVal(a1val)
     a1.setError(a1Err)
     a2.setVal(a2val)
     a2.setError(a2Err)
-    """
+
+    self.a1UpHist = a1UpHist
+    self.a1DownHist = a1DownHist
+    self.a2UpHist = a2UpHist
+    self.a2DownHist = a2DownHist
+    self.ErrNames = ["a1","a2"]
+    self.ErrHists = {}
+    self.ErrHists["a1Up"] = a1UpHist
+    self.ErrHists["a1Down"] = a1DownHist
+    self.ErrHists["a2Up"] = a2UpHist
+    self.ErrHists["a2Down"] = a2DownHist
 
   def writeDebugHistsToCurrTDir(self,compareHist=None):
     canvas = root.TCanvas("canvas")
@@ -1179,7 +1192,7 @@ if __name__ == "__main__":
 
   MassRebin = 4 # 4 Bins per GeV originally
   controlRegionLow=[115,125]
-  controlRegionHigh=[125,135]
+  controlRegionHigh=[125,140]
 
   print("Creating Threads...")
   threads = []
