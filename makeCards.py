@@ -195,12 +195,12 @@ class MassPDFBak:
     self.a1DownHist = a1DownHist
     self.a2UpHist = a2UpHist
     self.a2DownHist = a2DownHist
-    self.ErrNames = ["a1","a2"]
-    self.ErrHists = {}
-    self.ErrHists["a1Up"] = a1UpHist
-    self.ErrHists["a1Down"] = a1DownHist
-    self.ErrHists["a2Up"] = a2UpHist
-    self.ErrHists["a2Down"] = a2DownHist
+    self.errNames = ["a1","a2"]
+    self.errHists = {}
+    self.errHists["a1Up"] = a1UpHist
+    self.errHists["a1Down"] = a1DownHist
+    self.errHists["a2Up"] = a2UpHist
+    self.errHists["a2Down"] = a2DownHist
 
   def writeDebugHistsToCurrTDir(self,compareHist=None):
     canvas = root.TCanvas("canvas")
@@ -965,6 +965,13 @@ class ShapeDataCardMaker(DataCardMaker):
           #channel.bakShapeMkr.dump()
           if self.shape:
             rootDebugString += channel.bakShapeMkr.debug
+            for nuName in channel.bakShapeMkr.errNames:
+                origUp = channel.bakShapeMkr.errHists[nuName+"Up"]
+                origDown = channel.bakShapeMkr.errHists[nuName+"Down"]
+                tmpUp = origUp.Clone("bak_"+nuName+"Up")
+                tmpDown = origDown.Clone("bak_"+nuName+"Down")
+                self.makeRFHistWrite(channel,tmpUp,tmpDir)
+                self.makeRFHistWrite(channel,tmpDown,tmpDir)
           #channel.dump()
           sumAllBakMCHist = channel.getBakHistTotal().Clone("bak")
           sumAllBakMCHist.Scale(lumi)
@@ -1152,6 +1159,37 @@ class ShapeDataCardMaker(DataCardMaker):
       #print formatString
       #print formatList
       outfile.write(formatString.format(*formatList))
+
+    # Bak Shape Uncertainties (All Correlated)
+    for channel,channelName in zip(self.channels,self.channelNames):
+      for nuisanceName in channel.bakShapeMkr.errNames:
+        formatString = "{0:<8} {1:^4} "
+        formatList = [nuisanceName,"shape"]
+        iParam = 2
+        for channel2,channelName2 in zip(self.channels,self.channelNames):
+          for sigName in self.sigNames:
+            formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+            value = "-"
+            formatList.append(value)
+            iParam += 1
+          if sumAllBak:
+              bakName="bak"
+              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+              value = "1"
+              formatList.append(value)
+              iParam += 1
+          else:
+            for bakName in self.bakNames:
+              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+              value = "-"
+              formatList.append(value)
+              iParam += 1
+        formatString += "\n"
+        #print formatString
+        #print formatList
+        outfile.write(formatString.format(*formatList))
+      break
+
 
     #Debugging
     outfile.write("#################################\n")
