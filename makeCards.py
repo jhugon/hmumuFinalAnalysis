@@ -18,9 +18,9 @@ gSystem.Load('libRooFit')
 
 NPROCS = 1
 
-BAKUNC = 1.0
+BAKUNC = 0.1
 
-BAKUNCON = False
+BAKUNCON = True
 
 from xsec import *
 
@@ -68,6 +68,7 @@ def getRooVars(directory,signalNames,histNameBase,analysis):
     is2D = False
     for name in signalNames:
       tmpF = root.TFile(directory+name+".root")
+      #print("*********\n  Getting {}\n*********".format(histNameBase+analysis))
       hist = tmpF.Get(histNameBase+analysis)
       break
       self.sigFiles.append(tmpF)
@@ -172,8 +173,11 @@ class MassPDFBak:
     if BAKUNCON:
       a1val = a1.getVal()
       a2val = a2.getVal()
-      a1Err = a1.getError()/10.0
-      a2Err = a2.getError()/10.0
+      #a1Err = a1.getError()
+      #a2Err = a2.getError()
+      # Error Hack
+      a1Err = abs(a1val*BAKUNC)
+      a2Err = abs(a2val*BAKUNC)
       a1.setVal(a1val+a1Err)
       a1UpHist = pdfMmumu.createHistogram("a1Up",mMuMu,mMuMuBinning)
       pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
@@ -1245,13 +1249,12 @@ if __name__ == "__main__":
 
   directory = "input/"
   outDir = "statsCards/"
-  #analyses2D = ["VBFPresel","IncPresel"]
-  #histPostFix="mDiMu"
-  analyses2D = ["mDiMu"]
-  histPostFix=""
+  analyses = ["VBFPresel","IncPresel","VBFLoose","VBFMedium","VBFTight","VBFVeryTight","Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250"]
+  histPostFix="/mDiMu"
+  #analyses2D = ["mDiMu"]
+  #histPostFix=""
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
-  #backgroundNames= ["DYJetsToLL","ttbar","WW","WZ","ZZ"]
-  backgroundNames= ["DYJetsToLL"]
+  backgroundNames= ["DYJetsToLL","ttbar","WW","WZ","ZZ"]
   #lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
   lumiList = [10,20,30,100]
   lumiList = [20]
@@ -1263,29 +1266,37 @@ if __name__ == "__main__":
   print("Creating Threads...")
   threads = []
   for i in lumiList:
-    """
     threads.append(
       ThreadedCardMaker(
         #__init__ args:
-        directory,["BDTHistMuonOnlyVMass","BDTHistVBFVMass"],signalNames,backgroundNames,
+        directory,["VBFLoose","VBFMedium","VBFTight","VBFVeryTight","Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250"],signalNames,backgroundNames,
         rebin=[MassRebin], bakShape=True,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
         #write args:
-        outfilename=outDir+"BDTComb"+"_"+str(i)+".txt",lumi=i
+        outfilename=outDir+"AllCat"+"_"+str(i)+".txt",lumi=i
       )
     )
     threads.append(
       ThreadedCardMaker(
         #__init__ args:
-        directory,["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass"],signalNames,backgroundNames,
+        directory,["VBFLoose","VBFMedium","VBFTight","VBFVeryTight"],signalNames,backgroundNames,
         rebin=[MassRebin], bakShape=True,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
         #write args:
-        outfilename=outDir+"LHComb"+"_"+str(i)+".txt",lumi=i
+        outfilename=outDir+"VBFCat"+"_"+str(i)+".txt",lumi=i
       )
     )
-    """
-    for ana in analyses2D:
+    threads.append(
+      ThreadedCardMaker(
+        #__init__ args:
+        directory,["Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250"],signalNames,backgroundNames,
+        rebin=[MassRebin], bakShape=True,
+        controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
+        #write args:
+        outfilename=outDir+"IncCat"+"_"+str(i)+".txt",lumi=i
+      )
+    )
+    for ana in analyses:
       tmp = ThreadedCardMaker(
         #__init__ args:
         directory,[ana],signalNames,backgroundNames,rebin=[MassRebin],bakShape=True,
