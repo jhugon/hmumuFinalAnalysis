@@ -45,6 +45,22 @@ def getIntegralAll(hist,boundaries=[]):
   else:
     return -1
 
+def vetoOutOfBoundsEvents(hist,boundaries=[]):
+  xbinLow = None
+  xbinHigh = None
+  if len(boundaries)==2:
+    xbinLow = hist.GetXaxis().FindBin(boundaries[0])
+    xbinHigh = hist.GetXaxis().FindBin(boundaries[1])
+  else:
+    print("Error: vetoOutOfBoundsEvents: boundaries must be length 2, exiting.")
+    sys.exit(1)
+  for i in range(0,xbinLow):
+    hist.SetBinContent(i,0.0)
+    hist.SetBinError(i,0.0)
+  for i in range(xbinHigh+1,hist.GetNbinsX()+2):
+    hist.SetBinContent(i,0.0)
+    hist.SetBinError(i,0.0)
+
 def getRooVars(directory,signalNames,histNameBase,analysis):
     hist = None
     is2D = False
@@ -566,6 +582,9 @@ class Analysis:
     highBin = self.sigHistsRaw[0].GetNbinsX()+1
     massBounds = [controlRegionLow[0],controlRegionHigh[1]]
 
+    for hist in self.sigHistsRaw:
+      vetoOutOfBoundsEvents(hist,boundaries=massBounds)
+
     self.xsecSigTotal = 0.0
     self.xsecSigList = []
     self.effSigList = []
@@ -967,12 +986,13 @@ class ShapeDataCardMaker(DataCardMaker):
                 sumAllMCHist = tmpHist.Clone("data_obs")
             else:
                 sumAllMCHist.Add(tmpHist)
+        sumAllMCHist.Scale(int(getIntegralAll(sumAllMCHist))/getIntegralAll(sumAllMCHist)) # Make Integer
         self.makeRFHistWrite(channel,sumAllMCHist,tmpDir) #Pretend Data
         self.makeRFHistWrite(channel,sumAllSigMCHist,tmpDir) #Pretend Signal
         self.makeRFHistWrite(channel,sumAllBakMCHist,tmpDir,compareHist=sumAllSigMCHist) #Background Sum
-        #rootDebugString += "#     Pretend Obs: {0}\n".format(getIntegralAll(sumAllMCHist,boundaries=massBounds))
-        #rootDebugString += "#     All Signal:  {0}\n".format(getIntegralAll(sumAllSigMCHist,boundaries=massBounds))
-        #rootDebugString += "#     All Bak:     {0}\n".format(getIntegralAll(sumAllBakMCHist,boundaries=massBounds))
+        rootDebugString += "#     Pretend Obs: {0}\n".format(getIntegralAll(sumAllMCHist))
+        rootDebugString += "#     All Signal:  {0}\n".format(getIntegralAll(sumAllSigMCHist))
+        rootDebugString += "#     All Bak:     {0}\n".format(getIntegralAll(sumAllBakMCHist))
 
     outRootFile.Close()
 
