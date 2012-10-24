@@ -92,10 +92,12 @@ class MassPDFBak:
     a1 = root.RooRealVar("a1","a1",-1,1)
     a2 = root.RooRealVar("a2","a2",-1,1)
     a3 = root.RooRealVar("a3","a3",-1,1)
+    a4 = root.RooRealVar("a4","a4",-1,1)
+    a5 = root.RooRealVar("a5","a5",-1,1)
     shift = root.RooRealVar("shift","shift",-125)
     shiftedX = root.RooFormulaVar("shiftedX","shiftedX","mMuMu+shift",root.RooArgList(mMuMu,shift))
     pdfMmumu = root.RooPolynomial("pdfMmumu","pdfMmumu",shiftedX,root.RooArgList(a1,a2))
-    #pdfMmumu = root.RooChebychev("pdfMmumu","pdfMmumu",mMuMu,root.RooArgList(a1,a2))
+    #pdfMmumu = root.RooChebychev("pdfMmumu","pdfMmumu",shiftedX,root.RooArgList(a1,a2))
     
     tmpAxis = hist.GetXaxis()
     lowBin = tmpAxis.FindBin(minMass)
@@ -125,6 +127,8 @@ class MassPDFBak:
     self.a1 = a1
     self.a2 = a2
     self.a3 = a3
+    self.a4 = a4
+    self.a5 = a5
     self.shift = shift
     self.shiftedX = shiftedX
     self.pdfMmumu = pdfMmumu
@@ -141,7 +145,33 @@ class MassPDFBak:
     self.debug += "# a1: {0:.3g} +/- {1:.3g}\n".format(a1.getVal(),a1.getError())
     self.debug += "# a2: {0:.3g} +/- {1:.3g}\n".format(a2.getVal(),a2.getError())
     self.debug += "# a3: {0:.3g} +/- {1:.3g}\n".format(a3.getVal(),a3.getError())
+    self.debug += "# a4: {0:.3g} +/- {1:.3g}\n".format(a4.getVal(),a4.getError())
+    self.debug += "# a5: {0:.3g} +/- {1:.3g}\n".format(a5.getVal(),a5.getError())
     self.debug += "# chi2/ndf: {0:.3g}\n".format(chi2.getVal()/(nBinsX-1))
+
+    ## Error time
+
+    """
+    a1val = a1.getVal()
+    a2val = a2.getVal()
+    a1Err = a1.getError()
+    a2Err = a2.getError()
+    a1.setVal(a1val+a1Err)
+    pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
+    a1.setVal(a1val-a1Err)
+    pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
+    plotMmumu.Draw()
+    a1.setVal(a1val)
+    a2.setVal(a2val+a2Err)
+    pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kRed-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
+    a2.setVal(a2val-a2Err)
+    pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kRed-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
+
+    a1.setVal(a1val)
+    a1.setError(a1Err)
+    a2.setVal(a2val)
+    a2.setError(a2Err)
+    """
 
   def writeDebugHistsToCurrTDir(self,compareHist=None):
     canvas = root.TCanvas("canvas")
@@ -1141,13 +1171,13 @@ if __name__ == "__main__":
   analyses2D = ["mDiMu"]
   #signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
   signalNames=["ggHmumu125"]
-  backgroundNames= ["DYJetsToLL","ttbar","WZ","ZZ"]
+  #backgroundNames= ["DYJetsToLL","ttbar","WZ","ZZ"]
+  backgroundNames= ["DYJetsToLL"]
   #lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
   lumiList = [10,20,30,100]
   lumiList = [20]
 
   MassRebin = 4 # 4 Bins per GeV originally
-  MassRebin = 1 # 4 Bins per GeV originally
   controlRegionLow=[115,125]
   controlRegionHigh=[125,135]
 
