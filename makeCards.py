@@ -20,6 +20,8 @@ NPROCS = 1
 
 BAKUNC = 1.0
 
+BAKUNCON = False
+
 from xsec import *
 
 if scaleHiggsBy != 1.0:
@@ -167,40 +169,44 @@ class MassPDFBak:
 
     ## Error time
 
-    a1val = a1.getVal()
-    a2val = a2.getVal()
-    a1Err = a1.getError()/10.0
-    a2Err = a2.getError()/10.0
-    a1.setVal(a1val+a1Err)
-    a1UpHist = pdfMmumu.createHistogram("a1Up",mMuMu,mMuMuBinning)
-    pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
-    a1.setVal(a1val-a1Err)
-    a1DownHist = pdfMmumu.createHistogram("a1Down",mMuMu,mMuMuBinning)
-    pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
-    plotMmumu.Draw()
-    a1.setVal(a1val)
-    a2.setVal(a2val+a2Err)
-    a2UpHist = pdfMmumu.createHistogram("a2Up",mMuMu,mMuMuBinning)
-    pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kRed-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
-    a2.setVal(a2val-a2Err)
-    a2DownHist = pdfMmumu.createHistogram("a2Down",mMuMu,mMuMuBinning)
-    pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kRed-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
+    if BAKUNCON:
+      a1val = a1.getVal()
+      a2val = a2.getVal()
+      a1Err = a1.getError()/10.0
+      a2Err = a2.getError()/10.0
+      a1.setVal(a1val+a1Err)
+      a1UpHist = pdfMmumu.createHistogram("a1Up",mMuMu,mMuMuBinning)
+      pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
+      a1.setVal(a1val-a1Err)
+      a1DownHist = pdfMmumu.createHistogram("a1Down",mMuMu,mMuMuBinning)
+      pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
+      plotMmumu.Draw()
+      a1.setVal(a1val)
+      a2.setVal(a2val+a2Err)
+      a2UpHist = pdfMmumu.createHistogram("a2Up",mMuMu,mMuMuBinning)
+      pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kRed-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
+      a2.setVal(a2val-a2Err)
+      a2DownHist = pdfMmumu.createHistogram("a2Down",mMuMu,mMuMuBinning)
+      pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kRed-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
+  
+      a1.setVal(a1val)
+      a1.setError(a1Err)
+      a2.setVal(a2val)
+      a2.setError(a2Err)
+  
+      self.a1UpHist = a1UpHist
+      self.a1DownHist = a1DownHist
+      self.a2UpHist = a2UpHist
+      self.a2DownHist = a2DownHist
 
-    a1.setVal(a1val)
-    a1.setError(a1Err)
-    a2.setVal(a2val)
-    a2.setError(a2Err)
-
-    self.a1UpHist = a1UpHist
-    self.a1DownHist = a1DownHist
-    self.a2UpHist = a2UpHist
-    self.a2DownHist = a2DownHist
-    self.errNames = ["a1","a2"]
+    self.errNames = []
     self.errHists = {}
-    self.errHists["a1Up"] = a1UpHist
-    self.errHists["a1Down"] = a1DownHist
-    self.errHists["a2Up"] = a2UpHist
-    self.errHists["a2Down"] = a2DownHist
+    if BAKUNCON:
+      self.errNames = ["a1","a2"]
+      self.errHists["a1Up"] = a1UpHist
+      self.errHists["a1Down"] = a1DownHist
+      self.errHists["a2Up"] = a2UpHist
+      self.errHists["a2Down"] = a2DownHist
 
   def writeDebugHistsToCurrTDir(self,compareHist=None):
     canvas = root.TCanvas("canvas")
@@ -524,7 +530,7 @@ class MVAvMassPDFBak:
 
 
 class Analysis:
-  def __init__(self,directory,signalNames,backgroundNames,analysis,x,y,controlRegionLow,controlRegionHigh,histNameBase="mDiMu",bakShape=False,rebin=[]):
+  def __init__(self,directory,signalNames,backgroundNames,analysis,x,y,controlRegionLow,controlRegionHigh,histNameBase="mDiMu",bakShape=False,rebin=[],histNameSuffix=""):
     self.bakShape = bakShape
     self.sigNames = signalNames
     self.bakNames = backgroundNames
@@ -540,7 +546,7 @@ class Analysis:
     self.sigHistsRaw = []
     for name in signalNames:
       tmpF = root.TFile(directory+name+".root")
-      tmpH = tmpF.Get(histNameBase+analysis)
+      tmpH = tmpF.Get(histNameBase+analysis+histNameSuffix)
       self.sigFiles.append(tmpF)
       self.sigHistsRaw.append(tmpH)
       if tmpH.InheritsFrom("TH2"):
@@ -550,7 +556,7 @@ class Analysis:
     self.bakHistsRaw = []
     for name in backgroundNames:
       tmpF = root.TFile(directory+name+".root")
-      tmpH = tmpF.Get(histNameBase+analysis)
+      tmpH = tmpF.Get(histNameBase+analysis+histNameSuffix)
       self.bakFiles.append(tmpF)
       self.bakHistsRaw.append(tmpH)
 
@@ -693,7 +699,7 @@ class Analysis:
 ###################################################################################
 
 class DataCardMaker:
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="mDiMu",controlRegionLow=[80,115],controlRegionHigh=[135,150],bakShape=False,rebin=[]):
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="mDiMu",controlRegionLow=[80,115],controlRegionHigh=[135,150],bakShape=False,rebin=[],histNameSuffix=""):
     channels = []
     self.channelNames = copy.deepcopy(analysisNames)
     self.is2D = False
@@ -701,7 +707,7 @@ class DataCardMaker:
     x = None
     y = None
     for analysis in analysisNames:
-      tmpList = getRooVars(directory,signalNames,histNameBase,analysis)
+      tmpList = getRooVars(directory,signalNames,histNameBase,analysis+histNameSuffix)
       x = tmpList[0]
       if len(tmpList)==2:
         self.is2D = True
@@ -711,7 +717,7 @@ class DataCardMaker:
     self.shape = bakShape
 
     for analysis in analysisNames:
-      tmp = Analysis(directory,signalNames,backgroundNames,analysis,x,y,controlRegionLow,controlRegionHigh,histNameBase=histNameBase,bakShape=bakShape,rebin=rebin)
+      tmp = Analysis(directory,signalNames,backgroundNames,analysis,x,y,controlRegionLow,controlRegionHigh,histNameBase=histNameBase,bakShape=bakShape,rebin=rebin,histNameSuffix=histNameSuffix)
       channels.append(tmp)
     self.channels = channels
 
@@ -873,8 +879,8 @@ class DataCardMaker:
 ###################################################################################
 
 class ShapeDataCardMaker(DataCardMaker):
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False,controlRegionLow=[80,115],controlRegionHigh=[135,200],bakShape=False):
-    DataCardMaker.__init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap,histNameBase,controlRegionLow,controlRegionHigh,bakShape=bakShape,rebin=rebin)
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False,controlRegionLow=[80,115],controlRegionHigh=[135,200],bakShape=False,histNameSuffix=""):
+    DataCardMaker.__init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap,histNameBase,controlRegionLow,controlRegionHigh,bakShape=bakShape,rebin=rebin,histNameSuffix=histNameSuffix)
 
     self.useTH1 = useTH1
     self.controlRegionHigh = controlRegionHigh
@@ -1237,12 +1243,12 @@ if __name__ == "__main__":
 
   directory = "input/"
   outDir = "statsCards/"
-  analyses = ["BDTHistMuonOnly","BDTHistVBF","mDiMu"]
-  #analyses2D = ["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass","BDTHistMuonOnlyVMass","BDTHistVBFVMass"]
+  #analyses2D = ["VBFPresel","IncPresel"]
+  #histPostFix="mDiMu"
   analyses2D = ["mDiMu"]
-  #signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
-  signalNames=["ggHmumu125"]
-  #backgroundNames= ["DYJetsToLL","ttbar","WZ","ZZ"]
+  histPostFix=""
+  signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
+  #backgroundNames= ["DYJetsToLL","ttbar","WW","WZ","ZZ"]
   backgroundNames= ["DYJetsToLL"]
   #lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
   lumiList = [10,20,30,100]
@@ -1261,7 +1267,7 @@ if __name__ == "__main__":
         #__init__ args:
         directory,["BDTHistMuonOnlyVMass","BDTHistVBFVMass"],signalNames,backgroundNames,
         rebin=[MassRebin], bakShape=True,
-        controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
+        controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
         #write args:
         outfilename=outDir+"BDTComb"+"_"+str(i)+".txt",lumi=i
       )
@@ -1271,7 +1277,7 @@ if __name__ == "__main__":
         #__init__ args:
         directory,["likelihoodHistMuonOnlyVMass","likelihoodHistVBFVMass"],signalNames,backgroundNames,
         rebin=[MassRebin], bakShape=True,
-        controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
+        controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
         #write args:
         outfilename=outDir+"LHComb"+"_"+str(i)+".txt",lumi=i
       )
@@ -1281,7 +1287,7 @@ if __name__ == "__main__":
       tmp = ThreadedCardMaker(
         #__init__ args:
         directory,[ana],signalNames,backgroundNames,rebin=[MassRebin],bakShape=True,
-        controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
+        controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
         #write args:
         outfilename=outDir+ana+"_"+str(i)+".txt",lumi=i
         )
