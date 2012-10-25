@@ -100,6 +100,10 @@ class MassPDFBak:
 
     hist.Sumw2()
 
+    print("***************************")
+    print("bak Integral: {}".format(getIntegralAll(hist)))
+    print("***************************")
+
     maxMass = massHighRange[1]
     minMass = massLowRange[0]
     mMuMu = rooVars[0]
@@ -122,6 +126,7 @@ class MassPDFBak:
     lowBin = tmpAxis.FindBin(minMass)
     highBin = tmpAxis.FindBin(maxMass)
     nBinsX = highBin - lowBin
+    normalization = hist.Integral(lowBin,highBin)
 
     mMuMuRooDataHist = root.RooDataHist(name+"DataHist",name+"DataHist",root.RooArgList(mMuMu),hist)
     
@@ -136,6 +141,7 @@ class MassPDFBak:
 
     mMuMuBinning = root.RooFit.Binning(nBinsX,minMass,maxMass)
     nominalHist = pdfMmumu.createHistogram("pdf2dHist",mMuMu,mMuMuBinning)
+    nominalHist.Scale(normalization/nominalHist.Integral())
 
     self.name = name
     self.hist = hist
@@ -167,6 +173,7 @@ class MassPDFBak:
     self.debug += "# a4: {0:.3g} +/- {1:.3g}\n".format(a4.getVal(),a4.getError())
     self.debug += "# a5: {0:.3g} +/- {1:.3g}\n".format(a5.getVal(),a5.getError())
     self.debug += "# chi2/ndf: {0:.3g}\n".format(chi2.getVal()/(nBinsX-1))
+    self.debug += "# nominal Integral: {0:.3g}\n".format(getIntegralAll(nominalHist))
 
     ## Error time
 
@@ -197,6 +204,11 @@ class MassPDFBak:
       a1.setError(a1Err)
       a2.setVal(a2val)
       a2.setError(a2Err)
+
+      a1UpHist.Scale(normalization/a1UpHist.Integral())
+      a1DownHist.Scale(normalization/a1DownHist.Integral())
+      a2UpHist.Scale(normalization/a2UpHist.Integral())
+      a2DownHist.Scale(normalization/a2DownHist.Integral())
   
       self.a1UpHist = a1UpHist
       self.a1DownHist = a1DownHist
@@ -538,6 +550,9 @@ class Analysis:
     self.bakShape = bakShape
     self.sigNames = signalNames
     self.bakNames = backgroundNames
+    self.controlRegionLow = controlRegionLow
+    self.controlRegionHigh = controlRegionHigh
+    self.analysis = analysis
 
     self.is2D = False
     if y != None:
@@ -591,6 +606,7 @@ class Analysis:
     lowBin = 0
     highBin = self.sigHistsRaw[0].GetNbinsX()+1
     massBounds = [controlRegionLow[0],controlRegionHigh[1]]
+    self.massBounds = massBounds
 
     for hist in self.sigHistsRaw:
       vetoOutOfBoundsEvents(hist,boundaries=massBounds)
@@ -628,25 +644,10 @@ class Analysis:
       else:
         self.bakHistTotal.Add(h)
 
+    self.bakHistTotalReal = self.bakHistTotal.Clone("data_obs")
+
+    self.bakShape = bakShape
     self.bakShapeMkr = None
-    if bakShape and self.is2D:
-      bakShapeMkr = MVAvMassPDFBak("pdfHists_"+analysis,
-                                self.bakHistTotal,
-                                controlRegionLow,controlRegionHigh,
-                                rooVars = [self.x,self.y]
-                                )
-      self.bakShapeMkr = bakShapeMkr
-      self.bakHistTotal = bakShapeMkr.hackHist
-      self.xsecBakTotal = getIntegralAll(self.bakHistTotal,boundaries=massBounds)
-    elif bakShape:
-      bakShapeMkr = MassPDFBak("pdfHists_"+analysis,
-                                self.bakHistTotal,
-                                controlRegionLow,controlRegionHigh,
-                                rooVars = [self.x]
-                                )
-      self.bakShapeMkr = bakShapeMkr
-      self.bakHistTotal = bakShapeMkr.nominalHist
-      self.xsecBakTotal = getIntegralAll(self.bakHistTotal,boundaries=massBounds)
 
   def getSigEff(self,name):
     result = -1.0
@@ -682,7 +683,29 @@ class Analysis:
         i = self.bakNames.index(bakName)
         result = self.bakHists[i]
     return result
-  def getBakHistTotal(self):
+  def getBakHistTotal(self,lumi):
+    analysis = self.analysis
+    bakShape = self.bakShape
+    self.bakHistTotal = self.bakHistTotalReal.Clone("stuff")
+    self.bakHistTotal.Scale(lumi)
+    if bakShape and self.is2D:
+      bakShapeMkr = MVAvMassPDFBak("pdfHists_"+analysis,
+                                self.bakHistTotal,
+                                self.controlRegionLow,self.controlRegionHigh,
+                                rooVars = [self.x,self.y]
+                                )
+      self.bakShapeMkr = bakShapeMkr
+      self.bakHistTotal = bakShapeMkr.hackHist
+      self.xsecBakTotal = getIntegralAll(self.bakHistTotal,boundaries=massBounds)
+    elif bakShape:
+      bakShapeMkr = MassPDFBak("pdfHists_"+analysis,
+                                self.bakHistTotal,
+                                self.controlRegionLow,self.controlRegionHigh,
+                                rooVars = [self.x]
+                                )
+      self.bakShapeMkr = bakShapeMkr
+      self.bakHistTotal = bakShapeMkr.nominalHist
+      self.xsecBakTotal = getIntegralAll(self.bakHistTotal,boundaries=self.massBounds)
     return self.bakHistTotal
   def dump(self):
     print("##########################################")
@@ -890,7 +913,7 @@ class ShapeDataCardMaker(DataCardMaker):
     self.controlRegionHigh = controlRegionHigh
     self.controlRegionLow = controlRegionLow
 
-  def makeRFHistWrite(self,channel,hist,thisDir,isData=True,compareHist=None):
+  def makeRFHistWrite(self,channel,hist,thisDir,isData=True,compareHist=None,writeBakShape=False):
     thisDir.cd()
     is2D = hist.InheritsFrom("TH2")
     if self.useTH1 and not is2D:
@@ -935,7 +958,7 @@ class ShapeDataCardMaker(DataCardMaker):
       rfHistPdf.plotOn(plot)
       plot.SetName(hist.GetName())
       plot.Write()
-      if channel.bakShape:
+      if channel.bakShape and writeBakShape:
         channel.bakShapeMkr.writeDebugHistsToCurrTDir()
 
   def write(self,outfilename,lumi,sumAllBak=True,includeSigInAllMC=False):
@@ -974,6 +997,8 @@ class ShapeDataCardMaker(DataCardMaker):
             sumAllSigMCHist.Add(tmpHist)
   
         if sumAllBak:
+          #channel.dump()
+          sumAllBakMCHist = channel.getBakHistTotal(lumi).Clone("bak")
           #channel.bakShapeMkr.dump()
           if self.shape:
             rootDebugString += channel.bakShapeMkr.debug
@@ -982,20 +1007,17 @@ class ShapeDataCardMaker(DataCardMaker):
                 origDown = channel.bakShapeMkr.errHists[nuName+"Down"]
                 tmpUp = origUp.Clone("bak_"+nuName+"Up")
                 tmpDown = origDown.Clone("bak_"+nuName+"Down")
-                tmpUp.Scale(lumi)
-                tmpDown.Scale(lumi)
                 self.makeRFHistWrite(channel,tmpUp,tmpDir)
                 self.makeRFHistWrite(channel,tmpDown,tmpDir)
-          #channel.dump()
-          sumAllBakMCHist = channel.getBakHistTotal().Clone("bak")
-          sumAllBakMCHist.Scale(lumi)
 
-          #self.makeRFHistWrite(channel,sumAllBakMCHist,tmpDir) Done Below
+          # for simulated data_obs:
+          sumAllBakMCHistReal = channel.bakHistTotalReal.Clone("data_obs")
+          sumAllBakMCHistReal.Scale(lumi)
 
           if sumAllMCHist == None:
-            sumAllMCHist = sumAllBakMCHist.Clone("data_obs")
+            sumAllMCHist = sumAllBakMCHistReal
           else:
-            sumAllMCHist.Add(sumAllBakMCHist)
+            sumAllMCHist.Add(sumAllBakMCHistReal)
         else:
           for bakName in self.bakNames:
             tmpHist = channel.getBakHist(bakName).Clone(bakName)
@@ -1010,7 +1032,7 @@ class ShapeDataCardMaker(DataCardMaker):
         sumAllMCHist.Scale(int(getIntegralAll(sumAllMCHist))/getIntegralAll(sumAllMCHist)) # Make Integer
         self.makeRFHistWrite(channel,sumAllMCHist,tmpDir) #Pretend Data
         self.makeRFHistWrite(channel,sumAllSigMCHist,tmpDir) #Pretend Signal
-        self.makeRFHistWrite(channel,sumAllBakMCHist,tmpDir,compareHist=sumAllSigMCHist) #Background Sum
+        self.makeRFHistWrite(channel,sumAllBakMCHist,tmpDir,compareHist=sumAllSigMCHist,writeBakShape=True) #Background Sum
         rootDebugString += "#     Pretend Obs: {0}\n".format(getIntegralAll(sumAllMCHist))
         rootDebugString += "#     All Signal:  {0}\n".format(getIntegralAll(sumAllSigMCHist))
         rootDebugString += "#     All Bak:     {0}\n".format(getIntegralAll(sumAllBakMCHist))
@@ -1252,7 +1274,7 @@ if __name__ == "__main__":
   directory = "input/"
   outDir = "statsCards/"
   analyses = ["VBFPresel","IncPresel","VBFLoose","VBFMedium","VBFTight","VBFVeryTight","Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250"]
-  analyses = ["VBFPresel","IncPresel"]
+  analyses = ["IncPresel"]
   histPostFix="/mDiMu"
   #analyses2D = ["mDiMu"]
   #histPostFix=""

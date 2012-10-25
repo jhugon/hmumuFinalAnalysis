@@ -9,7 +9,8 @@ dataDir = "statsCards/"
 outDir = ""
 
 class ShapePlotter:
-  def __init__(self,filename):
+  def __init__(self,filename,titleMap):
+    self.titleMap = titleMap
     self.filename = filename
     self.data = {}
     self.f = root.TFile(filename)
@@ -24,11 +25,19 @@ class ShapePlotter:
       debugFolder = debugFolderKey.ReadObj()
       self.data[channelKey.GetName()] = {}
       for key in debugFolder.GetListOfKeys():
-        if re.match(r"TH1.*",key.GetClassName()) and (re.match(r"bak.*",key.GetName()) or key.GetName() == "data_obs"):
+        if re.match(r"TH1.*",key.GetClassName()) and (re.match(r"bak.*",key.GetName()) or key.GetName() == "data_obs" or key.GetName() == "sig"):
           hist = key.ReadObj()
           hist = hist.Clone(channelKey.GetName()+"_"+key.GetName())
           hist.Print()
           self.data[channelKey.GetName()][key.GetName()] = hist
+
+    self.lumi = -1
+    self.lumiStr = ""
+    tmpMatch = re.search(r"([\w]*)_([0-9]+)\.root",filename)
+    if tmpMatch:
+      self.lumi = int(tmpMatch.group(2))
+      self.lumiStr = "L = {} fb^{{-1}}".format(self.lumi)
+
 
     self.colors = [root.kRed-9, root.kGreen-9, root.kBlue-9, root.kMagenta-9, root.kCyan-9]
     self.fillStyles = [3004,3005,3003,3006,3007]
@@ -51,6 +60,8 @@ class ShapePlotter:
         yu = yd
         yd = tmp
       y = (yu+yd)/2.0
+      yu = yu-y
+      yd = y-yd
       print("x,y: {:.3g},{:.3g} + {:.3g} - {:.3g}".format(x,y, yu, yd))
       outGraph.SetPoint(iGraph,x,y)
       outGraph.SetPointEYhigh(iGraph,yu)
@@ -66,7 +77,7 @@ class ShapePlotter:
       obs = channel["data_obs"]
       paramSet = set()
       for histName in channel:
-        if histName != "bak" and histName != "data_obs":
+        if histName != "bak" and histName != "data_obs" and histName != "sig":
           tmp = histName.replace("bak_","")
           tmp = tmp.replace("Up","")
           tmp = tmp.replace("Down","")
@@ -98,10 +109,39 @@ class ShapePlotter:
         graphs.append(tmp)
       nominal.Draw("hist L same")
       obs.Draw("same")
+
+      tlatex = root.TLatex()
+      tlatex.SetNDC()
+      tlatex.SetTextFont(root.gStyle.GetLabelFont())
+      #tlatex.SetTextSize(0.05)
+      tlatex.SetTextSize(0.04)
+      tlatex.SetTextAlign(12)
+      tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
+      tlatex.SetTextAlign(32)
+      tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.titleMap[channelName]+", "+self.lumiStr)
         
       canvas.SaveAs(channelName+".png")
-    
+
+titleMap = {
+  "AllCat":"All Categories Comb.",
+  "IncCat":"Inclusive Categories Comb.",
+  "VBFCat":"VBF Categories Comb.",
+
+  "IncPresel":"Inclusive Preselection",
+  "VBFPresel":"VBF Preselection",
+
+  "Pt0to30":"p_{T}^{#mu#mu} #in [0,30]",
+  "Pt30to50":"p_{T}^{#mu#mu} #in [30,50]",
+  "Pt50to125":"p_{T}^{#mu#mu} #in [50,125]",
+  "Pt125to250":"p_{T}^{#mu#mu} #in [125,250]",
+  "Pt250":"p_{T}^{#mu#mu}>250",
+
+  "VBFLoose":"VBFL",
+  "VBFMedium":"VBFM",
+  "VBFTight":"VBFT",
+  "VBFVeryTight":"VBFVT"
+}
         
-s = ShapePlotter(dataDir+"IncPresel_20.root")
+s = ShapePlotter(dataDir+"IncPresel_20.root",titleMap)
 print s.data
 s.makePlot()
