@@ -179,19 +179,19 @@ class MassPDFBak:
       a1Err = abs(a1val*BAKUNC)
       a2Err = abs(a2val*BAKUNC)
       a1.setVal(a1val+a1Err)
+      pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
       a1UpHist = pdfMmumu.createHistogram("a1Up",mMuMu,mMuMuBinning)
-      pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
       a1.setVal(a1val-a1Err)
-      a1DownHist = pdfMmumu.createHistogram("a1Down",mMuMu,mMuMuBinning)
       pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
+      a1DownHist = pdfMmumu.createHistogram("a1Down",mMuMu,mMuMuBinning)
       plotMmumu.Draw()
       a1.setVal(a1val)
       a2.setVal(a2val+a2Err)
+      pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kRed-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
       a2UpHist = pdfMmumu.createHistogram("a2Up",mMuMu,mMuMuBinning)
-      pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kRed-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
       a2.setVal(a2val-a2Err)
-      a2DownHist = pdfMmumu.createHistogram("a2Down",mMuMu,mMuMuBinning)
       pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kRed-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
+      a2DownHist = pdfMmumu.createHistogram("a2Down",mMuMu,mMuMuBinning)
   
       a1.setVal(a1val)
       a1.setError(a1Err)
@@ -982,6 +982,8 @@ class ShapeDataCardMaker(DataCardMaker):
                 origDown = channel.bakShapeMkr.errHists[nuName+"Down"]
                 tmpUp = origUp.Clone("bak_"+nuName+"Up")
                 tmpDown = origDown.Clone("bak_"+nuName+"Down")
+                tmpUp.Scale(lumi)
+                tmpDown.Scale(lumi)
                 self.makeRFHistWrite(channel,tmpUp,tmpDir)
                 self.makeRFHistWrite(channel,tmpDown,tmpDir)
           #channel.dump()
@@ -1250,6 +1252,7 @@ if __name__ == "__main__":
   directory = "input/"
   outDir = "statsCards/"
   analyses = ["VBFPresel","IncPresel","VBFLoose","VBFMedium","VBFTight","VBFVeryTight","Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250"]
+  analyses = ["VBFPresel","IncPresel"]
   histPostFix="/mDiMu"
   #analyses2D = ["mDiMu"]
   #histPostFix=""
@@ -1266,6 +1269,7 @@ if __name__ == "__main__":
   print("Creating Threads...")
   threads = []
   for i in lumiList:
+    """
     threads.append(
       ThreadedCardMaker(
         #__init__ args:
@@ -1296,6 +1300,7 @@ if __name__ == "__main__":
         outfilename=outDir+"IncCat"+"_"+str(i)+".txt",lumi=i
       )
     )
+    """
     for ana in analyses:
       tmp = ThreadedCardMaker(
         #__init__ args:

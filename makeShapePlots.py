@@ -31,7 +31,7 @@ class ShapePlotter:
           self.data[channelKey.GetName()][key.GetName()] = hist
 
     self.colors = [root.kRed-9, root.kGreen-9, root.kBlue-9, root.kMagenta-9, root.kCyan-9]
-    self.fillStyles = [3003,3004,3005,3006,3007]
+    self.fillStyles = [3004,3005,3003,3006,3007]
 
   def makeGraph(self,nominal,up,down,outGraph):
     assert(nominal.InheritsFrom("TH1"))
@@ -102,9 +102,6 @@ class ShapePlotter:
       canvas.SaveAs(channelName+".png")
     
         
-    
-    
-
-s = ShapePlotter(dataDir+"VBFMedium_20.root")
+s = ShapePlotter(dataDir+"IncPresel_20.root")
 print s.data
 s.makePlot()
