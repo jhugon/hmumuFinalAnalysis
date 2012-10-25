@@ -234,6 +234,113 @@ class MassPDFBak:
     canvas.SetName(self.name+"Canvas")
     canvas.Write()
 
+class MassPDFBak2:
+  def __init__(self,name,hist,massLowRange,massHighRange,rooVars=None,smooth=False,hack=True):
+    self.debug = ""
+    self.debug += "### MassPDFBak2: "+name+"\n"
+    hist.Sumw2()
+
+    maxMass = massHighRange[1]
+    minMass = massLowRange[0]
+    tmpAxis = hist.GetXaxis()
+    lowBin = tmpAxis.FindBin(minMass)
+    highBin = tmpAxis.FindBin(maxMass)
+    nBinsX = highBin - lowBin
+    normalization = hist.Integral(lowBin,highBin)
+    self.debug += "# bak Hist no bounds: {:.3g}\n".format(hist.Integral())
+    self.debug += "# bak Hist bounds:    {:.3g}\n".format(normalization)
+
+    func = root.TF1("fitFunc","pol1",minMass,maxMass)
+    hist.Fit(func,"WLEM","",minMass,maxMass)
+
+    a0 = func.GetParameter(0)
+    a1 = func.GetParameter(1)
+    a2 = 0
+    a3 = 0
+    a4 = 0
+    a5 = 0
+
+    a0Err = func.GetParError(0)
+    a1Err = func.GetParError(1)
+    a2Err = 0
+    a3Err = 0
+    a4Err = 0
+    a5Err = 0
+
+    nominalHist = hist.Clone("nominal")
+    nominalHist.Reset()
+    for iBin in range(lowBin,highBin+1):
+        x = nominalHist.GetXaxis().GetBinCenter(iBin)
+        nominalHist.SetBinContent(iBin,func.Eval(x))
+
+    self.name = name
+    self.hist = hist
+    self.lowBin = lowBin
+    self.highBin = highBin
+    self.nBinsX = nBinsX
+    self.a1 = a1
+    self.a2 = a2
+    self.a3 = a3
+    self.a4 = a4
+    self.a5 = a5
+    self.nominalHist = nominalHist
+    self.maxMass = maxMass
+    self.minMass = minMass
+
+    self.debug += "# nominal Integral: {0:.3g}\n".format(getIntegralAll(nominalHist))
+    self.debug += "# a0: {0:.3g} +/- {1:.3g}\n".format(a0,a0Err)
+    self.debug += "# a1: {0:.3g} +/- {1:.3g}\n".format(a1,a1Err)
+    self.debug += "# a2: {0:.3g} +/- {1:.3g}\n".format(a2,a2Err)
+    self.debug += "# a3: {0:.3g} +/- {1:.3g}\n".format(a3,a3Err)
+    self.debug += "# a4: {0:.3g} +/- {1:.3g}\n".format(a4,a4Err)
+    self.debug += "# a5: {0:.3g} +/- {1:.3g}\n".format(a5,a5Err)
+
+    ## Error time
+
+    if BAKUNCON:
+
+      a1UpHist = hist.Clone("a1Up")
+      a1DownHist = hist.Clone("a1Down")
+      #a2UpHist = hist.Clone("a2Up")
+      #a2DownHist = hist.Clone("a2Down")
+
+      a1UpHist.Reset()
+      a1DownHist.Reset()
+      #a2UpHist.Reset()
+      #a2DownHist.Reset()
+
+      func.SetParameter(1,a1+a1Err)
+
+      for iBin in range(lowBin,highBin+1):
+        x = hist.GetXaxis().GetBinCenter(iBin)
+        a1UpHist.SetBinContent(iBin,func.Eval(x))
+
+      func.SetParameter(1,a1-a1Err)
+
+      for iBin in range(lowBin,highBin+1):
+        x = hist.GetXaxis().GetBinCenter(iBin)
+        a1DownHist.SetBinContent(iBin,func.Eval(x))
+
+      func.SetParameter(1,a1)
+  
+      self.a1UpHist = a1UpHist
+      self.a1DownHist = a1DownHist
+      #self.a2UpHist = a2UpHist
+      #self.a2DownHist = a2DownHist
+
+    self.errNames = []
+    self.errHists = {}
+    if BAKUNCON:
+      #self.errNames = ["a1","a2"]
+      self.errNames = ["a1"]
+      self.errHists["a1Up"] = a1UpHist
+      self.errHists["a1Down"] = a1DownHist
+      #self.errHists["a2Up"] = a2UpHist
+      #self.errHists["a2Down"] = a2DownHist
+
+  def writeDebugHistsToCurrTDir(self,compareHist=None):
+    pass
+
 class MVAvMassPDFBak:
   def __init__(self,name,hist2D,massLowRange,massHighRange,rooVars=None,smooth=False,hack=True):
     if rooVars == None:
@@ -1282,6 +1389,7 @@ if __name__ == "__main__":
   directory = "input/"
   outDir = "statsCards/"
   analyses = ["VBFPresel","IncPresel","VBFLoose","VBFMedium","VBFTight","VBFVeryTight","Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250","IncBDTSig80","VBFBDTSig80"]
+  analyses = ["VBFPresel"]
   histPostFix="/mDiMu"
   #analyses2D = ["mDiMu"]
   #histPostFix=""
@@ -1289,6 +1397,7 @@ if __name__ == "__main__":
   backgroundNames= ["DYJetsToLL","ttbar","WW","WZ","ZZ"]
   #lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
   lumiList = [10,20,30,100]
+  lumiList = [20]
 
   MassRebin = 4 # 4 Bins per GeV originally
   controlRegionLow=[115,125]
@@ -1297,6 +1406,7 @@ if __name__ == "__main__":
   print("Creating Threads...")
   threads = []
   for i in lumiList:
+    """
     threads.append(
       ThreadedCardMaker(
         #__init__ args:
@@ -1337,6 +1447,7 @@ if __name__ == "__main__":
         outfilename=outDir+"BDTSig80"+"_"+str(i)+".txt",lumi=i
       )
     )
+    """
     for ana in analyses:
       tmp = ThreadedCardMaker(
         #__init__ args:
