@@ -83,6 +83,7 @@ def getData(fileString,matchString=r"_([\d]+).txt.out",dontMatchStrings=[],doSor
 class RelativePlot:
   def __init__(self,dataPoints, canvas, legend, caption, ylabel="Expected 95% CL Limit #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",ylimits=[],xlimits=[],vertLines=[20.0]):
     expGraph = root.TGraph()
+    expGraph.SetLineStyle(2)
     oneSigGraph = root.TGraphAsymmErrors()
     oneSigGraph.SetFillColor(root.kGreen)
     oneSigGraph.SetLineStyle(0)
@@ -91,11 +92,15 @@ class RelativePlot:
     twoSigGraph.SetLineStyle(0)
     oneGraph = root.TGraph()
     oneGraph.SetLineColor(root.kRed)
-    oneGraph.SetLineStyle(2)
+    oneGraph.SetLineStyle(1)
+    obsGraph = root.TGraph()
+    obsGraph.SetLineColor(1)
+    obsGraph.SetLineStyle(1)
     self.expGraph = expGraph
     self.oneSigGraph = oneSigGraph
     self.twoSigGraph = twoSigGraph
     self.oneGraph = oneGraph
+    self.obsGraph = obsGraph
     iPoint = 0
     ymax = 1e-20
     ymin = 1e20
@@ -118,6 +123,7 @@ class RelativePlot:
       oneSigGraph.SetPointError(iPoint,0.0,0.0,low1sig,high1sig) 
       twoSigGraph.SetPointError(iPoint,0.0,0.0,low2sig,high2sig) 
       oneGraph.SetPoint(iPoint,xNum,1.0)
+      obsGraph.SetPoint(iPoint,xNum,obs)
       iPoint += 1
 
     self.vertLines = []
@@ -146,6 +152,7 @@ class RelativePlot:
     oneSigGraph.Draw("3")
     expGraph.Draw("l")
     oneGraph.Draw("l")
+    obsGraph.Draw("l")
 
     tlatex = root.TLatex()
     tlatex.SetNDC()
@@ -162,7 +169,7 @@ class RelativePlot:
 
 
 class ComparePlot:
-  def __init__(self,data,ylabel="Expected 95% CL Limit $\sigma/\sigma_{SM}$",titleMap={}):
+  def __init__(self,data,ylabel="Expected 95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},showObs=False):
     fig = mpl.figure()
     self.fig = fig
     ax1 = fig.add_subplot(111)
@@ -172,6 +179,7 @@ class ComparePlot:
 
     data.sort(key=lambda x: x[0].lower())
 
+    obs = [float(point[1]) for point in data]
     medians = [float(point[4]) for point in data]
     high1sigs = [float(point[5])-float(point[4]) for point in data]
     low1sigs = [float(point[4])-float(point[3]) for point in data]
@@ -186,12 +194,17 @@ class ComparePlot:
     ax1.set_xlabel(ylabel)
     bars = ax1.barh(xPos,medians, 0.5, xerr=[low1sigs,high1sigs],ecolor="k")
     self.bars = bars
+    if showObs:
+      xPosObs = [x+0.25 for x in xPos]
+      ax1.plot(obs,xPosObs,marker="|",color="r",markersize=10,linestyle="None")
     writeInValues = getattr(self,"writeInValues")
     writeInValues(bars)
+
   def save(self,saveName):
     self.fig.savefig(saveName+".png")
     self.fig.savefig(saveName+".pdf")
   def writeInValues(self,rects):
+    axisWidth = self.ax1.get_xlim()[1]-self.ax1.get_xlim()[0]
     size="medium"
     if len(rects)<5:
       size="large"
@@ -199,19 +212,15 @@ class ComparePlot:
       size="xx-small"
     elif len(rects)>9:
       size="x-small"
-    maxWidth = 0.0
-    for rect in rects:
-      width = rect.get_width()
-      if width>maxWidth:
-        maxWidth = width
+    maxWidth = axisWidth
     for rect in rects:
       width = rect.get_width()
       if (width/maxWidth < 0.1): # The bars aren't wide enough to print the ranking inside
-        xloc = width + 0.1/maxWidth # Shift the text to the right side of the right edge
+        xloc = width + maxWidth*0.05 # Shift the text to the right side of the right edge
         clr = 'black' # Black against white background
         align = 'left'
       else:
-        xloc = 0.98*width # Shift the text to the left side of the right edge
+        xloc = width - maxWidth*0.01 # Shift the text to the left side of the right edge
         clr = 'white' # White on magenta
         align = 'right'
       yloc = rect.get_y()+rect.get_height()/2.0 
@@ -295,6 +304,6 @@ for plotName in plots:
 ## Compare all types of limits
 compareData = getData(dirName+"*_20.txt.out",matchString=r"(.*)_[\d]+.txt.out",dontMatchStrings=[r"BDT.+BDT",r"PM"],doSort=False)
 #print compareData
-comparePlot = ComparePlot(compareData,titleMap=comparisonMap)
+comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=False)
 comparePlot.fig.text(0.9,0.2,"$L=20$ fb$^{-1}$",horizontalalignment="right",size="x-large")
 comparePlot.save(outDir+"compare")

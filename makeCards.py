@@ -1289,7 +1289,6 @@ if __name__ == "__main__":
   backgroundNames= ["DYJetsToLL","ttbar","WW","WZ","ZZ"]
   #lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
   lumiList = [10,20,30,100]
-  lumiList = [20]
 
   MassRebin = 4 # 4 Bins per GeV originally
   controlRegionLow=[115,125]
