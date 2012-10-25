@@ -238,7 +238,11 @@ titleMap = {
   "VBFLoose":"VBFL",
   "VBFMedium":"VBFM",
   "VBFTight":"VBFT",
-  "VBFVeryTight":"VBFVT"
+  "VBFVeryTight":"VBFVT",
+
+  "BDTSig80":"BDT Cut Combination",
+  "IncBDTSig80":"Inclusive BDT Cut",
+  "VBFBDTSig80":"VBF BDT Cut"
 }
 
 comparisonMap = {
@@ -258,7 +262,11 @@ comparisonMap = {
   "VBFLoose":"VBFL",
   "VBFMedium":"VBFM",
   "VBFTight":"VBFT",
-  "VBFVeryTight":"VBFVT"
+  "VBFVeryTight":"VBFVT",
+
+  "BDTSig80":"BDT Cut Comb.",
+  "IncBDTSig80":"Inc. BDT Cut",
+  "VBFBDTSig80":"VBF BDT Cut"
 }
 
 ylimits=[1.0,500.0]

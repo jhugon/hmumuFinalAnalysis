@@ -5,9 +5,6 @@ from helpers import *
 root.gROOT.SetBatch(True)
 root.gStyle.SetOptStat(0)
 
-dataDir = "statsCards/"
-outDir = ""
-
 class ShapePlotter:
   def __init__(self,filename,titleMap):
     self.titleMap = titleMap
@@ -67,7 +64,7 @@ class ShapePlotter:
       outGraph.SetPointEYlow(iGraph,yd)
       iGraph += 1
 
-  def makePlot(self):
+  def makePlot(self,outDir):
     canvas = root.TCanvas("canvas")
     for channelName in self.data:
       canvas.Clear()
@@ -119,7 +116,7 @@ class ShapePlotter:
       tlatex.SetTextAlign(32)
       tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.titleMap[channelName]+", "+self.lumiStr)
         
-      canvas.SaveAs(channelName+".png")
+      canvas.SaveAs(outDir+"/"+channelName+".png")
 
 titleMap = {
   "AllCat":"All Categories Comb.",
@@ -138,9 +135,21 @@ titleMap = {
   "VBFLoose":"VBFL",
   "VBFMedium":"VBFM",
   "VBFTight":"VBFT",
-  "VBFVeryTight":"VBFVT"
+  "VBFVeryTight":"VBFVT",
+
+  "BDTSig80":"BDT Cut Combination",
+  "IncBDTSig80":"Inclusive BDT Cut",
+  "VBFBDTSig80":"VBF BDT Cut"
 }
         
-s = ShapePlotter(dataDir+"IncPresel_20.root",titleMap)
-#print s.data
-s.makePlot()
+if __name__ == "__main__":
+  dataDir = "statsCards/"
+  outDir = "shapes/"
+
+  s = ShapePlotter(dataDir+"AllCat_20.root",titleMap)
+  #print s.data
+  s.makePlot(outDir)
+
+  s = ShapePlotter(dataDir+"BDTSig80_20.root",titleMap)
+  #print s.data
+  s.makePlot(outDir)
