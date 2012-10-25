@@ -28,7 +28,6 @@ class ShapePlotter:
         if re.match(r"TH1.*",key.GetClassName()) and (re.match(r"bak.*",key.GetName()) or key.GetName() == "data_obs" or key.GetName() == "sig"):
           hist = key.ReadObj()
           hist = hist.Clone(channelKey.GetName()+"_"+key.GetName())
-          hist.Print()
           self.data[channelKey.GetName()][key.GetName()] = hist
 
     self.lumi = -1
@@ -62,7 +61,7 @@ class ShapePlotter:
       y = (yu+yd)/2.0
       yu = yu-y
       yd = y-yd
-      print("x,y: {:.3g},{:.3g} + {:.3g} - {:.3g}".format(x,y, yu, yd))
+      #print("x,y: {:.3g},{:.3g} + {:.3g} - {:.3g}".format(x,y, yu, yd))
       outGraph.SetPoint(iGraph,x,y)
       outGraph.SetPointEYhigh(iGraph,yu)
       outGraph.SetPointEYlow(iGraph,yd)
@@ -143,5 +142,5 @@ titleMap = {
 }
         
 s = ShapePlotter(dataDir+"IncPresel_20.root",titleMap)
-print s.data
+#print s.data
 s.makePlot()

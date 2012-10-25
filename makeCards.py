@@ -98,6 +98,8 @@ class MassPDFBak:
         print("Error: MVAvMassPDFBak requires rooVars list of variables, exiting.")
         sys.exit(1)
 
+    self.debug = ""
+    self.debug += "### MassPDFBak: "+name+"\n"
     hist.Sumw2()
 
     print("***************************")
@@ -127,6 +129,8 @@ class MassPDFBak:
     highBin = tmpAxis.FindBin(maxMass)
     nBinsX = highBin - lowBin
     normalization = hist.Integral(lowBin,highBin)
+    self.debug += "# bak Hist no bounds: {:.3g}\n".format(hist.Integral())
+    self.debug += "# bak Hist bounds:    {:.3g}\n".format(normalization)
 
     mMuMuRooDataHist = root.RooDataHist(name+"DataHist",name+"DataHist",root.RooArgList(mMuMu),hist)
     
@@ -163,17 +167,15 @@ class MassPDFBak:
     self.minMass = minMass
     self.mMuMu = mMuMu
     self.plotMmumu = plotMmumu
-    self.debug = ""
     self.chi2 = chi2
 
-    self.debug += "### MassPDFBak: "+name+"\n"
+    self.debug += "# nominal Integral: {0:.3g}\n".format(getIntegralAll(nominalHist))
     self.debug += "# a1: {0:.3g} +/- {1:.3g}\n".format(a1.getVal(),a1.getError())
     self.debug += "# a2: {0:.3g} +/- {1:.3g}\n".format(a2.getVal(),a2.getError())
     self.debug += "# a3: {0:.3g} +/- {1:.3g}\n".format(a3.getVal(),a3.getError())
     self.debug += "# a4: {0:.3g} +/- {1:.3g}\n".format(a4.getVal(),a4.getError())
     self.debug += "# a5: {0:.3g} +/- {1:.3g}\n".format(a5.getVal(),a5.getError())
     self.debug += "# chi2/ndf: {0:.3g}\n".format(chi2.getVal()/(nBinsX-1))
-    self.debug += "# nominal Integral: {0:.3g}\n".format(getIntegralAll(nominalHist))
 
     ## Error time
 
@@ -696,7 +698,7 @@ class Analysis:
                                 )
       self.bakShapeMkr = bakShapeMkr
       self.bakHistTotal = bakShapeMkr.hackHist
-      self.xsecBakTotal = getIntegralAll(self.bakHistTotal,boundaries=massBounds)
+      #self.xsecBakTotal = getIntegralAll(self.bakHistTotal,boundaries=massBounds)
     elif bakShape:
       bakShapeMkr = MassPDFBak("pdfHists_"+analysis,
                                 self.bakHistTotal,
@@ -705,7 +707,7 @@ class Analysis:
                                 )
       self.bakShapeMkr = bakShapeMkr
       self.bakHistTotal = bakShapeMkr.nominalHist
-      self.xsecBakTotal = getIntegralAll(self.bakHistTotal,boundaries=self.massBounds)
+      #self.xsecBakTotal = getIntegralAll(self.bakHistTotal,boundaries=self.massBounds)
     return self.bakHistTotal
   def dump(self):
     print("##########################################")
@@ -1029,13 +1031,19 @@ class ShapeDataCardMaker(DataCardMaker):
                 sumAllMCHist = tmpHist.Clone("data_obs")
             else:
                 sumAllMCHist.Add(tmpHist)
-        sumAllMCHist.Scale(int(getIntegralAll(sumAllMCHist))/getIntegralAll(sumAllMCHist)) # Make Integer
+        massLimits = [self.controlRegionLow[0],self.controlRegionHigh[1]]
+        sumAllMCHist.Scale(int(getIntegralAll(sumAllMCHist,boundaries=massLimits))/getIntegralAll(sumAllMCHist,boundaries=massLimits)) # Make Integer
         self.makeRFHistWrite(channel,sumAllMCHist,tmpDir) #Pretend Data
         self.makeRFHistWrite(channel,sumAllSigMCHist,tmpDir) #Pretend Signal
         self.makeRFHistWrite(channel,sumAllBakMCHist,tmpDir,compareHist=sumAllSigMCHist,writeBakShape=True) #Background Sum
-        rootDebugString += "#     Pretend Obs: {0}\n".format(getIntegralAll(sumAllMCHist))
-        rootDebugString += "#     All Signal:  {0}\n".format(getIntegralAll(sumAllSigMCHist))
-        rootDebugString += "#     All Bak:     {0}\n".format(getIntegralAll(sumAllBakMCHist))
+        rootDebugString += "#######################\n"
+        rootDebugString += "#     {0}\n".format(channelName)
+        rootDebugString += "#     Pretend Obs: {0}\n".format(getIntegralAll(sumAllMCHist,boundaries=massLimits))
+        rootDebugString += "#     All Signal:  {0}\n".format(getIntegralAll(sumAllSigMCHist,boundaries=massLimits))
+        rootDebugString += "#     All Bak:     {0}\n".format(getIntegralAll(sumAllBakMCHist,boundaries=massLimits))
+        #rootDebugString += "#     Pretend Obs: {0}\n".format(getIntegralAll(sumAllMCHist))
+        #rootDebugString += "#     All Signal:  {0}\n".format(getIntegralAll(sumAllSigMCHist))
+        #rootDebugString += "#     All Bak:     {0}\n".format(getIntegralAll(sumAllBakMCHist))
 
     outRootFile.Close()
 
