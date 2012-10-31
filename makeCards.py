@@ -92,9 +92,12 @@ def getRooVars(directory,signalNames,histNameBase,analysis):
 ###################################################################################
 
 class MassPDFBak:
-  def __init__(self,name,hist,massLowRange,massHighRange,rooVars=None,smooth=False,hack=True):
+  def __init__(self,name,hist,massLowRange,massHighRange,massVeryLowRange,rooVars=None,smooth=False,hack=True):
     if rooVars == None:
         print("Error: MVAvMassPDFBak requires rooVars list of variables, exiting.")
+        sys.exit(1)
+    if len(massVeryLowRange)==0:
+        print("Error: MVAvMassPDFBak requires verylow mass range, exiting.")
         sys.exit(1)
 
     self.debug = ""
@@ -106,11 +109,11 @@ class MassPDFBak:
     print("***************************")
 
     maxMass = massHighRange[1]
-    minMass = massLowRange[0]
-    mMuMu = rooVars[0]
+    minMass = massVeryLowRange[0]
+    mMuMu = root.RooRealVar("mMuMu2","mMuMu",minMass,maxMass)
     mMuMu.setRange("z",88,94)
-    mMuMu.setRange("verylow",massLowRange[0],110.)
-    mMuMu.setRange("low",110.,massLowRange[1])
+    mMuMu.setRange("verylow",massVeryLowRange[0],massVeryLowRange[1])
+    mMuMu.setRange("low",massLowRange[0],massLowRange[1])
     mMuMu.setRange("high",massHighRange[0],massHighRange[1])
     mMuMu.setRange("signal",massLowRange[1],massHighRange[0])
     mMuMu.Print()
@@ -666,10 +669,11 @@ class MVAvMassPDFBak:
 
 
 class Analysis:
-  def __init__(self,directory,signalNames,backgroundNames,analysis,x,y,controlRegionLow,controlRegionHigh,histNameBase="mDiMu",bakShape=False,rebin=[],histNameSuffix=""):
+  def __init__(self,directory,signalNames,backgroundNames,analysis,x,y,controlRegionLow,controlRegionHigh,histNameBase="mDiMu",bakShape=False,rebin=[],histNameSuffix="",controlRegionVeryLow=[]):
     self.bakShape = bakShape
     self.sigNames = signalNames
     self.bakNames = backgroundNames
+    self.controlRegionVeryLow = controlRegionVeryLow
     self.controlRegionLow = controlRegionLow
     self.controlRegionHigh = controlRegionHigh
     self.analysis = analysis
@@ -822,6 +826,7 @@ class Analysis:
       bakShapeMkr = MassPDFBak("pdfHists_"+analysis,
                                 self.bakHistTotal,
                                 self.controlRegionLow,self.controlRegionHigh,
+                                self.controlRegionVeryLow,
                                 rooVars = [self.x]
                                 )
       self.bakShapeMkr = bakShapeMkr
@@ -847,7 +852,7 @@ class Analysis:
 ###################################################################################
 
 class DataCardMaker:
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",controlRegionLow=[80,115],controlRegionHigh=[135,150],bakShape=False,rebin=[],histNameSuffix=""):
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",controlRegionLow=[80,115],controlRegionHigh=[135,150],controlRegionVeryLow=[],bakShape=False,rebin=[],histNameSuffix=""):
     channels = []
     self.channelNames = copy.deepcopy(analysisNames)
     self.is2D = False
@@ -865,7 +870,7 @@ class DataCardMaker:
     self.shape = bakShape
 
     for analysis in analysisNames:
-      tmp = Analysis(directory,signalNames,backgroundNames,analysis,x,y,controlRegionLow,controlRegionHigh,histNameBase=histNameBase,bakShape=bakShape,rebin=rebin,histNameSuffix=histNameSuffix)
+      tmp = Analysis(directory,signalNames,backgroundNames,analysis,x,y,controlRegionLow,controlRegionHigh,controlRegionVeryLow=controlRegionVeryLow,histNameBase=histNameBase,bakShape=bakShape,rebin=rebin,histNameSuffix=histNameSuffix)
       channels.append(tmp)
     self.channels = channels
 
@@ -1037,12 +1042,13 @@ class DataCardMaker:
 ###################################################################################
 
 class ShapeDataCardMaker(DataCardMaker):
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False,controlRegionLow=[80,115],controlRegionHigh=[135,200],bakShape=False,histNameSuffix=""):
-    DataCardMaker.__init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap,histNameBase,controlRegionLow,controlRegionHigh,bakShape=bakShape,rebin=rebin,histNameSuffix=histNameSuffix)
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False,controlRegionLow=[80,115],controlRegionHigh=[135,200],controlRegionVeryLow=[],bakShape=False,histNameSuffix=""):
+    DataCardMaker.__init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap,histNameBase,controlRegionLow,controlRegionHigh,controlRegionVeryLow=controlRegionVeryLow,bakShape=bakShape,rebin=rebin,histNameSuffix=histNameSuffix)
 
     self.useTH1 = useTH1
     self.controlRegionHigh = controlRegionHigh
     self.controlRegionLow = controlRegionLow
+    self.controlRegionVeryLow = controlRegionVeryLow
 
   def makeRFHistWrite(self,channel,hist,thisDir,isData=True,compareHist=None,writeBakShape=False):
     thisDir.cd()
@@ -1430,7 +1436,8 @@ if __name__ == "__main__":
   lumiList = [20]
 
   MassRebin = 4 # 4 Bins per GeV originally
-  controlRegionLow=[80,120]
+  controlRegionVeryLow=[80,110]
+  controlRegionLow=[110,120]
   controlRegionHigh=[130,180]
 
   shape=True
@@ -1444,6 +1451,7 @@ if __name__ == "__main__":
         directory,["VBFLoose","VBFMedium","VBFTight","VBFVeryTight","Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250"],signalNames,backgroundNames,
         rebin=[MassRebin], bakShape=shape,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
+        controlRegionVeryLow=controlRegionVeryLow,
         #write args:
         outfilename=outDir+"AllCat"+"_"+str(i)+".txt",lumi=i
       )
@@ -1455,6 +1463,7 @@ if __name__ == "__main__":
         directory,["VBFLoose","VBFMedium","VBFTight","VBFVeryTight"],signalNames,backgroundNames,
         rebin=[MassRebin], bakShape=shape,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
+        controlRegionVeryLow=controlRegionVeryLow,
         #write args:
         outfilename=outDir+"VBFCat"+"_"+str(i)+".txt",lumi=i
       )
@@ -1465,6 +1474,7 @@ if __name__ == "__main__":
         directory,["Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250"],signalNames,backgroundNames,
         rebin=[MassRebin], bakShape=shape,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
+        controlRegionVeryLow=controlRegionVeryLow,
         #write args:
         outfilename=outDir+"IncCat"+"_"+str(i)+".txt",lumi=i
       )
@@ -1475,6 +1485,7 @@ if __name__ == "__main__":
         directory,["IncBDTSig80","VBFBDTSig80"],signalNames,backgroundNames,
         rebin=[MassRebin], bakShape=shape,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
+        controlRegionVeryLow=controlRegionVeryLow,
         #write args:
         outfilename=outDir+"BDTSig80"+"_"+str(i)+".txt",lumi=i
       )
@@ -1485,6 +1496,7 @@ if __name__ == "__main__":
         #__init__ args:
         directory,[ana],signalNames,backgroundNames,rebin=[MassRebin],bakShape=shape,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
+        controlRegionVeryLow=controlRegionVeryLow,
         #write args:
         outfilename=outDir+ana+"_"+str(i)+".txt",lumi=i
         )
@@ -1496,6 +1508,7 @@ if __name__ == "__main__":
         #__init__ args:
         directory,[ana],signalNames,backgroundNames,rebin=[MassRebin],bakShape=shape,
         controlRegionLow=[123.0,125.0],controlRegionHigh=[125.0,127.0],histNameSuffix=histPostFix,
+        controlRegionVeryLow=controlRegionVeryLow,
         #write args:
         outfilename=outDir+"CNC_"+ana+"_"+str(i)+".txt",lumi=i,
 
