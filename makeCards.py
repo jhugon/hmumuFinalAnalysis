@@ -20,7 +20,7 @@ NPROCS = 1
 
 BAKUNC = 0.1
 
-BAKUNCON = False
+BAKUNCON = True
 
 from xsec import *
 
@@ -193,49 +193,33 @@ class MassPDFBak:
 
     ## Error time
 
-    if BAKUNCON:
-      a1val = a1.getVal()
-      a2val = a2.getVal()
-      #a1Err = a1.getError()
-      #a2Err = a2.getError()
-      # Error Hack
-      a1Err = abs(a1val*BAKUNC)
-      a2Err = abs(a2val*BAKUNC)
-      a1.setVal(a1val+a1Err)
-      pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
-      a1UpHist = pdfMmumu.createHistogram("a1Up",mMuMu,mMuMuBinning)
-      a1.setVal(a1val-a1Err)
-      pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
-      a1DownHist = pdfMmumu.createHistogram("a1Down",mMuMu,mMuMuBinning)
-      plotMmumu.Draw()
-      a1.setVal(a1val)
-      a2.setVal(a2val+a2Err)
-      pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kRed-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
-      a2UpHist = pdfMmumu.createHistogram("a2Up",mMuMu,mMuMuBinning)
-      a2.setVal(a2val-a2Err)
-      pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kRed-1),root.RooFit.Range("low,signal,high"),root.RooFit.LineStyle(2))
-      a2DownHist = pdfMmumu.createHistogram("a2Down",mMuMu,mMuMuBinning)
-  
-      a1.setVal(a1val)
-      a1.setError(a1Err)
-      a2.setVal(a2val)
-      a2.setError(a2Err)
-
-      a1UpHist.Scale(normalization/getIntegralAll(nominalHist,[massLowRange[0],massHighRange[1]]))
-  
-      self.a1UpHist = a1UpHist
-      self.a1DownHist = a1DownHist
-      self.a2UpHist = a2UpHist
-      self.a2DownHist = a2DownHist
-
     self.errNames = []
     self.errHists = {}
     if BAKUNCON:
-      self.errNames = ["a1","a2"]
-      self.errHists["a1Up"] = a1UpHist
-      self.errHists["a1Down"] = a1DownHist
-      self.errHists["a2Up"] = a2UpHist
-      self.errHists["a2Down"] = a2DownHist
+      for errVar in [voitmZ,voitSig,expParam,mixParam]:
+        val = errVar.getVal()
+        err = errVar.getError()
+        varName = errVar.GetName()
+
+        errVar.setVal(val+err)
+        pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range(110,150),root.RooFit.LineStyle(3))
+        upHist = pdfMmumu.createHistogram(varName+"Up",mMuMu,mMuMuBinning)
+
+        errVar.setVal(val-err)
+        pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range(110,150),root.RooFit.LineStyle(3))
+        downHist = pdfMmumu.createHistogram(varName+"Down",mMuMu,mMuMuBinning)
+
+        errVar.setVal(val)
+
+        upHist.Scale(normalization/getIntegralAll(upHist,[massLowRange[0],massHighRange[1]]))
+        downHist.Scale(normalization/getIntegralAll(downHist,[massLowRange[0],massHighRange[1]]))
+
+        setattr(self,varName+"UpHist",upHist)
+        setattr(self,varName+"DownHist",downHist)
+
+        self.errNames.append(varName)
+        self.errHists[varName+"Up"] = upHist
+        self.errHists[varName+"Down"] = downHist
 
   def writeDebugHistsToCurrTDir(self,compareHist=None):
     canvas = root.TCanvas("canvas")
@@ -1422,7 +1406,6 @@ if __name__ == "__main__":
   directory = "input/"
   outDir = "statsCards/"
   analyses = ["VBFPresel","IncPresel","VBFLoose","VBFMedium","VBFTight","VBFVeryTight","Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250","IncBDTSig80","VBFBDTSig80"]
-  analyses = ["VBFPresel","IncPresel"]
   histPostFix="/mDiMu"
   #analyses = ["mDiMu"]
   #histPostFix=""
@@ -1453,7 +1436,6 @@ if __name__ == "__main__":
         outfilename=outDir+"AllCat"+"_"+str(i)+".txt",lumi=i
       )
     )
-    """
     threads.append(
       ThreadedCardMaker(
         #__init__ args:
@@ -1487,7 +1469,6 @@ if __name__ == "__main__":
         outfilename=outDir+"BDTSig80"+"_"+str(i)+".txt",lumi=i
       )
     )
-    """
     for ana in analyses:
       tmp = ThreadedCardMaker(
         #__init__ args:

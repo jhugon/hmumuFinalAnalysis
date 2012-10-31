@@ -1,9 +1,16 @@
 #!/usr/bin/python
 
 from helpers import *
+import math
 
 root.gROOT.SetBatch(True)
 root.gStyle.SetOptStat(0)
+
+def convertErrors(hist):
+  nBinsX = hist.GetNbinsX()
+  for i in range(0,nBinsX+2):
+    x = hist.GetBinContent(i)
+    hist.SetBinError(i,math.sqrt(x))
 
 class ShapePlotter:
   def __init__(self,filename,titleMap):
@@ -25,6 +32,7 @@ class ShapePlotter:
         if re.match(r"TH1.*",key.GetClassName()) and (re.match(r"bak.*",key.GetName()) or key.GetName() == "data_obs" or key.GetName() == "sig"):
           hist = key.ReadObj()
           hist = hist.Clone(channelKey.GetName()+"_"+key.GetName())
+          hist.Rebin(5)
           self.data[channelKey.GetName()][key.GetName()] = hist
 
     self.lumi = -1
@@ -55,14 +63,35 @@ class ShapePlotter:
         tmp = yu
         yu = yd
         yd = tmp
-      y = (yu+yd)/2.0
+      #y = (yu+yd)/2.0
+      y = nominal.GetBinContent(i)
       yu = yu-y
       yd = y-yd
+      if y<=0:
+        continue
       #print("x,y: {:.3g},{:.3g} + {:.3g} - {:.3g}".format(x,y, yu, yd))
       outGraph.SetPoint(iGraph,x,y)
       outGraph.SetPointEYhigh(iGraph,yu)
       outGraph.SetPointEYlow(iGraph,yd)
       iGraph += 1
+
+  def combineErrors(self,listOfGraphs,outGraph):
+    N = listOfGraphs[0].GetN()
+    for g in listOfGraphs:
+      assert(g.GetN() == N)
+    for i in range(N):
+      err2Up = 0.0
+      err2Down = 0.0
+      y = root.Double()
+      x = root.Double()
+      for g in listOfGraphs:
+        err2Up += g.GetErrorYhigh(i)**2
+        err2Down += g.GetErrorYlow(i)**2
+        g.GetPoint(i,x,y)
+      if y <= 0.0:
+        continue
+      outGraph.SetPoint(i,x,y)
+      outGraph.SetPointError(i,0.0,0.0,math.sqrt(err2Down),math.sqrt(err2Up))
 
   def makePlot(self,outDir):
     canvas = root.TCanvas("canvas")
@@ -71,6 +100,7 @@ class ShapePlotter:
       channel = self.data[channelName]
       nominal = channel["bak"]
       obs = channel["data_obs"]
+      convertErrors(obs)
       paramSet = set()
       for histName in channel:
         if histName != "bak" and histName != "data_obs" and histName != "sig":
@@ -85,7 +115,7 @@ class ShapePlotter:
       obs.SetLineColor(1)
       obs.SetTitle("")
       obs.GetXaxis().SetTitle("m_{#mu#mu} [GeV]")
-      obs.GetXaxis().SetRangeUser(110,150)
+      obs.GetXaxis().SetRangeUser(100,180)
       obs.GetYaxis().SetTitle("Events/Bin")
       nominal.SetFillStyle(0)
       nominal.SetLineStyle(1)
@@ -98,12 +128,16 @@ class ShapePlotter:
         up = channel["bak_"+param+"Up"]
         down = channel["bak_"+param+"Down"]
         self.makeGraph(nominal,up,down,tmp)
-        tmp.SetFillStyle(sty)
-        tmp.SetFillColor(col)
-        tmp.SetLineColor(col)
-        tmp.SetMarkerColor(col)
-        tmp.Draw("4")
+        #tmp.SetFillStyle(sty)
+        #tmp.SetFillColor(col)
+        #tmp.SetLineColor(col)
+        #tmp.SetMarkerColor(col)
+        #tmp.Draw("4")
         graphs.append(tmp)
+      combinedErrorGraph = root.TGraphAsymmErrors()
+      combinedErrorGraph.SetFillColor(root.kCyan)
+      self.combineErrors(graphs,combinedErrorGraph)
+      combinedErrorGraph.Draw("4")
       nominal.Draw("hist L same")
       obs.Draw("same")
 

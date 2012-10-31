@@ -302,7 +302,7 @@ for plotName in plots:
   saveAs(canvas,outDir+plotName)
 
 ## Compare all types of limits
-compareData = getData(dirName+"*_20.txt.out",matchString=r"(.*)_[\d]+.txt.out",dontMatchStrings=[r"CNC",r"PM"],doSort=False)
+compareData = getData(dirName+"*_20.txt.out",matchString=r"(.*)_[\d]+.txt.out",dontMatchStrings=[r"CNC",r"PM","Presel"],doSort=False)
 #print compareData
 comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=True)
 comparePlot.fig.text(0.9,0.2,"$L=20$ fb$^{-1}$",horizontalalignment="right",size="x-large")
