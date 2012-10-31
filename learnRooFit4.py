@@ -22,8 +22,9 @@ mMuMu.setRange("high",130,160)
 """
 mMuMu = root.RooRealVar("mMuMu","mMuMu",80,180.0)
 mMuMu.setRange("z",88,94)
-mMuMu.setRange("low",115,120)
-mMuMu.setRange("high",130,140)
+mMuMu.setRange("reallyLow",80,110)
+mMuMu.setRange("low",110,120)
+mMuMu.setRange("high",130,180)
 
 voitWidth = root.RooRealVar("voitWidth","voitWidth",2.4952)
 voitmZ = root.RooRealVar("voitmZ","voitmZ",85,95)
@@ -52,21 +53,33 @@ mixParam2 = root.RooRealVar("mixParam2","mixParam2",0,1)
 #pdfMmumu = root.RooAddPdf("pdfMmumu","pdfMmumu",polyMmumu,polyMmumu2,mixParam)
 #pdfMmumu = root.RooAddPdf("pdfMmumu","pdfMmumu",expMmumu2,expMmumu3,mixParam)
 #pdfMmumu = root.RooAddPdf("pdfMmumu","pdfMmumu",root.RooArgList(voitMmumu,expMmumu2,expMmumu3),root.RooArgList(mixParam,mixParam2))
-pdfMmumu = voitMmumu
-pdfMmumu = rooDoubleVoig
-pdfMmumu = expMmumu
+
+pdfMmumu = root.RooAddPdf("pdfMmumu","pdfMmumu",root.RooArgList(voitMmumu,expMmumu),root.RooArgList(mixParam))
+#pdfMmumu = voitMmumu
+#pdfMmumu = rooDoubleVoig
+#pdfMmumu = expMmumu
 
 f = root.TFile("input/DYJetsToLL.root")
 #f = root.TFile("input/ttbar.root")
 
 #mDiMu = f.Get("mDiMu")
-mDiMu = f.Get("VBFPresel/mDiMu")
+mDiMu = f.Get("IncPresel/mDiMu")
+#mDiMu = f.Get("VBFPresel/mDiMu")
 mDiMu.Rebin(2)
 
 templateMmumu = root.RooDataHist("template","template",root.RooArgList(mMuMu),mDiMu)
 
+voitMmumu.fitTo(templateMmumu,root.RooFit.Range("z"))
+voitmZ.setConstant(True)
+voitSig.setConstant(True)
+
+expMmumu.fitTo(templateMmumu,root.RooFit.Range("high"))
+expParam.setConstant(True)
+
 #fitResult = pdfMmumu.fitTo(templateMmumu,root.RooFit.Range("low,high"),root.RooFit.Save(True))
-fitResult = pdfMmumu.fitTo(templateMmumu,root.RooFit.Range("low,high"),root.RooFit.Save(True))
+# Have to include reallylow for VBF or Voit gets washed out
+# Including reallylow in Inclusive messes up things
+fitResult = pdfMmumu.fitTo(templateMmumu,root.RooFit.Range("reallylow,low,high"),root.RooFit.Save(True))
 #pdfMmumu.fitTo(templateMmumu,root.RooFit.Range(130,160))
 chi2 = pdfMmumu.createChi2(templateMmumu)
 
@@ -75,6 +88,8 @@ plotMmumu = mMuMu.frame()
 templateMmumu.plotOn(plotMmumu)
 pdfMmumu.plotOn(plotMmumu)
 pdfMmumu.plotOn(plotMmumu,root.RooFit.Range(80,200),root.RooFit.LineStyle(2))
+pdfMmumu.plotOn(plotMmumu,root.RooFit.Components("voitMmumu"),root.RooFit.Range(80,200),root.RooFit.LineColor(root.kRed))
+pdfMmumu.plotOn(plotMmumu,root.RooFit.Components("expMmumu"),root.RooFit.Range(80,200),root.RooFit.LineColor(root.kGreen))
 """
 expMmumu2.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1))
 expMmumu3.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1))
@@ -87,6 +102,10 @@ plotMmumu.Draw()
 print fitResult
 fitResult.Print()
 print("chi2/ndf: {}".format(chi2.getVal()/(mDiMu.GetNbinsX()-1)))
+voitmZ.Print()
+voitSig.Print()
+expParam.Print()
+mixParam.Print()
 yay = raw_input("Press Enter to continue...")
 canvas.SaveAs("learnMmumu.png")
 

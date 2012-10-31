@@ -68,11 +68,10 @@ def getRooVars(directory,signalNames,histNameBase,analysis):
     is2D = False
     for name in signalNames:
       tmpF = root.TFile(directory+name+".root")
-      #print("*********\n  Getting {}\n*********".format(histNameBase+analysis))
+      print("*********\n  Getting {}\n*********".format(histNameBase+analysis))
       hist = tmpF.Get(histNameBase+analysis)
       break
-      self.sigFiles.append(tmpF)
-      self.sigHistsRaw.append(tmpH)
+    print hist
     if hist.InheritsFrom("TH2"):
       is2D = True
 
@@ -835,7 +834,7 @@ class Analysis:
 ###################################################################################
 
 class DataCardMaker:
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="mDiMu",controlRegionLow=[80,115],controlRegionHigh=[135,150],bakShape=False,rebin=[],histNameSuffix=""):
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",controlRegionLow=[80,115],controlRegionHigh=[135,150],bakShape=False,rebin=[],histNameSuffix=""):
     channels = []
     self.channelNames = copy.deepcopy(analysisNames)
     self.is2D = False
@@ -1010,6 +1009,16 @@ class DataCardMaker:
       #print formatString
       #print formatList
       outfile.write(formatString.format(*formatList))
+
+    #Debugging
+    outfile.write("#################################\n")
+    for channel,channelName in zip(self.channels,self.channelNames):
+        outfile.write("#\n")
+        outfile.write("#info: channel {0}: \n".format(channelName))
+        for sigName in self.sigNames:
+          outfile.write("#  {0} XS, Eff: {1:.3g}, {2:.3%} \n".format(sigName,
+                        channel.getSigXSec(sigName), channel.getSigEff(sigName)))
+        outfile.write("#   Mass: {0} \n".format(channel.massBounds))
     outfile.close()
 
 ###################################################################################
@@ -1364,6 +1373,10 @@ class ThreadedCardMaker(myThread):
         self.writeArgsDict["sumAllBak"] = dictArgs["sumAllBak"]
     if dictArgs.has_key("includeSigInAllMC"):
         self.writeArgsDict["includeSigInAllMC"] = dictArgs["includeSigInAllMC"]
+    self.shapeDataCardMaker = True
+    if dictArgs.has_key("shapeDataCardMaker"):
+        self.shapeDataCardMaker = dictArgs["shapeDataCardMaker"]
+        dictArgs.pop("shapeDataCardMaker",None)
     self.args = args
     dictArgs.pop("sumAllBak",None)
     dictArgs.pop("includeSigInallMC",None)
@@ -1373,7 +1386,11 @@ class ThreadedCardMaker(myThread):
     self.started = False
   def run(self):
     self.started = True
-    dataCardMassShape = ShapeDataCardMaker(*(self.args),**(self.dictArgs))
+    dataCardMassShape = None
+    if self.shapeDataCardMaker:
+      dataCardMassShape = ShapeDataCardMaker(*(self.args),**(self.dictArgs))
+    else:
+      dataCardMassShape = DataCardMaker(*(self.args),**(self.dictArgs))
     dataCardMassShape.write(*(self.writeArgs),**(self.writeArgsDict))
 
 ###################################################################################
@@ -1402,6 +1419,8 @@ if __name__ == "__main__":
   controlRegionLow=[115,125]
   controlRegionHigh=[125,140]
 
+  shape=True
+
   print("Creating Threads...")
   threads = []
   for i in lumiList:
@@ -1409,7 +1428,7 @@ if __name__ == "__main__":
       ThreadedCardMaker(
         #__init__ args:
         directory,["VBFLoose","VBFMedium","VBFTight","VBFVeryTight","Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250"],signalNames,backgroundNames,
-        rebin=[MassRebin], bakShape=True,
+        rebin=[MassRebin], bakShape=shape,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
         #write args:
         outfilename=outDir+"AllCat"+"_"+str(i)+".txt",lumi=i
@@ -1419,7 +1438,7 @@ if __name__ == "__main__":
       ThreadedCardMaker(
         #__init__ args:
         directory,["VBFLoose","VBFMedium","VBFTight","VBFVeryTight"],signalNames,backgroundNames,
-        rebin=[MassRebin], bakShape=True,
+        rebin=[MassRebin], bakShape=shape,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
         #write args:
         outfilename=outDir+"VBFCat"+"_"+str(i)+".txt",lumi=i
@@ -1429,7 +1448,7 @@ if __name__ == "__main__":
       ThreadedCardMaker(
         #__init__ args:
         directory,["Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250"],signalNames,backgroundNames,
-        rebin=[MassRebin], bakShape=True,
+        rebin=[MassRebin], bakShape=shape,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
         #write args:
         outfilename=outDir+"IncCat"+"_"+str(i)+".txt",lumi=i
@@ -1439,7 +1458,7 @@ if __name__ == "__main__":
       ThreadedCardMaker(
         #__init__ args:
         directory,["IncBDTSig80","VBFBDTSig80"],signalNames,backgroundNames,
-        rebin=[MassRebin], bakShape=True,
+        rebin=[MassRebin], bakShape=shape,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
         #write args:
         outfilename=outDir+"BDTSig80"+"_"+str(i)+".txt",lumi=i
@@ -1448,10 +1467,22 @@ if __name__ == "__main__":
     for ana in analyses:
       tmp = ThreadedCardMaker(
         #__init__ args:
-        directory,[ana],signalNames,backgroundNames,rebin=[MassRebin],bakShape=True,
+        directory,[ana],signalNames,backgroundNames,rebin=[MassRebin],bakShape=shape,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
         #write args:
         outfilename=outDir+ana+"_"+str(i)+".txt",lumi=i
+        )
+      threads.append(tmp)
+    ## Cut and Count!!!
+    for ana in analyses:
+      tmp = ThreadedCardMaker(
+        #__init__ args:
+        directory,[ana],signalNames,backgroundNames,rebin=[MassRebin],bakShape=shape,
+        controlRegionLow=[123.0,125.0],controlRegionHigh=[125.0,127.0],histNameSuffix=histPostFix,
+        #write args:
+        outfilename=outDir+"CNC_"+ana+"_"+str(i)+".txt",lumi=i,
+
+        shapeDataCardMaker=False
         )
       threads.append(tmp)
 

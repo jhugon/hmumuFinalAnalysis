@@ -22,7 +22,7 @@ stdLegendPos = urLegendPos
 #histDirs = ["","4GeVWindow/","PtDiMu100/","VBFPresel/","IncPresel/","NotBlindWindow/"]
 histDirs = [""]
 histDirs = ["NotBlindWindow/"]
-histDirs = ["IncBDTSig80/"]
+histDirs = ["VBFPresel/","IncPresel/"]
 #histDirs = ["","PtDiMu100/","VBFPresel/","IncPresel/"]
 
 histNames = {}

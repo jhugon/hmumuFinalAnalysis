@@ -287,7 +287,7 @@ plots = set()
 for fn in allfiles:
   match = re.search(r".*/(.*)_[\d]+.txt.out",fn)
   badPlot = re.search(r"PM",fn)
-  badPlot2 = re.search(r"BDT.*BDT",fn)
+  badPlot2 = re.search(r"CNC",fn)
   if match and not (badPlot or badPlot2):
     plots.add(match.group(1))
 
@@ -302,7 +302,7 @@ for plotName in plots:
   saveAs(canvas,outDir+plotName)
 
 ## Compare all types of limits
-compareData = getData(dirName+"*_20.txt.out",matchString=r"(.*)_[\d]+.txt.out",dontMatchStrings=[r"BDT.+BDT",r"PM"],doSort=False)
+compareData = getData(dirName+"*_20.txt.out",matchString=r"(.*)_[\d]+.txt.out",dontMatchStrings=[r"CNC",r"PM"],doSort=False)
 #print compareData
 comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=True)
 comparePlot.fig.text(0.9,0.2,"$L=20$ fb$^{-1}$",horizontalalignment="right",size="x-large")
