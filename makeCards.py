@@ -134,7 +134,7 @@ class MassPDFBak:
     lowBin = tmpAxis.FindBin(minMass)
     highBin = tmpAxis.FindBin(maxMass)
     nBinsX = highBin - lowBin
-    normalization = hist.Integral(lowBin,highBin)
+    normalization = getIntegralAll(hist,[massLowRange[0],massHighRange[1]])
     self.debug += "# bak Hist no bounds: {:.3g}\n".format(hist.Integral())
     self.debug += "# bak Hist bounds:    {:.3g}\n".format(normalization)
 
@@ -159,7 +159,7 @@ class MassPDFBak:
 
     mMuMuBinning = root.RooFit.Binning(nBinsX,minMass,maxMass)
     nominalHist = pdfMmumu.createHistogram("pdf2dHist",mMuMu,mMuMuBinning)
-    nominalHist.Scale(normalization/nominalHist.Integral())
+    nominalHist.Scale(normalization/getIntegralAll(nominalHist,[massLowRange[0],massHighRange[1]]))
 
     self.name = name
     self.hist = hist
@@ -221,10 +221,7 @@ class MassPDFBak:
       a2.setVal(a2val)
       a2.setError(a2Err)
 
-      a1UpHist.Scale(normalization/a1UpHist.Integral())
-      a1DownHist.Scale(normalization/a1DownHist.Integral())
-      a2UpHist.Scale(normalization/a2UpHist.Integral())
-      a2DownHist.Scale(normalization/a2DownHist.Integral())
+      a1UpHist.Scale(normalization/getIntegralAll(nominalHist,[massLowRange[0],massHighRange[1]]))
   
       self.a1UpHist = a1UpHist
       self.a1DownHist = a1DownHist
