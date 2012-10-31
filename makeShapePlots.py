@@ -85,6 +85,7 @@ class ShapePlotter:
       obs.SetLineColor(1)
       obs.SetTitle("")
       obs.GetXaxis().SetTitle("m_{#mu#mu} [GeV]")
+      obs.GetXaxis().SetRangeUser(110,150)
       obs.GetYaxis().SetTitle("Events/Bin")
       nominal.SetFillStyle(0)
       nominal.SetLineStyle(1)

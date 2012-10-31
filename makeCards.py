@@ -20,7 +20,7 @@ NPROCS = 1
 
 BAKUNC = 0.1
 
-BAKUNCON = True
+BAKUNCON = False
 
 from xsec import *
 
@@ -108,20 +108,24 @@ class MassPDFBak:
     maxMass = massHighRange[1]
     minMass = massLowRange[0]
     mMuMu = rooVars[0]
-    mMuMu.setRange("low",massLowRange[0],massLowRange[1])
+    mMuMu.setRange("z",88,94)
+    mMuMu.setRange("verylow",massLowRange[0],110.)
+    mMuMu.setRange("low",110.,massLowRange[1])
     mMuMu.setRange("high",massHighRange[0],massHighRange[1])
     mMuMu.setRange("signal",massLowRange[1],massHighRange[0])
-    
-    a1 = root.RooRealVar("a1","a1",-1,1)
-    a2 = root.RooRealVar("a2","a2",-1,1)
-    a3 = root.RooRealVar("a3","a3",-1,1)
-    a4 = root.RooRealVar("a4","a4",-1,1)
-    a5 = root.RooRealVar("a5","a5",-1,1)
-    #shift = root.RooRealVar("shift","shift",-125)
-    shift = root.RooRealVar("shift","shift",-140)
-    shiftedX = root.RooFormulaVar("shiftedX","shiftedX","mMuMu+shift",root.RooArgList(mMuMu,shift))
-    pdfMmumu = root.RooPolynomial("pdfMmumu","pdfMmumu",shiftedX,root.RooArgList(a1,a2))
-    #pdfMmumu = root.RooChebychev("pdfMmumu","pdfMmumu",shiftedX,root.RooArgList(a1,a2))
+    mMuMu.Print()
+
+    voitWidth = root.RooRealVar("voitWidth","voitWidth",2.4952)
+    voitmZ = root.RooRealVar("voitmZ","voitmZ",85,95)
+    voitSig = root.RooRealVar("voitSig","voitSig",0.0,30.0)
+    voitMmumu = root.RooVoigtian("voitMmumu","voitMmumu",mMuMu,voitmZ,voitWidth,voitSig)
+
+    expParam = root.RooRealVar("expParam","expParam",-1,0)
+    expMmumu = root.RooExponential("expMmumu","expMmumu",mMuMu,expParam)
+
+    mixParam = root.RooRealVar("mixParam","mixParam",0,1)
+
+    pdfMmumu = root.RooAddPdf("pdfMmumu","pdfMmumu",root.RooArgList(voitMmumu,expMmumu),root.RooArgList(mixParam))
     
     tmpAxis = hist.GetXaxis()
     lowBin = tmpAxis.FindBin(minMass)
@@ -132,15 +136,23 @@ class MassPDFBak:
     self.debug += "# bak Hist bounds:    {:.3g}\n".format(normalization)
 
     mMuMuRooDataHist = root.RooDataHist(name+"DataHist",name+"DataHist",root.RooArgList(mMuMu),hist)
+
+    voitMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("z"),root.RooFit.SumW2Error(False))
+    voitmZ.setConstant(True)
+    voitSig.setConstant(True)
+
+    expMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("high"),root.RooFit.SumW2Error(False))
+    expParam.setConstant(True)
     
-    pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(True))
+    pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False))
     chi2 = pdfMmumu.createChi2(mMuMuRooDataHist)
 
     plotMmumu = mMuMu.frame()
 
     mMuMuRooDataHist.plotOn(plotMmumu)
-    pdfMmumu.plotOn(plotMmumu)
+    pdfMmumu.plotOn(plotMmumu,root.RooFit.Range("low,high"))
     pdfMmumu.plotOn(plotMmumu,root.RooFit.LineStyle(2),root.RooFit.Range(minMass,maxMass))
+    pdfMmumu.plotOn(plotMmumu,root.RooFit.Components("expMmumu"),root.RooFit.LineStyle(2),root.RooFit.Range(minMass,maxMass),root.RooFit.LineColor(root.kGreen+1))
 
     mMuMuBinning = root.RooFit.Binning(nBinsX,minMass,maxMass)
     nominalHist = pdfMmumu.createHistogram("pdf2dHist",mMuMu,mMuMuBinning)
@@ -152,13 +164,13 @@ class MassPDFBak:
     self.lowBin = lowBin
     self.highBin = highBin
     self.nBinsX = nBinsX
-    self.a1 = a1
-    self.a2 = a2
-    self.a3 = a3
-    self.a4 = a4
-    self.a5 = a5
-    self.shift = shift
-    self.shiftedX = shiftedX
+    self.voitWidth = voitWidth
+    self.voitmZ = voitmZ
+    self.voitSig = voitSig
+    self.voitMmumu = voitMmumu
+    self.expParam = expParam
+    self.expMmumu = expMmumu
+    self.mixParam = mixParam
     self.pdfMmumu = pdfMmumu
     self.mMuMuBinning = mMuMuBinning
     self.nominalHist = nominalHist
@@ -169,11 +181,11 @@ class MassPDFBak:
     self.chi2 = chi2
 
     self.debug += "# nominal Integral: {0:.3g}\n".format(getIntegralAll(nominalHist))
-    self.debug += "# a1: {0:.3g} +/- {1:.3g}\n".format(a1.getVal(),a1.getError())
-    self.debug += "# a2: {0:.3g} +/- {1:.3g}\n".format(a2.getVal(),a2.getError())
-    self.debug += "# a3: {0:.3g} +/- {1:.3g}\n".format(a3.getVal(),a3.getError())
-    self.debug += "# a4: {0:.3g} +/- {1:.3g}\n".format(a4.getVal(),a4.getError())
-    self.debug += "# a5: {0:.3g} +/- {1:.3g}\n".format(a5.getVal(),a5.getError())
+    self.debug += "# V Width: {0:.3g} +/- {1:.3g}\n".format(voitWidth.getVal(),voitWidth.getError())
+    self.debug += "# V Sigma: {0:.3g} +/- {1:.3g}\n".format(voitSig.getVal(),voitSig.getError())
+    self.debug += "# V mZ:    {0:.3g} +/- {1:.3g}\n".format(voitmZ.getVal(),voitmZ.getError())
+    self.debug += "# Exp Par: {0:.3g} +/- {1:.3g}\n".format(expParam.getVal(),expParam.getError())
+    self.debug += "# V Coef:  {0:.3g} +/- {1:.3g}\n".format(mixParam.getVal(),mixParam.getError())
     self.debug += "# chi2/ndf: {0:.3g}\n".format(chi2.getVal()/(nBinsX-1))
 
     ## Error time
@@ -674,6 +686,7 @@ class Analysis:
     for name in signalNames:
       tmpF = root.TFile(directory+name+".root")
       tmpH = tmpF.Get(histNameBase+analysis+histNameSuffix)
+      tmpH.Sumw2()
       self.sigFiles.append(tmpF)
       self.sigHistsRaw.append(tmpH)
       if tmpH.InheritsFrom("TH2"):
@@ -1406,6 +1419,7 @@ if __name__ == "__main__":
   directory = "input/"
   outDir = "statsCards/"
   analyses = ["VBFPresel","IncPresel","VBFLoose","VBFMedium","VBFTight","VBFVeryTight","Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250","IncBDTSig80","VBFBDTSig80"]
+  analyses = ["VBFPresel","IncPresel"]
   histPostFix="/mDiMu"
   #analyses = ["mDiMu"]
   #histPostFix=""
@@ -1416,8 +1430,8 @@ if __name__ == "__main__":
   lumiList = [20]
 
   MassRebin = 4 # 4 Bins per GeV originally
-  controlRegionLow=[115,125]
-  controlRegionHigh=[125,140]
+  controlRegionLow=[80,120]
+  controlRegionHigh=[130,180]
 
   shape=True
 
@@ -1434,6 +1448,7 @@ if __name__ == "__main__":
         outfilename=outDir+"AllCat"+"_"+str(i)+".txt",lumi=i
       )
     )
+    """
     threads.append(
       ThreadedCardMaker(
         #__init__ args:
@@ -1464,6 +1479,7 @@ if __name__ == "__main__":
         outfilename=outDir+"BDTSig80"+"_"+str(i)+".txt",lumi=i
       )
     )
+    """
     for ana in analyses:
       tmp = ThreadedCardMaker(
         #__init__ args:
@@ -1473,6 +1489,7 @@ if __name__ == "__main__":
         outfilename=outDir+ana+"_"+str(i)+".txt",lumi=i
         )
       threads.append(tmp)
+    """
     ## Cut and Count!!!
     for ana in analyses:
       tmp = ThreadedCardMaker(
@@ -1485,6 +1502,7 @@ if __name__ == "__main__":
         shapeDataCardMaker=False
         )
       threads.append(tmp)
+    """
 
   nThreads = len(threads)
   print("nProcs: {0}".format(NPROCS))
