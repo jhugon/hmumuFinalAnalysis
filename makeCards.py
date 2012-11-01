@@ -102,7 +102,6 @@ class MassPDFBak:
 
     self.debug = ""
     self.debug += "### MassPDFBak: "+name+"\n"
-    hist.Sumw2()
 
     print("***************************")
     print("bak Integral: {}".format(getIntegralAll(hist)))
@@ -648,12 +647,12 @@ class MVAvMassPDFBak:
 
 ###################################################################################
 
-
 class Analysis:
-  def __init__(self,directory,signalNames,backgroundNames,analysis,x,y,controlRegionLow,controlRegionHigh,histNameBase="mDiMu",bakShape=False,rebin=[],histNameSuffix="",controlRegionVeryLow=[]):
+  def __init__(self,directory,signalNames,backgroundNames,dataNames,analysis,x,y,controlRegionLow,controlRegionHigh,histNameBase="mDiMu",bakShape=False,rebin=[],histNameSuffix="",controlRegionVeryLow=[]):
     self.bakShape = bakShape
     self.sigNames = signalNames
     self.bakNames = backgroundNames
+    self.datNames = dataNames
     self.controlRegionVeryLow = controlRegionVeryLow
     self.controlRegionLow = controlRegionLow
     self.controlRegionHigh = controlRegionHigh
@@ -685,6 +684,14 @@ class Analysis:
       self.bakFiles.append(tmpF)
       self.bakHistsRaw.append(tmpH)
 
+    self.datFiles = []
+    self.datHists = []
+    for name in dataNames:
+      tmpF = root.TFile(directory+name+".root")
+      tmpH = tmpF.Get(histNameBase+analysis+histNameSuffix)
+      self.datFiles.append(tmpF)
+      self.datHists.append(tmpH)
+
     #Rebin
     rb = rebin
     if type(rb) != list:
@@ -695,10 +702,14 @@ class Analysis:
           hist.Rebin2D(*rb)
         for hist in self.bakHistsRaw:
           hist.Rebin2D(*rb)
+        for hist in self.datHists:
+          hist.Rebin2D(*rb)
     elif len(rb) == 1 and not self.is2D:
         for hist in self.sigHistsRaw:
           hist.Rebin(*rb)
         for hist in self.bakHistsRaw:
+          hist.Rebin(*rb)
+        for hist in self.datHists:
           hist.Rebin(*rb)
     elif len(rb) == 0:
       pass
@@ -755,6 +766,19 @@ class Analysis:
     self.bakShape = bakShape
     self.bakShapeMkr = None
 
+    self.dataCountsTotal = None
+    self.datHistTotal = None
+    for h,name in zip(self.datHists,dataNames):
+      counts = getIntegralAll(h,boundaries=massBounds)
+      if self.dataCountsTotal == None:
+        self.dataCountsTotal = counts
+      else:
+        self.dataCountsTotal += counts
+      if self.datHistTotal == None:
+        self.datHistTotal = h.Clone("data_obs")
+      else:
+        self.datHistTotal.Add(h)
+
   def getSigEff(self,name):
     result = -1.0
     if self.sigNames.count(name)>0:
@@ -792,8 +816,11 @@ class Analysis:
   def getBakHistTotal(self,lumi):
     analysis = self.analysis
     bakShape = self.bakShape
-    self.bakHistTotal = self.bakHistTotalReal.Clone("stuff")
-    self.bakHistTotal.Scale(lumi)
+    if self.datHistTotal == None:
+      self.bakHistTotal = self.bakHistTotalReal.Clone("stuff")
+      self.bakHistTotal.Scale(lumi)
+    else:
+      self.bakHistTotal = self.datHistTotal.Clone("stuff")
     if bakShape and self.is2D:
       bakShapeMkr = MVAvMassPDFBak("pdfHists_"+analysis,
                                 self.bakHistTotal,
@@ -833,7 +860,7 @@ class Analysis:
 ###################################################################################
 
 class DataCardMaker:
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",controlRegionLow=[80,115],controlRegionHigh=[135,150],controlRegionVeryLow=[],bakShape=False,rebin=[],histNameSuffix=""):
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,dataNames,nuisanceMap=None,histNameBase="",controlRegionLow=[80,115],controlRegionHigh=[135,150],controlRegionVeryLow=[],bakShape=False,rebin=[],histNameSuffix=""):
     channels = []
     self.channelNames = copy.deepcopy(analysisNames)
     self.is2D = False
@@ -851,7 +878,7 @@ class DataCardMaker:
     self.shape = bakShape
 
     for analysis in analysisNames:
-      tmp = Analysis(directory,signalNames,backgroundNames,analysis,x,y,controlRegionLow,controlRegionHigh,controlRegionVeryLow=controlRegionVeryLow,histNameBase=histNameBase,bakShape=bakShape,rebin=rebin,histNameSuffix=histNameSuffix)
+      tmp = Analysis(directory,signalNames,backgroundNames,dataNames,analysis,x,y,controlRegionLow,controlRegionHigh,controlRegionVeryLow=controlRegionVeryLow,histNameBase=histNameBase,bakShape=bakShape,rebin=rebin,histNameSuffix=histNameSuffix)
       channels.append(tmp)
     self.channels = channels
 
@@ -915,7 +942,12 @@ class DataCardMaker:
       binFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
       binFormatList.append(channelName)
       observationFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-      observationFormatList.append(int(channel.getBakXSecTotal()*lumi))
+      if channel.dataCountsTotal == None:
+        print("Writing Pretend Data Counts")
+        observationFormatList.append(int(channel.getBakXSecTotal()*lumi))
+      else:
+        print("Writing Real Data Counts")
+        observationFormatList.append(channel.dataCountsTotal)
       iParam += 1
     binFormatString+= "\n"
     observationFormatString+= "\n"
@@ -1023,8 +1055,8 @@ class DataCardMaker:
 ###################################################################################
 
 class ShapeDataCardMaker(DataCardMaker):
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False,controlRegionLow=[80,115],controlRegionHigh=[135,200],controlRegionVeryLow=[],bakShape=False,histNameSuffix=""):
-    DataCardMaker.__init__(self,directory,analysisNames,signalNames,backgroundNames,nuisanceMap,histNameBase,controlRegionLow,controlRegionHigh,controlRegionVeryLow=controlRegionVeryLow,bakShape=bakShape,rebin=rebin,histNameSuffix=histNameSuffix)
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,dataNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False,controlRegionLow=[80,115],controlRegionHigh=[135,200],controlRegionVeryLow=[],bakShape=False,histNameSuffix=""):
+    DataCardMaker.__init__(self,directory,analysisNames,signalNames,backgroundNames,dataNames,nuisanceMap,histNameBase,controlRegionLow,controlRegionHigh,controlRegionVeryLow=controlRegionVeryLow,bakShape=bakShape,rebin=rebin,histNameSuffix=histNameSuffix)
 
     self.useTH1 = useTH1
     self.controlRegionHigh = controlRegionHigh
@@ -1149,7 +1181,12 @@ class ShapeDataCardMaker(DataCardMaker):
                 sumAllMCHist.Add(tmpHist)
         massLimits = [self.controlRegionLow[0],self.controlRegionHigh[1]]
         sumAllMCHist.Scale(int(getIntegralAll(sumAllMCHist,boundaries=massLimits))/getIntegralAll(sumAllMCHist,boundaries=massLimits)) # Make Integer
-        self.makeRFHistWrite(channel,sumAllMCHist,tmpDir) #Pretend Data
+        if channel.datHistTotal == None:
+          print("Writing Pretend Data Histogram")
+          self.makeRFHistWrite(channel,sumAllMCHist,tmpDir) #Pretend Data
+        else:
+          print("Writing Real Data Histogram")
+          self.makeRFHistWrite(channel,channel.datHistTotal,tmpDir) #Real Data
         self.makeRFHistWrite(channel,sumAllSigMCHist,tmpDir) #Pretend Signal
         self.makeRFHistWrite(channel,sumAllBakMCHist,tmpDir,compareHist=sumAllSigMCHist,writeBakShape=True) #Background Sum
         rootDebugString += "#######################\n"
@@ -1194,7 +1231,12 @@ class ShapeDataCardMaker(DataCardMaker):
       observedNumber = int(channel.getBakXSecTotal()*lumi)
       if includeSigInAllMC:
         observedNumber = int((channel.getSigXSecTotal()+channel.getBakXSecTotal())*lumi)
-      observationFormatList.append(observedNumber)
+      if channel.dataCountsTotal != None:
+        print("Writing Real Data Counts")
+        observationFormatList.append(channel.dataCountsTotal)
+      else:
+        print("Writing Pretend Data Counts")
+        observationFormatList.append(observedNumber)
       #print("text Observed {}: {}".format(channelName,observedNumber))
       iParam += 1
     binFormatString+= "\n"
@@ -1411,6 +1453,7 @@ if __name__ == "__main__":
   #histPostFix=""
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar","WW","WZ","ZZ"]
+  dataNames=["SingleMuRun2012Av1IsoMu"]
   #lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
   lumiList = [10,20,30,100]
   lumiList = [20]
@@ -1428,7 +1471,7 @@ if __name__ == "__main__":
     threads.append(
       ThreadedCardMaker(
         #__init__ args:
-        directory,["VBFLoose","VBFMedium","VBFTight","VBFVeryTight","Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250"],signalNames,backgroundNames,
+        directory,["VBFLoose","VBFMedium","VBFTight","VBFVeryTight","Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250"],signalNames,backgroundNames,dataNames,
         rebin=[MassRebin], bakShape=shape,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
         controlRegionVeryLow=controlRegionVeryLow,
@@ -1439,7 +1482,7 @@ if __name__ == "__main__":
     threads.append(
       ThreadedCardMaker(
         #__init__ args:
-        directory,["VBFLoose","VBFMedium","VBFTight","VBFVeryTight"],signalNames,backgroundNames,
+        directory,["VBFLoose","VBFMedium","VBFTight","VBFVeryTight"],signalNames,backgroundNames,dataNames,
         rebin=[MassRebin], bakShape=shape,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
         controlRegionVeryLow=controlRegionVeryLow,
@@ -1450,7 +1493,7 @@ if __name__ == "__main__":
     threads.append(
       ThreadedCardMaker(
         #__init__ args:
-        directory,["Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250"],signalNames,backgroundNames,
+        directory,["Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250"],signalNames,backgroundNames,dataNames,
         rebin=[MassRebin], bakShape=shape,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
         controlRegionVeryLow=controlRegionVeryLow,
@@ -1461,7 +1504,7 @@ if __name__ == "__main__":
     threads.append(
       ThreadedCardMaker(
         #__init__ args:
-        directory,["IncBDTSig80","VBFBDTSig80"],signalNames,backgroundNames,
+        directory,["IncBDTSig80","VBFBDTSig80"],signalNames,backgroundNames,dataNames,
         rebin=[MassRebin], bakShape=shape,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
         controlRegionVeryLow=controlRegionVeryLow,
@@ -1472,7 +1515,7 @@ if __name__ == "__main__":
     for ana in analyses:
       tmp = ThreadedCardMaker(
         #__init__ args:
-        directory,[ana],signalNames,backgroundNames,rebin=[MassRebin],bakShape=shape,
+        directory,[ana],signalNames,backgroundNames,dataNames,rebin=[MassRebin],bakShape=shape,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
         controlRegionVeryLow=controlRegionVeryLow,
         #write args:
@@ -1484,7 +1527,7 @@ if __name__ == "__main__":
     for ana in analyses:
       tmp = ThreadedCardMaker(
         #__init__ args:
-        directory,[ana],signalNames,backgroundNames,rebin=[MassRebin],bakShape=shape,
+        directory,[ana],signalNames,backgroundNames,dataNames,rebin=[MassRebin],bakShape=shape,
         controlRegionLow=[123.0,125.0],controlRegionHigh=[125.0,127.0],histNameSuffix=histPostFix,
         controlRegionVeryLow=controlRegionVeryLow,
         #write args:
