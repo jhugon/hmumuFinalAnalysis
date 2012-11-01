@@ -15,6 +15,9 @@ from ROOT import gSystem
 gSystem.Load('libRooFit')
 
 #root.gErrorIgnoreLevel = root.kWarning
+#root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.WARNING)
+#root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.ERROR)
+#PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 
 NPROCS = 1
 
@@ -46,6 +49,11 @@ def getIntegralAll(hist,boundaries=[]):
     return hist.Integral(xbinLow,xbinHigh)
   else:
     return -1
+
+def getIntegralLowHigh(hist,lowBoundaries,highBoundaries):
+  lowInt = getIntegralAll(hist,lowBoundaries)
+  highInt = getIntegralAll(hist,highBoundaries)
+  return lowInt+highInt
 
 def vetoOutOfBoundsEvents(hist,boundaries=[]):
   xbinLow = None
@@ -133,20 +141,20 @@ class MassPDFBak:
     lowBin = tmpAxis.FindBin(minMass)
     highBin = tmpAxis.FindBin(maxMass)
     nBinsX = highBin - lowBin
-    normalization = getIntegralAll(hist,[massLowRange[0],massHighRange[1]])
+    normalization = getIntegralLowHigh(hist,massLowRange,massHighRange)
     self.debug += "# bak Hist no bounds: {:.3g}\n".format(hist.Integral())
     self.debug += "# bak Hist bounds:    {:.3g}\n".format(normalization)
 
     mMuMuRooDataHist = root.RooDataHist(name+"DataHist",name+"DataHist",root.RooArgList(mMuMu),hist)
 
-    voitMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("z"),root.RooFit.SumW2Error(False))
+    voitMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("z"),root.RooFit.SumW2Error(False),PRINTLEVEL)
     voitmZ.setConstant(True)
     voitSig.setConstant(True)
 
-    expMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("high"),root.RooFit.SumW2Error(False))
+    expMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("high"),root.RooFit.SumW2Error(False),PRINTLEVEL)
     expParam.setConstant(True)
     
-    pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False))
+    pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL)
     chi2 = pdfMmumu.createChi2(mMuMuRooDataHist)
 
     plotMmumu = mMuMu.frame()
@@ -158,7 +166,7 @@ class MassPDFBak:
 
     mMuMuBinning = root.RooFit.Binning(nBinsX,minMass,maxMass)
     nominalHist = pdfMmumu.createHistogram("pdf2dHist",mMuMu,mMuMuBinning)
-    nominalHist.Scale(normalization/getIntegralAll(nominalHist,[massLowRange[0],massHighRange[1]]))
+    nominalHist.Scale(normalization/getIntegralLowHigh(nominalHist,massLowRange,massHighRange))
 
     self.name = name
     self.hist = hist
@@ -210,8 +218,8 @@ class MassPDFBak:
 
         errVar.setVal(val)
 
-        upHist.Scale(normalization/getIntegralAll(upHist,[massLowRange[0],massHighRange[1]]))
-        downHist.Scale(normalization/getIntegralAll(downHist,[massLowRange[0],massHighRange[1]]))
+        upHist.Scale(normalization/getIntegralLowHigh(upHist,massLowRange,massHighRange))
+        downHist.Scale(normalization/getIntegralLowHigh(downHist,massLowRange,massHighRange))
 
         setattr(self,varName+"UpHist",upHist)
         setattr(self,varName+"DownHist",downHist)
@@ -369,7 +377,7 @@ class MVAvMassPDFBak:
     mMuMuHistSmooth = hist2DSmooth.ProjectionX("_mMuMuHistSmooth")
     mMuMuRooDataHistSmooth = root.RooDataHist(name+"mMuMuRooDataHistSmooth","mMuMuRooDataHistSmooth",root.RooArgList(mMuMu),mMuMuHistSmooth)
     
-    pdfMmumu.fitTo(mMuMuRooDataHistSmooth,root.RooFit.Range("low,high"))
+    pdfMmumu.fitTo(mMuMuRooDataHistSmooth,root.RooFit.Range("low,high"),PRINTLEVEL)
 
     ###################
     
@@ -395,7 +403,7 @@ class MVAvMassPDFBak:
 
     #pdfMva = root.RooFFTConvPdf("pdfMva","pdfMva",mva,templatePdfMva,gausPdfMva)
 
-    pdfMva.fitTo(mvaRooDataHistSmooth)
+    pdfMva.fitTo(mvaRooDataHistSmooth,PRINTLEVEL)
 
     ###################
 
@@ -1453,7 +1461,7 @@ if __name__ == "__main__":
   #histPostFix=""
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar","WW","WZ","ZZ"]
-  dataNames=["SingleMuRun2012Av1IsoMu"]
+  dataNames=[]
   #lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
   lumiList = [10,20,30,100]
   lumiList = [20]
