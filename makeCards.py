@@ -142,7 +142,7 @@ class MassPDFBak:
     highBin = tmpAxis.FindBin(maxMass)
     lowBin, highBin = getXbinsHighLow(hist,minMass,maxMass)
     nBinsX = highBin - lowBin + 1
-    normalization = getIntegralLowHigh(hist,massLowRange,massHighRange)
+    normalization = getIntegralAll(hist,[massLowRange[0],massHighRange[1]])
     self.debug += "# bak Hist no bounds: {:.3g}\n".format(hist.Integral())
     self.debug += "# bak Hist bounds:    {:.3g}\n".format(normalization)
 
@@ -167,14 +167,7 @@ class MassPDFBak:
 
     mMuMuBinning = root.RooFit.Binning(nBinsX,minMass,maxMass)
     nominalHist = pdfMmumu.createHistogram("pdf2dHist",mMuMu,mMuMuBinning)
-    nominalHist.Scale(normalization/getIntegralLowHigh(nominalHist,massLowRange,massHighRange))
-
-    print("*************\n {}, {}, {} \n**************".format(nominalHist.GetNbinsX(),nominalHist.GetXaxis().GetXmin(),nominalHist.GetXaxis().GetXmax()))
-    print("*************\n highBin {} {} {}\n**************".format(
-    nominalHist.GetXaxis().GetBinLowEdge(1),
-    nominalHist.GetXaxis().GetBinCenter(1),
-    nominalHist.GetXaxis().GetBinUpEdge(1)
-    ))
+    nominalHist.Scale(normalization/getIntegralAll(nominalHist,[massLowRange[0],massHighRange[1]]))
 
     self.name = name
     self.hist = hist
@@ -226,8 +219,8 @@ class MassPDFBak:
 
         errVar.setVal(val)
 
-        upHist.Scale(normalization/getIntegralLowHigh(upHist,massLowRange,massHighRange))
-        downHist.Scale(normalization/getIntegralLowHigh(downHist,massLowRange,massHighRange))
+        upHist.Scale(normalization/getIntegralAll(upHist,[massLowRange[0],massHighRange[1]]))
+        downHist.Scale(normalization/getIntegralAll(downHist,[massLowRange[0],massHighRange[1]]))
 
         setattr(self,varName+"UpHist",upHist)
         setattr(self,varName+"DownHist",downHist)
@@ -393,7 +386,7 @@ class MVAvMassPDFBak:
 
     lowPertBin = pdf2dHist.GetXaxis().FindBin(120.0)
     highPertBin = pdf2dHist.GetXaxis().FindBin(131.0)
-    lowPertBin, highPertBin = getIntegralLowHigh(pdf2dHist,120.0,131.0)
+    lowPertBin, highPertBin = getIntegralAll(pdf2dHist,120.0,131.0)
     print("pdf2dHist bins X: {} Y: {}".format(pdf2dHist.GetNbinsX(),pdf2dHist.GetNbinsY()))
     self.nuisanceNames = []
     self.pdf2dHistErrs = {}
