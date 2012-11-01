@@ -14,10 +14,10 @@ myThread = multiprocessing.Process
 from ROOT import gSystem
 gSystem.Load('libRooFit')
 
-#root.gErrorIgnoreLevel = root.kWarning
+root.gErrorIgnoreLevel = root.kWarning
 #root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.WARNING)
-#root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.ERROR)
-#PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
+root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.ERROR)
+PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 
 NPROCS = 1
 
@@ -76,10 +76,8 @@ def getRooVars(directory,signalNames,histNameBase,analysis):
     is2D = False
     for name in signalNames:
       tmpF = root.TFile(directory+name+".root")
-      print("*********\n  Getting {}\n*********".format(histNameBase+analysis))
       hist = tmpF.Get(histNameBase+analysis)
       break
-    print hist
     if hist.InheritsFrom("TH2"):
       is2D = True
 
@@ -111,10 +109,6 @@ class MassPDFBak:
     self.debug = ""
     self.debug += "### MassPDFBak: "+name+"\n"
 
-    print("***************************")
-    print("bak Integral: {}".format(getIntegralAll(hist)))
-    print("***************************")
-
     maxMass = massHighRange[1]
     minMass = massVeryLowRange[0]
     mMuMu = root.RooRealVar("mMuMu2","mMuMu",minMass,maxMass)
@@ -123,7 +117,6 @@ class MassPDFBak:
     mMuMu.setRange("low",massLowRange[0],massLowRange[1])
     mMuMu.setRange("high",massHighRange[0],massHighRange[1])
     mMuMu.setRange("signal",massLowRange[1],massHighRange[0])
-    mMuMu.Print()
 
     voitWidth = root.RooRealVar("voitWidth","voitWidth",2.4952)
     voitmZ = root.RooRealVar("voitmZ","voitmZ",85,95)
@@ -240,7 +233,6 @@ class MassPDFBak2:
   def __init__(self,name,hist,massLowRange,massHighRange,rooVars=None,smooth=False,hack=True):
     self.debug = ""
     self.debug += "### MassPDFBak2: "+name+"\n"
-    hist.Sumw2()
 
     maxMass = massHighRange[1]
     minMass = massLowRange[0]
@@ -494,7 +486,6 @@ class MVAvMassPDFBak:
     print("pdf2dHist bins X: {} Y: {}".format(pdf2dHist.GetNbinsX(),pdf2dHist.GetNbinsY()))
     self.nuisanceNames = []
     self.pdf2dHistErrs = {}
-    pdf2dHist.Sumw2()
     bakPlus = pdf2dHist.Clone("bakUnc"+"Up")
     bakMinus = pdf2dHist.Clone("bakUnc"+"Down")
     errIntNominal = 0.
@@ -678,7 +669,6 @@ class Analysis:
     for name in signalNames:
       tmpF = root.TFile(directory+name+".root")
       tmpH = tmpF.Get(histNameBase+analysis+histNameSuffix)
-      tmpH.Sumw2()
       self.sigFiles.append(tmpF)
       self.sigHistsRaw.append(tmpH)
       if tmpH.InheritsFrom("TH2"):
