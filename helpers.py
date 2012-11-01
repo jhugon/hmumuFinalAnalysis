@@ -1055,6 +1055,8 @@ def shrinkTH1(hist,xlow,xhigh,deleteOld=False):
   assert(xhigh <= oldXhigh)
   lowBin = taxis.FindBin(xlow)
   highBin = taxis.FindBin(xhigh)
+  if taxis.GetBinLowEdge(highBin)==float(xhigh):
+    highBin -= 1
   xlow = taxis.GetBinLowEdge(lowBin)
   xhigh = taxis.GetBinUpEdge(highBin)
   oldN = hist.GetNbinsX()

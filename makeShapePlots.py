@@ -13,7 +13,7 @@ def convertErrors(hist):
     hist.SetBinError(i,math.sqrt(x))
 
 class ShapePlotter:
-  def __init__(self,filename,titleMap):
+  def __init__(self,filename,titleMap,rebin=1):
     self.titleMap = titleMap
     self.filename = filename
     self.data = {}
@@ -32,7 +32,7 @@ class ShapePlotter:
         if re.match(r"TH1.*",key.GetClassName()) and (re.match(r"bak.*",key.GetName()) or key.GetName() == "data_obs" or key.GetName() == "sig"):
           hist = key.ReadObj()
           hist = hist.Clone(channelKey.GetName()+"_"+key.GetName())
-          hist.Rebin(5)
+          hist.Rebin(rebin)
           self.data[channelKey.GetName()][key.GetName()] = hist
 
     self.lumi = -1
@@ -93,7 +93,7 @@ class ShapePlotter:
       outGraph.SetPoint(i,x,y)
       outGraph.SetPointError(i,0.0,0.0,math.sqrt(err2Down),math.sqrt(err2Up))
 
-  def makePlot(self,outDir):
+  def makePlot(self,outDir,plotRange=[]):
     canvas = root.TCanvas("canvas")
     for channelName in self.data:
       canvas.Clear()
@@ -115,7 +115,8 @@ class ShapePlotter:
       obs.SetLineColor(1)
       obs.SetTitle("")
       obs.GetXaxis().SetTitle("m_{#mu#mu} [GeV]")
-      obs.GetXaxis().SetRangeUser(100,180)
+      if len(plotRange) ==2:
+        obs.GetXaxis().SetRangeUser(*plotRange)
       obs.GetYaxis().SetTitle("Events/Bin")
       nominal.SetFillStyle(0)
       nominal.SetLineStyle(1)
@@ -136,10 +137,14 @@ class ShapePlotter:
         graphs.append(tmp)
       combinedErrorGraph = root.TGraphAsymmErrors()
       combinedErrorGraph.SetFillColor(root.kCyan)
+      combinedErrorGraph.SetLineColor(root.kRed+1)
       self.combineErrors(graphs,combinedErrorGraph)
-      combinedErrorGraph.Draw("4")
-      nominal.Draw("hist L same")
+      combinedErrorGraph.Draw("3")
+      combinedErrorGraph.Draw("LX")
+      #nominal.Draw("hist L same")
       obs.Draw("same")
+      #if channelName=="Pt0to30":
+      #  obs.Print("all")
 
       tlatex = root.TLatex()
       tlatex.SetNDC()
@@ -151,6 +156,7 @@ class ShapePlotter:
       tlatex.SetTextAlign(32)
       tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.titleMap[channelName]+", "+self.lumiStr)
         
+      canvas.RedrawAxis()
       canvas.SaveAs(outDir+"/"+channelName+".png")
 
 titleMap = {
@@ -181,10 +187,15 @@ if __name__ == "__main__":
   dataDir = "statsCards/"
   outDir = "shapes/"
 
-  s = ShapePlotter(dataDir+"AllCat_20.root",titleMap)
-  #print s.data
-  s.makePlot(outDir)
+  plotRange= [115,150]
+  #plotRange= []
 
-  s = ShapePlotter(dataDir+"BDTSig80_20.root",titleMap)
+  rebin=2
+
+  s = ShapePlotter(dataDir+"AllCat_20.root",titleMap,rebin)
   #print s.data
-  s.makePlot(outDir)
+  s.makePlot(outDir,plotRange)
+
+  s = ShapePlotter(dataDir+"BDTSig80_20.root",titleMap,rebin)
+  #print s.data
+  s.makePlot(outDir,plotRange)

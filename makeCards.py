@@ -31,6 +31,15 @@ if scaleHiggsBy != 1.0:
   print("Error: higgs xsec is scaled!!! Return to 1. Exiting.")
   sys.exit(1)
 
+def getXbinsHighLow(hist,low,high):
+  axis = hist.GetXaxis()
+  xbinLow = axis.FindBin(low)
+  xbinHigh = axis.FindBin(high)
+  #print("xbinhigh: {}, {}, {}".format(xbinHigh,axis.GetBinLowEdge(xbinHigh),float(high)))
+  if axis.GetBinLowEdge(xbinHigh)==float(high):
+    xbinHigh -= 1
+  return xbinLow, xbinHigh
+
 def getIntegralAll(hist,boundaries=[]):
   xbinLow = None
   xbinHigh = None
@@ -38,8 +47,7 @@ def getIntegralAll(hist,boundaries=[]):
     xbinLow = 0
     xbinHigh = hist.GetXaxis().GetNbins()
   elif len(boundaries)==2:
-    xbinLow = hist.GetXaxis().FindBin(boundaries[0])
-    xbinHigh = hist.GetXaxis().FindBin(boundaries[1])
+    xbinLow, xbinHigh = getXbinsHighLow(hist,boundaries[0],boundaries[1])
   else:
     return -1
   if hist.InheritsFrom("TH2"):
@@ -59,8 +67,7 @@ def vetoOutOfBoundsEvents(hist,boundaries=[]):
   xbinLow = None
   xbinHigh = None
   if len(boundaries)==2:
-    xbinLow = hist.GetXaxis().FindBin(boundaries[0])
-    xbinHigh = hist.GetXaxis().FindBin(boundaries[1])
+    xbinLow, xbinHigh = getXbinsHighLow(hist,boundaries[0],boundaries[1])
   else:
     print("Error: vetoOutOfBoundsEvents: boundaries must be length 2, exiting.")
     sys.exit(1)
@@ -133,7 +140,8 @@ class MassPDFBak:
     tmpAxis = hist.GetXaxis()
     lowBin = tmpAxis.FindBin(minMass)
     highBin = tmpAxis.FindBin(maxMass)
-    nBinsX = highBin - lowBin
+    lowBin, highBin = getXbinsHighLow(hist,minMass,maxMass)
+    nBinsX = highBin - lowBin + 1
     normalization = getIntegralLowHigh(hist,massLowRange,massHighRange)
     self.debug += "# bak Hist no bounds: {:.3g}\n".format(hist.Integral())
     self.debug += "# bak Hist bounds:    {:.3g}\n".format(normalization)
@@ -160,6 +168,13 @@ class MassPDFBak:
     mMuMuBinning = root.RooFit.Binning(nBinsX,minMass,maxMass)
     nominalHist = pdfMmumu.createHistogram("pdf2dHist",mMuMu,mMuMuBinning)
     nominalHist.Scale(normalization/getIntegralLowHigh(nominalHist,massLowRange,massHighRange))
+
+    print("*************\n {}, {}, {} \n**************".format(nominalHist.GetNbinsX(),nominalHist.GetXaxis().GetXmin(),nominalHist.GetXaxis().GetXmax()))
+    print("*************\n highBin {} {} {}\n**************".format(
+    nominalHist.GetXaxis().GetBinLowEdge(1),
+    nominalHist.GetXaxis().GetBinCenter(1),
+    nominalHist.GetXaxis().GetBinUpEdge(1)
+    ))
 
     self.name = name
     self.hist = hist
@@ -255,8 +270,7 @@ class MVAvMassPDFBak:
     pdfMmumu = root.RooVoigtian("pdfMmumu","pdfMmumu",mMuMu,bwmZ,bwWidth,voitSigma)
     
     tmpAxis = hist2D.GetXaxis()
-    lowBin = tmpAxis.FindBin(minMass)
-    highBin = tmpAxis.FindBin(maxMass)
+    lowBin, highBin = getXbinsHighLow(hist2D,minMass,maxMass)
 
     mMuMuHist = hist2D.ProjectionX("_mMuMuHist")
     mMuMuRooDataHist = root.RooDataHist(name+"mMuMuRooDataHist","mMuMuRooDataHist",root.RooArgList(mMuMu),mMuMuHist)
@@ -267,14 +281,15 @@ class MVAvMassPDFBak:
 
     ###################
     
-    mvaHistLow = hist2D.ProjectionY("_mvaLow",lowBin,tmpAxis.FindBin(massLowRange[1]))
+    silly, lowRangeHighBin = getXbinsHighLow(hist2D,minMass,massLowRange[1])
+    mvaHistLow = hist2D.ProjectionY("_mvaLow",lowBin,lowRangeHighBin)
     mvaHistHigh = hist2D.ProjectionY("_mvaHigh",tmpAxis.FindBin(massHighRange[0]),highBin)
     mvaHist = mvaHistLow.Clone()
     mvaHist.Add(mvaHistHigh)
     mvaRooDataHist = root.RooDataHist(name+"mvaRooDataHist","mvaRooDataHist",root.RooArgList(mva),mvaHist)
 
 
-    mvaHistLowSmooth = hist2DSmooth.ProjectionY("_mvaLowSmooth",lowBin,tmpAxis.FindBin(massLowRange[1]))
+    mvaHistLowSmooth = hist2DSmooth.ProjectionY("_mvaLowSmooth",lowBin,lowRangeHighBin)
     mvaHistHighSmooth = hist2DSmooth.ProjectionY("_mvaHighSmooth",tmpAxis.FindBin(massHighRange[0]),highBin)
     mvaHistSmooth = mvaHistLowSmooth.Clone()
     mvaHistSmooth.Add(mvaHistHighSmooth)
@@ -307,9 +322,10 @@ class MVAvMassPDFBak:
     mvaRooDataHist.plotOn(plotMva)
     pdfMva.plotOn(plotMva)
 
-    nBinsX = hist2D.GetXaxis().FindBin(maxMass) - hist2D.GetXaxis().FindBin(minMass)
+    tmpLowBin,tmpHighBin = getXbinsHighLow(hist2D,minMass,maxMass)
+    nBinsX = tmpHighBin - tmpLowBin
 
-    mMuMuBinning = root.RooFit.Binning(nBinsX,minMass,maxMass)
+    mMuMuBinning = root.RooFit.Binning(nBinsX,minMass,maxMass-0.00000001)
     mvaBinning = root.RooFit.Binning(mvaHist.GetNbinsX(),-1,1)
     pdf2dHist = pdf2d.createHistogram("pdf2dHist",mMuMu,mMuMuBinning,root.RooFit.YVar(mva,mvaBinning))
 
@@ -377,6 +393,7 @@ class MVAvMassPDFBak:
 
     lowPertBin = pdf2dHist.GetXaxis().FindBin(120.0)
     highPertBin = pdf2dHist.GetXaxis().FindBin(131.0)
+    lowPertBin, highPertBin = getIntegralLowHigh(pdf2dHist,120.0,131.0)
     print("pdf2dHist bins X: {} Y: {}".format(pdf2dHist.GetNbinsX(),pdf2dHist.GetNbinsY()))
     self.nuisanceNames = []
     self.pdf2dHistErrs = {}
