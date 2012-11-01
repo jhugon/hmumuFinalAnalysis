@@ -18,6 +18,9 @@ setStyle()
 canvas = root.TCanvas()
 canvas.SetLogx(1)
 canvas.SetLogy(1)
+
+mpl.rcParams["font.family"] = "sans-serif"
+
 #######################################
 
 def getData(fileString,matchString=r"_([\d]+).txt.out",dontMatchStrings=[],doSort=True):
@@ -305,9 +308,11 @@ for plotName in plots:
 compareData = getData(dirName+"*_20.txt.out",matchString=r"(.*)_[\d]+.txt.out",dontMatchStrings=[r"CNC",r"PM","Presel"],doSort=False)
 #print compareData
 comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=True)
-comparePlot.fig.text(0.9,0.2,"$L=20$ fb$^{-1}$",horizontalalignment="right",size="x-large")
+comparePlot.fig.text(0.9,0.2,"$\mathcal{L}=20$ fb$^{-1}$",horizontalalignment="right",size="x-large")
+comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=8$ TeV",horizontalalignment="right",size="x-large")
 comparePlot.save(outDir+"compareObs")
 
 comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=False)
-comparePlot.fig.text(0.9,0.2,"$L=20$ fb$^{-1}$",horizontalalignment="right",size="x-large")
+comparePlot.fig.text(0.9,0.2,"$\mathcal{L}=20$ fb$^{-1}$",horizontalalignment="right",size="x-large")
+comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=8$ TeV",horizontalalignment="right",size="x-large")
 comparePlot.save(outDir+"compare")

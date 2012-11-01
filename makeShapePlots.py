@@ -154,7 +154,11 @@ class ShapePlotter:
       tlatex.SetTextAlign(12)
       tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
       tlatex.SetTextAlign(32)
-      tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.titleMap[channelName]+", "+self.lumiStr)
+      tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.titleMap[channelName])
+      tlatex.SetTextAlign(22)
+      tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin()-0.105,0.875,self.lumiStr)
+      tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin()-0.11,0.83,"#sqrt{s}=8 TeV")
+      
         
       canvas.RedrawAxis()
       canvas.SaveAs(outDir+"/"+channelName+".png")
