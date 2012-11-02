@@ -1087,13 +1087,14 @@ class DataCardMaker:
 ###################################################################################
 
 class ShapeDataCardMaker(DataCardMaker):
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,dataNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False,controlRegionLow=[80,115],controlRegionHigh=[135,200],controlRegionVeryLow=[],bakShape=False,histNameSuffix=""):
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,dataNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False,controlRegionLow=[80,115],controlRegionHigh=[135,200],controlRegionVeryLow=[],bakShape=False,histNameSuffix="",toyData=False):
     DataCardMaker.__init__(self,directory,analysisNames,signalNames,backgroundNames,dataNames,nuisanceMap,histNameBase,controlRegionLow,controlRegionHigh,controlRegionVeryLow=controlRegionVeryLow,bakShape=bakShape,rebin=rebin,histNameSuffix=histNameSuffix)
 
     self.useTH1 = useTH1
     self.controlRegionHigh = controlRegionHigh
     self.controlRegionLow = controlRegionLow
     self.controlRegionVeryLow = controlRegionVeryLow
+    self.toyData = toyData
 
   def makeRFHistWrite(self,channel,hist,thisDir,isData=True,compareHist=None,writeBakShape=False):
     thisDir.cd()
@@ -1155,6 +1156,8 @@ class ShapeDataCardMaker(DataCardMaker):
 
     rootDebugString = ""
 
+    observedN = {}
+
     for channel,channelName in zip(self.channels,self.channelNames):
         tmpDir = outRootFile.mkdir(channelName)
         tmpDir.cd()
@@ -1214,10 +1217,19 @@ class ShapeDataCardMaker(DataCardMaker):
         massLimits = [self.controlRegionLow[0],self.controlRegionHigh[1]]
         sumAllMCHist.Scale(int(getIntegralAll(sumAllMCHist,boundaries=massLimits))/getIntegralAll(sumAllMCHist,boundaries=massLimits)) # Make Integer
         if channel.datHistTotal == None:
-          print("Writing Pretend Data Histogram")
-          self.makeRFHistWrite(channel,sumAllMCHist,tmpDir) #Pretend Data
+          if self.toyData:
+            print("Writing Toy Data Histogram")
+            toy = sumAllBakMCHist.Clone("data_obs")
+            toyHistogram(toy)
+            observedN[channelName] = getIntegralAll(toy,boundaries=massLimits)
+            self.makeRFHistWrite(channel,toy,tmpDir) #Pretend Toy Data
+          else:
+            print("Writing Pretend Data Histogram")
+            observedN[channelName] = getIntegralAll(sumAllMCHist,boundaries=massLimits)
+            self.makeRFHistWrite(channel,sumAllMCHist,tmpDir) #Pretend Data
         else:
           print("Writing Real Data Histogram")
+          observedN[channelName] = getIntegralAll(channel.datHistTotal,boundaries=massLimits)
           self.makeRFHistWrite(channel,channel.datHistTotal,tmpDir) #Real Data
         self.makeRFHistWrite(channel,sumAllSigMCHist,tmpDir) #Pretend Signal
         self.makeRFHistWrite(channel,sumAllBakMCHist,tmpDir,compareHist=sumAllSigMCHist,writeBakShape=True) #Background Sum
@@ -1260,15 +1272,8 @@ class ShapeDataCardMaker(DataCardMaker):
       binFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
       binFormatList.append(channelName)
       observationFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-      observedNumber = int(channel.getBakXSecTotal()*lumi)
-      if includeSigInAllMC:
-        observedNumber = int((channel.getSigXSecTotal()+channel.getBakXSecTotal())*lumi)
-      if channel.dataCountsTotal != None:
-        print("Writing Real Data Counts")
-        observationFormatList.append(channel.dataCountsTotal)
-      else:
-        print("Writing Pretend Data Counts")
-        observationFormatList.append(observedNumber)
+      observedNumber = observedN[channelName]
+      observationFormatList.append(observedNumber)
       #print("text Observed {}: {}".format(channelName,observedNumber))
       iParam += 1
     binFormatString+= "\n"
@@ -1496,6 +1501,7 @@ if __name__ == "__main__":
   controlRegionHigh=[130,180]
 
   shape=True
+  toyData=True
 
   print("Creating Threads...")
   threads = []
@@ -1506,7 +1512,7 @@ if __name__ == "__main__":
         directory,["VBFLoose","VBFMedium","VBFTight","VBFVeryTight","Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250"],signalNames,backgroundNames,dataNames,
         rebin=[MassRebin], bakShape=shape,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-        controlRegionVeryLow=controlRegionVeryLow,
+        controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
         #write args:
         outfilename=outDir+"AllCat"+"_"+str(i)+".txt",lumi=i
       )
@@ -1517,7 +1523,7 @@ if __name__ == "__main__":
         directory,["VBFLoose","VBFMedium","VBFTight","VBFVeryTight"],signalNames,backgroundNames,dataNames,
         rebin=[MassRebin], bakShape=shape,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-        controlRegionVeryLow=controlRegionVeryLow,
+        controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
         #write args:
         outfilename=outDir+"VBFCat"+"_"+str(i)+".txt",lumi=i
       )
@@ -1528,7 +1534,7 @@ if __name__ == "__main__":
         directory,["Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250"],signalNames,backgroundNames,dataNames,
         rebin=[MassRebin], bakShape=shape,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-        controlRegionVeryLow=controlRegionVeryLow,
+        controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
         #write args:
         outfilename=outDir+"IncCat"+"_"+str(i)+".txt",lumi=i
       )
@@ -1539,7 +1545,7 @@ if __name__ == "__main__":
         directory,["IncBDTSig80","VBFBDTSig80"],signalNames,backgroundNames,dataNames,
         rebin=[MassRebin], bakShape=shape,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-        controlRegionVeryLow=controlRegionVeryLow,
+        controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
         #write args:
         outfilename=outDir+"BDTSig80"+"_"+str(i)+".txt",lumi=i
       )
@@ -1549,7 +1555,7 @@ if __name__ == "__main__":
         #__init__ args:
         directory,[ana],signalNames,backgroundNames,dataNames,rebin=[MassRebin],bakShape=shape,
         controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-        controlRegionVeryLow=controlRegionVeryLow,
+        controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
         #write args:
         outfilename=outDir+ana+"_"+str(i)+".txt",lumi=i
         )

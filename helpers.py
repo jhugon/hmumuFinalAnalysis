@@ -1074,6 +1074,16 @@ def shrinkTH1(hist,xlow,xhigh,deleteOld=False):
     hist.Delete()
   return newHist
 
+def toyHistogram(hist):
+  nBins = hist.GetNbinsX()
+  random = root.TRandom3()
+  for i in range(nBins+2):
+    mean = hist.GetBinContent(i)
+    n = random.Poisson(mean)
+    err = sqrt(n)
+    hist.SetBinContent(i,n)
+    hist.SetBinError(i,err)
+
 def saveAs(canvas,name):
   canvas.SaveAs(name+".png")
   canvas.SaveAs(name+".pdf")
