@@ -186,6 +186,8 @@ class ComparePlot:
     medians = [float(point[4]) for point in data]
     high1sigs = [float(point[5])-float(point[4]) for point in data]
     low1sigs = [float(point[4])-float(point[3]) for point in data]
+    high2sigs = [float(point[6])-float(point[4]) for point in data]
+    low2sigs = [float(point[4])-float(point[2]) for point in data]
 
     xPos = numpy.arange(len(medians))
     xLabels = [point[0] for point in data]
@@ -195,18 +197,19 @@ class ComparePlot:
     ax1.set_yticks(xPos+0.25)
     ax1.set_yticklabels(tuple(xLabels),size="small")
     ax1.set_xlabel(ylabel)
-    bars = ax1.barh(xPos,medians, 0.5, xerr=[low1sigs,high1sigs],ecolor="k")
+    bars = ax1.barh(xPos,medians, 0.5, xerr=[low2sigs,high2sigs],ecolor="k")
     self.bars = bars
+    xPosObs = [x+0.25 for x in xPos]
+    # Now for the 1sigma error bars
+    self.oneSig = ax1.errorbar(medians,xPosObs,xerr=[low1sigs,high1sigs],color="g",linestyle="None")
     if showObs:
-      xPosObs = [x+0.25 for x in xPos]
-      ax1.plot(obs,xPosObs,marker="|",color="r",markersize=10,linestyle="None")
+      self.obs = ax1.plot(obs,xPosObs,marker="|",color="r",markersize=10,linestyle="None")
     writeInValues = getattr(self,"writeInValues")
-    writeInValues(bars)
-
+    writeInValues(bars,high2sigs)
   def save(self,saveName):
     self.fig.savefig(saveName+".png")
     self.fig.savefig(saveName+".pdf")
-  def writeInValues(self,rects):
+  def writeInValues(self,rects,high2sigs):
     axisWidth = self.ax1.get_xlim()[1]-self.ax1.get_xlim()[0]
     size="medium"
     if len(rects)<5:
@@ -216,10 +219,10 @@ class ComparePlot:
     elif len(rects)>9:
       size="x-small"
     maxWidth = axisWidth
-    for rect in rects:
+    for rect,sigUp in zip(rects,high2sigs):
       width = rect.get_width()
       if (width/maxWidth < 0.1): # The bars aren't wide enough to print the ranking inside
-        xloc = width + maxWidth*0.05 # Shift the text to the right side of the right edge
+        xloc = width + sigUp + maxWidth*0.01 # Shift the text to the right side of the right edge
         clr = 'black' # Black against white background
         align = 'left'
       else:
@@ -230,8 +233,6 @@ class ComparePlot:
       valueStr = "{0:.1f}".format(width)
       self.ax1.text(xloc, yloc, valueStr, horizontalalignment=align,
             verticalalignment='center', color=clr, weight='bold',size=size)
-
-    
 
 titleMap = {
   "AllCat":"All Categories Comb.",
