@@ -118,7 +118,7 @@ class MassPDFBakMSSM:
 
     maxMass = massHighRange[1]
     minMass = massVeryLowRange[0]
-    mMuMu = root.RooRealVar("mMuMu2","mMuMu",minMass,maxMass)
+    mMuMu = root.RooRealVar("mMuMu","mMuMu",minMass,maxMass)
     mMuMu.setRange("z",88,94)
     mMuMu.setRange("verylow",massVeryLowRange[0],massVeryLowRange[1])
     mMuMu.setRange("low",massLowRange[0],massLowRange[1])
@@ -178,7 +178,6 @@ class MassPDFBakMSSM:
     self.bwSig = bwSig
     self.bwLambda = bwLambda
     self.bwMmumu = bwMmumu
-    self.alpha = alpha
     self.phoMmumu = phoMmumu
     self.mixParam = mixParam
     self.pdfMmumu = pdfMmumu
@@ -1481,6 +1480,8 @@ if __name__ == "__main__":
   directory = "input/"
   outDir = "statsCards/"
   analyses = ["VBFPresel","IncPresel","VBFLoose","VBFMedium","VBFTight","VBFVeryTight","Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250","IncBDTSig80","VBFBDTSig80"]
+  analyses = ["VBFMedium""VBFVeryTight","Pt0to30","Pt250"]
+  analyses = ["Pt0to30"]
   histPostFix="/mDiMu"
   #analyses = ["mDiMu"]
   #histPostFix=""
@@ -1501,6 +1502,7 @@ if __name__ == "__main__":
   print("Creating Threads...")
   threads = []
   for i in lumiList:
+    """
     threads.append(
       ThreadedCardMaker(
         #__init__ args:
@@ -1545,6 +1547,7 @@ if __name__ == "__main__":
         outfilename=outDir+"BDTSig80"+"_"+str(i)+".txt",lumi=i
       )
     )
+    """
     for ana in analyses:
       tmp = ThreadedCardMaker(
         #__init__ args:
@@ -1555,21 +1558,19 @@ if __name__ == "__main__":
         outfilename=outDir+ana+"_"+str(i)+".txt",lumi=i
         )
       threads.append(tmp)
-    """
-    ## Cut and Count!!!
-    for ana in analyses:
-      tmp = ThreadedCardMaker(
-        #__init__ args:
-        directory,[ana],signalNames,backgroundNames,dataNames,rebin=[MassRebin],bakShape=shape,
-        controlRegionLow=[123.0,125.0],controlRegionHigh=[125.0,127.0],histNameSuffix=histPostFix,
-        controlRegionVeryLow=controlRegionVeryLow,
-        #write args:
-        outfilename=outDir+"CNC_"+ana+"_"+str(i)+".txt",lumi=i,
-
-        shapeDataCardMaker=False
-        )
-      threads.append(tmp)
-    """
+#    ## Cut and Count!!!
+#    for ana in analyses:
+#      tmp = ThreadedCardMaker(
+#        #__init__ args:
+#        directory,[ana],signalNames,backgroundNames,dataNames,rebin=[MassRebin],bakShape=shape,
+#        controlRegionLow=[123.0,125.0],controlRegionHigh=[125.0,127.0],histNameSuffix=histPostFix,
+#        controlRegionVeryLow=controlRegionVeryLow,
+#        #write args:
+#        outfilename=outDir+"CNC_"+ana+"_"+str(i)+".txt",lumi=i,
+#
+#        shapeDataCardMaker=False
+#        )
+#      threads.append(tmp)
 
   nThreads = len(threads)
   print("nProcs: {0}".format(NPROCS))
