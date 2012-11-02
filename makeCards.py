@@ -1480,8 +1480,6 @@ if __name__ == "__main__":
   directory = "input/"
   outDir = "statsCards/"
   analyses = ["VBFPresel","IncPresel","VBFLoose","VBFMedium","VBFTight","VBFVeryTight","Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250","IncBDTSig80","VBFBDTSig80"]
-  analyses = ["VBFMedium""VBFVeryTight","Pt0to30","Pt250"]
-  analyses = ["Pt0to30"]
   histPostFix="/mDiMu"
   #analyses = ["mDiMu"]
   #histPostFix=""
@@ -1502,7 +1500,6 @@ if __name__ == "__main__":
   print("Creating Threads...")
   threads = []
   for i in lumiList:
-    """
     threads.append(
       ThreadedCardMaker(
         #__init__ args:
@@ -1547,7 +1544,6 @@ if __name__ == "__main__":
         outfilename=outDir+"BDTSig80"+"_"+str(i)+".txt",lumi=i
       )
     )
-    """
     for ana in analyses:
       tmp = ThreadedCardMaker(
         #__init__ args:

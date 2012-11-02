@@ -2,6 +2,8 @@
 
 from helpers import *
 import math
+import os.path
+import glob
 
 root.gROOT.SetBatch(True)
 root.gStyle.SetOptStat(0)
@@ -45,6 +47,54 @@ class ShapePlotter:
 
     self.colors = [root.kRed-9, root.kGreen-9, root.kBlue-9, root.kMagenta-9, root.kCyan-9]
     self.fillStyles = [3004,3005,3003,3006,3007]
+
+    self.limit = 1.0
+    #if len(self.data)==1:
+    if True:
+        scaleSignal = getattr(self,"scaleSignal")
+        scaleSignal()
+
+  def scaleSignal(self):
+    try:
+      cardTime = os.path.getmtime(self.filename)
+      limitfname = os.path.splitext(self.filename)[0] + ".txt.out"
+      limitfname = limitfname.replace("statsCards","statsInput")
+      limitTime = os.path.getmtime(limitfname)
+    except Exception as e:
+      print("Warning: Couldn't find limit file to scale signal by: {}".format(limitfname))
+      #print("Error: {}, {}".format(e.errno,e.strerror))
+      return
+    if limitTime > cardTime:
+      try:
+        f = open(limitfname)
+        for line in f:
+          #match = re.search(r"Observed[\s]Limit:[^.\d]*< ([.\deE]+)",line)
+          match = re.search(r"Expected.*50\.0.*< ([.\deE]+)",line)
+          if match:
+            self.limit = float(match.group(1))
+            break
+      except Exception as e:
+        print("Warning: Couldn't find limit file to scale signal by: {}".format(limitfname))
+        #print("Error: {}, {}".format(e.errno,e.strerror))
+        return
+      if self.limit != 1.0:
+        for channelName in self.data:
+          channel = self.data[channelName]
+          if channel.has_key("sig"):
+            channel["sig"].Scale(self.limit)
+
+  def hist2Graph(self,hist,outGraph):
+    assert(hist.InheritsFrom("TH1"))
+    assert(outGraph.InheritsFrom("TGraphAsymmErrors") or outGraph.InheritsFrom("TGraphErrors") 
+            or outGraph.InheritsFrom("TGraph"))
+    iGraph = 0
+    for i in range(1,hist.GetNbinsX()+1):
+      x = hist.GetXaxis().GetBinCenter(i)
+      y = hist.GetBinContent(i)
+      if y<= 0:
+        continue
+      outGraph.SetPoint(iGraph,x,y)
+      iGraph += 1
 
   def makeGraph(self,nominal,up,down,outGraph):
     assert(nominal.InheritsFrom("TH1"))
@@ -101,6 +151,12 @@ class ShapePlotter:
       nominal = channel["bak"]
       obs = channel["data_obs"]
       convertErrors(obs)
+      sig = channel["sig"]
+      sig.Add(nominal)
+      sigGraph = root.TGraph()
+      self.hist2Graph(sig,sigGraph)
+      sigGraph.SetLineColor(root.kRed)
+      #sigGraph.SetLineStyle(2)
       paramSet = set()
       for histName in channel:
         if histName != "bak" and histName != "data_obs" and histName != "sig":
@@ -118,11 +174,8 @@ class ShapePlotter:
       if len(plotRange) ==2:
         obs.GetXaxis().SetRangeUser(*plotRange)
       obs.GetYaxis().SetTitle("Events/Bin")
-      nominal.SetFillStyle(0)
-      nominal.SetLineStyle(1)
-      nominal.SetLineColor(root.kRed+1)
       obs.Draw("")
-      nominal.Draw("hist L same")
+      #nominal.Draw("hist L same")
       graphs = []
       for param,col,sty in zip(paramSet,self.colors,self.fillStyles):
         tmp = root.TGraphAsymmErrors()
@@ -137,14 +190,24 @@ class ShapePlotter:
         graphs.append(tmp)
       combinedErrorGraph = root.TGraphAsymmErrors()
       combinedErrorGraph.SetFillColor(root.kCyan)
-      combinedErrorGraph.SetLineColor(root.kRed+1)
+      combinedErrorGraph.SetLineColor(root.kBlue+1)
       self.combineErrors(graphs,combinedErrorGraph)
       combinedErrorGraph.Draw("3")
-      combinedErrorGraph.Draw("LX")
+      sigGraph.Draw("C")
+      combinedErrorGraph.Draw("CX")
       #nominal.Draw("hist L same")
       obs.Draw("same")
       #if channelName=="Pt0to30":
       #  obs.Print("all")
+
+      legPos = [0.65,0.65,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
+      leg = root.TLegend(*legPos)
+      leg.SetFillColor(0)
+      leg.SetLineColor(0)
+      leg.AddEntry(obs,"MC Data","pe")
+      leg.AddEntry(combinedErrorGraph,"Background Model","lf")
+      leg.AddEntry(sigGraph,"SM Higgs #times {:.1f}".format(self.limit),"l")
+      leg.Draw()
 
       tlatex = root.TLatex()
       tlatex.SetNDC()
@@ -155,10 +218,9 @@ class ShapePlotter:
       tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
       tlatex.SetTextAlign(32)
       tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.titleMap[channelName])
-      tlatex.SetTextAlign(22)
-      tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin()-0.105,0.875,self.lumiStr)
-      tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin()-0.11,0.83,"#sqrt{s}=8 TeV")
-      
+      tlatex.DrawLatex(legPos[0]-0.01,0.875,self.lumiStr)
+      tlatex.DrawLatex(legPos[0]-0.01,0.83,"#sqrt{s}=8 TeV")
+      tlatex.SetTextAlign(32)
         
       canvas.RedrawAxis()
       canvas.SaveAs(outDir+"/"+channelName+".png")
@@ -196,10 +258,11 @@ if __name__ == "__main__":
 
   rebin=2
 
-  s = ShapePlotter(dataDir+"AllCat_20.root",titleMap,rebin)
-  #print s.data
-  s.makePlot(outDir,plotRange)
-
-  s = ShapePlotter(dataDir+"BDTSig80_20.root",titleMap,rebin)
-  #print s.data
-  s.makePlot(outDir,plotRange)
+  for fn in glob.glob(dataDir+"*20.root"):
+    #print fn
+    if fn.count("Cat")>0:
+      continue
+    if fn.count("BDTSig80")>0:
+      continue
+    s = ShapePlotter(fn,titleMap,rebin)
+    s.makePlot(outDir,plotRange)
