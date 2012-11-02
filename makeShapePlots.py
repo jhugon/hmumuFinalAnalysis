@@ -175,6 +175,8 @@ class ShapePlotter:
         obs.GetXaxis().SetRangeUser(*plotRange)
       obs.GetYaxis().SetTitle("Events/Bin")
       obs.Draw("")
+      normchi2 = nominal.Chi2Test(obs,"UW CHI2/NDF")
+      print("Warning: chi2 is computed for weighted data!!!! Not suitable for real data!!!")
       #nominal.Draw("hist L same")
       graphs = []
       for param,col,sty in zip(paramSet,self.colors,self.fillStyles):
@@ -220,7 +222,11 @@ class ShapePlotter:
       tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.titleMap[channelName])
       tlatex.DrawLatex(legPos[0]-0.01,0.875,self.lumiStr)
       tlatex.DrawLatex(legPos[0]-0.01,0.83,"#sqrt{s}=8 TeV")
-      tlatex.SetTextAlign(32)
+      tlatex.SetTextSize(0.035)
+      tlatex.SetTextAlign(11)
+      tlatex.DrawLatex(gStyle.GetPadLeftMargin()+0.025,gStyle.GetPadBottomMargin()+0.025,
+        "#chi^{{2}}/NDF = {:.3g}".format(normchi2)
+      )
         
       canvas.RedrawAxis()
       canvas.SaveAs(outDir+"/"+channelName+".png")
@@ -262,7 +268,7 @@ if __name__ == "__main__":
     #print fn
     if fn.count("Cat")>0:
       continue
-    if fn.count("BDTSig80")>0:
+    if fn.count("/BDTSig80")>0:
       continue
     s = ShapePlotter(fn,titleMap,rebin)
     s.makePlot(outDir,plotRange)
