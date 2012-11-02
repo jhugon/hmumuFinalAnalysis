@@ -310,6 +310,7 @@ compareData = getData(dirName+"*_20.txt.out",matchString=r"(.*)_[\d]+.txt.out",d
 comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=True)
 comparePlot.fig.text(0.9,0.2,"$\mathcal{L}=20$ fb$^{-1}$",horizontalalignment="right",size="x-large")
 comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=8$ TeV",horizontalalignment="right",size="x-large")
+comparePlot.fig.text(0.9,0.13,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
 comparePlot.save(outDir+"compareObs")
 
 comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=False)

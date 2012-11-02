@@ -104,6 +104,137 @@ def getRooVars(directory,signalNames,histNameBase,analysis):
 
 ###################################################################################
 
+class MassPDFBakMSSM:
+  def __init__(self,name,hist,massLowRange,massHighRange,massVeryLowRange,rooVars=None,smooth=False,hack=True):
+    if rooVars == None:
+        print("Error: MVAvMassPDFBakMSSM requires rooVars list of variables, exiting.")
+        sys.exit(1)
+    if len(massVeryLowRange)==0:
+        print("Error: MVAvMassPDFBakMSSM requires verylow mass range, exiting.")
+        sys.exit(1)
+
+    self.debug = ""
+    self.debug += "### MassPDFBakMSSM: "+name+"\n"
+
+    maxMass = massHighRange[1]
+    minMass = massVeryLowRange[0]
+    mMuMu = root.RooRealVar("mMuMu2","mMuMu",minMass,maxMass)
+    mMuMu.setRange("z",88,94)
+    mMuMu.setRange("verylow",massVeryLowRange[0],massVeryLowRange[1])
+    mMuMu.setRange("low",massLowRange[0],massLowRange[1])
+    mMuMu.setRange("high",massHighRange[0],massHighRange[1])
+    mMuMu.setRange("signal",massLowRange[1],massHighRange[0])
+
+    bwmZ = root.RooRealVar("bwmZ","bwmZ",85,95)
+    bwSig = root.RooRealVar("bwSig","bwSig",0.0,30.0)
+    bwLambda = root.RooRealVar("bwLambda","bwLambda",-1e-03,-1e-01,-1e-04)
+    bwMmumu = root.RooGenericPdf("bwMmumu","exp(bwLambda*mMuMu)*bwSig/(((mMuMu-bwmZ)*(mMuMu-bwmZ) + bwSig*bwSig*0.25))",root.RooArgList( mMuMu, bwLambda, bwSig, bwmZ))
+
+    phoMmumu = root.RooGenericPdf("phoMmumu","exp(bwLambda*mMuMu)/pow(mMuMu,2)",root.RooArgList(mMuMu,bwLambda))
+
+    mixParam = root.RooRealVar("mixParam","mixParam",0.5,0,1)
+
+    pdfMmumu = root.RooAddPdf("pdfMmumu","pdfMmumu",root.RooArgList(bwMmumu,phoMmumu),root.RooArgList(mixParam))
+    
+    tmpAxis = hist.GetXaxis()
+    lowBin = tmpAxis.FindBin(minMass)
+    highBin = tmpAxis.FindBin(maxMass)
+    lowBin, highBin = getXbinsHighLow(hist,minMass,maxMass)
+    nBinsX = highBin - lowBin + 1
+    normalization = getIntegralAll(hist,[massLowRange[0],massHighRange[1]])
+    self.debug += "# bak Hist no bounds: {:.3g}\n".format(hist.Integral())
+    self.debug += "# bak Hist bounds:    {:.3g}\n".format(normalization)
+
+    mMuMuRooDataHist = root.RooDataHist(name+"DataHist",name+"DataHist",root.RooArgList(mMuMu),hist)
+
+    bwMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("z"),root.RooFit.SumW2Error(False),PRINTLEVEL)
+    bwmZ.setConstant(True)
+    bwSig.setConstant(True)
+
+    #phoMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("high"),root.RooFit.SumW2Error(False),PRINTLEVEL)
+    #bwLambda.setConstant(True)
+    
+    pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL)
+    chi2 = pdfMmumu.createChi2(mMuMuRooDataHist)
+
+    plotMmumu = mMuMu.frame()
+
+    mMuMuRooDataHist.plotOn(plotMmumu)
+    pdfMmumu.plotOn(plotMmumu,root.RooFit.Range("low,high"))
+    pdfMmumu.plotOn(plotMmumu,root.RooFit.LineStyle(2),root.RooFit.Range(minMass,maxMass))
+    pdfMmumu.plotOn(plotMmumu,root.RooFit.Components("phoMmumu"),root.RooFit.LineStyle(2),root.RooFit.Range(minMass,maxMass),root.RooFit.LineColor(root.kGreen+1))
+
+    mMuMuBinning = root.RooFit.Binning(nBinsX,minMass,maxMass)
+    nominalHist = pdfMmumu.createHistogram("pdf2dHist",mMuMu,mMuMuBinning)
+    nominalHist.Scale(normalization/getIntegralAll(nominalHist,[massLowRange[0],massHighRange[1]]))
+
+    self.name = name
+    self.hist = hist
+    self.mMuMuRooDataHist = mMuMuRooDataHist
+    self.lowBin = lowBin
+    self.highBin = highBin
+    self.nBinsX = nBinsX
+    self.bwmZ = bwmZ
+    self.bwSig = bwSig
+    self.bwLambda = bwLambda
+    self.bwMmumu = bwMmumu
+    self.alpha = alpha
+    self.phoMmumu = phoMmumu
+    self.mixParam = mixParam
+    self.pdfMmumu = pdfMmumu
+    self.mMuMuBinning = mMuMuBinning
+    self.nominalHist = nominalHist
+    self.maxMass = maxMass
+    self.minMass = minMass
+    self.mMuMu = mMuMu
+    self.plotMmumu = plotMmumu
+    self.chi2 = chi2
+
+    self.debug += "# nominal Integral: {0:.3g}\n".format(getIntegralAll(nominalHist))
+    self.debug += "# BW Sigma: {0:.3g} +/- {1:.3g}\n".format(bwSig.getVal(),bwSig.getError())
+    self.debug += "# BW mZ:    {0:.3g} +/- {1:.3g}\n".format(bwmZ.getVal(),bwmZ.getError())
+    self.debug += "# Lam:      {0:.3g} +/- {1:.3g}\n".format(bwLambda.getVal(),bwLambda.getError())
+    self.debug += "# BW Coef:  {0:.3g} +/- {1:.3g}\n".format(mixParam.getVal(),mixParam.getError())
+    self.debug += "# chi2/ndf: {0:.3g}\n".format(chi2.getVal()/(nBinsX-1))
+
+    ## Error time
+
+    self.errNames = []
+    self.errHists = {}
+    if BAKUNCON:
+      for errVar in [bwmZ,bwSig,bwLambda,mixParam]:
+        val = errVar.getVal()
+        err = errVar.getError()
+        varName = errVar.GetName()
+
+        errVar.setVal(val+err)
+        pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range(110,150),root.RooFit.LineStyle(3))
+        upHist = pdfMmumu.createHistogram(varName+"Up",mMuMu,mMuMuBinning)
+
+        errVar.setVal(val-err)
+        pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range(110,150),root.RooFit.LineStyle(3))
+        downHist = pdfMmumu.createHistogram(varName+"Down",mMuMu,mMuMuBinning)
+
+        errVar.setVal(val)
+
+        upHist.Scale(normalization/getIntegralAll(upHist,[massLowRange[0],massHighRange[1]]))
+        downHist.Scale(normalization/getIntegralAll(downHist,[massLowRange[0],massHighRange[1]]))
+
+        setattr(self,varName+"UpHist",upHist)
+        setattr(self,varName+"DownHist",downHist)
+
+        self.errNames.append(varName)
+        self.errHists[varName+"Up"] = upHist
+        self.errHists[varName+"Down"] = downHist
+
+  def writeDebugHistsToCurrTDir(self,compareHist=None):
+    canvas = root.TCanvas("canvas")
+    canvas.cd()
+    #canvas.SetLogy(1)
+    self.plotMmumu.Draw()
+    canvas.SetName(self.name+"Canvas")
+    canvas.Write()
+
 class MassPDFBak:
   def __init__(self,name,hist,massLowRange,massHighRange,massVeryLowRange,rooVars=None,smooth=False,hack=True):
     if rooVars == None:
