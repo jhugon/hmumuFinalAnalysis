@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import math
 import ROOT as root
@@ -1501,7 +1501,7 @@ if __name__ == "__main__":
   controlRegionHigh=[130,180]
 
   shape=True
-  toyData=True
+  toyData=False
 
   print("Creating Threads...")
   threads = []
