@@ -1,6 +1,6 @@
 import ROOT as root
 
-LUMI=0.807
+LUMI=5.723
 
 scaleHiggsBy = 1.0
 #scaleHiggsBy = 50.0
@@ -14,6 +14,7 @@ xsec["wHmumu125"] = 1.533e-4 * scaleHiggsBy
 xsec["DYJetsToLL"] = 3503.71   ## madgraph
 xsec["ttbar"] = 225.197   ## madgraph
 
+xsec["DYToMuMu"] = 5745.25/3.0   ## powheg
 xsec["DYToTauTau"] = 5745.25/3.0   ## powheg
 xsec["WW"] =   54.838
 xsec["WZ"] =   33.21 
@@ -26,17 +27,19 @@ nEventsMap["vbfHmumu125"] = 9990
 nEventsMap["ggHmumu125"] = 9998
 nEventsMap["zHmumu125"] = 10000
 nEventsMap["wHmumu125"] = 10000
-nEventsMap["DYJetsToLL"] = 30459503
+nEventsMap["DYJetsToLL"] = 29659503
 nEventsMap["ttbar"] = 6923750
+nEventsMap["DYToMuMu"] = 48719386
 nEventsMap["DYToTauTau"] = 3295238
-nEventsMap["WW"] =  9900431 
-nEventsMap["WZ"] = 10000283
+nEventsMap["WW"] =  10000431
+nEventsMap["WZ"] = 9900283
 nEventsMap["ZZ"] = 9799908
-nEventsMap["WJetsToLNu"] =  57330800
-nEventsMap["QCD"] =  20284602
+nEventsMap["WJetsToLNu"] =  55509905
+nEventsMap["QCD"] =  21384602
 
 backgroundList = [
-"DYJetsToLL",
+"DYToMuMu",
+#"DYJetsToLL",
 #"WJetsToLNu",
 "ttbar",
 "WW",
@@ -53,11 +56,10 @@ signalList = [
 ]
 
 dataList = [
-"SingleMuRun2012Av1IsoMu"
 
-#"SingleMuRun2012Av1",
-#"SingleMuRun2012Bv1"
-#"SingleMuRun2012Cv1",
+"SingleMuRun2012Av1",
+"SingleMuRun2012Bv1",
+"SingleMuRun2012Cv1"
 #"SingleMuRun2012Cv2"
 
 #"DoubleMuRun2012Av1",
@@ -68,6 +70,7 @@ dataList = [
 
 legendEntries = {}
 legendEntries["DYJetsToLL"] = "DY+Jets"
+legendEntries["DYToMuMu"] = "DY->#mu#mu"
 legendEntries["WJetsToLNu"] = "W\rightarrow\ell\nu+Jets"
 legendEntries["ttbar"] = "t#bar{t}"
 legendEntries["vbfHmumu125"] = "VBF H->#mu#mu"
@@ -83,6 +86,7 @@ legendEntries["QCD"] = "QCD"
 
 colors = {}
 colors["DYJetsToLL"] = root.kOrange
+colors["DYToMuMu"] = root.kOrange
 colors["WJetsToLNu"] = root.kCyan
 colors["vbfHmumu125"] = root.kBlue
 colors["ggHmumu125"] = root.kRed
@@ -98,8 +102,11 @@ colors["QCD"] = root.kSpring+8
 ##################################################
 
 if __name__ == "__main__":
-  print("xsec/nEvent Scale Factors for Datasets:")
   if scaleHiggsBy != 1:  
     print("**** Higgs XSEC Scaled by Factor of: {} ****".format(scaleHiggsBy))
+  print("Integrated Lumi for Datasets:")
   for i in xsec: 
-    print("{0:<15} {1:.3e}".format(i,xsec[i]/nEventsMap[i]))
+    print("{0:<15} {1:.3f}".format(i,nEventsMap[i]/xsec[i]/1000.))
+  print("xsec/nEvent Scale Factors for Datasets:")
+  for i in xsec: 
+    print("{0:<15} {1:.3g}".format(i,xsec[i]/nEventsMap[i]*1000.))

@@ -60,6 +60,7 @@ histNames["etaJet2"] = {"xlabel":"Sub-Leading Jet #eta","xlimits":[-5.0,5.0]}
 histNames["yDiMu"] = {"xlabel":"y_{#mu#mu} [GeV]","xlimits":[-2.2,2.2],"leg":lcLegendPos}
 
 histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1.0,1.0],"leg":lcLegendPos}
+histNames["cosThetaStarCS"] = {"xlabel":"cos(#theta^{*}_{CS})","xlimits":[-1.0,1.0],"leg":lcLegendPos}
 
 histNames["relIsoMu1"] = {"xlabel":"Leading Muon Relative PF Isolation","xlimits":[0,0.3],"rebin":2}
 histNames["relIsoMu2"] = {"xlabel":"Sub-Leading Muon Relative PF Isolation","xlimits":[0,0.3],"rebin":2}

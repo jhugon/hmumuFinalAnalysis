@@ -528,7 +528,7 @@ def makeWeightHist(f1,canvas,leg):
   leg.Draw("same")
 
 class DataMCStack:
-  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="Events", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=False,integralPlot=False):
+  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="Events", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False):
     nBinsX = dataHist.GetNbinsX()
     self.nBinsX = nBinsX
     self.dataHist = dataHist
@@ -574,6 +574,7 @@ class DataMCStack:
         showHistOverflow(dataHist)
 
     # Get chi^2 Prob Data/MC
+    self.normchi2 = dataHist.Chi2Test(self.mcSumHist,"UW CHI2/NDF")
     self.chi2Prob = dataHist.Chi2Test(self.mcSumHist,"UW")
     self.KSProb = dataHist.KolmogorovTest(self.mcSumHist)
   
@@ -702,8 +703,9 @@ class DataMCStack:
       self.problatex.SetTextFont(root.gStyle.GetLabelFont())
       self.problatex.SetTextSize(self.pullHist.GetYaxis().GetLabelSize())
       self.problatex.SetTextAlign(12)
-      self.problatex.DrawLatex(0.18,0.50,"#chi^{{2}}  Prob: {0:.3g}".format(self.chi2Prob))
-      self.problatex.DrawLatex(0.18,0.41,"KS Prob: {0:.3g}".format(self.KSProb))
+      #self.problatex.DrawLatex(0.18,0.50,"#chi^{{2}}  Prob: {0:.3g}".format(self.chi2Prob))
+      #self.problatex.DrawLatex(0.18,0.41,"KS Prob: {0:.3g}".format(self.KSProb))
+      self.problatex.DrawLatex(0.18,0.41,"#chi^{{2}}/NDF: {0:.3g}".format(self.normchi2))
 
     pad2.Update()
     pad2.GetFrame().DrawClone()
