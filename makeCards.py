@@ -1659,6 +1659,25 @@ date
   runFile.write(batchString)
   runFile.close()
 
+  runFile = open(outDir+"notlxbatch.sh","w")
+  batchString = \
+"""#!/bin/bash
+echo "running notlxbatch.sh"
+date
+for i in *.txt; do
+    [[ -e "$i" ]] || continue
+FILENAME=$i
+echo "executing combine -M Asymptotic $FILENAME >& $FILENAME.out"
+
+combine -M Asymptotic $FILENAME >& $FILENAME.out
+done
+
+date
+echo "done"
+"""
+  runFile.write(batchString)
+  runFile.close()
+
   runFile = open(outDir+"getStatus.sh","w")
   batchString = \
 """#!/bin/bash
