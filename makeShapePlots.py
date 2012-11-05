@@ -59,6 +59,7 @@ class ShapePlotter:
         scaleSignal = getattr(self,"scaleSignal")
         scaleSignal()
     self.graphsListList = []
+    self.padList = []
 
   def scaleSignal(self):
     try:
@@ -403,6 +404,8 @@ class ShapePlotter:
       tlatex.DrawLatex(legPos[0]-0.01,0.82,"#sqrt{s}=8 TeV")
 
       canvas.SaveAs(outDir+"/"+channelName+".png")
+
+      self.padList.extend([canvas,pad1,pad2])
 
 titleMap = {
   "AllCat":"All Categories Comb.",
