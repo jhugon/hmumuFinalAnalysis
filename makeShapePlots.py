@@ -201,26 +201,60 @@ class ShapePlotter:
       print("Warning: chi2 is computed for weighted data!!!! Not suitable for real data!!!")
 
       # Make Pull Hist
+      pullYmax = 0.0
+      pullYmin = 10.0
       pullHist = obs.Clone("pullHist_"+obs.GetName())
       pullHist.Reset()
+      iGraph = 0
+      pullGraph = root.TGraphAsymmErrors()
       for i in range(1,pullHist.GetNbinsX()):
-        nData = obs.GetBinContent(i)
-        nMC = nominal.GetBinContent(i)
-        error = obs.GetBinError(i)
-        pull = 0.0
-        if error != 0.0:
-          pull = (nData -nMC)/error
-        pullHist.SetBinContent(i,pull)
-        #print("nData: %f, nMC: %f, error: %f, pull: %f" % (nData,nMC,error,pull))
-      pullHist.GetXaxis().SetTitle("m_{#mu#mu} [GeV]")
+        x = obs.GetXaxis().GetBinCenter(i)
+        nObs = obs.GetBinContent(i)
+        nNom = nominal.GetBinContent(i)
+        nObsErr = obs.GetBinError(i)
+        nNomErr = nominal.GetBinError(i)
+        ratio = 0.0
+        ratioErrUp = 0.0
+        ratioErrDown = 0.0
+        if nObs != 0.0 and nNom != 0.0:
+          ratio = nObs/nNom
+          ratioErrUp = (nObs+nObsErr)/nNom - ratio
+          ratioErrDown = ratio - (nObs-nObsErr)/nNom
+        pullGraph.SetPoint(iGraph,x,ratio)
+        pullGraph.SetPointError(iGraph,0.,0.,ratioErrUp,ratioErrDown)
+        pullHist.SetBinContent(i,ratio)
+        if pullYmax < ratio + ratioErrUp:
+            pullYmax = ratio + ratioErrUp
+        if pullYmin > ratio - ratioErrDown:
+            pullYmin = ratio - ratioErrDown
+        iGraph += 1
 
-      return obs, combinedErrorGraph, sigGraph, pullHist, normchi2
+      pullErrs = root.TGraphAsymmErrors()
+      for i in range(0,combinedErrorGraph.GetN()):
+        x = root.Double()
+        y = root.Double()
+        combinedErrorGraph.GetPoint(i,x,y)
+        yErrUp = combinedErrorGraph.GetErrorYhigh(i)/y
+        yErrDown = combinedErrorGraph.GetErrorYlow(i)/y
+        pullErrs.SetPoint(i,x,1.0)
+        pullErrs.SetPointError(i,0.0,0.0,yErrDown,yErrUp)
+        if pullYmax < 1. + yErrUp:
+            pullYmax = 1. + yErrUp
+        if pullYmin > 1. - yErrDown:
+            pullYmin = 1. - ratioErrDown
+      pullHist.GetXaxis().SetTitle("m_{#mu#mu} [GeV]")
+      pullHist.GetYaxis().SetRangeUser(pullYmin,pullYmax)
+      pullErrs.SetLineColor(root.kBlue)
+      pullErrs.SetFillColor(root.kCyan)
+
+      return obs, combinedErrorGraph, sigGraph, pullHist, pullGraph, pullErrs, normchi2
 
   def makePlot(self,outDir,plotRange=[]):
+    dataLabel = "MC Data"
     canvas = root.TCanvas("canvas")
     for channelName in self.data:
       canvas.Clear()
-      obs, combinedErrorGraph, sigGraph, pulls, normchi2 = self.getPlots(channelName)
+      obs, combinedErrorGraph, sigGraph, pulls, pullGraph, pullErrGraph, normchi2 = self.getPlots(channelName)
 
       #Setup Canvas
       canvas.cd()
@@ -279,7 +313,7 @@ class ShapePlotter:
       pulls.GetYaxis().SetNdivisions(5)
       pulls.GetXaxis().SetTitleSize(0.055*pad1ToPad2FontScalingFactor)
       pulls.GetXaxis().SetLabelSize(0.050*pad1ToPad2FontScalingFactor)
-      pulls.GetYaxis().SetTitle("#frac{Data-Fit}{Error}")
+      pulls.GetYaxis().SetTitle("#frac{"+dataLabel+"}{Fit}")
       pulls.GetYaxis().SetTitleSize(0.045*pad1ToPad2FontScalingFactor)
       pulls.GetYaxis().SetLabelSize(0.045*pad1ToPad2FontScalingFactor)
       pulls.GetYaxis().CenterTitle(1)
@@ -288,13 +322,17 @@ class ShapePlotter:
 
       pulls.GetXaxis().SetLabelSize(gStyle.GetLabelSize("X")*canvasToPad2FontScalingFactor)
 
-      pulls.SetFillColor(856)
-      pulls.SetFillStyle(1001)
-      pulls.Draw("histo b")
+      pulls.Draw("p")
+      #pulls.GetYaxis().SetRangeUser(0,2)
+      pulls.Draw("p")
+      pullGraph.Draw("p")
+      pullErrGraph.Draw("3")
+      pullErrGraph.Draw("CX")
+      pullGraph.Draw("p")
   
       problatex = root.TLatex()
       problatex.SetNDC()
-      problatex.SetTextFont(pulls.GetLabelFont())
+      problatex.SetTextFont(obs.GetXaxis().GetLabelFont())
       problatex.SetTextSize(pulls.GetYaxis().GetLabelSize())
       problatex.SetTextAlign(12)
       problatex.DrawLatex(0.18,0.41,"#chi^{{2}}/NDF: {0:.3g}".format(normchi2))
@@ -347,7 +385,7 @@ class ShapePlotter:
       leg = root.TLegend(*legPos)
       leg.SetFillColor(0)
       leg.SetLineColor(0)
-      leg.AddEntry(obs,"MC Data","pe")
+      leg.AddEntry(obs,dataLabel,"pe")
       leg.AddEntry(combinedErrorGraph,"Background Model","lf")
       leg.AddEntry(sigGraph,"SM Higgs #times {0:.1f}".format(self.limit),"l")
       leg.Draw()
