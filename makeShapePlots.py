@@ -58,6 +58,7 @@ class ShapePlotter:
     if True:
         scaleSignal = getattr(self,"scaleSignal")
         scaleSignal()
+    self.graphsListList = []
 
   def scaleSignal(self):
     try:
@@ -148,10 +149,7 @@ class ShapePlotter:
       outGraph.SetPoint(i,x,y)
       outGraph.SetPointError(i,0.0,0.0,math.sqrt(err2Down),math.sqrt(err2Up))
 
-  def makePlot(self,outDir,plotRange=[]):
-    canvas = root.TCanvas("canvas")
-    for channelName in self.data:
-      canvas.Clear()
+  def getPlots(self,channelName):
       channel = self.data[channelName]
       nominal = channel["bak"]
       obs = channel["data_obs"]
@@ -161,7 +159,6 @@ class ShapePlotter:
       sigGraph = root.TGraph()
       self.hist2Graph(sig,sigGraph)
       sigGraph.SetLineColor(root.kRed)
-      #sigGraph.SetLineStyle(2)
       paramSet = set()
       for histName in channel:
         if histName != "bak" and histName != "data_obs" and histName != "sig":
@@ -175,14 +172,10 @@ class ShapePlotter:
       obs.SetLineStyle(1)
       obs.SetLineColor(1)
       obs.SetTitle("")
-      obs.GetXaxis().SetTitle("m_{#mu#mu} [GeV]")
+      obs.GetXaxis().SetTitle("")
       if len(plotRange) ==2:
         obs.GetXaxis().SetRangeUser(*plotRange)
       obs.GetYaxis().SetTitle("Events/Bin")
-      obs.Draw("")
-      normchi2 = nominal.Chi2Test(obs,"UW CHI2/NDF")
-      print("Warning: chi2 is computed for weighted data!!!! Not suitable for real data!!!")
-      #nominal.Draw("hist L same")
       graphs = []
       for param,col,sty in zip(paramSet,self.colors,self.fillStyles):
         tmp = root.TGraphAsymmErrors()
@@ -195,6 +188,7 @@ class ShapePlotter:
         #tmp.SetMarkerColor(col)
         #tmp.Draw("4")
         graphs.append(tmp)
+      self.graphsListList.append(graphs)
       combinedErrorGraph = root.TGraphAsymmErrors()
       combinedErrorGraph.SetFillColor(root.kCyan)
       combinedErrorGraph.SetLineColor(root.kBlue+1)
@@ -202,10 +196,120 @@ class ShapePlotter:
       combinedErrorGraph.Draw("3")
       sigGraph.Draw("C")
       combinedErrorGraph.Draw("CX")
-      #nominal.Draw("hist L same")
+
+      normchi2 = nominal.Chi2Test(obs,"UW CHI2/NDF")
+      print("Warning: chi2 is computed for weighted data!!!! Not suitable for real data!!!")
+
+      # Make Pull Hist
+      pullHist = obs.Clone("pullHist_"+obs.GetName())
+      pullHist.Reset()
+      for i in range(1,pullHist.GetNbinsX()):
+        nData = obs.GetBinContent(i)
+        nMC = nominal.GetBinContent(i)
+        error = obs.GetBinError(i)
+        pull = 0.0
+        if error != 0.0:
+          pull = (nData -nMC)/error
+        pullHist.SetBinContent(i,pull)
+        #print("nData: %f, nMC: %f, error: %f, pull: %f" % (nData,nMC,error,pull))
+      pullHist.GetXaxis().SetTitle("m_{#mu#mu} [GeV]")
+
+      return obs, combinedErrorGraph, sigGraph, pullHist, normchi2
+
+  def makePlot(self,outDir,plotRange=[]):
+    canvas = root.TCanvas("canvas")
+    for channelName in self.data:
+      canvas.Clear()
+      obs, combinedErrorGraph, sigGraph, pulls, normchi2 = self.getPlots(channelName)
+
+      #Setup Canvas
+      canvas.cd()
+      pad1 = root.TPad("pad1"+obs.GetName(),"",0.02,0.30,0.98,0.98,0)
+      pad2 = root.TPad("pad2"+obs.GetName(),"",0.02,0.01,0.98,0.29,0)
+    
+      pad1.SetBottomMargin(0.005);
+      pad2.SetTopMargin   (0.005);
+      pad2.SetBottomMargin(0.33);
+      """
+      pad1.SetBottomMargin(0.01);
+      pad2.SetTopMargin   (0.3);
+      pad2.SetBottomMargin(0.33);
+      """
+      canvas.SetLogy(0)
+      pad2.SetLogy(0)
+      if False:
+          pad1.SetLogy(1)
+      else:
+          pad1.SetLogy(0)
+    
+      pad1.Draw() # Projections pad
+      pad2.Draw() # Residuals   pad
+  
+      pad1Width = pad1.XtoPixel(pad1.GetX2())
+      pad1Height = pad1.YtoPixel(pad1.GetY1())
+      pad2Height = pad2.YtoPixel(pad2.GetY1())
+      pad1ToPad2FontScalingFactor = float(pad1Height)/pad2Height
+      canvasToPad1FontScalingFactor = float(canvas.YtoPixel(canvas.GetY1()))/pad1.YtoPixel(pad1.GetY1())
+      canvasToPad2FontScalingFactor = float(canvas.YtoPixel(canvas.GetY1()))/pad2.YtoPixel(pad2.GetY1())
+    
+      # Main Pad
+      pad1.cd();
+      #obs.GetYaxis().SetTitleSize(0.045)
+      #obs.GetYaxis().SetLabelSize(0.045)
+      obs.GetYaxis().SetTitleSize(gStyle.GetTitleSize("Y")*canvasToPad1FontScalingFactor)
+      obs.GetYaxis().SetLabelSize(gStyle.GetLabelSize("Y")*canvasToPad1FontScalingFactor)
+      obs.GetYaxis().SetTitleOffset(0.9*gStyle.GetTitleOffset("Y"))
+      obs.GetXaxis().SetLabelOffset(0.70)
+      obs.Draw("")
+      combinedErrorGraph.Draw("3")
+      sigGraph.Draw("C")
+      combinedErrorGraph.Draw("CX")
       obs.Draw("same")
-      #if channelName=="Pt0to30":
-      #  obs.Print("all")
+      pad1.Update()
+  
+      pad1.RedrawAxis() # Updates Axis Lines
+
+      # Pulls Pad
+      pad2.cd()
+      pulls.SetTitle("")
+      if plotRange != []:
+        pulls.GetXaxis().SetRangeUser(*plotRange)
+      #pulls.GetXaxis().SetTitle(xtitle)
+      pulls.GetXaxis().CenterTitle(1)
+      pulls.GetYaxis().SetNdivisions(5)
+      pulls.GetXaxis().SetTitleSize(0.055*pad1ToPad2FontScalingFactor)
+      pulls.GetXaxis().SetLabelSize(0.050*pad1ToPad2FontScalingFactor)
+      pulls.GetYaxis().SetTitle("#frac{Data-Fit}{Error}")
+      pulls.GetYaxis().SetTitleSize(0.045*pad1ToPad2FontScalingFactor)
+      pulls.GetYaxis().SetLabelSize(0.045*pad1ToPad2FontScalingFactor)
+      pulls.GetYaxis().CenterTitle(1)
+      pulls.GetXaxis().SetTitleOffset(0.75*pulls.GetXaxis().GetTitleOffset())
+      pulls.GetYaxis().SetTitleOffset(0.70)
+
+      pulls.GetXaxis().SetLabelSize(gStyle.GetLabelSize("X")*canvasToPad2FontScalingFactor)
+
+      pulls.SetFillColor(856)
+      pulls.SetFillStyle(1001)
+      pulls.Draw("histo b")
+  
+      problatex = root.TLatex()
+      problatex.SetNDC()
+      problatex.SetTextFont(pulls.GetLabelFont())
+      problatex.SetTextSize(pulls.GetYaxis().GetLabelSize())
+      problatex.SetTextAlign(12)
+      problatex.DrawLatex(0.18,0.41,"#chi^{{2}}/NDF: {0:.3g}".format(normchi2))
+  
+      pad2.Update()
+      pad2.GetFrame().DrawClone()
+      pad2.RedrawAxis() # Updates Axis Lines
+    
+
+      """
+      obs.Draw("")
+      combinedErrorGraph.Draw("3")
+      sigGraph.Draw("C")
+      combinedErrorGraph.Draw("CX")
+      obs.Draw("same")
 
       legPos = [0.65,0.65,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
       leg = root.TLegend(*legPos)
@@ -234,6 +338,32 @@ class ShapePlotter:
       )
         
       canvas.RedrawAxis()
+      canvas.SaveAs(outDir+"/"+channelName+".png")
+      """
+
+      pad1.cd()
+
+      legPos = [0.65,0.65,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
+      leg = root.TLegend(*legPos)
+      leg.SetFillColor(0)
+      leg.SetLineColor(0)
+      leg.AddEntry(obs,"MC Data","pe")
+      leg.AddEntry(combinedErrorGraph,"Background Model","lf")
+      leg.AddEntry(sigGraph,"SM Higgs #times {0:.1f}".format(self.limit),"l")
+      leg.Draw()
+
+      tlatex = root.TLatex()
+      tlatex.SetNDC()
+      tlatex.SetTextFont(root.gStyle.GetLabelFont())
+      #tlatex.SetTextSize(0.05)
+      tlatex.SetTextSize(0.04*canvasToPad1FontScalingFactor)
+      tlatex.SetTextAlign(12)
+      tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
+      tlatex.SetTextAlign(32)
+      tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.titleMap[channelName])
+      tlatex.DrawLatex(legPos[0]-0.01,0.875,self.lumiStr)
+      tlatex.DrawLatex(legPos[0]-0.01,0.82,"#sqrt{s}=8 TeV")
+
       canvas.SaveAs(outDir+"/"+channelName+".png")
 
 titleMap = {

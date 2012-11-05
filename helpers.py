@@ -692,6 +692,7 @@ class DataMCStack:
     self.pullHist.GetYaxis().SetTitleSize(0.040*pad1ToPad2FontScalingFactor)
     self.pullHist.GetYaxis().SetLabelSize(0.040*pad1ToPad2FontScalingFactor)
     self.pullHist.GetYaxis().CenterTitle(1)
+    self.pullHist.GetXaxis().SetTitleOffset(0.75*self.pullHist.GetXaxis().GetTitleOffset())
     self.pullHist.GetYaxis().SetTitleOffset(0.70)
     self.pullHist.SetFillColor(856)
     self.pullHist.SetFillStyle(1001)
