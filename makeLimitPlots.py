@@ -13,6 +13,7 @@ caption2 = "1D Shape Analysis"
 
 outDir = "statsOutput/"
 
+root.gErrorIgnoreLevel = root.kWarning
 root.gROOT.SetBatch(True)
 setStyle()
 canvas = root.TCanvas()
@@ -20,6 +21,7 @@ canvas.SetLogx(1)
 canvas.SetLogy(1)
 
 mpl.rcParams["font.family"] = "sans-serif"
+print mpl.rcParams["backend"]
 
 #######################################
 

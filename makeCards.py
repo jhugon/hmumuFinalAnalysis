@@ -35,7 +35,7 @@ def getXbinsHighLow(hist,low,high):
   axis = hist.GetXaxis()
   xbinLow = axis.FindBin(low)
   xbinHigh = axis.FindBin(high)
-  #print("xbinhigh: {}, {}, {}".format(xbinHigh,axis.GetBinLowEdge(xbinHigh),float(high)))
+  #print("xbinhigh: {0}, {1}, {2}".format(xbinHigh,axis.GetBinLowEdge(xbinHigh),float(high)))
   if axis.GetBinLowEdge(xbinHigh)==float(high):
     xbinHigh -= 1
   return xbinLow, xbinHigh
@@ -142,8 +142,8 @@ class MassPDFBakMSSM:
     lowBin, highBin = getXbinsHighLow(hist,minMass,maxMass)
     nBinsX = highBin - lowBin + 1
     normalization = getIntegralAll(hist,[massLowRange[0],massHighRange[1]])
-    self.debug += "# bak Hist no bounds: {:.3g}\n".format(hist.Integral())
-    self.debug += "# bak Hist bounds:    {:.3g}\n".format(normalization)
+    self.debug += "# bak Hist no bounds: {0:.3g}\n".format(hist.Integral())
+    self.debug += "# bak Hist bounds:    {0:.3g}\n".format(normalization)
 
     mMuMuRooDataHist = root.RooDataHist(name+"DataHist",name+"DataHist",root.RooArgList(mMuMu),hist)
 
@@ -273,8 +273,8 @@ class MassPDFBak:
     lowBin, highBin = getXbinsHighLow(hist,minMass,maxMass)
     nBinsX = highBin - lowBin + 1
     normalization = getIntegralAll(hist,[massLowRange[0],massHighRange[1]])
-    self.debug += "# bak Hist no bounds: {:.3g}\n".format(hist.Integral())
-    self.debug += "# bak Hist bounds:    {:.3g}\n".format(normalization)
+    self.debug += "# bak Hist no bounds: {0:.3g}\n".format(hist.Integral())
+    self.debug += "# bak Hist bounds:    {0:.3g}\n".format(normalization)
 
     mMuMuRooDataHist = root.RooDataHist(name+"DataHist",name+"DataHist",root.RooArgList(mMuMu),hist)
 
@@ -372,7 +372,7 @@ class MVAvMassPDFBak:
     if rooVars == None:
         print("Error: MVAvMassPDFBak requires rooVars list of variables, exiting.")
         sys.exit(1)
-    print("original hist bins X: {} Y: {}".format(hist2D.GetNbinsX(),hist2D.GetNbinsY()))
+    print("original hist bins X: {0} Y: {1}".format(hist2D.GetNbinsX(),hist2D.GetNbinsY()))
 
     hist2DSmooth = hist2D.Clone(name+hist2D.GetName()+"_smoothed")
     if smooth:
@@ -517,7 +517,7 @@ class MVAvMassPDFBak:
     lowPertBin = pdf2dHist.GetXaxis().FindBin(120.0)
     highPertBin = pdf2dHist.GetXaxis().FindBin(131.0)
     lowPertBin, highPertBin = getIntegralAll(pdf2dHist,120.0,131.0)
-    print("pdf2dHist bins X: {} Y: {}".format(pdf2dHist.GetNbinsX(),pdf2dHist.GetNbinsY()))
+    print("pdf2dHist bins X: {0} Y: {1}".format(pdf2dHist.GetNbinsX(),pdf2dHist.GetNbinsY()))
     self.nuisanceNames = []
     self.pdf2dHistErrs = {}
     bakPlus = pdf2dHist.Clone("bakUnc"+"Up")
@@ -642,9 +642,9 @@ class MVAvMassPDFBak:
     tmpPave.SetFillColor(0)
     tmpPave.SetLineColor(1)
     tmpPave.AddText("HistName: "+self.hist2D.GetName())
-    tmpPave.AddText("Smoothed: {}".format(self.smooth))
-    tmpPave.AddText("Control Region Low: {}".format(self.massLowRange))
-    tmpPave.AddText("Control Region High: {}".format(self.massHighRange))
+    tmpPave.AddText("Smoothed: {0}".format(self.smooth))
+    tmpPave.AddText("Control Region Low: {0}".format(self.massLowRange))
+    tmpPave.AddText("Control Region High: {0}".format(self.massHighRange))
     tmpPave.AddText("pdfMmumu:")
     tmpPave.AddText("  BW mZ: {0:.2g} +/- {1:.2g}".format(self.bwmZ.getVal(),self.bwmZ.getError()))
     tmpPave.AddText("  BW Width: {0:.2g} +/- {1:.2g}".format(self.bwWidth.getVal(),self.bwWidth.getError()))
@@ -1274,7 +1274,7 @@ class ShapeDataCardMaker(DataCardMaker):
       observationFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
       observedNumber = observedN[channelName]
       observationFormatList.append(observedNumber)
-      #print("text Observed {}: {}".format(channelName,observedNumber))
+      #print("text Observed {0}: {1}".format(channelName,observedNumber))
       iParam += 1
     binFormatString+= "\n"
     observationFormatString+= "\n"
@@ -1671,6 +1671,9 @@ FILENAME=$i
 echo "executing combine -M Asymptotic $FILENAME >& $FILENAME.out"
 
 combine -M Asymptotic $FILENAME >& $FILENAME.out
+rm -f roostats*
+rm -f higgsCombineTest*.root
+
 done
 
 date

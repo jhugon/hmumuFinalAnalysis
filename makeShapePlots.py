@@ -5,6 +5,7 @@ import math
 import os.path
 import glob
 
+root.gErrorIgnoreLevel = root.kWarning
 root.gROOT.SetBatch(True)
 root.gStyle.SetOptStat(0)
 
@@ -25,9 +26,13 @@ class ShapePlotter:
         continue
       channelFolder = channelKey.ReadObj()
       debugFolderKey = channelFolder.GetKey("debug")
-      if debugFolderKey.GetClassName() != "TDirectoryFile":
-        print("Warning: loadData: {}/{} in {} is not a directory".format(channelFolder.GetName(),debugFolder.GetName(),filename))
-        continue
+      try:
+       if debugFolderKey.GetClassName() != "TDirectoryFile":
+          print("Warning: loadData: {0}/{1} in {2} is not a directory".format(channelFolder.GetName(),debugFolder.GetName(),filename))
+          continue
+      except Exception as e:
+          print("Warning: loadData: {0}/{1} in {2} Does not exist".format(channelFolder.GetName(),"debug",filename))
+          continue
       debugFolder = debugFolderKey.ReadObj()
       self.data[channelKey.GetName()] = {}
       for key in debugFolder.GetListOfKeys():
@@ -42,7 +47,7 @@ class ShapePlotter:
     tmpMatch = re.search(r"([\w]*)_([0-9]+)\.root",filename)
     if tmpMatch:
       self.lumi = int(tmpMatch.group(2))
-      self.lumiStr = "L = {} fb^{{-1}}".format(self.lumi)
+      self.lumiStr = "L = {0} fb^{{-1}}".format(self.lumi)
 
 
     self.colors = [root.kRed-9, root.kGreen-9, root.kBlue-9, root.kMagenta-9, root.kCyan-9]
@@ -61,8 +66,8 @@ class ShapePlotter:
       limitfname = limitfname.replace("statsCards","statsInput")
       limitTime = os.path.getmtime(limitfname)
     except Exception as e:
-      print("Warning: Couldn't find limit file to scale signal by: {}".format(limitfname))
-      #print("Error: {}, {}".format(e.errno,e.strerror))
+      print("Warning: Couldn't find limit file to scale signal by: {0}".format(limitfname))
+      #print("Error: {0}, {1}".format(e.errno,e.strerror))
       return
     if limitTime > cardTime:
       try:
@@ -74,8 +79,8 @@ class ShapePlotter:
             self.limit = float(match.group(1))
             break
       except Exception as e:
-        print("Warning: Couldn't find limit file to scale signal by: {}".format(limitfname))
-        #print("Error: {}, {}".format(e.errno,e.strerror))
+        print("Warning: Couldn't find limit file to scale signal by: {0}".format(limitfname))
+        #print("Error: {0}, {1}".format(e.errno,e.strerror))
         return
       if self.limit != 1.0:
         for channelName in self.data:
@@ -119,7 +124,7 @@ class ShapePlotter:
       yd = y-yd
       if y<=0:
         continue
-      #print("x,y: {:.3g},{:.3g} + {:.3g} - {:.3g}".format(x,y, yu, yd))
+      #print("x,y: {0:.3g},{1:.3g} + {2:.3g} - {3:.3g}".format(x,y, yu, yd))
       outGraph.SetPoint(iGraph,x,y)
       outGraph.SetPointEYhigh(iGraph,yu)
       outGraph.SetPointEYlow(iGraph,yd)
@@ -208,7 +213,7 @@ class ShapePlotter:
       leg.SetLineColor(0)
       leg.AddEntry(obs,"MC Data","pe")
       leg.AddEntry(combinedErrorGraph,"Background Model","lf")
-      leg.AddEntry(sigGraph,"SM Higgs #times {:.1f}".format(self.limit),"l")
+      leg.AddEntry(sigGraph,"SM Higgs #times {0:.1f}".format(self.limit),"l")
       leg.Draw()
 
       tlatex = root.TLatex()
@@ -225,7 +230,7 @@ class ShapePlotter:
       tlatex.SetTextSize(0.035)
       tlatex.SetTextAlign(11)
       tlatex.DrawLatex(gStyle.GetPadLeftMargin()+0.025,gStyle.GetPadBottomMargin()+0.025,
-        "#chi^{{2}}/NDF = {:.3g}".format(normchi2)
+        "#chi^{{2}}/NDF = {0:.3g}".format(normchi2)
       )
         
       canvas.RedrawAxis()
