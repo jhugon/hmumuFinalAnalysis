@@ -1499,7 +1499,7 @@ if __name__ == "__main__":
   MassRebin = 4 # 4 Bins per GeV originally
   controlRegionVeryLow=[80,110]
   controlRegionLow=[110,120]
-  controlRegionHigh=[130,180]
+  controlRegionHigh=[130,160]
 
   shape=True
   toyData=False
