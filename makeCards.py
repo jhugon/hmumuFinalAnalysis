@@ -19,7 +19,7 @@ root.gErrorIgnoreLevel = root.kWarning
 root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.ERROR)
 PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 
-NPROCS = 1
+NPROCS = 2
 
 BAKUNC = 0.1
 
@@ -1492,9 +1492,10 @@ if __name__ == "__main__":
   backgroundNames= ["DYToMuMu","ttbar","WW","WZ","ZZ"]
   dataNames=[]
   #dataNames=["SingleMuRun2012Av1.root","SingleMuRun2012Bv1.root","SingleMuRun2012Cv1.root"]
-  #lumiList = [5,10,15,20,25,30,40,50,75,100,200,500,1000]
+  lumiListLong = [5,10,15,20,25,30,40,50,75,100,200,500,1000,2000,5000]
   lumiList = [10,20,30,100]
   lumiList = [20]
+  lumiListLong = lumiList
 
   MassRebin = 4 # 4 Bins per GeV originally
   controlRegionVeryLow=[80,110]
@@ -1507,17 +1508,6 @@ if __name__ == "__main__":
   print("Creating Threads...")
   threads = []
   for i in lumiList:
-    threads.append(
-      ThreadedCardMaker(
-        #__init__ args:
-        directory,["VBFLoose","VBFMedium","VBFTight","VBFVeryTight","Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250"],signalNames,backgroundNames,dataNames,
-        rebin=[MassRebin], bakShape=shape,
-        controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-        controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
-        #write args:
-        outfilename=outDir+"AllCat"+"_"+str(i)+".txt",lumi=i
-      )
-    )
     threads.append(
       ThreadedCardMaker(
         #__init__ args:
@@ -1538,17 +1528,6 @@ if __name__ == "__main__":
         controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
         #write args:
         outfilename=outDir+"IncCat"+"_"+str(i)+".txt",lumi=i
-      )
-    )
-    threads.append(
-      ThreadedCardMaker(
-        #__init__ args:
-        directory,["IncBDTSig80","VBFBDTSig80"],signalNames,backgroundNames,dataNames,
-        rebin=[MassRebin], bakShape=shape,
-        controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-        controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
-        #write args:
-        outfilename=outDir+"BDTSig80"+"_"+str(i)+".txt",lumi=i
       )
     )
     for ana in analyses:
@@ -1574,6 +1553,30 @@ if __name__ == "__main__":
 #        shapeDataCardMaker=False
 #        )
 #      threads.append(tmp)
+
+  for i in lumiListLong:
+    threads.append(
+      ThreadedCardMaker(
+        #__init__ args:
+        directory,["VBFLoose","VBFMedium","VBFTight","VBFVeryTight","Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250"],signalNames,backgroundNames,dataNames,
+        rebin=[MassRebin], bakShape=shape,
+        controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
+        controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
+        #write args:
+        outfilename=outDir+"AllCat"+"_"+str(i)+".txt",lumi=i
+      )
+    )
+    threads.append(
+      ThreadedCardMaker(
+        #__init__ args:
+        directory,["IncBDTSig80","VBFBDTSig80"],signalNames,backgroundNames,dataNames,
+        rebin=[MassRebin], bakShape=shape,
+        controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
+        controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
+        #write args:
+        outfilename=outDir+"BDTSig80"+"_"+str(i)+".txt",lumi=i
+      )
+    )
 
   nThreads = len(threads)
   print("nProcs: {0}".format(NPROCS))

@@ -5,10 +5,10 @@ rm -f statsCards/*
 rm -f statsInput/*
 rm -f statsOutput/*
 
-./makeCards.py
+nice ./makeCards.py
 cd statsCards/
-bash notlxbatch.sh
+nice bash notlxbatch.sh
 cd ..
 cp statsCards/*.out statsInput/.
-./makeShapePlots.py
-./makeLimitPlots.py
+nice ./makeShapePlots.py
+nice ./makeLimitPlots.py
