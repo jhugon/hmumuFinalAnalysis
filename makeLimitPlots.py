@@ -9,7 +9,7 @@ import matplotlib.pyplot as mpl
 import numpy
 
 dirName = "statsInput/"
-caption2 = "1D Shape Analysis"
+caption2 = "#sqrt{s} = 8 TeV"
 
 outDir = "statsOutput/"
 
@@ -86,7 +86,7 @@ def getData(fileString,matchString=r"_([\d]+).txt.out",dontMatchStrings=[],doSor
   return result
 
 class RelativePlot:
-  def __init__(self,dataPoints, canvas, legend, caption, ylabel="Expected 95% CL Limit #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",ylimits=[],xlimits=[],vertLines=[20.0]):
+  def __init__(self,dataPoints, canvas, legend, caption, ylabel="Expected 95% CL Limit #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",ylimits=[],xlimits=[],vertLines=[20.0],showObs=False):
     expGraph = root.TGraph()
     expGraph.SetLineStyle(2)
     oneSigGraph = root.TGraphAsymmErrors()
@@ -97,7 +97,7 @@ class RelativePlot:
     twoSigGraph.SetLineStyle(0)
     oneGraph = root.TGraph()
     oneGraph.SetLineColor(root.kRed)
-    oneGraph.SetLineStyle(1)
+    oneGraph.SetLineStyle(3)
     obsGraph = root.TGraph()
     obsGraph.SetLineColor(1)
     obsGraph.SetLineStyle(1)
@@ -138,6 +138,7 @@ class RelativePlot:
       tmp.SetPoint(0,xPos,ymin)
       tmp.SetPoint(1,xPos,ymax)
       tmp.SetLineColor(root.kRed)
+      tmp.SetLineStyle(3)
       self.vertLines.append(tmp)
       self.vertLabel.append(xPos)
 
@@ -157,7 +158,8 @@ class RelativePlot:
     oneSigGraph.Draw("3")
     expGraph.Draw("l")
     oneGraph.Draw("l")
-    obsGraph.Draw("l")
+    if showObs:
+      obsGraph.Draw("l")
 
     tlatex = root.TLatex()
     tlatex.SetNDC()
@@ -169,9 +171,12 @@ class RelativePlot:
     tlatex.SetTextAlign(32)
     tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption)
 
+    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin()-0.03,0.88,caption2)
+
     for g in self.vertLines:
       g.Draw("l")
 
+    canvas.RedrawAxis()
 
 class ComparePlot:
   def __init__(self,data,ylabel="Expected 95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},showObs=False):
@@ -237,7 +242,7 @@ class ComparePlot:
             verticalalignment='center', color=clr, weight='bold',size=size)
 
 titleMap = {
-  "AllCat":"All Categories Comb.",
+  "AllCat":"H->#mu#mu Catagories Combination",
   "IncCat":"Inclusive Categories Comb.",
   "VBFCat":"VBF Categories Comb.",
 
@@ -255,7 +260,7 @@ titleMap = {
   "VBFTight":"VBFT",
   "VBFVeryTight":"VBFVT",
 
-  "BDTSig80":"BDT Cut Combination",
+  "BDTSig80":"H->#mu#mu BDT Combination",
   "IncBDTSig80":"Inclusive BDT Cut",
   "VBFBDTSig80":"VBF BDT Cut"
 }
@@ -284,7 +289,7 @@ comparisonMap = {
   "VBFBDTSig80":"VBF BDT Cut"
 }
 
-ylimits=[1.0,500.0]
+ylimits=[0.1,100.0]
 
 allfiles = glob.glob(dirName+"*.txt.out")
 
