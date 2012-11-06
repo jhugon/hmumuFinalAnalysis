@@ -12,6 +12,22 @@ outDir = "output/"
 LOGY=False
 integralPlot=False
 
+backgroundList = [
+#"DYToMuMu",
+#"DYJetsToLL",
+#"WJetsToLNu",
+"ttbar",
+"WW",
+"WZ",
+"ZZ"
+#"QCD"
+]
+
+dyList = [
+ "DYToMuMu", "DYJetsToLL"
+]
+dyLegendEntries = {"DYToMuMu":"DY Powheg","DYJetsToLL":"DY Madgraph"}
+
 urLegendPos = [0.70,0.67,0.9,0.9]
 ulLegendPos = [0.20,0.67,0.4,0.9]
 ucLegendPos = [0.46,0.67,0.64,0.9]
@@ -144,6 +160,22 @@ class Dataset:
 
 #######################################
 
+dyDatasetList = []
+for i in dyList:
+  if i in scaleFactors:
+    if scaleFactors[i]>0.0:
+      filename = dataDir+i+".root"
+      if not os.path.exists(filename):
+          continue
+      tmp = Dataset(filename,dyLegendEntries[i],colors[i],scaleFactors[i])
+      if tmp.isZombie():
+        print ("Warning: file for dataset {0} is Zombie!!".format(i))
+        continue
+      print("Loading Dataset: {0}".format(i))
+      for hDir in histDirs:
+        tmp.loadHistos(histNames,prefix=hDir)
+      dyDatasetList.append(tmp)
+
 bkgDatasetList = []
 for i in backgroundList:
   if i in scaleFactors:
@@ -198,18 +230,20 @@ leg = root.TLegend(*stdLegendPos)
 leg.SetLineColor(0)
 leg.SetFillColor(0)
 uniqueLegendEntries = set()
-for ds in bkgDatasetList:
+dyColors = [root.kRed,root.kBlue]
+for ds,col in zip(dyDatasetList,dyColors):
   for hname in ds.hists:
     if ds.legendEntry not in uniqueLegendEntries:
-      leg.AddEntry(ds.hists[hname],ds.legendEntry,"f")
+      ds.hists[hname].SetLineColor(col)
+      leg.AddEntry(ds.hists[hname],ds.legendEntry,"l")
       uniqueLegendEntries.add(ds.legendEntry)
     break
-for ds in sigDatasetList:
-  for hname in ds.hists:
-    if ds.legendEntry not in uniqueLegendEntries:
-      leg.AddEntry(ds.hists[hname],ds.legendEntry,"f")
-      uniqueLegendEntries.add(ds.legendEntry)
-    break
+#for ds in sigDatasetList:
+#  for hname in ds.hists:
+#    if ds.legendEntry not in uniqueLegendEntries:
+#      leg.AddEntry(ds.hists[hname],ds.legendEntry,"l")
+#      uniqueLegendEntries.add(ds.legendEntry)
+#    break
 for ds in realDatasetList:
   for hname in ds.hists:
     if ds.legendEntry not in uniqueLegendEntries:
@@ -223,16 +257,32 @@ for ds in realDatasetList:
 for histName in bkgDatasetList[0].hists:
   print("Making Histo: %s" % histName)
   canvas.Clear()
-  bkgHistList = []
-  sigHistList = []
+  bkgHist = None
+  sigHist = None
+  dyHistList = []
   for ds in bkgDatasetList:
     tmpHist = ds.hists[histName]
-    bkgHistList.append(tmpHist)
-  bkgHistList.reverse()
+    if bkgHist == None:
+        bkgHist = tmpHist.Clone(histName+"_BakSum")
+    else:
+        bkgHist.Add(tmpHist)
   for ds in sigDatasetList:
     tmpHist = ds.hists[histName]
-    sigHistList.append(tmpHist)
-  #bkgHistList.reverse()
+    if sigHist == None:
+        sigHist = tmpHist.Clone(histName+"_SigSum")
+    else:
+        sigHist.Add(tmpHist)
+  for ds in dyDatasetList:
+    tmpHist = ds.hists[histName]
+    dyHistList.append(tmpHist)
+
+  assert(len(dyHistList) == 2)
+  dy0Hist = bkgHist.Clone("dy0BakSum")
+  dy0Hist.Add(dyHistList[0])
+  dy0Hist.SetLineColor(root.kRed+1)
+  dy1Hist = bkgHist.Clone("dy1BakSum")
+  dy1Hist.Add(dyHistList[1])
+  dy1Hist.SetLineColor(root.kBlue+1)
 
   #dataHist = bkgDatasetList[0].hists[histName].Clone()
   #dataHist.Reset()
@@ -243,7 +293,7 @@ for histName in bkgDatasetList[0].hists:
 
   histBaseName = re.sub(r".*/","",histName)
   xtitle = histNames[histBaseName]["xlabel"]
-  stack = DataMCStack(bkgHistList, dataHist, canvas, xtitle,lumi=LUMI,logy=LOGY,xlimits=histNames[histBaseName]["xlimits"],signalsNoStack=sigHistList,integralPlot=integralPlot)
+  stack = CompareTwoHistsAndData(dy0Hist,dy1Hist, dataHist, canvas, xtitle,lumi=LUMI,logy=LOGY,xlimits=histNames[histBaseName]["xlimits"],integralPlot=integralPlot)
 
   legLeftPos = stdLegendPos[0]
   if histNames[histBaseName].has_key("leg"):
@@ -253,15 +303,10 @@ for histName in bkgDatasetList[0].hists:
     setLegPos(leg,stdLegendPos)
   leg.Draw("same")
 
-  if scaleHiggsBy != 1.0:
-    tlatex.SetTextSize(0.07)
-    tlatex.SetTextAlign(32)
-    tlatex.DrawLatex(legLeftPos-0.02,0.8,"Higgs #times {0:.0f}".format(scaleHiggsBy))
-
-  tlatex.SetTextSize(0.03)
-  tlatex.SetTextAlign(33)
-  anotateText = "80 GeV < m_{#mu#mu} < 160 GeV"
-  tlatex.DrawLatex(legLeftPos-0.02,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
+#  tlatex.SetTextSize(0.03)
+#  tlatex.SetTextAlign(33)
+#  anotateText = "80 GeV < m_{#mu#mu} < 160 GeV"
+#  tlatex.DrawLatex(legLeftPos-0.02,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
 
   saveName = histName.replace("(","")
   saveName = saveName.replace(")","")
