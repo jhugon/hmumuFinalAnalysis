@@ -3,7 +3,7 @@ import ROOT as root
 LUMI=5.723
 
 scaleHiggsBy = 1.0
-#scaleHiggsBy = 50.0
+scaleHiggsBy = 50.0
 
 xsec = {}
 xsec["vbfHmumu125"] = 3.347e-4 * scaleHiggsBy
@@ -38,8 +38,8 @@ nEventsMap["WJetsToLNu"] =  55509905
 nEventsMap["QCD"] =  21384602
 
 backgroundList = [
-"DYToMuMu",
-#"DYJetsToLL",
+#"DYToMuMu",
+"DYJetsToLL",
 #"WJetsToLNu",
 "ttbar",
 "WW",

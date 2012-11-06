@@ -12,9 +12,9 @@ outDir = "output/"
 LOGY=False
 integralPlot=False
 
-urLegendPos = [0.70,0.65,0.88,0.88]
-ulLegendPos = [0.20,0.65,0.38,0.88]
-ucLegendPos = [0.46,0.65,0.64,0.88]
+urLegendPos = [0.70,0.67,0.88,0.9]
+ulLegendPos = [0.20,0.67,0.38,0.9]
+ucLegendPos = [0.46,0.67,0.64,0.9]
 lcLegendPos = [0.46,0.35,0.64,0.63]
 ccLegendPos = [0.46,0.47,0.64,0.7]
 stdLegendPos = urLegendPos
@@ -26,8 +26,8 @@ histDirs = ["VBFPresel/","IncPresel/"]
 #histDirs = ["","PtDiMu100/","VBFPresel/","IncPresel/"]
 
 histNames = {}
-histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[110.0,150.0],"rebin":4}
-#histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[80.0,150.0],"rebin":4}
+#histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[110.0,150.0],"rebin":4}
+histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[80.0,150.0],"rebin":4}
 
 histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV]","xlimits":[0.0,200.0],"rebin":5}
 
@@ -57,7 +57,7 @@ histNames["etaMu2"] = {"xlabel":"Sub-Leading Muon #eta","xlimits":[-2.4,2.4],"le
 histNames["etaJet1"] = {"xlabel":"Leading Jet #eta","xlimits":[-5.0,5.0]}
 histNames["etaJet2"] = {"xlabel":"Sub-Leading Jet #eta","xlimits":[-5.0,5.0]}
 
-histNames["yDiMu"] = {"xlabel":"y_{#mu#mu} [GeV]","xlimits":[-2.2,2.2],"leg":lcLegendPos}
+histNames["yDiMu"] = {"xlabel":"y_{#mu#mu} [GeV]","xlimits":[-2.2,2.2],"rebin":2,"leg":lcLegendPos}
 
 histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1.0,1.0],"leg":lcLegendPos}
 histNames["cosThetaStarCS"] = {"xlabel":"cos(#theta^{*}_{CS})","xlimits":[-1.0,1.0],"leg":lcLegendPos}
@@ -222,6 +222,7 @@ for ds in realDatasetList:
 
 for histName in bkgDatasetList[0].hists:
   print("Making Histo: %s" % histName)
+  canvas.Clear()
   bkgHistList = []
   sigHistList = []
   for ds in bkgDatasetList:
@@ -243,14 +244,24 @@ for histName in bkgDatasetList[0].hists:
   histBaseName = re.sub(r".*/","",histName)
   xtitle = histNames[histBaseName]["xlabel"]
   stack = DataMCStack(bkgHistList, dataHist, canvas, xtitle,lumi=LUMI,logy=LOGY,xlimits=histNames[histBaseName]["xlimits"],signalsNoStack=sigHistList,integralPlot=integralPlot)
+
+  legLeftPos = stdLegendPos[0]
   if histNames[histBaseName].has_key("leg"):
     setLegPos(leg,(histNames[histBaseName]["leg"]))
+    legLeftPos = histNames[histBaseName]["leg"][0]
   else:
     setLegPos(leg,stdLegendPos)
   leg.Draw("same")
 
   if scaleHiggsBy != 1.0:
-    tlatex.DrawLatex(0.33,0.8,"Higgs #times {0:.0f}".format(scaleHiggsBy))
+    tlatex.SetTextSize(0.07)
+    tlatex.SetTextAlign(32)
+    tlatex.DrawLatex(legLeftPos-0.02,0.8,"Higgs #times {0:.0f}".format(scaleHiggsBy))
+
+  tlatex.SetTextSize(0.03)
+  tlatex.SetTextAlign(33)
+  anotateText = "80 GeV < m_{#mu#mu} < 160 GeV"
+  tlatex.DrawLatex(legLeftPos-0.02,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
 
   saveName = histName.replace("(","")
   saveName = saveName.replace(")","")
