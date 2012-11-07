@@ -46,6 +46,7 @@ histNames = {}
 histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[80.0,150.0],"rebin":4}
 
 histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV]","xlimits":[0.0,200.0],"rebin":5}
+#histNames["ptDiJet"] = {"xlabel":"p_{T,jj} [GeV]","xlimits":[0.0,200.0],"rebin":2}
 
 histNames["mDiJet"] = {"xlabel":"m_{jj} [GeV]","xlimits":[0.0,1200.0],"rebin":5}
 histNames["mDiJet"] = {"xlabel":"m_{jj} [GeV]","xlimits":[300.0,1200.0],"rebin":5}

@@ -1,6 +1,12 @@
 import ROOT as root
 
-LUMI=5.723
+LUMI=5.723 #2012ABCv1
+#LUMI=12.034 #2012C
+
+#LUMI=0.807 #2012A
+#LUMI=4.421 #2012B
+#LUMI=0.495 #2012Cv1
+#LUMI=6.311 #2012Cv2
 
 scaleHiggsBy = 1.0
 #scaleHiggsBy = 50.0

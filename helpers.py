@@ -835,6 +835,8 @@ class CompareTwoHists:
     self.pullHist.GetYaxis().SetTitleOffset(0.5)
     self.pullHist.GetYaxis().SetNdivisions(nDivPullY)
     self.pullHist.GetYaxis().SetRangeUser(*pullHistRangeY)
+    self.pullHist.GetXaxis().SetTitleOffset(0.75*self.pullHist.GetXaxis().GetTitleOffset())
+    self.pullHist.GetYaxis().SetTitleOffset(0.70)
     self.pullHist.SetFillColor(856)
     self.pullHist.SetFillStyle(1001)
     self.pullHist.Draw("")
@@ -983,6 +985,8 @@ class CompareTwoHistsAndData:
     self.pullHist1.GetYaxis().SetTitleOffset(0.5)
     self.pullHist1.GetYaxis().SetNdivisions(nDivPullY)
     self.pullHist1.GetYaxis().SetRangeUser(pullmin*0.90,pullmax*1.1)
+    self.pullHist1.GetXaxis().SetTitleOffset(0.75*self.pullHist1.GetXaxis().GetTitleOffset())
+    #self.pullHist1.GetYaxis().SetTitleOffset(0.70)
     self.pullHist1.SetFillStyle(0)
     self.pullHist2.SetFillStyle(0)
     self.pullHist1.Draw("hist")
@@ -1233,9 +1237,9 @@ def toyHistogram(hist):
 
 def saveAs(canvas,name):
   canvas.SaveAs(name+".png")
-  canvas.SaveAs(name+".pdf")
+  #canvas.SaveAs(name+".pdf")
   #canvas.SaveAs(name+".eps")
-  canvas.SaveAs(name+".root")
+  #canvas.SaveAs(name+".root")
 
 def setLegPos(leg,legPos):
   leg.SetX1NDC(legPos[0])
