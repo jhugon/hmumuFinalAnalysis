@@ -8,6 +8,9 @@ import os
 dataDir = "input/"
 outDir = "output/"
 
+RUNPERIOD="8TeV"
+LUMI=lumiDict[RUNPERIOD]
+
 listToPlot = backgroundList+signalList
 
 LOGY=False
@@ -105,12 +108,13 @@ class Dataset:
 
 bkgDatasetList = []
 for i in listToPlot:
+  i += "_"+RUNPERIOD
   if i in scaleFactors:
     if scaleFactors[i]>0.0:
       filename = dataDir+i+".root"
       if not os.path.exists(filename):
           continue
-      tmp = Dataset(filename,legendEntries[i],colors[i],scaleFactors[i])
+      tmp = Dataset(filename,getLegendEntry(i),getColor(i),scaleFactors[i])
       if tmp.isZombie():
         print ("Warning: file for dataset {0} is Zombie!!".format(i))
         continue
@@ -197,8 +201,17 @@ for histName in bkgDatasetList[0].hists:
   canvas.RedrawAxis()
   leg.Draw("same")
 
+  tlatex = root.TLatex()
+  tlatex.SetNDC()
+  tlatex.SetTextFont(root.gStyle.GetLabelFont())
+  tlatex.SetTextSize(0.04)
+  tlatex.SetTextAlign(12)
+  tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
+  tlatex.SetTextAlign(32)
+  tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,"#sqrt{{s}}={0}".format(RUNPERIOD))
+
   saveName = histName.replace("(","")
   saveName = saveName.replace(")","")
   saveName = saveName.replace("[","")
   saveName = saveName.replace("]","")
-  saveAs(canvas,outDir+"dist_"+saveName)
+  saveAs(canvas,outDir+"dist_"+saveName+"_"+RUNPERIOD)

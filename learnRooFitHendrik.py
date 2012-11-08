@@ -47,7 +47,7 @@ pdfMmumu = root.RooAddPdf("pdfMmumu","pdfMmumu",root.RooArgList(bwMmumu,phoMmumu
 
 #####################################################################
 
-f = root.TFile("input/DYJetsToLL.root")
+f = root.TFile("input/DYJetsToLL_8TeV.root")
 #f = root.TFile("input/ttbar.root")
 
 #mDiMu = f.Get("mDiMu")
