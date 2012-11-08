@@ -9,6 +9,9 @@ import sys
 dataDir = "input/"
 outDir = "output/"
 
+RUNPERIOD="7TeV"
+LUMI=lumiDict[RUNPERIOD]
+
 LOGY=False
 integralPlot=False
 
@@ -146,6 +149,7 @@ class Dataset:
 
 bkgDatasetList = []
 for i in backgroundList:
+  i += "_"+RUNPERIOD
   if i in scaleFactors:
     if scaleFactors[i]>0.0:
       filename = dataDir+i+".root"
@@ -162,6 +166,7 @@ for i in backgroundList:
 
 sigDatasetList = []
 for i in signalList:
+  i += "_"+RUNPERIOD
   if i in scaleFactors:
     if scaleFactors[i]>0.0:
       filename = dataDir+i+".root"
@@ -177,12 +182,12 @@ for i in signalList:
       sigDatasetList.append(tmp)
 
 realDatasetList = []
-for i in dataList:
+for i in dataDict[RUNPERIOD]:
       filename = dataDir+i+".root"
       if not os.path.exists(filename):
         print("Error: Data file not found {}, exiting".format(filename))
         sys.exit(1)
-      tmp = Dataset(filename,"CMS Data 2012",1,1.0,isData=True)
+      tmp = Dataset(filename,getLegendEntry(RUNPERIOD),1,1.0,isData=True)
       if tmp.isZombie():
         print ("Error: file for dataset {0} is Zombie!!".format(i))
         sys.exit(1)
@@ -243,7 +248,7 @@ for histName in bkgDatasetList[0].hists:
 
   histBaseName = re.sub(r".*/","",histName)
   xtitle = histNames[histBaseName]["xlabel"]
-  stack = DataMCStack(bkgHistList, dataHist, canvas, xtitle,lumi=LUMI,logy=LOGY,xlimits=histNames[histBaseName]["xlimits"],signalsNoStack=sigHistList,integralPlot=integralPlot)
+  stack = DataMCStack(bkgHistList, dataHist, canvas, xtitle,lumi=LUMI,logy=LOGY,xlimits=histNames[histBaseName]["xlimits"],signalsNoStack=sigHistList,integralPlot=integralPlot,energyStr=RUNPERIOD)
 
   legLeftPos = stdLegendPos[0]
   if histNames[histBaseName].has_key("leg"):
@@ -268,4 +273,4 @@ for histName in bkgDatasetList[0].hists:
   saveName = saveName.replace("[","")
   saveName = saveName.replace("]","")
   saveName = saveName.replace("/","_")
-  saveAs(canvas,outDir+saveName)
+  saveAs(canvas,outDir+saveName+"_"+RUNPERIOD)
