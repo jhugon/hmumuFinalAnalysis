@@ -98,10 +98,6 @@ if __name__ == "__main__":
 
   from makeCards import *
 
-  analyses = ["VBFPresel","IncPresel","VBFLoose","VBFMedium","VBFTight","VBFVeryTight","Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250","IncBDTSig80","VBFBDTSig80"]
-  histPostFix="/mDiMu"
-  #analyses = ["mDiMu"]
-  #histPostFix=""
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
   backgroundNames= ["DYToMuMu","ttbar","WW","WZ","ZZ"]
 
@@ -222,7 +218,6 @@ if __name__ == "__main__":
 
   for period in ["7TeV","8TeV"]:
     allfiles = glob.glob("*_"+period+"_*.txt.out")
-    print allfiles
     
     ## Limit v. Lumi
     energyStr = ""
@@ -235,19 +230,15 @@ if __name__ == "__main__":
         plots.add(match.group(1))
         energyStr = match.group(2)
 
-    print plots
-  
     caption2 = "#sqrt{s}="+energyStr
     legend = root.TLegend(0.58,0.70,0.9,0.9)
     legend.SetFillColor(0)
     legend.SetLineColor(0)
     for plotName in plots:
       data = limits.getData(plotName+"_"+energyStr+"_*.txt.out")
-      print data
       if len(data)<=1:
         continue
       incPlot = limits.RelativePlot(data,canvas,legend,titleMap[plotName],caption2=caption2,ylimits=ylimits,energyStr=energyStr,xlabel="BDT Cut Value")
       saveAs(canvas,plotName+"_"+energyStr)
-    
 
   print("Done.")

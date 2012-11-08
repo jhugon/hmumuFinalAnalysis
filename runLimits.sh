@@ -12,3 +12,5 @@ cd ..
 cp statsCards/*.out statsInput/.
 nice ./makeShapePlots.py
 nice ./makeLimitPlots.py
+
+nice ./makeBDTCuts.py
