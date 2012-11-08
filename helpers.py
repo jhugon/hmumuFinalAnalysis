@@ -528,7 +528,7 @@ def makeWeightHist(f1,canvas,leg):
   leg.Draw("same")
 
 class DataMCStack:
-  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="Events", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False):
+  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="Events", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV"):
     nBinsX = dataHist.GetNbinsX()
     self.nBinsX = nBinsX
     self.dataHist = dataHist
@@ -714,7 +714,7 @@ class DataMCStack:
   
     canvas.cd()
     self.tlatex.DrawLatex(0.33,0.96,"CMS Internal")
-    self.tlatex.DrawLatex(0.75,0.96,"#sqrt{s}=8 TeV, L=%.2f fb^{-1}" % lumi)
+    self.tlatex.DrawLatex(0.75,0.96,"#sqrt{{s}}={0}, L={1:.1f} fb^{{-1}}".format(energyStr,lumi))
 
 class CompareTwoHists:
   def __init__(self, hist1,hist2, canvas, xtitle, ytitle="Events",nDivX=7,nDivPullY=5,xlimits=[],ylimits=[],pullHistRangeY=[0.0,2.0],isPreliminary=True,is7TeV=False,lumi=5.0):
@@ -856,7 +856,7 @@ class CompareTwoHists:
       self.tlatex.DrawLatex(0.75,0.96,"#sqrt{s}=8 TeV, L=%.2f fb^{-1}" % lumi)
 
 class CompareTwoHistsAndData:
-  def __init__(self, hist1,hist2, data, canvas, xtitle, ytitle="Events",nDivX=7,nDivPullY=5,xlimits=[],ylimits=[],pullHistRangeY=[0.0,2.0],isPreliminary=True,is7TeV=False,lumi=5.0,logy=False,integralPlot=False):
+  def __init__(self, hist1,hist2, data, canvas, xtitle, ytitle="Events",nDivX=7,nDivPullY=5,xlimits=[],ylimits=[],pullHistRangeY=[0.0,2.0],isPreliminary=True,is7TeV=False,lumi=5.0,logy=False,integralPlot=False,energyStr="8TeV"):
     nBinsX = hist1.GetNbinsX()
     assert(nBinsX == hist2.GetNbinsX())
     assert(nBinsX == data.GetNbinsX())
@@ -998,7 +998,7 @@ class CompareTwoHistsAndData:
   
     canvas.cd()
     self.tlatex.DrawLatex(0.33,0.96,"CMS Internal")
-    self.tlatex.DrawLatex(0.75,0.96,"#sqrt{s}=8 TeV, L=%.2f fb^{-1}" % lumi)
+    self.tlatex.DrawLatex(0.75,0.96,"#sqrt{{s}}={0}, L={1:.1f} fb^{{-1}}".format(energyStr,lumi))
 
 
 def getMedianAndQuantileInterval(hist,amountForQuantile):

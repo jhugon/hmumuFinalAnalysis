@@ -151,7 +151,7 @@ for i in backgroundList:
       filename = dataDir+i+".root"
       if not os.path.exists(filename):
           continue
-      tmp = Dataset(filename,legendEntries[i],colors[i],scaleFactors[i])
+      tmp = Dataset(filename,getLegendEntry(i),getColor(i),scaleFactors[i])
       if tmp.isZombie():
         print ("Warning: file for dataset {0} is Zombie!!".format(i))
         continue
@@ -167,7 +167,7 @@ for i in signalList:
       filename = dataDir+i+".root"
       if not os.path.exists(filename):
           continue
-      tmp = Dataset(filename,legendEntries[i],colors[i],scaleFactors[i],isSignal=True)
+      tmp = Dataset(filename,getLegendEntry(i),getColor(i),scaleFactors[i],isSignal=True)
       if tmp.isZombie():
         print ("Warning: file for dataset {0} is Zombie!!".format(i))
         continue

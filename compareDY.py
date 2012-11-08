@@ -9,6 +9,9 @@ import sys
 dataDir = "input/"
 outDir = "output/"
 
+RUNPERIOD="8TeV"
+LUMI=lumiDict[RUNPERIOD]
+
 LOGY=False
 integralPlot=False
 
@@ -163,12 +166,13 @@ class Dataset:
 
 dyDatasetList = []
 for i in dyList:
+  i += "_"+RUNPERIOD
   if i in scaleFactors:
     if scaleFactors[i]>0.0:
       filename = dataDir+i+".root"
       if not os.path.exists(filename):
           continue
-      tmp = Dataset(filename,dyLegendEntries[i],colors[i],scaleFactors[i])
+      tmp = Dataset(filename,dyLegendEntries[re.sub(r"_.*","",i)],getColor(i),scaleFactors[i])
       if tmp.isZombie():
         print ("Warning: file for dataset {0} is Zombie!!".format(i))
         continue
@@ -179,12 +183,13 @@ for i in dyList:
 
 bkgDatasetList = []
 for i in backgroundList:
+  i += "_"+RUNPERIOD
   if i in scaleFactors:
     if scaleFactors[i]>0.0:
       filename = dataDir+i+".root"
       if not os.path.exists(filename):
           continue
-      tmp = Dataset(filename,legendEntries[i],colors[i],scaleFactors[i])
+      tmp = Dataset(filename,getLegendEntry(i),getColor(i),scaleFactors[i])
       if tmp.isZombie():
         print ("Warning: file for dataset {0} is Zombie!!".format(i))
         continue
@@ -195,12 +200,13 @@ for i in backgroundList:
 
 sigDatasetList = []
 for i in signalList:
+  i += "_"+RUNPERIOD
   if i in scaleFactors:
     if scaleFactors[i]>0.0:
       filename = dataDir+i+".root"
       if not os.path.exists(filename):
           continue
-      tmp = Dataset(filename,legendEntries[i],colors[i],scaleFactors[i],isSignal=True)
+      tmp = Dataset(filename,getLegendEntry(i),getColor(i),scaleFactors[i],isSignal=True)
       if tmp.isZombie():
         print ("Warning: file for dataset {0} is Zombie!!".format(i))
         continue
@@ -210,12 +216,12 @@ for i in signalList:
       sigDatasetList.append(tmp)
 
 realDatasetList = []
-for i in dataList:
+for i in dataDict[RUNPERIOD]:
       filename = dataDir+i+".root"
       if not os.path.exists(filename):
         print("Error: Data file not found {}, exiting".format(filename))
         sys.exit(1)
-      tmp = Dataset(filename,"CMS Data 2012",1,1.0,isData=True)
+      tmp = Dataset(filename,getLegendEntry(RUNPERIOD),1,1.0,isData=True)
       if tmp.isZombie():
         print ("Error: file for dataset {0} is Zombie!!".format(i))
         sys.exit(1)
@@ -294,7 +300,7 @@ for histName in bkgDatasetList[0].hists:
 
   histBaseName = re.sub(r".*/","",histName)
   xtitle = histNames[histBaseName]["xlabel"]
-  stack = CompareTwoHistsAndData(dy0Hist,dy1Hist, dataHist, canvas, xtitle,lumi=LUMI,logy=LOGY,xlimits=histNames[histBaseName]["xlimits"],integralPlot=integralPlot)
+  stack = CompareTwoHistsAndData(dy0Hist,dy1Hist, dataHist, canvas, xtitle,lumi=LUMI,logy=LOGY,xlimits=histNames[histBaseName]["xlimits"],integralPlot=integralPlot,energyStr=RUNPERIOD)
 
   legLeftPos = stdLegendPos[0]
   if histNames[histBaseName].has_key("leg"):
@@ -314,4 +320,4 @@ for histName in bkgDatasetList[0].hists:
   saveName = saveName.replace("[","")
   saveName = saveName.replace("]","")
   saveName = saveName.replace("/","_")
-  saveAs(canvas,outDir+saveName)
+  saveAs(canvas,outDir+saveName+"_"+RUNPERIOD)
