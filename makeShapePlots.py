@@ -44,11 +44,12 @@ class ShapePlotter:
 
     self.lumi = -1
     self.lumiStr = ""
-    tmpMatch = re.search(r"([\w]*)_([0-9]+)\.root",filename)
+    self.energyStr = ""
+    tmpMatch = re.search(r"([\w]*)_(.+)_([0-9]+)\.root",filename)
     if tmpMatch:
-      self.lumi = int(tmpMatch.group(2))
+      self.lumi = int(tmpMatch.group(3))
       self.lumiStr = "L = {0} fb^{{-1}}".format(self.lumi)
-
+      self.energyStr = tmpMatch.group(2)
 
     self.colors = [root.kRed-9, root.kGreen-9, root.kBlue-9, root.kMagenta-9, root.kCyan-9]
     self.fillStyles = [3004,3005,3003,3006,3007]
@@ -401,9 +402,9 @@ class ShapePlotter:
       tlatex.SetTextAlign(32)
       tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.titleMap[channelName])
       tlatex.DrawLatex(legPos[0]-0.01,0.875,self.lumiStr)
-      tlatex.DrawLatex(legPos[0]-0.01,0.82,"#sqrt{s}=8 TeV")
+      tlatex.DrawLatex(legPos[0]-0.01,0.82,"#sqrt{s}="+self.energyStr)
 
-      canvas.SaveAs(outDir+"/"+channelName+".png")
+      canvas.SaveAs(outDir+"/"+channelName+"_"+self.energyStr+".png")
 
       self.padList.extend([canvas,pad1,pad2])
 

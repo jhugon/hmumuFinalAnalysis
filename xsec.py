@@ -149,6 +149,8 @@ def getLegendEntry(ds):
   return legendEntries[re.sub(r"_.*","",ds)]
 def getColor(ds):
   return colors[re.sub(r"_.*","",ds)]
+def appendPeriod(l,period):
+  return [i+"_"+period for i in l]
 
 ##################################################
 

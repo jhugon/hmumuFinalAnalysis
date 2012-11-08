@@ -916,12 +916,23 @@ class DataCardMaker:
 
     if nuisanceMap == None:
       self.nuisance = {}
-      self.nuisance["lumi"] = (0.044,["vbfHmumu125","ggHmumu125","wHmumu125","zHmumu125"])
-      self.nuisance["xs_ggH"] = (0.147,["ggHmumu125"])
-      self.nuisance["xs_vbfH"] = (0.03,["vbfHmumu125"])
-      self.nuisance["xs_wH"] = (0.041,["wHmumu125"])
-      self.nuisance["xs_zH"] = (0.051,["zHmumu125"])
-      self.nuisance["br_Hmm"] = (0.06,["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"])
+      self.nuisance["lumi"] = (0.044,[
+                "vbfHmumu125_8TeV","ggHmumu125_8TeV","wHmumu125_8TeV","zHmumu125_8TeV",
+                "vbfHmumu125_7TeV","ggHmumu125_7TeV","wHmumu125_7TeV","zHmumu125_7TeV"
+                ])
+      self.nuisance["br_Hmm"] = (0.06,[
+                "vbfHmumu125_8TeV","ggHmumu125_8TeV","wHmumu125_8TeV","zHmumu125_8TeV",
+                "vbfHmumu125_7TeV","ggHmumu125_7TeV","wHmumu125_7TeV","zHmumu125_7TeV"
+                ])
+      self.nuisance["xs_ggH_8TeV"] = (0.147,["ggHmumu125_8TeV"])
+      self.nuisance["xs_vbfH_8TeV"] = (0.03,["vbfHmumu125_8TeV"])
+      self.nuisance["xs_wH_8TeV"] = (0.041,["wHmumu125_8TeV"])
+      self.nuisance["xs_zH_8TeV"] = (0.051,["zHmumu125_8TeV"])
+
+      self.nuisance["xs_ggH_7TeV"] = (0.147,["ggHmumu125_7TeV"])
+      self.nuisance["xs_vbfH_7TeV"] = (0.024,["vbfHmumu125_7TeV"])
+      self.nuisance["xs_wH_7TeV"] = (0.043,["wHmumu125_7TeV"])
+      self.nuisance["xs_zH_7TeV"] = (0.051,["zHmumu125_7TeV"])
       #self.nuisance["bg_dy"] = (0.05,["DYJetsToLL"])
       #self.nuisance["bg_tt"] = (0.05,["ttbar"])
     else:
@@ -1484,14 +1495,24 @@ if __name__ == "__main__":
 
   directory = "input/"
   outDir = "statsCards/"
+  periods = ["7TeV","8TeV"]
   analyses = ["VBFPresel","IncPresel","VBFLoose","VBFMedium","VBFTight","VBFVeryTight","Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250","IncBDTSig80","VBFBDTSig80"]
   histPostFix="/mDiMu"
   #analyses = ["mDiMu"]
   #histPostFix=""
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
   backgroundNames= ["DYToMuMu","ttbar","WW","WZ","ZZ"]
-  dataNames=[]
-  #dataNames=["SingleMuRun2012Av1.root","SingleMuRun2012Bv1.root","SingleMuRun2012Cv1.root"]
+  dataDict = {}
+  dataDict["8TeV"] = [
+    #"SingleMuRun2012Av1",
+    #"SingleMuRun2012Bv1",
+    #"SingleMuRun2012Cv1",
+    #"SingleMuRun2012Cv2"
+  ]
+  dataDict["7TeV"] = [
+    #"SingleMuRun2011Av1",
+    #"SingleMuRun2011Bv1"
+  ]
   lumiListLong = [5,10,15,20,25,30,40,50,75,100,200,500,1000,2000,5000]
   lumiList = [10,20,30,100]
   lumiList = [20]
@@ -1508,75 +1529,85 @@ if __name__ == "__main__":
   print("Creating Threads...")
   threads = []
   for i in lumiList:
-    threads.append(
-      ThreadedCardMaker(
-        #__init__ args:
-        directory,["VBFLoose","VBFMedium","VBFTight","VBFVeryTight"],signalNames,backgroundNames,dataNames,
-        rebin=[MassRebin], bakShape=shape,
-        controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-        controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
-        #write args:
-        outfilename=outDir+"VBFCat"+"_"+str(i)+".txt",lumi=i
-      )
-    )
-    threads.append(
-      ThreadedCardMaker(
-        #__init__ args:
-        directory,["Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250"],signalNames,backgroundNames,dataNames,
-        rebin=[MassRebin], bakShape=shape,
-        controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-        controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
-        #write args:
-        outfilename=outDir+"IncCat"+"_"+str(i)+".txt",lumi=i
-      )
-    )
-    for ana in analyses:
-      tmp = ThreadedCardMaker(
-        #__init__ args:
-        directory,[ana],signalNames,backgroundNames,dataNames,rebin=[MassRebin],bakShape=shape,
-        controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-        controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
-        #write args:
-        outfilename=outDir+ana+"_"+str(i)+".txt",lumi=i
+    for p in periods:
+      threads.append(
+        ThreadedCardMaker(
+          #__init__ args:
+          directory,["VBFLoose","VBFMedium","VBFTight","VBFVeryTight"],
+          appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
+          rebin=[MassRebin], bakShape=shape,
+          controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
+          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
+          #write args:
+          outfilename=outDir+"VBFCat"+"_"+p+"_"+str(i)+".txt",lumi=i
         )
-      threads.append(tmp)
-#    ## Cut and Count!!!
-#    for ana in analyses:
-#      tmp = ThreadedCardMaker(
-#        #__init__ args:
-#        directory,[ana],signalNames,backgroundNames,dataNames,rebin=[MassRebin],bakShape=shape,
-#        controlRegionLow=[123.0,125.0],controlRegionHigh=[125.0,127.0],histNameSuffix=histPostFix,
-#        controlRegionVeryLow=controlRegionVeryLow,
-#        #write args:
-#        outfilename=outDir+"CNC_"+ana+"_"+str(i)+".txt",lumi=i,
-#
-#        shapeDataCardMaker=False
-#        )
-#      threads.append(tmp)
+      )
+      threads.append(
+        ThreadedCardMaker(
+          #__init__ args:
+          directory,["Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250"],
+          appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
+          rebin=[MassRebin], bakShape=shape,
+          controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
+          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
+          #write args:
+          outfilename=outDir+"IncCat"+"_"+p+"_"+str(i)+".txt",lumi=i
+        )
+      )
+      for ana in analyses:
+        tmp = ThreadedCardMaker(
+          #__init__ args:
+          directory,[ana],
+          appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
+          rebin=[MassRebin],bakShape=shape,
+          controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
+          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
+          #write args:
+          outfilename=outDir+ana+"_"+p+"_"+str(i)+".txt",lumi=i
+          )
+        threads.append(tmp)
+#      ## Cut and Count!!!
+#      for ana in analyses:
+#        tmp = ThreadedCardMaker(
+#          #__init__ args:
+#          directory,[ana],
+#          appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
+#          rebin=[MassRebin],bakShape=shape,
+#          controlRegionLow=[123.0,125.0],controlRegionHigh=[125.0,127.0],histNameSuffix=histPostFix,
+#          controlRegionVeryLow=controlRegionVeryLow,
+#          #write args:
+#          outfilename=outDir+"CNC_"+ana+"_"+p+"_"+str(i)+".txt",lumi=i,
+#  
+#          shapeDataCardMaker=False
+#          )
+#        threads.append(tmp)
 
   for i in lumiListLong:
-    threads.append(
-      ThreadedCardMaker(
-        #__init__ args:
-        directory,["VBFLoose","VBFMedium","VBFTight","VBFVeryTight","Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250"],signalNames,backgroundNames,dataNames,
-        rebin=[MassRebin], bakShape=shape,
-        controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-        controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
-        #write args:
-        outfilename=outDir+"AllCat"+"_"+str(i)+".txt",lumi=i
+    for p in periods:
+      threads.append(
+        ThreadedCardMaker(
+          #__init__ args:
+          directory,["VBFLoose","VBFMedium","VBFTight","VBFVeryTight","Pt0to30","Pt30to50","Pt50to125","Pt125to250","Pt250"],
+          appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
+          rebin=[MassRebin], bakShape=shape,
+          controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
+          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
+          #write args:
+          outfilename=outDir+"AllCat"+"_"+p+"_"+str(i)+".txt",lumi=i
+        )
       )
-    )
-    threads.append(
-      ThreadedCardMaker(
-        #__init__ args:
-        directory,["IncBDTSig80","VBFBDTSig80"],signalNames,backgroundNames,dataNames,
-        rebin=[MassRebin], bakShape=shape,
-        controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-        controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
-        #write args:
-        outfilename=outDir+"BDTSig80"+"_"+str(i)+".txt",lumi=i
+      threads.append(
+        ThreadedCardMaker(
+          #__init__ args:
+          directory,["IncBDTSig80","VBFBDTSig80"],
+          appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
+          rebin=[MassRebin], bakShape=shape,
+          controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
+          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
+          #write args:
+          outfilename=outDir+"BDTSig80"+"_"+p+"_"+str(i)+".txt",lumi=i
+        )
       )
-    )
 
   nThreads = len(threads)
   print("nProcs: {0}".format(NPROCS))
