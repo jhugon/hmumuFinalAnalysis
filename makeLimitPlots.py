@@ -9,7 +9,6 @@ import matplotlib.pyplot as mpl
 import numpy
 
 dirName = "statsInput/"
-caption2 = "#sqrt{s} = 8 TeV"
 
 outDir = "statsOutput/"
 
@@ -21,7 +20,7 @@ canvas.SetLogx(1)
 canvas.SetLogy(1)
 
 mpl.rcParams["font.family"] = "sans-serif"
-print mpl.rcParams["backend"]
+#print mpl.rcParams["backend"]
 
 #######################################
 
@@ -86,7 +85,7 @@ def getData(fileString,matchString=r"_([\d]+).txt.out",dontMatchStrings=[],doSor
   return result
 
 class RelativePlot:
-  def __init__(self,dataPoints, canvas, legend, caption, ylabel="Expected 95% CL Limit #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",ylimits=[],xlimits=[],vertLines=[20.0],showObs=False):
+  def __init__(self,dataPoints, canvas, legend, caption, ylabel="Expected 95% CL Limit #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",ylimits=[],xlimits=[],vertLines=[20.0],showObs=False,energyStr="8TeV"):
     expGraph = root.TGraph()
     expGraph.SetLineStyle(2)
     oneSigGraph = root.TGraphAsymmErrors()
@@ -291,37 +290,42 @@ comparisonMap = {
 
 ylimits=[0.1,100.0]
 
-allfiles = glob.glob(dirName+"*.txt.out")
+for period in ["7TeV","8TeV"]:
+  allfiles = glob.glob(dirName+"*_"+period+"_*.txt.out")
+  
+  ## Limit v. Lumi
+  energyStr = ""
+  plots = set()
+  for fn in allfiles:
+    match = re.search(r".*/(.+)_(.+)_[\d]+.txt.out",fn)
+    badPlot = re.search(r"Silly",fn)
+    badPlot2 = re.search(r"Silly",fn)
+    if match and not (badPlot or badPlot2):
+      plots.add(match.group(1))
+      energyStr = match.group(2)
 
-## Limit v. Lumi
-plots = set()
-for fn in allfiles:
-  match = re.search(r".*/(.*)_[\d]+.txt.out",fn)
-  badPlot = re.search(r"PM",fn)
-  badPlot2 = re.search(r"CNC",fn)
-  if match and not (badPlot or badPlot2):
-    plots.add(match.group(1))
-
-legend = root.TLegend(0.58,0.70,0.9,0.9)
-legend.SetFillColor(0)
-legend.SetLineColor(0)
-for plotName in plots:
-  data = getData(dirName+plotName+"_*.txt.out")
-  if len(data)==0:
-    continue
-  incPlot = RelativePlot(data,canvas,legend,titleMap[plotName],caption2=caption2,ylimits=ylimits)
-  saveAs(canvas,outDir+plotName)
-
-## Compare all types of limits
-compareData = getData(dirName+"*_20.txt.out",matchString=r"(.*)_[\d]+.txt.out",dontMatchStrings=[r"CNC",r"PM","Presel"],doSort=False)
-#print compareData
-comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=True)
-comparePlot.fig.text(0.9,0.2,"$\mathcal{L}=20$ fb$^{-1}$",horizontalalignment="right",size="x-large")
-comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=8$ TeV",horizontalalignment="right",size="x-large")
-comparePlot.fig.text(0.9,0.13,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
-comparePlot.save(outDir+"compareObs")
-
-comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=False)
-comparePlot.fig.text(0.9,0.2,"$\mathcal{L}=20$ fb$^{-1}$",horizontalalignment="right",size="x-large")
-comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=8$ TeV",horizontalalignment="right",size="x-large")
-comparePlot.save(outDir+"compare")
+  caption2 = "#sqrt{s}="+energyStr
+  legend = root.TLegend(0.58,0.70,0.9,0.9)
+  legend.SetFillColor(0)
+  legend.SetLineColor(0)
+  for plotName in plots:
+    data = getData(dirName+plotName+"_"+energyStr+"_*.txt.out")
+    if len(data)<=1:
+      continue
+    incPlot = RelativePlot(data,canvas,legend,titleMap[plotName],caption2=caption2,ylimits=ylimits,energyStr=energyStr)
+    saveAs(canvas,outDir+plotName+"_"+energyStr)
+  
+  ## Compare all types of limits
+  desiredLumiStr="20"
+  compareData = getData(dirName+"*_"+energyStr+"_"+desiredLumiStr+".txt.out",matchString=r"(.+)_(.+)_[\d]+.txt.out",dontMatchStrings=[r"CNC",r"PM","Presel"],doSort=False)
+  #print compareData
+  comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=True)
+  comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+desiredLumiStr+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
+  comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStr,horizontalalignment="right",size="x-large")
+  comparePlot.fig.text(0.9,0.13,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
+  comparePlot.save(outDir+"compareObs"+"_"+energyStr)
+  
+  comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=False)
+  comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+desiredLumiStr+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
+  comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStr,horizontalalignment="right",size="x-large")
+  comparePlot.save(outDir+"compare"+"_"+energyStr)
