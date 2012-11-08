@@ -82,8 +82,12 @@ def getRooVars(directory,signalNames,histNameBase,analysis):
     hist = None
     is2D = False
     for name in signalNames:
-      tmpF = root.TFile(directory+name+".root")
-      hist = tmpF.Get(histNameBase+analysis)
+      filename = directory+name+".root"
+      histName = histNameBase+analysis
+      print("file name: {0}".format(filename))
+      print("hist name: {0}".format(histName))
+      tmpF = root.TFile(filename)
+      hist = tmpF.Get(histName)
       break
     if hist.InheritsFrom("TH2"):
       is2D = True

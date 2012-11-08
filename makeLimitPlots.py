@@ -8,23 +8,59 @@ import re
 import matplotlib.pyplot as mpl
 import numpy
 
-dirName = "statsInput/"
+#######################################
 
-outDir = "statsOutput/"
+titleMap = {
+  "AllCat":"H->#mu#mu Catagories Combination",
+  "IncCat":"Inclusive Categories Comb.",
+  "VBFCat":"VBF Categories Comb.",
 
-root.gErrorIgnoreLevel = root.kWarning
-root.gROOT.SetBatch(True)
-setStyle()
-canvas = root.TCanvas()
-canvas.SetLogx(1)
-canvas.SetLogy(1)
+  "IncPresel":"Inclusive Preselection",
+  "VBFPresel":"VBF Preselection",
 
-mpl.rcParams["font.family"] = "sans-serif"
-#print mpl.rcParams["backend"]
+  "Pt0to30":"p_{T}^{#mu#mu} #in [0,30]",
+  "Pt30to50":"p_{T}^{#mu#mu} #in [30,50]",
+  "Pt50to125":"p_{T}^{#mu#mu} #in [50,125]",
+  "Pt125to250":"p_{T}^{#mu#mu} #in [125,250]",
+  "Pt250":"p_{T}^{#mu#mu}>250",
+
+  "VBFLoose":"VBFL",
+  "VBFMedium":"VBFM",
+  "VBFTight":"VBFT",
+  "VBFVeryTight":"VBFVT",
+
+  "BDTSig80":"H->#mu#mu BDT Combination",
+  "IncBDTSig80":"Inclusive BDT Cut",
+  "VBFBDTSig80":"VBF BDT Cut"
+}
+
+comparisonMap = {
+  "AllCat":"All Cat. Comb.",
+  "IncCat":"Inc. Cat. Comb.",
+  "VBFCat":"VBF Cat. Comb.",
+
+  "IncPresel":"Inc. Presel.",
+  "VBFPresel":"VBF Presel.",
+
+  "Pt0to30":"$p_{T}^{\mu\mu} \in [0,30]$",
+  "Pt30to50":"$p_{T}^{\mu\mu} \in [30,50]$",
+  "Pt50to125":"$p_{T}^{\mu\mu} \in [50,125]$",
+  "Pt125to250":"$p_{T}^{\mu\mu} \in [125,250]$",
+  "Pt250":"$p_{T}^{\mu\mu}>250$",
+
+  "VBFLoose":"VBFL",
+  "VBFMedium":"VBFM",
+  "VBFTight":"VBFT",
+  "VBFVeryTight":"VBFVT",
+
+  "BDTSig80":"BDT Cut Comb.",
+  "IncBDTSig80":"Inc. BDT Cut",
+  "VBFBDTSig80":"VBF BDT Cut"
+}
 
 #######################################
 
-def getData(fileString,matchString=r"_([\d]+).txt.out",dontMatchStrings=[],doSort=True):
+def getData(fileString,matchString=r"_([-\d.]+)\.txt\.out",dontMatchStrings=[],doSort=True):
   def sortfun(s):
     match = re.search(matchString,s)
     result = 1e12
@@ -85,7 +121,7 @@ def getData(fileString,matchString=r"_([\d]+).txt.out",dontMatchStrings=[],doSor
   return result
 
 class RelativePlot:
-  def __init__(self,dataPoints, canvas, legend, caption, ylabel="Expected 95% CL Limit #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",ylimits=[],xlimits=[],vertLines=[20.0],showObs=False,energyStr="8TeV"):
+  def __init__(self,dataPoints, canvas, legend, caption, ylabel="Expected 95% CL Limit #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV"):
     expGraph = root.TGraph()
     expGraph.SetLineStyle(2)
     oneSigGraph = root.TGraphAsymmErrors()
@@ -240,92 +276,60 @@ class ComparePlot:
       self.ax1.text(xloc, yloc, valueStr, horizontalalignment=align,
             verticalalignment='center', color=clr, weight='bold',size=size)
 
-titleMap = {
-  "AllCat":"H->#mu#mu Catagories Combination",
-  "IncCat":"Inclusive Categories Comb.",
-  "VBFCat":"VBF Categories Comb.",
+if __name__ == "__main__":
 
-  "IncPresel":"Inclusive Preselection",
-  "VBFPresel":"VBF Preselection",
-
-  "Pt0to30":"p_{T}^{#mu#mu} #in [0,30]",
-  "Pt30to50":"p_{T}^{#mu#mu} #in [30,50]",
-  "Pt50to125":"p_{T}^{#mu#mu} #in [50,125]",
-  "Pt125to250":"p_{T}^{#mu#mu} #in [125,250]",
-  "Pt250":"p_{T}^{#mu#mu}>250",
-
-  "VBFLoose":"VBFL",
-  "VBFMedium":"VBFM",
-  "VBFTight":"VBFT",
-  "VBFVeryTight":"VBFVT",
-
-  "BDTSig80":"H->#mu#mu BDT Combination",
-  "IncBDTSig80":"Inclusive BDT Cut",
-  "VBFBDTSig80":"VBF BDT Cut"
-}
-
-comparisonMap = {
-  "AllCat":"All Cat. Comb.",
-  "IncCat":"Inc. Cat. Comb.",
-  "VBFCat":"VBF Cat. Comb.",
-
-  "IncPresel":"Inc. Presel.",
-  "VBFPresel":"VBF Presel.",
-
-  "Pt0to30":"$p_{T}^{\mu\mu} \in [0,30]$",
-  "Pt30to50":"$p_{T}^{\mu\mu} \in [30,50]$",
-  "Pt50to125":"$p_{T}^{\mu\mu} \in [50,125]$",
-  "Pt125to250":"$p_{T}^{\mu\mu} \in [125,250]$",
-  "Pt250":"$p_{T}^{\mu\mu}>250$",
-
-  "VBFLoose":"VBFL",
-  "VBFMedium":"VBFM",
-  "VBFTight":"VBFT",
-  "VBFVeryTight":"VBFVT",
-
-  "BDTSig80":"BDT Cut Comb.",
-  "IncBDTSig80":"Inc. BDT Cut",
-  "VBFBDTSig80":"VBF BDT Cut"
-}
-
-ylimits=[0.1,100.0]
-
-for period in ["7TeV","8TeV"]:
-  allfiles = glob.glob(dirName+"*_"+period+"_*.txt.out")
+  dirName = "statsInput/"
   
-  ## Limit v. Lumi
-  energyStr = ""
-  plots = set()
-  for fn in allfiles:
-    match = re.search(r".*/(.+)_(.+)_[\d]+.txt.out",fn)
-    badPlot = re.search(r"Silly",fn)
-    badPlot2 = re.search(r"Silly",fn)
-    if match and not (badPlot or badPlot2):
-      plots.add(match.group(1))
-      energyStr = match.group(2)
+  outDir = "statsOutput/"
+  
+  root.gErrorIgnoreLevel = root.kWarning
+  root.gROOT.SetBatch(True)
+  setStyle()
+  canvas = root.TCanvas()
+  canvas.SetLogx(1)
+  canvas.SetLogy(1)
+  
+  mpl.rcParams["font.family"] = "sans-serif"
+  #print mpl.rcParams["backend"]
 
-  caption2 = "#sqrt{s}="+energyStr
-  legend = root.TLegend(0.58,0.70,0.9,0.9)
-  legend.SetFillColor(0)
-  legend.SetLineColor(0)
-  for plotName in plots:
-    data = getData(dirName+plotName+"_"+energyStr+"_*.txt.out")
-    if len(data)<=1:
-      continue
-    incPlot = RelativePlot(data,canvas,legend,titleMap[plotName],caption2=caption2,ylimits=ylimits,energyStr=energyStr)
-    saveAs(canvas,outDir+plotName+"_"+energyStr)
+  ylimits=[0.1,100.0]
   
-  ## Compare all types of limits
-  desiredLumiStr="20"
-  compareData = getData(dirName+"*_"+energyStr+"_"+desiredLumiStr+".txt.out",matchString=r"(.+)_(.+)_[\d]+.txt.out",dontMatchStrings=[r"CNC",r"PM","Presel"],doSort=False)
-  #print compareData
-  comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=True)
-  comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+desiredLumiStr+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
-  comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStr,horizontalalignment="right",size="x-large")
-  comparePlot.fig.text(0.9,0.13,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
-  comparePlot.save(outDir+"compareObs"+"_"+energyStr)
+  for period in ["7TeV","8TeV"]:
+    allfiles = glob.glob(dirName+"*_"+period+"_*.txt.out")
+    
+    ## Limit v. Lumi
+    energyStr = ""
+    plots = set()
+    for fn in allfiles:
+      match = re.search(r".*/(.+)_(.+)_[\d]+.txt.out",fn)
+      badPlot = re.search(r"Silly",fn)
+      badPlot2 = re.search(r"Silly",fn)
+      if match and not (badPlot or badPlot2):
+        plots.add(match.group(1))
+        energyStr = match.group(2)
   
-  comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=False)
-  comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+desiredLumiStr+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
-  comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStr,horizontalalignment="right",size="x-large")
+    caption2 = "#sqrt{s}="+energyStr
+    legend = root.TLegend(0.58,0.70,0.9,0.9)
+    legend.SetFillColor(0)
+    legend.SetLineColor(0)
+    for plotName in plots:
+      data = getData(dirName+plotName+"_"+energyStr+"_*.txt.out")
+      if len(data)<=1:
+        continue
+      incPlot = RelativePlot(data,canvas,legend,titleMap[plotName],caption2=caption2,ylimits=ylimits,energyStr=energyStr)
+      saveAs(canvas,outDir+plotName+"_"+energyStr)
+    
+    ## Compare all types of limits
+    desiredLumiStr="20"
+    compareData = getData(dirName+"*_"+energyStr+"_"+desiredLumiStr+".txt.out",matchString=r"(.+)_(.+)_[\d]+.txt.out",dontMatchStrings=[r"CNC",r"PM","Presel"],doSort=False)
+    #print compareData
+    comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=True)
+    comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+desiredLumiStr+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
+    comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStr,horizontalalignment="right",size="x-large")
+    comparePlot.fig.text(0.9,0.13,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
+    comparePlot.save(outDir+"compareObs"+"_"+energyStr)
+    
+    comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=False)
+    comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+desiredLumiStr+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
+    comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStr,horizontalalignment="right",size="x-large")
   comparePlot.save(outDir+"compare"+"_"+energyStr)
