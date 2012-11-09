@@ -27,7 +27,7 @@ def makeSillyHist(inHist,outHist,cutVal):
         outHist.SetBinContent(iX,mySum)
 
 def makeSillyFiles(inDir,outDir, runperiod,
-            rebinY=100
+            rebinY=1
     ):
   incCuts = set()
   vbfCuts = set()
@@ -119,7 +119,7 @@ if __name__ == "__main__":
       #"SingleMuRun2011Bv1"
     ]
     
-    MassRebin = 4 # 4 Bins per GeV originally
+    MassRebin = 1 # 4 Bins per GeV originally
     controlRegionVeryLow=[80,110]
     controlRegionLow=[110,120]
     controlRegionHigh=[130,160]

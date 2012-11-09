@@ -439,7 +439,7 @@ if __name__ == "__main__":
   plotRange= [115,150]
   #plotRange= []
 
-  rebin=2
+  rebin=1
 
   for fn in glob.glob(dataDir+"*20.root"):
     #print fn

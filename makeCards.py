@@ -1503,7 +1503,7 @@ if __name__ == "__main__":
   lumiList = [20]
   lumiListLong = lumiList
 
-  MassRebin = 4 # 4 Bins per GeV originally
+  MassRebin = 1 # 4 Bins per GeV originally
   controlRegionVeryLow=[80,110]
   controlRegionLow=[110,120]
   controlRegionHigh=[130,160]

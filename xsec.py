@@ -24,6 +24,9 @@ xsec["zHmumu125_8TeV"] = 8.675e-5 * scaleHiggsBy
 xsec["wHmumu125_8TeV"] = 1.533e-4 * scaleHiggsBy
 
 xsec["DYJetsToLL_8TeV"] = 3503.71   ## madgraph
+xsec["DY2JetsToLL_8TeV"] = 181.   ## madgraph
+xsec["DY3JetsToLL_8TeV"] = 51.1   ## madgraph
+xsec["DY4JetsToLL_8TeV"] = 23.04  ## madgraph
 xsec["ttbar_8TeV"] = 225.197   ## madgraph
 
 xsec["DYToMuMu_8TeV"] = 5745.25/3.0   ## powheg
@@ -56,6 +59,9 @@ nEventsMap["vbfHmumu125_8TeV"] = 9990
 nEventsMap["zHmumu125_8TeV"] = 10000
 nEventsMap["wHmumu125_8TeV"] = 10000
 nEventsMap["DYJetsToLL_8TeV"] = 29659503
+nEventsMap["DY2JetsToLL_8TeV"] = 0.000001
+nEventsMap["DY3JetsToLL_8TeV"] = 11015445
+nEventsMap["DY4JetsToLL_8TeV"] = 0.000001
 nEventsMap["ttbar_8TeV"] = 6923750
 nEventsMap["DYToMuMu_8TeV"] = 48719386
 nEventsMap["DYToTauTau_8TeV"] = 3295238
@@ -113,6 +119,9 @@ dataDict["7TeV"] = [
 
 legendEntries = {}
 legendEntries["DYJetsToLL"] = "DY+Jets"
+legendEntries["DY2JetsToLL"] = "DY+Jets"
+legendEntries["DY3JetsToLL"] = "DY+Jets"
+legendEntries["DY4JetsToLL"] = "DY+Jets"
 legendEntries["DYToMuMu"] = "DY->#mu#mu"
 legendEntries["WJetsToLNu"] = "W\rightarrow\ell\nu+Jets"
 legendEntries["ttbar"] = "t#bar{t}"
@@ -132,6 +141,9 @@ legendEntries["8TeV"] = "CMS DATA 2012"
 
 colors = {}
 colors["DYJetsToLL"] = root.kOrange
+colors["DY2JetsToLL"] = root.kOrange
+colors["DY3JetsToLL"] = root.kOrange
+colors["DY4JetsToLL"] = root.kOrange
 colors["DYToMuMu"] = root.kOrange
 colors["WJetsToLNu"] = root.kCyan
 colors["vbfHmumu125"] = root.kBlue
@@ -199,9 +211,9 @@ def appendPeriod(l,period):
 if __name__ == "__main__":
   if scaleHiggsBy != 1:  
     print("**** Higgs XSEC Scaled by Factor of: {} ****".format(scaleHiggsBy))
-  print("Integrated Lumi for Datasets:")
+  print("Integrated Lumi for Datasets: [fb^-1]")
   for i in xsec: 
     print("{0:<15} {1:.3f}".format(i,nEventsMap[i]/xsec[i]/1000.))
-  print("xsec/nEvent Scale Factors for Datasets:")
+  print("xsec/nEvent Scale Factors for Datasets: [fb/event]")
   for i in xsec: 
     print("{0:<15} {1:.3g}".format(i,xsec[i]/nEventsMap[i]*1000.))
