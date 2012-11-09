@@ -9,7 +9,7 @@ import sys
 dataDir = "input/"
 outDir = "output/"
 
-RUNPERIOD="8TeV"
+RUNPERIOD="7TeV"
 LUMI=lumiDict[RUNPERIOD]
 
 LOGY=False
@@ -101,7 +101,8 @@ for i in nEventsMap:
   if nEventsMap[i] ==0.0:
     scaleFactors[i] = 0.0
   else:
-    scaleFactors[i] = xsec[i]*1000.0*LUMI/nEventsMap[i]
+    p = getPeriod(i)
+    scaleFactors[i] = xsec[i]*1000.0*LUMI/nEventsMap[i]*efficiencyMap[p]*mcPlotScaleFactorMap[p]
   #print "%s = %.2e" %(i,scaleFactors[i])
 
 #######################################

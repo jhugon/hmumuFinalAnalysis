@@ -770,12 +770,12 @@ class Analysis:
     self.sigHists = []
     for h,name in zip(self.sigHistsRaw,signalNames):
       counts = getIntegralAll(h,boundaries=massBounds)
-      eff = counts/nEventsMap[name]
+      eff = counts/nEventsMap[name]*efficiencyMap[getPeriod(name)]
       xs = eff*xsec[name]
       self.xsecSigTotal += xs
       self.xsecSigList.append(xs)
       self.effSigList.append(eff)
-      h.Scale(xsec[name]/nEventsMap[name])
+      h.Scale(xsec[name]/nEventsMap[name]*efficiencyMap[getPeriod(name)])
       self.sigHists.append(h)
 
     self.xsecBakTotal = 0.0
@@ -785,12 +785,12 @@ class Analysis:
     self.bakHistTotal = None
     for h,name in zip(self.bakHistsRaw,backgroundNames):
       counts = getIntegralAll(h,boundaries=massBounds)
-      eff = counts/nEventsMap[name]
+      eff = counts/nEventsMap[name]*efficiencyMap[getPeriod(name)]
       xs = eff*xsec[name]
       self.xsecBakTotal += xs
       self.xsecBakList.append(xs)
       self.effBakList.append(eff)
-      h.Scale(xsec[name]/nEventsMap[name])
+      h.Scale(xsec[name]/nEventsMap[name]*efficiencyMap[getPeriod(name)])
       self.bakHists.append(h)
       if self.bakHistTotal == None:
         self.bakHistTotal = h.Clone("bak")

@@ -136,8 +136,8 @@ legendEntries["WZ"] = "VV"
 legendEntries["ZZ"] = "VV"
 legendEntries["QCD"] = "QCD"
 
-legendEntries["7TeV"] = "CMS DATA 2011"
-legendEntries["8TeV"] = "CMS DATA 2012"
+legendEntries["7TeV"] = "CMS Data 2011"
+legendEntries["8TeV"] = "CMS Data 2012"
 
 colors = {}
 colors["DYJetsToLL"] = root.kOrange
@@ -156,6 +156,14 @@ colors["WW"] = root.kPink+9
 colors["WZ"] = root.kPink+9
 colors["ZZ"] = root.kPink+9
 colors["QCD"] = root.kSpring+8
+
+efficiencyMap = {}
+efficiencyMap["7TeV"] = 1.0
+efficiencyMap["8TeV"] = 1.0
+
+mcPlotScaleFactorMap = {}
+mcPlotScaleFactorMap["7TeV"] = 1.0
+mcPlotScaleFactorMap["8TeV"] = 1.0
 
 nuisanceMap = {}
 nuisanceMap["lumi"] = {
@@ -205,7 +213,12 @@ def getColor(ds):
   return colors[re.sub(r"_.*","",ds)]
 def appendPeriod(l,period):
   return [i+"_"+period for i in l]
-
+def getPeriod(datasetName):
+  match =  re.search(r"_(.*)")
+  if match:
+    return match.group(1)
+  else:
+    return ""
 ##################################################
 
 if __name__ == "__main__":
