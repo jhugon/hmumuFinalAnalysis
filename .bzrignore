@@ -3,6 +3,7 @@ input/*
 statsCards/*
 statsOutput/*
 statsInput/*
+bdtCutInputs/*
 shapes/*
 learn2D.png
 learnMmumu.png

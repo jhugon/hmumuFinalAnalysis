@@ -9,7 +9,7 @@ import sys
 dataDir = "input/"
 outDir = "output/"
 
-RUNPERIOD="7TeV"
+RUNPERIOD="8TeV"
 LUMI=lumiDict[RUNPERIOD]
 
 LOGY=False

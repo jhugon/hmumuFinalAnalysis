@@ -13,4 +13,5 @@ cp statsCards/*.out statsInput/.
 nice ./makeShapePlots.py
 nice ./makeLimitPlots.py
 
+rm -f bdtCutInputs/*
 nice ./makeBDTCuts.py
