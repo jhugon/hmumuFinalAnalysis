@@ -121,7 +121,7 @@ def getData(fileString,matchString=r"_([-\d.]+)\.txt\.out",dontMatchStrings=[],d
   return result
 
 class RelativePlot:
-  def __init__(self,dataPoints, canvas, legend, caption, ylabel="Expected 95% CL Limit #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV"):
+  def __init__(self,dataPoints, canvas, legend, caption, ylabel="Expected 95% CL Limit #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV"):
     expGraph = root.TGraph()
     expGraph.SetLineStyle(2)
     oneSigGraph = root.TGraphAsymmErrors()
@@ -207,6 +207,7 @@ class RelativePlot:
     tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption)
 
     tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin()-0.03,0.88,caption2)
+    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin()-0.03,0.82,caption3)
 
     for g in self.vertLines:
       g.Draw("l")

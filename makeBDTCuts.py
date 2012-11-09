@@ -27,7 +27,7 @@ def makeSillyHist(inHist,outHist,cutVal):
         outHist.SetBinContent(iX,mySum)
 
 def makeSillyFiles(inDir,outDir, runperiod,
-            rebinY=1
+            rebinY=1,step=0.01
     ):
   incCuts = set()
   vbfCuts = set()
@@ -53,24 +53,32 @@ def makeSillyFiles(inDir,outDir, runperiod,
     outFile = root.TFile(outFileName,"RECREATE")
     outFile.cd()
   
-    for iCut in range(0,20):
-      incCutVal = incLimits[0]+iCut*(incLimits[1]-incLimits[0])/10.
-      vbfCutVal = vbfLimits[0]+iCut*(vbfLimits[1]-vbfLimits[0])/10.
+    iCut = 0
+    while True:
+      incCutVal = incLimits[0]+iCut*step
+      if incCutVal > incLimits[1]:
+        break
       incCutStr = "{0:.2f}".format(incCutVal)
-      vbfCutStr = "{0:.2f}".format(vbfCutVal)
       if incCutStr not in incCuts:
         incCuts.add(incCutStr)
-      if vbfCutStr not in vbfCuts:
-        vbfCuts.add(vbfCutStr)
       outInc = out.Clone("mDiMuBDTIncCut"+incCutStr)
-      outVBF = out.Clone("mDiMuBDTVBFCut"+vbfCutStr)
-      outVBF.Reset()
       outInc.Reset()
       makeSillyHist(inc,outInc,incCutVal)
-      makeSillyHist(vbf,outVBF,vbfCutVal)
-      #print("Inc cut: {0:.2f}, sum: {1} \tVBF cut: {2:.2f}, sum: {3}".format(incCutVal,outInc.Integral(),vbfCutVal,outVBF.Integral()))
       outInc.Write()
+      iCut += 1
+    iCut = 0
+    while True:
+      vbfCutVal = vbfLimits[0]+iCut*step
+      if vbfCutVal > vbfLimits[1]:
+        break
+      vbfCutStr = "{0:.2f}".format(vbfCutVal)
+      if vbfCutStr not in vbfCuts:
+        vbfCuts.add(vbfCutStr)
+      outVBF = out.Clone("mDiMuBDTVBFCut"+vbfCutStr)
+      outVBF.Reset()
+      makeSillyHist(vbf,outVBF,vbfCutVal)
       outVBF.Write()
+      iCut += 1
     outFile.Close()
 
   return incCuts, vbfCuts
@@ -85,6 +93,10 @@ if __name__ == "__main__":
   NPROCS = 1
 
   periods = ["7TeV","8TeV"]
+  lumiDict = {}
+  lumiDict["7TeV"] = 5.0
+  lumiDict["8TeV"] = 20.0
+  
 
   dataDir = "input/"
   outDir = "bdtCutInputs/"
@@ -125,10 +137,6 @@ if __name__ == "__main__":
     controlRegionHigh=[130,160]
     shape=True
     toyData=False
-    lumiDict = {}
-    lumiDict["7TeV"] = 5.0
-    lumiDict["8TeV"] = 20.0
-  
     print("Creating Threads...")
     threads = []
     for p in periods:
@@ -241,6 +249,7 @@ if __name__ == "__main__":
         energyStr = match.group(2)
 
     caption2 = "#sqrt{s}="+energyStr
+    caption3 = "L={0:.1f} fb^{{-1}}".format(lumiDict[period])
     legend = root.TLegend(0.58,0.70,0.9,0.9)
     legend.SetFillColor(0)
     legend.SetLineColor(0)
@@ -248,7 +257,7 @@ if __name__ == "__main__":
       data = limits.getData(plotName+"_"+energyStr+"_*.txt.out")
       if len(data)<=1:
         continue
-      incPlot = limits.RelativePlot(data,canvas,legend,titleMap[plotName],caption2=caption2,ylimits=ylimits,energyStr=energyStr,xlabel="BDT Cut Value")
+      incPlot = limits.RelativePlot(data,canvas,legend,titleMap[plotName],caption2=caption2,caption3=caption3,ylimits=ylimits,energyStr=energyStr,xlabel="BDT Cut Value")
       saveAs(canvas,plotName+"_"+energyStr)
 
   print("Done.")
