@@ -76,6 +76,11 @@ def makeSillyFiles(inDir,outDir, runperiod,
   return incCuts, vbfCuts
 
 if __name__ == "__main__":
+  import argparse
+  parser = argparse.ArgumentParser(description="Creates Limit v. BDT Cut Plots For Analysis")
+  parser.add_argument("-p","--plotOnly", help="Only Re-does the plotting stage of processing",action="store_true",default=False)
+  args = parser.parse_args()
+
   root.gROOT.SetBatch(True)
   NPROCS = 1
 
@@ -85,123 +90,128 @@ if __name__ == "__main__":
   outDir = "bdtCutInputs/"
   incCutDict = {}
   vbfCutDict = {}
-  for RUNPERIOD in periods:
-    incSigFilename = "ggHmumu125_"+RUNPERIOD+".root"
-    vbfSigFilename = "vbfHmumu125_"+RUNPERIOD+".root"
-    incCuts, vbfCuts = makeSillyFiles(dataDir,outDir,RUNPERIOD)
-    incCutDict[RUNPERIOD] = incCuts
-    vbfCutDict[RUNPERIOD] = vbfCuts
-
-  ############################################################
-  print "Starting makeCards Portion..."
-  sys.stdout.flush()
-
-  from makeCards import *
-
-  signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
-  backgroundNames= ["DYToMuMu","ttbar","WW","WZ","ZZ"]
-
-  dataDict = {}
-  dataDict["8TeV"] = [
-    #"SingleMuRun2012Av1",
-    #"SingleMuRun2012Bv1",
-    #"SingleMuRun2012Cv1",
-    #"SingleMuRun2012Cv2"
-  ]
-  dataDict["7TeV"] = [
-    #"SingleMuRun2011Av1",
-    #"SingleMuRun2011Bv1"
-  ]
+  if not args.plotOnly:
+    for RUNPERIOD in periods:
+      incSigFilename = "ggHmumu125_"+RUNPERIOD+".root"
+      vbfSigFilename = "vbfHmumu125_"+RUNPERIOD+".root"
+      incCuts, vbfCuts = makeSillyFiles(dataDir,outDir,RUNPERIOD)
+      incCutDict[RUNPERIOD] = incCuts
+      vbfCutDict[RUNPERIOD] = vbfCuts
   
-  MassRebin = 4 # 4 Bins per GeV originally
-  controlRegionVeryLow=[80,110]
-  controlRegionLow=[110,120]
-  controlRegionHigh=[130,160]
-  shape=True
-  toyData=False
-  lumiDict = {}
-  lumiDict["7TeV"] = 5.0
-  lumiDict["8TeV"] = 20.0
-
-  print("Creating Threads...")
-  threads = []
-  for p in periods:
-    for cutStr in incCutDict[p]:
-      threads.append(
-        ThreadedCardMaker(
-          #__init__ args:
-          outDir,["mDiMuBDTIncCut"],
-          appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
-          rebin=[MassRebin], bakShape=shape,
-          controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=cutStr,
-          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
-          #write args:
-          outfilename=outDir+"BDTIncCut"+"_"+p+"_"+cutStr+".txt",lumi=lumiDict[p]
-        )
-      )
-    for cutStr in vbfCutDict[p]:
-      threads.append(
-        ThreadedCardMaker(
-          #__init__ args:
-          outDir,["mDiMuBDTVBFCut"],
-          appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
-          rebin=[MassRebin], bakShape=shape,
-          controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=cutStr,
-          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
-          #write args:
-          outfilename=outDir+"BDTVBFCut"+"_"+p+"_"+cutStr+".txt",lumi=lumiDict[p]
-        )
-      )
-  nThreads = len(threads)
-  print("nProcs: {0}".format(NPROCS))
-  print("nCards: {0}".format(nThreads))
-
-  threadsNotStarted = copy.copy(threads)
-  threadsRunning = []
-  threadsDone = []
-  while True:
-    iThread = 0
-    while iThread < len(threadsRunning):
-        alive = threadsRunning[iThread].is_alive()
-        if not alive:
-          tmp = threadsRunning.pop(iThread)
-          threadsDone.append(tmp)
-        else:
-          iThread += 1
-
-    nRunning = len(threadsRunning)
-    if nRunning < NPROCS and len(threadsNotStarted) > 0:
-        tmp = threadsNotStarted.pop()
-        tmp.start()
-        threadsRunning.append(tmp)
-
-    nRunning = len(threadsRunning)
-    nNotStarted = len(threadsNotStarted)
-    if nRunning == 0 and nNotStarted == 0:
-        break
-
-    time.sleep(0.1)
-
-  ############################################################
-  print "Starting combine tool Portion..."
-  sys.stdout.flush()
-
-  import os
-  import subprocess
-
-  os.chdir(outDir)
-  print(os.getcwd())
-
-  for f in glob.glob("*.txt"):
-    outfilename = f + ".out"
-    outfile = open(outfilename,"w")
-    print("Running combine on {0}".format(f))
+    ############################################################
+    print "Starting makeCards Portion..."
     sys.stdout.flush()
-    subprocess.call(["combine","-M","Asymptotic",f],stdout=outfile,stderr=outfile)
+  
+    from makeCards import *
+  
+    signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
+    backgroundNames= ["DYToMuMu","ttbar","WW","WZ","ZZ"]
+  
+    dataDict = {}
+    dataDict["8TeV"] = [
+      #"SingleMuRun2012Av1",
+      #"SingleMuRun2012Bv1",
+      #"SingleMuRun2012Cv1",
+      #"SingleMuRun2012Cv2"
+    ]
+    dataDict["7TeV"] = [
+      #"SingleMuRun2011Av1",
+      #"SingleMuRun2011Bv1"
+    ]
+    
+    MassRebin = 4 # 4 Bins per GeV originally
+    controlRegionVeryLow=[80,110]
+    controlRegionLow=[110,120]
+    controlRegionHigh=[130,160]
+    shape=True
+    toyData=False
+    lumiDict = {}
+    lumiDict["7TeV"] = 5.0
+    lumiDict["8TeV"] = 20.0
+  
+    print("Creating Threads...")
+    threads = []
+    for p in periods:
+      for cutStr in incCutDict[p]:
+        threads.append(
+          ThreadedCardMaker(
+            #__init__ args:
+            outDir,["mDiMuBDTIncCut"],
+            appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
+            rebin=[MassRebin], bakShape=shape,
+            controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=cutStr,
+            controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,
+            #write args:
+            outfilename=outDir+"BDTIncCut"+"_"+p+"_"+cutStr+".txt",lumi=lumiDict[p]
+          )
+        )
+      for cutStr in vbfCutDict[p]:
+        threads.append(
+          ThreadedCardMaker(
+            #__init__ args:
+            outDir,["mDiMuBDTVBFCut"],
+            appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
+            rebin=[MassRebin], bakShape=shape,
+            controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=cutStr,
+            controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,
+            #write args:
+            outfilename=outDir+"BDTVBFCut"+"_"+p+"_"+cutStr+".txt",lumi=lumiDict[p]
+          )
+        )
+    nThreads = len(threads)
+    print("nProcs: {0}".format(NPROCS))
+    print("nCards: {0}".format(nThreads))
+  
+    threadsNotStarted = copy.copy(threads)
+    threadsRunning = []
+    threadsDone = []
+    while True:
+      iThread = 0
+      while iThread < len(threadsRunning):
+          alive = threadsRunning[iThread].is_alive()
+          if not alive:
+            tmp = threadsRunning.pop(iThread)
+            threadsDone.append(tmp)
+          else:
+            iThread += 1
+  
+      nRunning = len(threadsRunning)
+      if nRunning < NPROCS and len(threadsNotStarted) > 0:
+          tmp = threadsNotStarted.pop()
+          tmp.start()
+          threadsRunning.append(tmp)
+  
+      nRunning = len(threadsRunning)
+      nNotStarted = len(threadsNotStarted)
+      if nRunning == 0 and nNotStarted == 0:
+          break
+  
+      time.sleep(0.1)
+  
+    ############################################################
+    print "Starting combine tool Portion..."
+    sys.stdout.flush()
+  
+    import os
+    import subprocess
+  
+    os.chdir(outDir)
+    print(os.getcwd())
+  
+    for f in glob.glob("*.txt"):
+      outfilename = f + ".out"
+      outfile = open(outfilename,"w")
+      print("Running combine on {0}".format(f))
+      sys.stdout.flush()
+      subprocess.call(["combine","-M","Asymptotic",f],stdout=outfile,stderr=outfile)
+
+    os.chdir("..")
 
   ############################################################
   print "Starting Limits Plots Portion..."
   sys.stdout.flush()
+
+  os.chdir(outDir)
 
   titleMap={
     "BDTIncCut":"Inclusive",
@@ -214,7 +224,7 @@ if __name__ == "__main__":
   canvas = root.TCanvas()
   #canvas.SetLogx(1)
   #canvas.SetLogy(1)
-  ylimits=[0.1,100.0]
+  ylimits=[0.0,30.0]
 
   for period in ["7TeV","8TeV"]:
     allfiles = glob.glob("*_"+period+"_*.txt.out")

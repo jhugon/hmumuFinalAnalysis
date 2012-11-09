@@ -920,25 +920,6 @@ class DataCardMaker:
 
     if nuisanceMap == None:
       self.nuisance = {}
-      self.nuisance["lumi"] = (0.044,[
-                "vbfHmumu125_8TeV","ggHmumu125_8TeV","wHmumu125_8TeV","zHmumu125_8TeV",
-                "vbfHmumu125_7TeV","ggHmumu125_7TeV","wHmumu125_7TeV","zHmumu125_7TeV"
-                ])
-      self.nuisance["br_Hmm"] = (0.06,[
-                "vbfHmumu125_8TeV","ggHmumu125_8TeV","wHmumu125_8TeV","zHmumu125_8TeV",
-                "vbfHmumu125_7TeV","ggHmumu125_7TeV","wHmumu125_7TeV","zHmumu125_7TeV"
-                ])
-      self.nuisance["xs_ggH_8TeV"] = (0.147,["ggHmumu125_8TeV"])
-      self.nuisance["xs_vbfH_8TeV"] = (0.03,["vbfHmumu125_8TeV"])
-      self.nuisance["xs_wH_8TeV"] = (0.041,["wHmumu125_8TeV"])
-      self.nuisance["xs_zH_8TeV"] = (0.051,["zHmumu125_8TeV"])
-
-      self.nuisance["xs_ggH_7TeV"] = (0.147,["ggHmumu125_7TeV"])
-      self.nuisance["xs_vbfH_7TeV"] = (0.024,["vbfHmumu125_7TeV"])
-      self.nuisance["xs_wH_7TeV"] = (0.043,["wHmumu125_7TeV"])
-      self.nuisance["xs_zH_7TeV"] = (0.051,["zHmumu125_7TeV"])
-      #self.nuisance["bg_dy"] = (0.05,["DYJetsToLL"])
-      #self.nuisance["bg_tt"] = (0.05,["ttbar"])
     else:
       self.nuisance = nuisanceMap
 
@@ -1072,15 +1053,15 @@ class DataCardMaker:
           for sigName in self.sigNames:
             formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
             value = "-"
-            if thisNu[1].count(sigName)>0:
-              value = thisNu[0]+1.0
+            if thisNu.has_key(sigName):
+              value = thisNu[sigName]+1.0
             formatList.append(value)
             iParam += 1
           for bakName in self.bakNames:
             formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
             value = "-"
-            if thisNu[1].count(bakName)>0:
-              value = thisNu[0]+1.0
+            if thisNu.has_key(bakName):
+              value = thisNu[bakName]+1.0
             formatList.append(value)
             iParam += 1
       formatString += "\n"
@@ -1389,24 +1370,24 @@ class ShapeDataCardMaker(DataCardMaker):
           for sigName in self.sigNames:
             formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
             value = "-"
-            if thisNu[1].count(sigName)>0:
-              value = thisNu[0]+1.0
+            if thisNu.has_key(sigName):
+              value = thisNu[sigName]+1.0
             formatList.append(value)
             iParam += 1
           if sumAllBak:
               bakName="bak"
               formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
               value = "-"
-              if thisNu[1].count(bakName)>0:
-                value = thisNu[0]+1.0
+              if thisNu.has_key(bakName):
+                value = thisNu[bakName]+1.0
               formatList.append(value)
               iParam += 1
           else:
             for bakName in self.bakNames:
               formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
               value = "-"
-              if thisNu[1].count(bakName)>0:
-                value = thisNu[0]+1.0
+              if thisNu.has_key(bakName):
+                value = thisNu[bakName]+1.0
               formatList.append(value)
               iParam += 1
       formatString += "\n"
@@ -1541,7 +1522,7 @@ if __name__ == "__main__":
           appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
           rebin=[MassRebin], bakShape=shape,
           controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
+          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,
           #write args:
           outfilename=outDir+"VBFCat"+"_"+p+"_"+str(i)+".txt",lumi=i
         )
@@ -1553,7 +1534,7 @@ if __name__ == "__main__":
           appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
           rebin=[MassRebin], bakShape=shape,
           controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
+          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,
           #write args:
           outfilename=outDir+"IncCat"+"_"+p+"_"+str(i)+".txt",lumi=i
         )
@@ -1565,7 +1546,7 @@ if __name__ == "__main__":
           appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
           rebin=[MassRebin],bakShape=shape,
           controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
+          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,
           #write args:
           outfilename=outDir+ana+"_"+p+"_"+str(i)+".txt",lumi=i
           )
@@ -1578,7 +1559,7 @@ if __name__ == "__main__":
 #          appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
 #          rebin=[MassRebin],bakShape=shape,
 #          controlRegionLow=[123.0,125.0],controlRegionHigh=[125.0,127.0],histNameSuffix=histPostFix,
-#          controlRegionVeryLow=controlRegionVeryLow,
+#          controlRegionVeryLow=controlRegionVeryLow,nuisanceMap=nuisanceMap,
 #          #write args:
 #          outfilename=outDir+"CNC_"+ana+"_"+p+"_"+str(i)+".txt",lumi=i,
 #  
@@ -1595,7 +1576,7 @@ if __name__ == "__main__":
           appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
           rebin=[MassRebin], bakShape=shape,
           controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
+          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,
           #write args:
           outfilename=outDir+"AllCat"+"_"+p+"_"+str(i)+".txt",lumi=i
         )
@@ -1607,7 +1588,7 @@ if __name__ == "__main__":
           appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
           rebin=[MassRebin], bakShape=shape,
           controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,
+          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,
           #write args:
           outfilename=outDir+"BDTSig80"+"_"+p+"_"+str(i)+".txt",lumi=i
         )

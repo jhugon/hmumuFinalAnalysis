@@ -145,6 +145,48 @@ colors["WZ"] = root.kPink+9
 colors["ZZ"] = root.kPink+9
 colors["QCD"] = root.kSpring+8
 
+nuisanceMap = {}
+nuisanceMap["lumi"] = {
+  "vbfHmumu125_8TeV":0.044,
+  "ggHmumu125_8TeV":0.044,
+  "wHmumu125_8TeV":0.044,
+  "zHmumu125_8TeV":0.044,
+
+  "vbfHmumu125_7TeV":0.044,
+  "ggHmumu125_7TeV":0.044,
+  "wHmumu125_7TeV":0.044,
+  "zHmumu125_7TeV":0.044
+}
+
+nuisanceMap["br_Hmm"] = {
+  "vbfHmumu125_8TeV":0.06,
+  "ggHmumu125_8TeV":0.06,
+  "wHmumu125_8TeV":0.06,
+  "zHmumu125_8TeV":0.06,
+
+  "vbfHmumu125_7TeV":0.06,
+  "ggHmumu125_7TeV":0.06,
+  "wHmumu125_7TeV":0.06,
+  "zHmumu125_7TeV":0.06
+}
+
+nuisanceMap["xs_vbfH"] = {
+  "vbfHmumu125_8TeV": 0.03,
+  "vbfHmumu125_7TeV": 0.024
+}
+nuisanceMap["xs_ggH"] = {
+  "ggHmumu125_8TeV": 0.147,
+  "ggHmumu125_7TeV": 0.147
+}
+nuisanceMap["xs_wH"] = {
+  "wHmumu125_8TeV": 0.041,
+  "wHmumu125_7TeV": 0.043
+}
+nuisanceMap["xs_zH"] = {
+  "zHmumu125_8TeV": 0.051,
+  "zHmumu125_7TeV": 0.051
+}
+
 def getLegendEntry(ds):
   return legendEntries[re.sub(r"_.*","",ds)]
 def getColor(ds):
