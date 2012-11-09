@@ -1238,6 +1238,39 @@ def toyHistogram(hist):
     hist.SetBinContent(i,n)
     hist.SetBinError(i,err)
 
+def getXbinsHighLow(hist,low,high):
+  axis = hist.GetXaxis()
+  xbinLow = axis.FindBin(low)
+  xbinHigh = axis.FindBin(high)
+  #print("xbinhigh: {0}, {1}, {2}".format(xbinHigh,axis.GetBinLowEdge(xbinHigh),float(high)))
+  if axis.GetBinLowEdge(xbinHigh)==float(high):
+    xbinHigh -= 1
+  return xbinLow, xbinHigh
+
+def getIntegralAll(hist,boundaries=[]):
+  xbinLow = None
+  xbinHigh = None
+  if len(boundaries)==0:
+    xbinLow = 0
+    xbinHigh = hist.GetXaxis().GetNbins()
+  elif len(boundaries)==2:
+    xbinLow, xbinHigh = getXbinsHighLow(hist,boundaries[0],boundaries[1])
+  else:
+    return -1
+  if hist.InheritsFrom("TH2"):
+    nBinsY = hist.GetYaxis().GetNbins()
+    return hist.Integral(xbinLow,xbinHigh,0,nBinsY+1)
+  elif hist.InheritsFrom("TH1"):
+    return hist.Integral(xbinLow,xbinHigh)
+  else:
+    return -1
+
+def getIntegralLowHigh(hist,lowBoundaries,highBoundaries):
+  lowInt = getIntegralAll(hist,lowBoundaries)
+  highInt = getIntegralAll(hist,highBoundaries)
+  return lowInt+highInt
+
+
 def saveAs(canvas,name):
   canvas.SaveAs(name+".png")
   #canvas.SaveAs(name+".pdf")

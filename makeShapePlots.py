@@ -63,6 +63,7 @@ class ShapePlotter:
     self.padList = []
 
   def scaleSignal(self):
+    limitfname = ""
     try:
       cardTime = os.path.getmtime(self.filename)
       limitfname = os.path.splitext(self.filename)[0] + ".txt.out"

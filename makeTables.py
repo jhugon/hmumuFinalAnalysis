@@ -1,270 +1,268 @@
 #!/usr/bin/env python
 
 import math
+from math import sqrt
 import ROOT as root
 from helpers import *
 import matplotlib.pyplot as mpl
 import numpy
+import glob
 
 from xsec import *
 
-directory = "input/open/"
+import makeShapePlots
 
-analysisList = ["","VBFSelected","VBFTightSelected","ZPt30Selected","ZPt75Selected"]
+channelNameMap = {
+  "AllCat":"All Cat. Comb.",
+  "IncCat":"Inc. Cat. Comb.",
+  "VBFCat":"VBF Cat. Comb.",
 
-signalName = "ggHmumu125"
-backgroundName = "DYJetsToLL"
+  "IncPresel":"Inc. Presel.",
+  "VBFPresel":"VBF Presel.",
 
-scaleSignal = 1.0
+  "Pt0to30":"$p_{T}^{\mu\mu} \in [0,30]$",
+  "Pt30to50":"$p_{T}^{\mu\mu} \in [30,50]$",
+  "Pt50to125":"$p_{T}^{\mu\mu} \in [50,125]$",
+  "Pt125to250":"$p_{T}^{\mu\mu} \in [125,250]$",
+  "Pt250":"$p_{T}^{\mu\mu}>250$",
 
-lumis = [
-5.0,
-10.0,
-20.0,
-30.0,
-50.#,
-#75.,
-#200.,
-#500.,
-#1000.
-]
+  "VBFLoose":"VBFL",
+  "VBFMedium":"VBFM",
+  "VBFTight":"VBFT",
+  "VBFVeryTight":"VBFVT",
 
-colors = [
-root.kBlue+1,
-root.kRed+1,
-root.kGreen+1,
-root.kOrange,
-1,
-root.kCyan,
-root.kPink,
-root.kMagenta,
-root.kSpring-9
-]
+  "BDTSig80":"BDT Cut Comb.",
+  "IncBDTSig80":"Inc. BDT Cut",
+  "VBFBDTSig80":"VBF BDT Cut"
+}
 
-BACKUNC=0.15
+sampleNameMap = {
+  "data_obs":"Data",
+  "bak":"Background",
+  "sig":"Signal"
+}
+errNameMap = {
+  "expParam":"Exponential Param.",
+  "voitSig":"Voigtian $\sigma$",
+  "voitmZ":"Voigtian Mass",
+  "mixParam":"V/E Ratio",
+  "TotalSyst":"Total Systematic",
+  "Stat":"Background Stat.",
+}
 
-class DataFromHists:
-  def __init__(self,directory,signalName,backgroundName,analysisList,massRange=[123,127]):
-    self.sigFile = root.TFile(directory+signalName+".root")
-    self.bakFile = root.TFile(directory+backgroundName+".root")
-    analyses = analysisList
-    self.analyses = analyses
-    self.sigHists = []
-    self.bakHists = []
-    for a in analyses:
-        self.sigHists.append(self.sigFile.Get("mDiMu"+a))
-        self.bakHists.append(self.bakFile.Get("mDiMu"+a))
-
-    effMap = {}
-    xsecMap = {}
-    for sigHist,bakHist,anaName in zip(self.sigHists,self.bakHists,analyses):
-      axis = sigHist.GetXaxis()
-      lowBin = axis.FindBin(massRange[0])
-      assert(axis.GetBinLowEdge(lowBin)==massRange[0])
-      highBin = axis.FindBin(massRange[1])
-      highBin -= 1
-      assert(axis.GetBinUpEdge(highBin)==massRange[1])
-      countsSig = sigHist.Integral(lowBin,highBin)
-      countsBak = bakHist.Integral(lowBin,highBin)
-      
-      effSig = countsSig/nEventsMap[signalName]
-      effBak = countsBak/nEventsMap[backgroundName]
-      xsecSig = effSig*xsec[signalName]
-      xsecBak = effBak*xsec[backgroundName]
-      effMap[anaName] = {"signal":effSig,"background":effBak}
-      xsecMap[anaName] = {"signal":xsecSig,"background":xsecBak}
-    self.effMap = effMap
-    self.xsecMap = xsecMap
-
-  def getSigEff(self,anaName):
-    return self.effMap[anaName]["signal"]
-  def getBakXSec(self,anaName):
-    return self.xsecMap[anaName]["background"]
-
-  def calc(self,lumi,anaName,scaleSignal=1.0):
-    lumi = lumi*1000.0
-    s = self.xsecMap[anaName]["signal"]*lumi*scaleSignal
-    b = self.xsecMap[anaName]["background"]*lumi
-    #fom = s/(1.5+math.sqrt(b)+self.backUnc*b)
-    #sig = s/sqrt(b+s)
-    sig = s/sqrt(b)
-    return s, b, sig
-
-###### Text Part
-
-textfile = open("nEvents.txt","w")
-texfile = open("nEvents.tex","w")
-
-#Different Mass Ranges
-textfile.write("\nTesting Different Search Windows, Inclusive Analysis\n")
-textfile.write("{0:<13} {1:<13} {2:<13}\n".format("125+/-X [GeV]","Sig Eff","Bak Xsec [pb]"))
-for i in range(10):
-  i = 0.5+0.5*i
-  data = DataFromHists(directory,signalName,backgroundName,[""],massRange=[125.-i,125.+i])
-  eff = data.getSigEff("")
-  back = data.getBakXSec("")
-  textfile.write("{0:<13.2f} {1:<13.3e} {2:<13.3e}\n".format(i,eff,back))
-
-textfile.write("\n#######################################\n")
-
-data = DataFromHists(directory,signalName,backgroundName,analysisList)
-
-for ana in analysisList:
-  textfile.write("\n{0} {1} {2}\n".format(ana,signalName,backgroundName))
-  textfile.write("{0:<13} {1:<13}\n".format("Sig Eff","Bak Xsec [pb]"))
-  eff = data.getSigEff(ana)
-  back = data.getBakXSec(ana)
-  textfile.write("{0:<13.3e} {1:<13.3e}\n".format(eff,back))
-
-textfile.write("\n#######################################\n")
+def convertHistToCounts(dataDict,xlow,xhigh):
+  outDict = {}
+  for channelName in dataDict:
+    tmpDict = {}
+    channel = dataDict[channelName]
+    lowBin = 0
+    highBin = 0
+    for histName in channel:
+      hist = channel[histName]
+      val = getIntegralAll(hist,[xlow,xhigh])
+      tmpDict[histName] = val
+    outDict[channelName] = tmpDict
+  return outDict
   
-for lumi in lumis:
-  textfile.write("\nIntegrated Luminosity (fb^-1): {0:.2f}\n".format(lumi))
-  texfile.write("\\begin{tabular{|l|l|l|l|l|l|}} \\hline \n")
-  texfile.write("\\%multicolumn{0}{{Events For {1:.2f}fb$^{2}$}} \\\\ \\hline\n".format("{6}",lumi,"{-1}"))
-  texfile.write("Selection & Signal & $S$ & $B$ & $S/B$ & $S/\\sqrt{B}$ \\\\ \\hline \n")
-  if scaleSignal != 1.0:
-    textfile.write("\nHiggs Signal Scaled by factor of: {0:.2f}\n".format(scaleSignal))
-  for ana in analysisList:
-      s, b, sosqrtb = data.calc(lumi,ana,scaleSignal=scaleSignal)
-      textfile.write("{0:<17} {1:<10} s: {2:<6.2f} b: {3:<10.2f} s/b: {4:<6.2e} s/sqrt(b): {5:<5.2f}\n".format(ana,signalName,s,b,s/b,sosqrtb))
-      texfile.write("{0:<17} & {1:<10} & {2:<6.2f} & {3:<10.2f} & {4:<6.2e} & {5:<5.2f} \\\\ \\hline \n".format(ana,signalName,s,b,s/b,sosqrtb))
+def getShapeErrorsFromCounts(data):
+  outDict = {}
+  for channelName in data:
+    tmpDict = {}
+    channel = data[channelName]
+    for name in channel:
+      if name == "data_obs":
+        tmpDict["data_obs"] = {"nom":channel[name]}
+        continue
+      matchUp = re.match(r"(.+)_(.+)Up",name)
+      matchDown = re.match(r"(.+)_(.+)Down",name)
+      if matchUp:
+        histName = matchUp.group(1)
+        parName = matchUp.group(2)
+        if tmpDict.has_key(histName):
+          if tmpDict[histName].has_key(parName):
+            tmpDict[histName][parName]["Up"] = channel[name]
+          else:
+            tmpDict[histName][parName] = {}
+            tmpDict[histName][parName]["Up"] = channel[name]
+        else:
+          tmpDict[histName] = {}
+          tmpDict[histName][parName] = {}
+          tmpDict[histName][parName]["Up"] = channel[name]
+      elif matchDown:
+        histName = matchDown.group(1)
+        parName = matchDown.group(2)
+        if tmpDict.has_key(histName):
+          if tmpDict[histName].has_key(parName):
+            tmpDict[histName][parName]["Down"] = channel[name]
+          else:
+            tmpDict[histName][parName] = {}
+            tmpDict[histName][parName]["Down"] = channel[name]
+        else:
+          tmpDict[histName] = {}
+          tmpDict[histName][parName] = {}
+          tmpDict[histName][parName]["Down"] = channel[name]
+      else:
+        if tmpDict.has_key(name):
+          tmpDict[name]["nom"] = channel[name]
+        else:
+          tmpDict[name] = {"nom":channel[name]}
+    ##################################
+    # Now Process into Error Fractions
+    for histName in tmpDict:
+      nomVal = tmpDict[histName]["nom"]
+      upSum2 = 0.0
+      downSum2 = 0.0
+      for errName in tmpDict[histName]:
+        if errName == "nom":
+            continue
+        upVal = tmpDict[histName][errName]["Up"]
+        downVal = tmpDict[histName][errName]["Down"]
+        if upVal < downVal:
+          tmpVal = upVal
+          upVal = downVal
+          downVal = tmpVal
+        upErr = (upVal-nomVal)/nomVal
+        downErr = (nomVal-downVal)/nomVal
+        tmpDict[histName][errName]["Up"] = upErr
+        tmpDict[histName][errName]["Down"] = downErr
+        upSum2 += upErr**2
+        downSum2 += downErr**2
+      if histName == "bak":
+        tmpDict[histName]["TotalSyst"] = {"Up":sqrt(upSum2),"Down":sqrt(downSum2)}
+        tmpDict[histName]["Stat"] = {"Up":sqrt(nomVal)/nomVal,"Down":sqrt(nomVal)/nomVal}
 
-  texfile.write("\\hline\n\\end{tabular}\n\n")
+    for histName in tmpDict:
+        print(histName+"  "+str(tmpDict[histName].keys()))
+        
+    outDict[channelName] = tmpDict
+      
+      
+  return outDict
 
-textfile.close()
-texfile.close()
+def writeErrorTable(data,latex,niceTitles):
+  outString = ""
+  # Get Widths
+  maxChannelWidth = 0
+  maxSampleWidth = 0
+  maxErrWidth = 0
+  for channelName in data:
+     channel = data[channelName]
+     if niceTitles:
+        channelName = channelNameMap[channelName]
+     if len(channelName) > maxChannelWidth:
+        maxChannelWidth = len(channelName)
+     for sampleName in channel:
+       sample = channel[sampleName]
+       if niceTitles:
+         sampleName = sampleNameMap[sampleName]
+       if len(sampleName) > maxSampleWidth:
+          maxSampleWidth = len(sampleName)
+       for errName in sample:
+         if errName == "nom":
+            continue
+         if niceTitles:
+           errName = errNameMap[errName]
+         if len(errName) > maxErrWidth:
+            maxErrWidth = len(errName)
+  maxChannelWidth = str(maxChannelWidth+2)
+  maxSampleWidth = str(maxSampleWidth+2)
+  maxErrWidth = str(maxErrWidth+2)
+  # Get Err Names
+  errNames = []
+  errNamesString = " "*int(maxChannelWidth)
+  if latex:
+    errNamesString += "&"
+  iErrName = 0
+  for channelName in data:
+     for sampleName in data[channelName]:
+       for errName in data[channelName][sampleName]:
+         if errName == "nom":
+            continue
+         if niceTitles:
+           errName = errNameMap[errName]
+         errNames.append(errName)
+         errNamesString += "{"+str(iErrName)+":^"+str(len(errName)+2)+"}"
+         if latex:
+           errNamesString += "&"
+         iErrName += 1
+     break
+  if latex:
+    errNamesString = errNamesString.rstrip("&")
+    errNamesString += r"\\ \hline \hline"
+  errNamesString = errNamesString.format(*errNames)
+  outString += "\n"+errNamesString+"\n"
+  for channelName in data:
+    errVals = [channelName]
+    if niceTitles:
+      errVals = [channelNameMap[channelName]]
+    errVals2 = [""]
+    errValsString = "{0:<"+maxChannelWidth+"}"
+    errValsString2 = "{0:<"+maxChannelWidth+"}"
+    if latex:
+      errValsString += r"&"
+      errValsString2 += r"&"
+    iErrVal = 1
+    for sampleName in data[channelName]:
+      for errName in data[channelName][sampleName]:
+        if errName == "nom":
+            continue
+        errVals.append("+{0:.3%}".format(data[channelName][sampleName][errName]["Up"]))
+        errVals2.append("-{0:.3%}".format(data[channelName][sampleName][errName]["Down"]))
+        if niceTitles:
+            errName = errNameMap[errName]
+        errValsString += "{"+str(iErrVal)+":^"+str(len(errName)+2)+"}"
+        errValsString2 += "{"+str(iErrVal)+":^"+str(len(errName)+2)+"}"
+        if latex:
+           errValsString += "&"
+           errValsString2 += "&"
+        iErrVal += 1
+    errValsString = errValsString.format(*errVals)
+    errValsString2 = errValsString2.format(*errVals2)
+    if latex:
+      errValsString = errValsString.rstrip("&")
+      errValsString2 = errValsString2.rstrip("&")
+      errValsString += r"\\"
+      errValsString2 += r"\\ \hline"
+    errValsString += "\n"+errValsString2+"\n"
+    outString += errValsString
 
-########## End Text Part
+  if latex:
+    columnFormat = "|l|" + "c|"*len(errNames)
+    outString = r"\begin{tabular}{"+columnFormat+"} \hline" + outString + r"\end{tabular}"+"\n"
+    outString = outString.replace(r"%",r"\%")
 
-root.gROOT.SetBatch(True)
-setStyle()
+  return outString
+    
+if __name__ == "__main__":
+ import subprocess
+  
+ dataDir = "statsCards/"
+ filenames = ["statsCards/AllCat_8TeV_20.root"]
+ #filenames = glob.glob(dataDir+"20*.root")
 
-canvas = root.TCanvas("canvas")
-#canvas.SetLogx(1)
-#canvas.SetLogy(1)
+ for fn in filenames:
+  sPlotter = makeShapePlots.ShapePlotter(fn,makeShapePlots.titleMap)
+    
+  data = getShapeErrorsFromCounts(convertHistToCounts(sPlotter.data,123.,127.))
 
-#leg = root.TLegend(0.75,0.75,0.9,0.9)
-leg = root.TLegend(0.23,0.6,0.5,0.9)
-leg.SetFillColor(0)
-leg.SetLineColor(0)
-
-significancePlots = {}
-threeSigPlots = {}
-fiveSigPlots = {}
-iColor = 0
-for ana in analysisList:
-  tmp = root.TGraph()
-  tmp.SetLineColor(colors[iColor % len(colors)])
-  significancePlots[ana] = tmp
-
-  tmp = root.TGraph()
-  tmp.SetLineColor(colors[iColor % len(colors)])
-  threeSigPlots[ana] = tmp
-
-  tmp = root.TGraph()
-  tmp.SetLineColor(colors[iColor % len(colors)])
-  fiveSigPlots[ana] = tmp
-
-
-  leg.AddEntry(tmp,ana,"l")
-
-  iColor += 1
-
-iPoint = 0
-for lumi in lumis:
-  for ana in analysisList:
-      s, b, sosqrtb = data.calc(lumi,ana)
-      significancePlots[ana].SetPoint(iPoint,lumi,sosqrtb)
-  iPoint += 1
-
-iPoint = 0
-for lumi in lumis:
-  for ana in analysisList:
-      found3Sig = False
-      found5Sig = False
-      #rangeToUse = numpy.logspace(1.0,100.0,num=1000)
-      rangeToUse = [0.1,0.5,1.0,2.0,5.0,8.,10.,12.,15.,20.,30.,40.,50.,75.,150.,200,300.,400.,500.,700.,1000.,1500.,2000.,5000.]
-      for mult in rangeToUse:
-        s, b, sosqrtb = data.calc(lumi,ana,scaleSignal=mult)
-        if sosqrtb>3.0 and not found3Sig:
-          threeSigPlots[ana].SetPoint(iPoint,lumi,mult)
-          found3Sig = True
-        if sosqrtb>5.0:
-          fiveSigPlots[ana].SetPoint(iPoint,lumi,mult)
-          found5Sig = True
-      if not found3Sig:
-          threeSigPlots[ana].SetPoint(iPoint,lumi,1000.0)
-      if not found5Sig:
-          fiveSigPlots[ana].SetPoint(iPoint,lumi,10000.0)
-  iPoint += 1
-
-firstPlot = True
-for ana in analysisList:
-  if firstPlot:
-    firstPlot = False
-    significancePlots[ana].Draw("al")
-    significancePlots[ana].GetXaxis().SetTitle("Integrated Luminosity [fb^{-1}]")
-    significancePlots[ana].GetYaxis().SetTitle("S/#sqrt{B}")
-    significancePlots[ana].Draw("al")
-
-  else:
-    significancePlots[ana].Draw("l")
-leg.Draw()
-saveAs(canvas,"significance")
-
-canvas.SetLogy(1)
-firstPlot = True
-for ana in analysisList:
-  if firstPlot:
-    firstPlot = False
-    threeSigPlots[ana].Draw("al")
-    threeSigPlots[ana].GetXaxis().SetTitle("Integrated Luminosity [fb^{-1}]")
-    threeSigPlots[ana].GetYaxis().SetTitle("S/#sqrt{B} #geq 3 for SM #times X")
-    threeSigPlots[ana].GetYaxis().SetRangeUser(1,100)
-    threeSigPlots[ana].Draw("al")
-
-  else:
-    threeSigPlots[ana].Draw("l")
-leg.Draw()
-saveAs(canvas,"threeSig")
-
-canvas.SetLogy(1)
-firstPlot = True
-for ana in analysisList:
-  if firstPlot:
-    firstPlot = False
-    fiveSigPlots[ana].Draw("al")
-    fiveSigPlots[ana].GetXaxis().SetTitle("Integrated Luminosity [fb^{-1}]")
-    fiveSigPlots[ana].GetYaxis().SetTitle("S/#sqrt{B} #geq 5 for SM #times X")
-    fiveSigPlots[ana].GetYaxis().SetRangeUser(100,10000)
-    fiveSigPlots[ana].Draw("al")
-
-  else:
-    fiveSigPlots[ana].Draw("l")
-leg.Draw()
-saveAs(canvas,"fiveSig")
+  f = open("shapeErrors.tex","w")
+  f.write(writeErrorTable(data,True,True))
+  f.close()
 
 
-"""
-sobList = []
-for ana in analysisList:
-      s, b, sosqrtb = data.calc(lumi,ana)
-      sobList.append(s/b)
-      break
-
-fig = mpl.figure()
-ax1 = fig.add_subplot(111)
-ax1bounds = ax1.get_position().bounds
-ax1.set_position([0.2,0.1,0.7,0.85]) #uncomment if you need more space for names
-#ax1.set_position([0.25,0.1,0.7,0.85]) #uncomment if you need more space for names
-pos = numpy.arange(len(analysisList))
-ax1.grid(axis="x")
-ax1.set_yticks(pos+0.25)
-ax1.set_yticklabels(tuple(analysisList))
-ax1.set_xlabel("S/B")
-bars = ax1.barh(pos,sobList, 0.5,log=True)
-fig.savefig("sob.png")
-fig.savefig("sob.pdf")
-"""
+  f = open("shapeErrorsTest.tex","w")
+  f.write(r"""
+\documentclass[12pt,a4paper]{article}
+\usepackage{lscape}
+\begin{document}
+\begin{landscape}
+%\tiny
+\small
+\input{shapeErrors}
+\end{landscape}
+\end{document}
+         """)
+  f.close()
+  subprocess.call(["latex","shapeErrorsTest.tex"])
+  subprocess.call(["dvipdf","shapeErrorsTest.dvi"])
 
