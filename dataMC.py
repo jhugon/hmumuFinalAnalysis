@@ -225,6 +225,7 @@ for ds in realDatasetList:
   break
 
 #######################################
+dataMCRatioStr = "############################################\n"
 
 for histName in bkgDatasetList[0].hists:
   print("Making Histo: %s" % histName)
@@ -275,3 +276,10 @@ for histName in bkgDatasetList[0].hists:
   saveName = saveName.replace("]","")
   saveName = saveName.replace("/","_")
   saveAs(canvas,outDir+saveName+"_"+RUNPERIOD)
+
+  match = re.match(r"(.*)_mDiMu",saveName)
+  if match:
+    catName = match.group(1)
+    dataMCRatioStr += "{0:<10} Data/MC Ratio: {1:.3f}\n".format(catName,float(stack.nDataEvents)/stack.nMCEvents)
+
+print(dataMCRatioStr)

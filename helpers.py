@@ -573,6 +573,9 @@ class DataMCStack:
     if showOverflow:
         showHistOverflow(dataHist)
 
+    self.nMCEvents = self.mcSumHist.Integral(0,self.mcSumHist.GetNbinsX()+1)
+    self.nDataEvents = dataHist.Integral(0,dataHist.GetNbinsX()+1)
+
     # Get chi^2 Prob Data/MC
     self.normchi2 = dataHist.Chi2Test(self.mcSumHist,"UW CHI2/NDF")
     self.chi2Prob = dataHist.Chi2Test(self.mcSumHist,"UW")

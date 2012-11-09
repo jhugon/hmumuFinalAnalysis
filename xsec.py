@@ -161,6 +161,7 @@ efficiencyMap = {}
 efficiencyMap["7TeV"] = 1.0
 efficiencyMap["8TeV"] = 1.0
 
+# Data/MC scale factors
 mcPlotScaleFactorMap = {}
 mcPlotScaleFactorMap["7TeV"] = 1.0
 mcPlotScaleFactorMap["8TeV"] = 1.0
@@ -214,7 +215,7 @@ def getColor(ds):
 def appendPeriod(l,period):
   return [i+"_"+period for i in l]
 def getPeriod(datasetName):
-  match =  re.search(r"_(.*)")
+  match =  re.search(r"_(.*)",datasetName)
   if match:
     return match.group(1)
   else:
