@@ -430,7 +430,33 @@ titleMap = {
 
   "BDTSig80":"BDT Cut Combination",
   "IncBDTSig80":"Inclusive BDT Cut",
-  "VBFBDTSig80":"VBF BDT Cut"
+  "VBFBDTSig80":"VBF BDT Cut",
+
+  "BDTSig80Cat":"BDT Cut Cat. Combination",
+  "IncBDTSig80Cat":"Inclusive BDT Cut",
+  "VBFBDTSig80Cat":"VBF BDT Cut",
+
+  "IncPreselCat":"Inclusive Cat. Preselection",
+  "VBFPreselCat":"VBF Cat. Preselection",
+
+  "IncBDTSig80BB":"Inclusive BDT Cut BB",
+  "IncBDTSig80BO":"Inclusive BDT Cut BO",
+  "IncBDTSig80BE":"Inclusive BDT Cut BE",
+  "IncBDTSig80OO":"Inclusive BDT Cut OO",
+  "IncBDTSig80OE":"Inclusive BDT Cut OE",
+  "IncBDTSig80EE":"Inclusive BDT Cut EE",
+  "IncBDTSig80NotBB":"Inclusive BDT Cut !BB",
+  "VBFBDTSig80BB":"VBF BDT Cut BB",
+  "VBFBDTSig80NotBB":"VBF BDT Cut !BB",
+  "IncPreselBB":"Inclusive Preselection BB",
+  "IncPreselBO":"Inclusive Preselection BO",
+  "IncPreselBE":"Inclusive Preselection BE",
+  "IncPreselOO":"Inclusive Preselection OO",
+  "IncPreselOE":"Inclusive Preselection OE",
+  "IncPreselEE":"Inclusive Preselection EE",
+  "IncPreselNotBB":"Inclusive Preselection !BB",
+  "VBFPreselBB":"VBF Preselection BB",
+  "VBFPreselNotBB":"VBF Preselection !BB"
 }
         
 if __name__ == "__main__":
@@ -447,6 +473,8 @@ if __name__ == "__main__":
     if fn.count("Cat")>0:
       continue
     if fn.count("/BDTSig80")>0:
+      continue
+    if fn.count("/Presel")>0:
       continue
     s = ShapePlotter(fn,titleMap,rebin)
     s.makePlot(outDir,plotRange)

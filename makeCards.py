@@ -51,8 +51,8 @@ def getRooVars(directory,signalNames,histNameBase,analysis):
     for name in signalNames:
       filename = directory+name+".root"
       histName = histNameBase+analysis
-      print("file name: {0}".format(filename))
-      print("hist name: {0}".format(histName))
+      #print("file name: {0}".format(filename))
+      #print("hist name: {0}".format(histName))
       tmpF = root.TFile(filename)
       hist = tmpF.Get(histName)
       break
@@ -1427,13 +1427,17 @@ class ThreadedCardMaker(myThread):
     self.dictArgs = dictArgs
     self.started = False
   def run(self):
-    self.started = True
-    dataCardMassShape = None
-    if self.shapeDataCardMaker:
-      dataCardMassShape = ShapeDataCardMaker(*(self.args),**(self.dictArgs))
-    else:
-      dataCardMassShape = DataCardMaker(*(self.args),**(self.dictArgs))
-    dataCardMassShape.write(*(self.writeArgs),**(self.writeArgsDict))
+    try:
+      self.started = True
+      dataCardMassShape = None
+      if self.shapeDataCardMaker:
+        dataCardMassShape = ShapeDataCardMaker(*(self.args),**(self.dictArgs))
+      else:
+        dataCardMassShape = DataCardMaker(*(self.args),**(self.dictArgs))
+      dataCardMassShape.write(*(self.writeArgs),**(self.writeArgsDict))
+    except Exception as e:
+      print("Error: Exception: {0}".format(e))
+      print("  Thread Arguments: {0}, {1}".format(self.args,self.dictArgs))
 
 ###################################################################################
 ###################################################################################
@@ -1448,7 +1452,48 @@ if __name__ == "__main__":
   directory = "input/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  analyses = ["VBFPresel","IncPresel","IncBDTSig80","VBFBDTSig80"]
+  periods = ["8TeV"]
+  analysesInc = ["IncPresel","IncBDTSig80"]
+  analysesVBF = ["VBFPresel","VBFBDTSig80"]
+  analyses = analysesInc + analysesVBF
+  categoriesInc = ["BB","BO","BE","OO","OE","EE"]
+  categoriesVBF = ["BB","NotBB"]
+  tmpList = []
+  for a in analysesInc:
+    for c in categoriesInc:
+        tmpList.append(a+c)
+  analyses += tmpList
+  tmpList = []
+  for a in analysesVBF:
+    for c in categoriesVBF:
+        tmpList.append(a+c)
+  analyses += tmpList
+  combinations = []
+  combinationsLong = []
+  combinations.append((
+        ["IncBDTSig80"+x for x in categoriesInc],"IncBDTSig80Cat"
+  ))
+  combinations.append((
+        ["VBFBDTSig80"+x for x in categoriesVBF],"VBFBDTSig80Cat"
+  ))
+  combinations.append((
+        ["IncPresel"+x for x in categoriesInc],"IncPreselCat"
+  ))
+  combinations.append((
+        ["VBFPresel"+x for x in categoriesVBF],"VBFPreselCat"
+  ))
+  combinations.append((
+        ["IncBDTSig80","VBFBDTSig80"],"BDTSig80"
+  ))
+  combinations.append((
+        ["IncPresel","VBFPresel"],"Presel"
+  ))
+  combinations.append((
+        ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
+  ))
+  combinationsLong.append((
+        ["VBFBDTSig80"+x for x in categoriesVBF]+["IncBDTSig80"+x for x in categoriesInc],"BDTSig80Cat"
+  ))
   histPostFix="/mDiMu"
   #analyses = ["mDiMu"]
   #histPostFix=""
@@ -1466,9 +1511,10 @@ if __name__ == "__main__":
     #"SingleMuRun2011Bv1"
   ]
   lumiListLong = [5,10,15,20,25,30,40,50,75,100,200,500,1000,2000,5000]
-  lumiList = [10,20,30,100]
+  lumiListLong = [20,30,50,100,500,1000,5000]
+  lumiList = [lumiDict["8TeV"],20,25,30]
   lumiList = [20]
-  lumiListLong = lumiList
+  #lumiListLong = lumiList
 
   MassRebin = 1 # 4 Bins per GeV originally
   controlRegionVeryLow=[80,110]
@@ -1478,10 +1524,21 @@ if __name__ == "__main__":
   shape=True
   toyData=False
 
+  print("Simple Analyses to run:")
+  for a in analyses:
+    print("  {0}".format(a))
+  print("Combination Analyses to run:")
+  for c in combinations:
+    print("  {0}".format(c[1]))
+    for a in c[0]:
+      print("    {0}".format(a))
+
   print("Creating Threads...")
   threads = []
-  for i in lumiList:
-    for p in periods:
+  for p in periods:
+    for i in lumiList:
+      if p == "7TeV":
+        i = lumiDict[p]
       for ana in analyses:
         tmp = ThreadedCardMaker(
           #__init__ args:
@@ -1494,6 +1551,20 @@ if __name__ == "__main__":
           outfilename=outDir+ana+"_"+p+"_"+str(i)+".txt",lumi=i
           )
         threads.append(tmp)
+      for comb in combinations:
+       threads.append(
+        ThreadedCardMaker(
+          #__init__ args:
+          directory,
+          comb[0],
+          appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
+          rebin=[MassRebin], bakShape=shape,
+          controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
+          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,
+          #write args:
+          outfilename=outDir+comb[1]+"_"+p+"_"+str(i)+".txt",lumi=i
+        )
+       )
 #      ## Cut and Count!!!
 #      for ana in analyses:
 #        tmp = ThreadedCardMaker(
@@ -1509,33 +1580,26 @@ if __name__ == "__main__":
 #          shapeDataCardMaker=False
 #          )
 #        threads.append(tmp)
+      if p == "7TeV":
+        break
 
-  for i in lumiListLong:
-    for p in periods:
-      threads.append(
+  for p in periods:
+   if p == "8TeV":
+    for i in lumiListLong:
+      for comb in combinationsLong:
+       threads.append(
         ThreadedCardMaker(
           #__init__ args:
-          directory,["IncBDTSig80","VBFBDTSig80"],
+          directory,
+          comb[0],
           appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
           rebin=[MassRebin], bakShape=shape,
           controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
           controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,
           #write args:
-          outfilename=outDir+"BDTSig80"+"_"+p+"_"+str(i)+".txt",lumi=i
+          outfilename=outDir+comb[1]+"_"+p+"_"+str(i)+".txt",lumi=i
         )
-      )
-      threads.append(
-        ThreadedCardMaker(
-          #__init__ args:
-          directory,["IncPresel","VBFPresel"],
-          appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
-          rebin=[MassRebin], bakShape=shape,
-          controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,
-          #write args:
-          outfilename=outDir+"Presel"+"_"+p+"_"+str(i)+".txt",lumi=i
-        )
-      )
+       )
 
   nThreads = len(threads)
   print("nProcs: {0}".format(NPROCS))

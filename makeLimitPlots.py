@@ -10,6 +10,7 @@ import numpy
 
 #######################################
 
+#~48 Charactars Max
 titleMap = {
   "AllCat":"H->#mu#mu Catagories Combination",
   "IncCat":"Inclusive Categories Comb.",
@@ -30,8 +31,35 @@ titleMap = {
   "VBFVeryTight":"VBFVT",
 
   "BDTSig80":"H->#mu#mu BDT Combination",
-  "IncBDTSig80":"Inclusive BDT Cut",
-  "VBFBDTSig80":"VBF BDT Cut"
+  "IncBDTSig80":"Inclusive BDT ",
+  "VBFBDTSig80":"VBF BDT ",
+
+  "BDTSig80Cat":"BDT Res. Cat. Combination",
+  "IncBDTSig80Cat":"Inclusive BDT Resolution Categories",
+  "VBFBDTSig80Cat":"VBF BDT Resolution Categories",
+
+  "PreselCat":"Res. Cat. Preselection Combination",
+  "IncPreselCat":"Inclusive Resolution Cat. Preselection",
+  "VBFPreselCat":"VBF Cat. Resolution Preselection",
+
+  "IncBDTSig80BB":"Inclusive BDT BB",
+  "IncBDTSig80BO":"Inclusive BDT BO",
+  "IncBDTSig80BE":"Inclusive BDT BE",
+  "IncBDTSig80OO":"Inclusive BDT OO",
+  "IncBDTSig80OE":"Inclusive BDT OE",
+  "IncBDTSig80EE":"Inclusive BDT EE",
+  "IncBDTSig80NotBB":"Inclusive BDT !BB",
+  "VBFBDTSig80BB":"VBF BDT BB",
+  "VBFBDTSig80NotBB":"VBF BDT !BB",
+  "IncPreselBB":"Inclusive Preselection BB",
+  "IncPreselBO":"Inclusive Preselection BO",
+  "IncPreselBE":"Inclusive Preselection BE",
+  "IncPreselOO":"Inclusive Preselection OO",
+  "IncPreselOE":"Inclusive Preselection OE",
+  "IncPreselEE":"Inclusive Preselection EE",
+  "IncPreselNotBB":"Inclusive Preselection !BB",
+  "VBFPreselBB":"VBF Preselection BB",
+  "VBFPreselNotBB":"VBF Preselection !BB"
 }
 
 comparisonMap = {
@@ -39,6 +67,7 @@ comparisonMap = {
   "IncCat":"Inc. Cat. Comb.",
   "VBFCat":"VBF Cat. Comb.",
 
+  "Presel":"Presel. Comb.",
   "IncPresel":"Inc. Presel.",
   "VBFPresel":"VBF Presel.",
 
@@ -53,9 +82,36 @@ comparisonMap = {
   "VBFTight":"VBFT",
   "VBFVeryTight":"VBFVT",
 
-  "BDTSig80":"BDT Cut Comb.",
-  "IncBDTSig80":"Inc. BDT Cut",
-  "VBFBDTSig80":"VBF BDT Cut"
+  "BDTSig80":"BDT Comb.",
+  "IncBDTSig80":"Inc. BDT",
+  "VBFBDTSig80":"VBF BDT",
+
+  "BDTSig80Cat":"BDT Res. Comb.",
+  "IncBDTSig80Cat":"Inc. BDT Res.",
+  "VBFBDTSig80Cat":"VBF BDT Res.",
+
+  "PreselCat":"Presel. Res. Comb.",
+  "IncPreselCat":"Inc. Res. Presel.",
+  "VBFPreselCat":"VBF Res. Presel.",
+
+  "IncBDTSig80BB":"Inc. BDT BB",
+  "IncBDTSig80BO":"Inc. BDT BO",
+  "IncBDTSig80BE":"Inc. BDT BE",
+  "IncBDTSig80OO":"Inc. BDT OO",
+  "IncBDTSig80OE":"Inc. BDT OE",
+  "IncBDTSig80EE":"Inc. BDT EE",
+  "IncBDTSig80NotBB":"Inc. BDT !BB",
+  "VBFBDTSig80BB":"VBF BDT BB",
+  "VBFBDTSig80NotBB":"VBF BDT !BB",
+  "IncPreselBB":"Inc. Presel. BB",
+  "IncPreselBO":"Inc. Presel. BO",
+  "IncPreselBE":"Inc. Presel. BE",
+  "IncPreselOO":"Inc. Presel. OO",
+  "IncPreselOE":"Inc. Presel. OE",
+  "IncPreselEE":"Inc. Presel. EE",
+  "IncPreselNotBB":"Inc. Presel. !BB",
+  "VBFPreselBB":"VBF Presel. BB",
+  "VBFPreselNotBB":"VBF Presel. !BB"
 }
 
 #######################################
@@ -296,7 +352,8 @@ if __name__ == "__main__":
   ylimits=[0.1,100.0]
   
   for period in ["7TeV","8TeV"]:
-    allfiles = glob.glob(dirName+"*_"+period+"_*.txt.out")
+    fnToGlob = dirName+"*_"+period+"_*.txt.out"
+    allfiles = glob.glob(fnToGlob)
     
     ## Limit v. Lumi
     energyStr = ""
@@ -319,11 +376,21 @@ if __name__ == "__main__":
         continue
       incPlot = RelativePlot(data,canvas,legend,titleMap[plotName],caption2=caption2,ylimits=ylimits,energyStr=energyStr)
       saveAs(canvas,outDir+plotName+"_"+energyStr)
+
+    veto = [r"CNC",r"PM","BB","BO","BE","OO","OE","EE","NotBB"]
+    #veto = [r"CNC",r"PM","Presel","BB","BO","BE","OO","OE","EE","NotBB"]
+    #veto = [r"CNC",r"PM","BDT","BB","BO","BE","OO","OE","EE","NotBB"]
+    #veto = [r"CNC",r"PM","Presel"]
+    #veto = [r"CNC",r"PM","BDT"]
     
     ## Compare all types of limits
     desiredLumiStr="20"
-    compareData = getData(dirName+"*_"+energyStr+"_"+desiredLumiStr+".txt.out",matchString=r"(.+)_(.+)_[\d]+.txt.out",dontMatchStrings=[r"CNC",r"PM","Presel"],doSort=False)
+    fnGlobStr = dirName+"*_"+energyStr+"_"+desiredLumiStr+".txt.out"
+    compareData = getData(fnGlobStr,matchString=r"(.+)_(.+)_[\d]+.txt.out",dontMatchStrings=veto,doSort=False)
     #print compareData
+    if len(compareData)==0:
+        print("No Data to Compare for {0}!!".format(period))
+        continue
     comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=True)
     comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+desiredLumiStr+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
     comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStr,horizontalalignment="right",size="x-large")
