@@ -8,6 +8,8 @@ import re
 import matplotlib.pyplot as mpl
 import numpy
 
+from xsec import *
+
 #######################################
 
 #~48 Charactars Max
@@ -350,6 +352,8 @@ if __name__ == "__main__":
   #print mpl.rcParams["backend"]
 
   ylimits=[0.1,100.0]
+
+  lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":20}
   
   for period in ["7TeV","8TeV"]:
     fnToGlob = dirName+"*_"+period+"_*.txt.out"
@@ -359,7 +363,7 @@ if __name__ == "__main__":
     energyStr = ""
     plots = set()
     for fn in allfiles:
-      match = re.search(r".*/(.+)_(.+)_[\d]+.txt.out",fn)
+      match = re.search(r".*/(.+)_(.+)_[.\d]+.txt.out",fn)
       badPlot = re.search(r"Silly",fn)
       badPlot2 = re.search(r"Silly",fn)
       if match and not (badPlot or badPlot2):
@@ -384,9 +388,9 @@ if __name__ == "__main__":
     #veto = [r"CNC",r"PM","BDT"]
     
     ## Compare all types of limits
-    desiredLumiStr="20"
+    desiredLumiStr=str(lumisToUse[period])
     fnGlobStr = dirName+"*_"+energyStr+"_"+desiredLumiStr+".txt.out"
-    compareData = getData(fnGlobStr,matchString=r"(.+)_(.+)_[\d]+.txt.out",dontMatchStrings=veto,doSort=False)
+    compareData = getData(fnGlobStr,matchString=r"(.+)_(.+)_[.\d]+.txt.out",dontMatchStrings=veto,doSort=False)
     #print compareData
     if len(compareData)==0:
         print("No Data to Compare for {0}!!".format(period))

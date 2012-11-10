@@ -45,9 +45,9 @@ class ShapePlotter:
     self.lumi = -1
     self.lumiStr = ""
     self.energyStr = ""
-    tmpMatch = re.search(r"([\w]*)_(.+)_([0-9]+)\.root",filename)
+    tmpMatch = re.search(r"([\w]*)_(.+)_([.0-9]+)\.root",filename)
     if tmpMatch:
-      self.lumi = int(tmpMatch.group(3))
+      self.lumi = int(float(tmpMatch.group(3)))
       self.lumiStr = "L = {0} fb^{{-1}}".format(self.lumi)
       self.energyStr = tmpMatch.group(2)
 
@@ -468,7 +468,7 @@ if __name__ == "__main__":
 
   rebin=1
 
-  for fn in glob.glob(dataDir+"*20.root"):
+  for fn in glob.glob(dataDir+"*20.root")+glob.glob(dataDir+"*5.05.root"):
     #print fn
     if fn.count("Cat")>0:
       continue

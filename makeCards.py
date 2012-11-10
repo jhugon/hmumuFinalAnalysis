@@ -24,7 +24,7 @@ NPROCS = 2
 BAKUNC = 0.1
 
 BAKUNCON = True
-SIGUNCON = True
+SIGUNCON = False
 
 from xsec import *
 
@@ -1532,7 +1532,6 @@ if __name__ == "__main__":
   directory = "input/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTSig80"]
   analysesVBF = ["VBFPresel","VBFBDTSig80"]
   analyses = analysesInc + analysesVBF
@@ -1664,8 +1663,9 @@ if __name__ == "__main__":
         break
 
   for p in periods:
-   if p == "8TeV":
     for i in lumiListLong:
+      if p == "7TeV":
+        i = lumiDict[p]
       for comb in combinationsLong:
        threads.append(
         ThreadedCardMaker(
@@ -1680,6 +1680,8 @@ if __name__ == "__main__":
           outfilename=outDir+comb[1]+"_"+p+"_"+str(i)+".txt",lumi=i
         )
        )
+      if p == "7TeV":
+        break
 
   nThreads = len(threads)
   print("nProcs: {0}".format(NPROCS))
