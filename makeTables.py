@@ -246,12 +246,12 @@ if __name__ == "__main__":
     
   data = getShapeErrorsFromCounts(convertHistToCounts(sPlotter.data,123.,127.))
 
-  f = open("shapeErrors.tex","w")
+  f = open("tableShapeErrors.tex","w")
   f.write(writeErrorTable(data,True,True))
   f.close()
 
 
-  f = open("shapeErrorsTest.tex","w")
+  f = open("tableShapeErrorsTest.tex","w")
   f.write(r"""
 \documentclass[12pt,a4paper]{article}
 \usepackage{lscape}
@@ -264,9 +264,9 @@ if __name__ == "__main__":
 \end{document}
          """)
   f.close()
-  subprocess.call(["latex","shapeErrorsTest.tex"])
-  subprocess.call(["dvipdf","shapeErrorsTest.dvi"])
-  os.remove("shapeErrorsTest.aux")
-  os.remove("shapeErrorsTest.log")
-  os.remove("shapeErrorsTest.dvi")
+  subprocess.call(["latex","tableShapeErrorsTest.tex"])
+  subprocess.call(["dvipdf","tableShapeErrorsTest.dvi"])
+  os.remove("tableShapeErrorsTest.aux")
+  os.remove("tableShapeErrorsTest.log")
+  os.remove("tableShapeErrorsTest.dvi")
 

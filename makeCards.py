@@ -24,6 +24,7 @@ NPROCS = 2
 BAKUNC = 0.1
 
 BAKUNCON = True
+SIGUNCON = True
 
 from xsec import *
 
@@ -679,6 +680,26 @@ class Analysis:
       if tmpH.InheritsFrom("TH2"):
         self.is2D = True
 
+    # Signal Shape systematics
+    self.sigErrHistsMap = {}
+    if SIGUNCON:
+      for f in self.sigFiles:
+        name = histNameBase+analysis+histNameSuffix
+        name = name.split("/")
+        tmpDirKey = f.GetKey(name[0]) #Will break in main dir
+        tmpDir = tmpDirKey.ReadObj()
+        tmpDir.Print()
+        for key in tmpDir.GetListOfKeys():
+          matchUp = re.match(name[1]+".+Up",key.GetName())
+          matchDown = re.match(name[1]+".+Down",key.GetName())
+          if matchUp or matchDown:
+            self.sigErrHistsMap[re.sub(name[1],"",key.GetName())] = []
+        break
+      for f in self.sigFiles:
+        for sysName in self.sigErrHistsMap:
+          tmpHist = f.Get(histNameBase+analysis+histNameSuffix+sysName)
+          self.sigErrHistsMap[sysName].append(tmpHist)
+
     self.bakFiles = []
     self.bakHistsRaw = []
     for name in backgroundNames:
@@ -707,6 +728,9 @@ class Analysis:
           hist.Rebin2D(*rb)
         for hist in self.datHists:
           hist.Rebin2D(*rb)
+        for err in self.sigErrHistsMap:
+          for hist in self.sigErrHistsMap[err]:
+            hist.Rebin2D(*rb)
     elif len(rb) == 1 and not self.is2D:
         for hist in self.sigHistsRaw:
           hist.Rebin(*rb)
@@ -714,6 +738,9 @@ class Analysis:
           hist.Rebin(*rb)
         for hist in self.datHists:
           hist.Rebin(*rb)
+        for err in self.sigErrHistsMap:
+          for hist in self.sigErrHistsMap[err]:
+            hist.Rebin(*rb)
     elif len(rb) == 0:
       pass
     else:
@@ -782,6 +809,16 @@ class Analysis:
       else:
         self.datHistTotal.Add(h)
 
+    for err in self.sigErrHistsMap:
+      for h,name in zip(self.sigErrHistsMap[err],signalNames):
+        h.Scale(xsec[name]/nEventsMap[name]*efficiencyMap[getPeriod(name)])
+    self.sigErrNames = set()
+    for errLong in self.sigErrHistsMap:
+        errLong = re.sub(r"Up$","",errLong)
+        errLong = re.sub(r"Down$","",errLong)
+        if not errLong in self.sigErrNames:
+            self.sigErrNames.add(errLong)
+
   def getSigEff(self,name):
     result = -1.0
     if self.sigNames.count(name)>0:
@@ -809,6 +846,13 @@ class Analysis:
     if self.sigNames.count(sigName)>0:
         i = self.sigNames.index(sigName)
         result = self.sigHists[i]
+    return result
+  def getSigSystHist(self,sigName,systName):
+    result = -1.0
+    l = self.sigErrHistsMap[systName]
+    if self.sigNames.count(sigName)>0:
+        i = self.sigNames.index(sigName)
+        result = l[i]
     return result
   def getBakHist(self,bakName):
     result = -1.0
@@ -1143,6 +1187,12 @@ class ShapeDataCardMaker(DataCardMaker):
             sumAllSigMCHist = tmpHist.Clone("sig")
           else:
             sumAllSigMCHist.Add(tmpHist)
+
+          # Signal Shape Systematics
+          for errHistKey in channel.sigErrHistsMap:
+             tmpHist = channel.getSigSystHist(sigName,errHistKey).Clone(sigName+"_"+errHistKey)
+             tmpHist.Scale(lumi)
+             self.makeRFHistWrite(channel,tmpHist,tmpDir)
   
         if sumAllBak:
           #channel.dump()
@@ -1362,6 +1412,36 @@ class ShapeDataCardMaker(DataCardMaker):
       #print formatList
       outfile.write(formatString.format(*formatList))
 
+    # Sig Shape Uncertainties (All Correlated)
+    for channel,channelName in zip(self.channels,self.channelNames):
+      for nuisanceName in channel.sigErrNames:
+        formatString = "{0:<8} {1:^4} "
+        formatList = [nuisanceName,"shape"]
+        iParam = 2
+        for channel2,channelName2 in zip(self.channels,self.channelNames):
+          for sigName in self.sigNames:
+            formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+            value = "1"
+            formatList.append(value)
+            iParam += 1
+          if sumAllBak:
+              bakName="bak"
+              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+              value = "-"
+              formatList.append(value)
+              iParam += 1
+          else:
+            for bakName in self.bakNames:
+              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+              value = "-"
+              formatList.append(value)
+              iParam += 1
+        formatString += "\n"
+        #print formatString
+        #print formatList
+        outfile.write(formatString.format(*formatList))
+      break
+
     # Bak Shape Uncertainties (All Correlated)
     for channel,channelName in zip(self.channels,self.channelNames):
       for nuisanceName in channel.bakShapeMkr.errNames:
@@ -1427,7 +1507,7 @@ class ThreadedCardMaker(myThread):
     self.dictArgs = dictArgs
     self.started = False
   def run(self):
-    try:
+    #try:
       self.started = True
       dataCardMassShape = None
       if self.shapeDataCardMaker:
@@ -1435,9 +1515,9 @@ class ThreadedCardMaker(myThread):
       else:
         dataCardMassShape = DataCardMaker(*(self.args),**(self.dictArgs))
       dataCardMassShape.write(*(self.writeArgs),**(self.writeArgsDict))
-    except Exception as e:
-      print("Error: Exception: {0}".format(e))
-      print("  Thread Arguments: {0}, {1}".format(self.args,self.dictArgs))
+    #except Exception as e:
+    #  print("Error: Exception: {0}".format(e))
+    #  print("  Thread Arguments: {0}, {1}".format(self.args,self.dictArgs))
 
 ###################################################################################
 ###################################################################################
