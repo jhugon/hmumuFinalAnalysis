@@ -235,9 +235,10 @@ def writeErrorTable(data,latex,niceTitles):
     
 if __name__ == "__main__":
  import subprocess
+ import os
   
  dataDir = "statsCards/"
- filenames = ["statsCards/AllCat_8TeV_20.root"]
+ filenames = ["statsCards/BDTSig80_8TeV_20.root"]
  #filenames = glob.glob(dataDir+"20*.root")
 
  for fn in filenames:
@@ -265,4 +266,7 @@ if __name__ == "__main__":
   f.close()
   subprocess.call(["latex","shapeErrorsTest.tex"])
   subprocess.call(["dvipdf","shapeErrorsTest.dvi"])
+  os.remove("shapeErrorsTest.aux")
+  os.remove("shapeErrorsTest.log")
+  os.remove("shapeErrorsTest.dvi")
 

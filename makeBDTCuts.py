@@ -117,7 +117,7 @@ if __name__ == "__main__":
     from makeCards import *
   
     signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
-    backgroundNames= ["DYToMuMu","ttbar","WW","WZ","ZZ"]
+    backgroundNames= ["DYJetsToLL","ttbar","WW","WZ","ZZ"]
   
     dataDict = {}
     dataDict["8TeV"] = [
