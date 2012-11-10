@@ -400,4 +400,4 @@ if __name__ == "__main__":
     comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=False)
     comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+desiredLumiStr+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
     comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStr,horizontalalignment="right",size="x-large")
-  comparePlot.save(outDir+"compare"+"_"+energyStr)
+    comparePlot.save(outDir+"compare"+"_"+energyStr)
