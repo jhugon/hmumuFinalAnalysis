@@ -6,6 +6,7 @@ import ROOT as root
 import os
 import sys
 
+dataDir = "input/noZPeak/"
 dataDir = "input/"
 outDir = "output/"
 
@@ -14,6 +15,11 @@ LUMI=lumiDict[RUNPERIOD]
 
 LOGY=False
 integralPlot=False
+
+#anotateText = "80 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"
+#anotateText = "110 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"
+anotateText = "110 GeV < m_{#mu#mu} < 160 GeV"
+#anotateText = "80 GeV < m_{#mu#mu} < 160 GeV"
 
 urLegendPos = [0.70,0.67,0.9,0.9]
 ulLegendPos = [0.20,0.67,0.4,0.9]
@@ -25,8 +31,11 @@ stdLegendPos = urLegendPos
 #histDirs = ["","4GeVWindow/","PtDiMu100/","VBFPresel/","IncPresel/","NotBlindWindow/"]
 histDirs = [""]
 histDirs = ["NotBlindWindow/"]
+histDirs = ["VBFPreselDiMuPtL20/","IncPreselDiMuPtL20/"]
 histDirs = ["VBFPresel/","IncPresel/"]
 #histDirs = ["","PtDiMu100/","VBFPresel/","IncPresel/"]
+
+root.gErrorIgnoreLevel = root.kWarning
 
 histNames = {}
 #histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[110.0,150.0],"rebin":1}
@@ -36,7 +45,7 @@ histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV]","xlimits":[0.0,100.0],"rebi
 #histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV]","xlimits":[0.0,200.0],"rebin":5}
 
 histNames["mDiJet"] = {"xlabel":"m_{jj} [GeV]","xlimits":[0.0,1200.0],"rebin":5}
-histNames["mDiJet"] = {"xlabel":"m_{jj} [GeV]","xlimits":[300.0,1200.0],"rebin":5}
+histNames["ptDiJet"] = {"xlabel":"p_{T,jj} [GeV]","xlimits":[0.0,200.0],"rebin":2}
 histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj}","xlimits":[0.0,8.5]}
 histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj}","xlimits":[3.0,8.5]}
 histNames["deltaRJets"] = {"xlabel":"#DeltaR_{jj}","xlimits":[0.0,8.5]}
@@ -69,11 +78,11 @@ histNames["cosThetaStarCS"] = {"xlabel":"cos(#theta^{*}_{CS})","xlimits":[-1.0,1
 histNames["relIsoMu1"] = {"xlabel":"Leading Muon Relative PF Isolation","xlimits":[0,0.3],"rebin":2}
 histNames["relIsoMu2"] = {"xlabel":"Sub-Leading Muon Relative PF Isolation","xlimits":[0,0.3],"rebin":2}
 
-histNames["likelihoodHistMuonOnly"] = {"xlabel":"Likelihood (Inclusive Category)","xlimits":[-0.5,0.5],"rebin":20}
-histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Inclusive Category)","xlimits":[-1,0],"rebin":20}
+#histNames["likelihoodHistMuonOnly"] = {"xlabel":"Likelihood (Inclusive Category)","xlimits":[-0.5,0.5],"rebin":20}
+histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Inclusive Category)","xlimits":[-1,0],"rebin":2}
 
-histNames["likelihoodHistVBF"] = {"xlabel":"Likelihood (VBF Category)","xlimits":[-0.5,0.5],"rebin":20}
-histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.5,0.5],"rebin":20}
+#histNames["likelihoodHistVBF"] = {"xlabel":"Likelihood (VBF Category)","xlimits":[-0.5,0.5],"rebin":2}
+histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.5,0.5],"rebin":2}
 
 histNames["puJetIDSimpleDiscJet1"] = {"xlabel":"PU Jet ID Simple Discriminator--Leading Jet","xlimits":[-1,1],"rebin":1}
 histNames["puJetIDSimpleDiscJet2"] = {"xlabel":"PU Jet ID Simple Discriminator--Sub-Leading Jet","xlimits":[-1,1],"rebin":1}
@@ -268,7 +277,6 @@ for histName in bkgDatasetList[0].hists:
 
   tlatex.SetTextSize(0.03)
   tlatex.SetTextAlign(33)
-  anotateText = "80 GeV < m_{#mu#mu} < 160 GeV"
   tlatex.DrawLatex(legLeftPos-0.02,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
 
   saveName = histName.replace("(","")

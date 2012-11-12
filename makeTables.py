@@ -17,6 +17,7 @@ channelNameMap = {
   "IncCat":"Inc. Cat. Comb.",
   "VBFCat":"VBF Cat. Comb.",
 
+  "Presel":"Presel. Comb.",
   "IncPresel":"Inc. Presel.",
   "VBFPresel":"VBF Presel.",
 
@@ -31,9 +32,36 @@ channelNameMap = {
   "VBFTight":"VBFT",
   "VBFVeryTight":"VBFVT",
 
-  "BDTSig80":"BDT Cut Comb.",
-  "IncBDTSig80":"Inc. BDT Cut",
-  "VBFBDTSig80":"VBF BDT Cut"
+  "BDTSig80":"BDT Comb.",
+  "IncBDTSig80":"Inc. BDT",
+  "VBFBDTSig80":"VBF BDT",
+
+  "BDTSig80Cat":"BDT Res. Comb.",
+  "IncBDTSig80Cat":"Inc. BDT Res.",
+  "VBFBDTSig80Cat":"VBF BDT Res.",
+
+  "PreselCat":"Presel. Res. Comb.",
+  "IncPreselCat":"Inc. Res. Presel.",
+  "VBFPreselCat":"VBF Res. Presel.",
+
+  "IncBDTSig80BB":"Inc. BDT BB",
+  "IncBDTSig80BO":"Inc. BDT BO",
+  "IncBDTSig80BE":"Inc. BDT BE",
+  "IncBDTSig80OO":"Inc. BDT OO",
+  "IncBDTSig80OE":"Inc. BDT OE",
+  "IncBDTSig80EE":"Inc. BDT EE",
+  "IncBDTSig80NotBB":"Inc. BDT !BB",
+  "VBFBDTSig80BB":"VBF BDT BB",
+  "VBFBDTSig80NotBB":"VBF BDT !BB",
+  "IncPreselBB":"Inc. Presel. BB",
+  "IncPreselBO":"Inc. Presel. BO",
+  "IncPreselBE":"Inc. Presel. BE",
+  "IncPreselOO":"Inc. Presel. OO",
+  "IncPreselOE":"Inc. Presel. OE",
+  "IncPreselEE":"Inc. Presel. EE",
+  "IncPreselNotBB":"Inc. Presel. !BB",
+  "VBFPreselBB":"VBF Presel. BB",
+  "VBFPreselNotBB":"VBF Presel. !BB"
 }
 
 sampleNameMap = {
@@ -46,7 +74,7 @@ errNameMap = {
   "voitSig":"Voigtian $\sigma$",
   "voitmZ":"Voigtian Mass",
   "mixParam":"V/E Ratio",
-  "TotalSyst":"Total Systematic",
+  "TotalSyst":"Total Background Syst.",
   "Stat":"Background Stat.",
 }
 
@@ -139,13 +167,31 @@ def getShapeErrorsFromCounts(data):
       
   return outDict
 
-def writeErrorTable(data,latex,niceTitles):
+def writeErrorTable(data,latex,niceTitles,mustMatchList=None,cantMatchList=None):
+  def sortfun(s):
+    ll = ["BB","BE","BO","OO","OE","EE","NotBB","!BB"]
+    i = 0
+    for l in ll:
+      match = re.match(r"(.*)("+l+r")",s)
+      if match:
+        result = match.group(1)+str(i)
+        print result
+        return result
+      i += 1
+    return s
+  def matches(s,ll):
+    for l in ll:
+      if re.match(l,s):
+        return True
+    return False
   outString = ""
   # Get Widths
   maxChannelWidth = 0
   maxSampleWidth = 0
   maxErrWidth = 0
-  for channelName in data:
+  channelNames = data.keys()
+  channelNames.sort(key=sortfun)
+  for channelName in channelNames:
      channel = data[channelName]
      if niceTitles:
         channelName = channelNameMap[channelName]
@@ -158,6 +204,12 @@ def writeErrorTable(data,latex,niceTitles):
        if len(sampleName) > maxSampleWidth:
           maxSampleWidth = len(sampleName)
        for errName in sample:
+         if mustMatchList != None:
+            if not matches(errName, mustMatchList):
+              continue
+         if cantMatchList != None:
+            if matches(errName, cantMatchList):
+              continue
          if errName == "nom":
             continue
          if niceTitles:
@@ -173,9 +225,15 @@ def writeErrorTable(data,latex,niceTitles):
   if latex:
     errNamesString += "&"
   iErrName = 0
-  for channelName in data:
+  for channelName in channelNames:
      for sampleName in data[channelName]:
        for errName in data[channelName][sampleName]:
+         if mustMatchList != None:
+            if not matches(errName, mustMatchList):
+              continue
+         if cantMatchList != None:
+            if matches(errName, cantMatchList):
+              continue
          if errName == "nom":
             continue
          if niceTitles:
@@ -191,7 +249,7 @@ def writeErrorTable(data,latex,niceTitles):
     errNamesString += r"\\ \hline \hline"
   errNamesString = errNamesString.format(*errNames)
   outString += "\n"+errNamesString+"\n"
-  for channelName in data:
+  for channelName in channelNames:
     errVals = [channelName]
     if niceTitles:
       errVals = [channelNameMap[channelName]]
@@ -204,6 +262,12 @@ def writeErrorTable(data,latex,niceTitles):
     iErrVal = 1
     for sampleName in data[channelName]:
       for errName in data[channelName][sampleName]:
+        if mustMatchList != None:
+            if not matches(errName, mustMatchList):
+              continue
+        if cantMatchList != None:
+            if matches(errName, cantMatchList):
+              continue
         if errName == "nom":
             continue
         errVals.append("+{0:.3%}".format(data[channelName][sampleName][errName]["Up"]))
@@ -238,7 +302,8 @@ if __name__ == "__main__":
  import os
   
  dataDir = "statsCards/"
- filenames = ["statsCards/BDTSig80_8TeV_20.root"]
+ #filenames = ["statsCards/BDTSig80_8TeV_20.root"]
+ filenames = ["statsCards/BDTSig80Cat_8TeV_20.root"]
  #filenames = glob.glob(dataDir+"20*.root")
 
  for fn in filenames:
@@ -247,7 +312,7 @@ if __name__ == "__main__":
   data = getShapeErrorsFromCounts(convertHistToCounts(sPlotter.data,123.,127.))
 
   f = open("tableShapeErrors.tex","w")
-  f.write(writeErrorTable(data,True,True))
+  f.write(writeErrorTable(data,True,True,mustMatchList=["TotalSyst"]))
   f.close()
 
 
@@ -259,7 +324,7 @@ if __name__ == "__main__":
 \begin{landscape}
 %\tiny
 \small
-\input{shapeErrors}
+\input{tableShapeErrors}
 \end{landscape}
 \end{document}
          """)
@@ -269,4 +334,3 @@ if __name__ == "__main__":
   os.remove("tableShapeErrorsTest.aux")
   os.remove("tableShapeErrorsTest.log")
   os.remove("tableShapeErrorsTest.dvi")
-
