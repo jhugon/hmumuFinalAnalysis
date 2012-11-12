@@ -298,6 +298,7 @@ class ComparePlot:
     ax1.set_yticks(xPos+0.25)
     ax1.set_yticklabels(tuple(xLabels),size="small")
     ax1.set_xlabel(ylabel)
+    ax1.set_xlim([0,20])
     bars = ax1.barh(xPos,medians, 0.5, xerr=[low2sigs,high2sigs],ecolor="k")
     self.bars = bars
     xPosObs = [x+0.25 for x in xPos]
@@ -382,7 +383,7 @@ if __name__ == "__main__":
       saveAs(canvas,outDir+plotName+"_"+energyStr)
 
     veto = [r"CNC",r"PM","BB","BO","BE","OO","OE","EE","NotBB"]
-    #veto = [r"CNC",r"PM","Presel","BB","BO","BE","OO","OE","EE","NotBB"]
+    veto = [r"CNC",r"PM","Presel","BB","BO","BE","OO","OE","EE","NotBB"]
     #veto = [r"CNC",r"PM","BDT","BB","BO","BE","OO","OE","EE","NotBB"]
     #veto = [r"CNC",r"PM","Presel"]
     #veto = [r"CNC",r"PM","BDT"]

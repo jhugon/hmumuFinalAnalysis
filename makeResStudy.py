@@ -14,10 +14,9 @@ root.gStyle.SetOptStat(0)
 class ResStudy:
   def __init__(self,fileNames,titles):
     getData = getattr(self,"getData")
-    plotPies = getattr(self,"plotPies")
-    plotRes = getattr(self,"plotRes")
     countsList = []
     resList = []
+    quantList = []
     categoriesList = []
     for fn in fileNames:
         prefix = "IncPresel"
@@ -25,14 +24,20 @@ class ResStudy:
         if re.search(r"VBF",fn) or re.search(r"vbf",fn) :
           prefix = "VBFPresel"
           categories = ["BB","NotBB"]
-        tmpCounts, tmpRes = getData(fn,categories,prefix)
+        tmpCounts, tmpRes, tmpQuants = getData(fn,categories,prefix)
         countsList.append(tmpCounts)
         resList.append(tmpRes)
+        quantList.append(tmpQuants)
         categoriesList.append(categories)
     self.titles = titles
     self.countsList = countsList
     self.resList = resList
+    self.quantList = quantList
     self.categoriesList = categoriesList
+
+  def plot(self):
+    plotPies = getattr(self,"plotPies")
+    plotRes = getattr(self,"plotRes")
     plotPies()
     plotRes()
 
@@ -144,11 +149,13 @@ class ResStudy:
       meanRMSString += "{0:<8}{1:<10.2f}{2:<6.2f}\n".format(c,histMap[c].GetMean(),histMap[c].GetRMS())
     
     resMap={}
+    quantMap={}
     quantilesString = ""
     quantilesString += "{0:<8}{1:<10}{2:^24}{3:^24}\n".format("","Median","1 Sigma Quantile Width","2 Sigma Quantile Width")
     for c in keyList:
       quantiles = getMedianAndQuantileInterval(histMap[c],0.159)
       err = (quantiles[2]-quantiles[0])/2.
+      quantMap[c] = quantiles
       resMap[c] = err
       quantiles2 = getMedianAndQuantileInterval(histMap[c],0.023)
       err2 = (quantiles2[2]-quantiles2[0])/2.
@@ -185,7 +192,7 @@ class ResStudy:
     saveAs(canvas,"resolutionCategories")
     """
 
-    return countsMap, resMap
+    return countsMap, resMap, quantMap
 
 if __name__ == "__main__":
   infilename = "input/ggHmumu125_8TeV.root"
@@ -197,5 +204,6 @@ if __name__ == "__main__":
   infiles.append("input/smearing/vbfHmumu125_8TeV.root")
   titles.append("VBF")
 
-  ResStudy(infiles,titles)
-
+  rs = ResStudy(infiles,titles)
+  rs.plot()
+  print rs.quantList

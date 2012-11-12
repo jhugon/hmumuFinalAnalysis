@@ -7,6 +7,7 @@ from helpers import *
 import matplotlib.pyplot as mpl
 import numpy
 import glob
+import re
 
 from xsec import *
 
@@ -78,16 +79,26 @@ errNameMap = {
   "Stat":"Background Stat.",
 }
 
-def convertHistToCounts(dataDict,xlow,xhigh):
+def convertHistToCounts(dataDict,ggFileName,vbfFileName):
+  ggFile = root.TFile(ggFileName)
+  vbfFile = root.TFile(vbfFileName)
+
   outDict = {}
   for channelName in dataDict:
+    tmpHist = None
+    histNameToGet = channelName+"/mDiMu"
+    if re.search("VBF",channelName) or re.search("vbf",channelName):
+      tmpHist = vbfFile.Get(histNameToGet)
+    else:
+      tmpHist = ggFile.Get(histNameToGet)
+    quantiles = getMedianAndQuantileInterval(tmpHist,0.159)
     tmpDict = {}
     channel = dataDict[channelName]
     lowBin = 0
     highBin = 0
     for histName in channel:
       hist = channel[histName]
-      val = getIntegralAll(hist,[xlow,xhigh])
+      val = getIntegralAll(hist,[quantiles[0],quantiles[2]])
       tmpDict[histName] = val
     outDict[channelName] = tmpDict
   return outDict
@@ -175,7 +186,6 @@ def writeErrorTable(data,latex,niceTitles,mustMatchList=None,cantMatchList=None)
       match = re.match(r"(.*)("+l+r")",s)
       if match:
         result = match.group(1)+str(i)
-        print result
         return result
       i += 1
     return s
@@ -301,6 +311,8 @@ if __name__ == "__main__":
  import subprocess
  import os
   
+ ggFileName = "input/ggHmumu125_8TeV.root"
+ vbfFileName = "input/vbfHmumu125_8TeV.root"
  dataDir = "statsCards/"
  #filenames = ["statsCards/BDTSig80_8TeV_20.root"]
  filenames = ["statsCards/BDTSig80Cat_8TeV_20.root"]
@@ -309,7 +321,7 @@ if __name__ == "__main__":
  for fn in filenames:
   sPlotter = makeShapePlots.ShapePlotter(fn,makeShapePlots.titleMap)
     
-  data = getShapeErrorsFromCounts(convertHistToCounts(sPlotter.data,123.,127.))
+  data = getShapeErrorsFromCounts(convertHistToCounts(sPlotter.data,ggFileName,vbfFileName))
 
   f = open("tableShapeErrors.tex","w")
   f.write(writeErrorTable(data,True,True,mustMatchList=["TotalSyst"]))
