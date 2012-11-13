@@ -33,27 +33,27 @@ channelNameMap = {
   "VBFTight":"VBFT",
   "VBFVeryTight":"VBFVT",
 
-  "BDTSig80":"BDT Comb.",
-  "IncBDTSig80":"Inc. BDT",
-  "VBFBDTSig80":"VBF BDT",
+  "BDTCut":"BDT Comb.",
+  "IncBDTCut":"Inc. BDT",
+  "VBFBDTCut":"VBF BDT",
 
-  "BDTSig80Cat":"BDT Res. Comb.",
-  "IncBDTSig80Cat":"Inc. BDT Res.",
-  "VBFBDTSig80Cat":"VBF BDT Res.",
+  "BDTCutCat":"BDT Res. Comb.",
+  "IncBDTCutCat":"Inc. BDT Res.",
+  "VBFBDTCutCat":"VBF BDT Res.",
 
   "PreselCat":"Presel. Res. Comb.",
   "IncPreselCat":"Inc. Res. Presel.",
   "VBFPreselCat":"VBF Res. Presel.",
 
-  "IncBDTSig80BB":"Inc. BDT BB",
-  "IncBDTSig80BO":"Inc. BDT BO",
-  "IncBDTSig80BE":"Inc. BDT BE",
-  "IncBDTSig80OO":"Inc. BDT OO",
-  "IncBDTSig80OE":"Inc. BDT OE",
-  "IncBDTSig80EE":"Inc. BDT EE",
-  "IncBDTSig80NotBB":"Inc. BDT !BB",
-  "VBFBDTSig80BB":"VBF BDT BB",
-  "VBFBDTSig80NotBB":"VBF BDT !BB",
+  "IncBDTCutBB":"Inc. BDT BB",
+  "IncBDTCutBO":"Inc. BDT BO",
+  "IncBDTCutBE":"Inc. BDT BE",
+  "IncBDTCutOO":"Inc. BDT OO",
+  "IncBDTCutOE":"Inc. BDT OE",
+  "IncBDTCutEE":"Inc. BDT EE",
+  "IncBDTCutNotBB":"Inc. BDT !BB",
+  "VBFBDTCutBB":"VBF BDT BB",
+  "VBFBDTCutNotBB":"VBF BDT !BB",
   "IncPreselBB":"Inc. Presel. BB",
   "IncPreselBO":"Inc. Presel. BO",
   "IncPreselBE":"Inc. Presel. BE",
@@ -314,8 +314,8 @@ if __name__ == "__main__":
  ggFileName = "input/ggHmumu125_8TeV.root"
  vbfFileName = "input/vbfHmumu125_8TeV.root"
  dataDir = "statsCards/"
- #filenames = ["statsCards/BDTSig80_8TeV_20.root"]
- filenames = ["statsCards/BDTSig80Cat_8TeV_20.root"]
+ #filenames = ["statsCards/BDTCut_8TeV_20.root"]
+ filenames = ["statsCards/BDTCutCat_8TeV_20.root"]
  #filenames = glob.glob(dataDir+"20*.root")
 
  for fn in filenames:

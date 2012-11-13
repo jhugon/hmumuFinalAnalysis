@@ -1532,8 +1532,8 @@ if __name__ == "__main__":
   directory = "input/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  analysesInc = ["IncPresel","IncBDTSig80"]
-  analysesVBF = ["VBFPresel","VBFBDTSig80"]
+  analysesInc = ["IncPresel","IncBDTCut"]
+  analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
   categoriesInc = ["BB","BO","BE","OO","OE","EE"]
   categoriesVBF = ["BB","NotBB"]
@@ -1550,10 +1550,10 @@ if __name__ == "__main__":
   combinations = []
   combinationsLong = []
   combinations.append((
-        ["IncBDTSig80"+x for x in categoriesInc],"IncBDTSig80Cat"
+        ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
   ))
   combinations.append((
-        ["VBFBDTSig80"+x for x in categoriesVBF],"VBFBDTSig80Cat"
+        ["VBFBDTCut"+x for x in categoriesVBF],"VBFBDTCutCat"
   ))
   combinations.append((
         ["IncPresel"+x for x in categoriesInc],"IncPreselCat"
@@ -1562,7 +1562,7 @@ if __name__ == "__main__":
         ["VBFPresel"+x for x in categoriesVBF],"VBFPreselCat"
   ))
   combinations.append((
-        ["IncBDTSig80","VBFBDTSig80"],"BDTSig80"
+        ["IncBDTCut","VBFBDTCut"],"BDTCut"
   ))
   combinations.append((
         ["IncPresel","VBFPresel"],"Presel"
@@ -1571,7 +1571,7 @@ if __name__ == "__main__":
         ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
   ))
   combinationsLong.append((
-        ["VBFBDTSig80"+x for x in categoriesVBF]+["IncBDTSig80"+x for x in categoriesInc],"BDTSig80Cat"
+        ["VBFBDTCut"+x for x in categoriesVBF]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))
   histPostFix="/mDiMu"
   #analyses = ["mDiMu"]

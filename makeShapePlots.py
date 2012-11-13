@@ -428,26 +428,26 @@ titleMap = {
   "VBFTight":"VBFT",
   "VBFVeryTight":"VBFVT",
 
-  "BDTSig80":"BDT Cut Combination",
-  "IncBDTSig80":"Inclusive BDT Cut",
-  "VBFBDTSig80":"VBF BDT Cut",
+  "BDTCut":"BDT Cut Combination",
+  "IncBDTCut":"Inclusive BDT Cut",
+  "VBFBDTCut":"VBF BDT Cut",
 
-  "BDTSig80Cat":"BDT Cut Cat. Combination",
-  "IncBDTSig80Cat":"Inclusive BDT Cut",
-  "VBFBDTSig80Cat":"VBF BDT Cut",
+  "BDTCutCat":"BDT Cut Cat. Combination",
+  "IncBDTCutCat":"Inclusive BDT Cut",
+  "VBFBDTCutCat":"VBF BDT Cut",
 
   "IncPreselCat":"Inclusive Cat. Preselection",
   "VBFPreselCat":"VBF Cat. Preselection",
 
-  "IncBDTSig80BB":"Inclusive BDT Cut BB",
-  "IncBDTSig80BO":"Inclusive BDT Cut BO",
-  "IncBDTSig80BE":"Inclusive BDT Cut BE",
-  "IncBDTSig80OO":"Inclusive BDT Cut OO",
-  "IncBDTSig80OE":"Inclusive BDT Cut OE",
-  "IncBDTSig80EE":"Inclusive BDT Cut EE",
-  "IncBDTSig80NotBB":"Inclusive BDT Cut !BB",
-  "VBFBDTSig80BB":"VBF BDT Cut BB",
-  "VBFBDTSig80NotBB":"VBF BDT Cut !BB",
+  "IncBDTCutBB":"Inclusive BDT Cut BB",
+  "IncBDTCutBO":"Inclusive BDT Cut BO",
+  "IncBDTCutBE":"Inclusive BDT Cut BE",
+  "IncBDTCutOO":"Inclusive BDT Cut OO",
+  "IncBDTCutOE":"Inclusive BDT Cut OE",
+  "IncBDTCutEE":"Inclusive BDT Cut EE",
+  "IncBDTCutNotBB":"Inclusive BDT Cut !BB",
+  "VBFBDTCutBB":"VBF BDT Cut BB",
+  "VBFBDTCutNotBB":"VBF BDT Cut !BB",
   "IncPreselBB":"Inclusive Preselection BB",
   "IncPreselBO":"Inclusive Preselection BO",
   "IncPreselBE":"Inclusive Preselection BE",
@@ -472,7 +472,7 @@ if __name__ == "__main__":
     #print fn
     if fn.count("Cat")>0:
       continue
-    if fn.count("/BDTSig80")>0:
+    if fn.count("/BDTCut")>0:
       continue
     if fn.count("/Presel")>0:
       continue
