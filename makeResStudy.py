@@ -200,8 +200,12 @@ if __name__ == "__main__":
   infiles = []
   titles = []
   infiles.append("input/smearing/ggHmumu125_8TeV.root")
-  titles.append("gg")
   infiles.append("input/smearing/vbfHmumu125_8TeV.root")
+  #infiles.append("input/ggHmumu125_8TeV.root")
+  #infiles.append("input/vbfHmumu125_8TeV.root")
+  #infiles.append("input/rochester/ggHmumu125_8TeV.root")
+  #infiles.append("input/rochester/vbfHmumu125_8TeV.root")
+  titles.append("gg")
   titles.append("VBF")
 
   rs = ResStudy(infiles,titles)
