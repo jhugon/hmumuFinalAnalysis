@@ -4,6 +4,7 @@ from ROOT import gStyle as gStyle
 #from ROOT import RooRealVar, RooGaussian, RooArgList, RooDataHist
 import re
 from math import sqrt
+import numpy
 import array
 import sys
 
@@ -1003,19 +1004,52 @@ class CompareTwoHistsAndData:
     self.tlatex.DrawLatex(0.33,0.96,"CMS Internal")
     self.tlatex.DrawLatex(0.75,0.96,"#sqrt{{s}}={0}, L={1:.1f} fb^{{-1}}".format(energyStr,lumi))
 
+def makeBootstrapHist(hist,outHist,entries=None):
+ outHist.Reset()
+ samples = entries
+ if samples == None:
+   integral = hist.Integral()
+ for i in range(samples):
+   outHist.Fill(hist.GetRandom())
 
-def getMedianAndQuantileInterval(hist,amountForQuantile):
+def getMedianAndQuantileInterval(hist,amountForQuantile,doErrors=False):
     """ 
         Takes and input histogram, and an amount for the quantile 
         returns a list with: 
           [amountForQuantile, median, and 1.0-amountForQuantile] quantiles
     """
     quantilesToGet = array.array('d',[amountForQuantile,0.5,1.0-amountForQuantile])
-    quantiles = array.array('d',[0.0,0.0,0.0])
-    nQuantiles = hist.GetQuantiles(3,quantiles,quantilesToGet)
-    if(nQuantiles != 3):
-        raise Exception("ROOT Hist Quantile Estimation didn't work!!")
-    return list(quantiles)
+    if doErrors:
+      lowErrors = numpy.zeros(1000)
+      medianErrors = numpy.zeros(1000)
+      highErrors = numpy.zeros(1000)
+      errors = []
+      for i in range(1000):
+        tmpHist = hist.Clone("tmpForQuantiles")
+        makeBootstrapHist(hist,tmpHist,int(hist.GetEntries()))
+        quantiles = array.array('d',[0.0,0.0,0.0])
+        nQuantiles = tmpHist.GetQuantiles(3,quantiles,quantilesToGet)
+        if(nQuantiles != 3):
+          raise Exception("ROOT Hist Quantile Estimation didn't work!!")
+        lowErrors[i] = quantiles[0]
+        medianErrors[i] = quantiles[1]
+        highErrors[i] = quantiles[2]
+      quantiles = array.array('d',[0.0,0.0,0.0])
+      nQuantiles = hist.GetQuantiles(3,quantiles,quantilesToGet)
+      if(nQuantiles != 3):
+          raise Exception("ROOT Hist Quantile Estimation didn't work!!")
+      medianErros = []
+      highErrors = []
+      errors.append(numpy.std(lowErrors))
+      errors.append(numpy.std(medianErrors))
+      errors.append(numpy.std(highErrors))
+      return list(quantiles), errors
+    else:
+      quantiles = array.array('d',[0.0,0.0,0.0])
+      nQuantiles = hist.GetQuantiles(3,quantiles,quantilesToGet)
+      if(nQuantiles != 3):
+          raise Exception("ROOT Hist Quantile Estimation didn't work!!")
+      return list(quantiles)
 
 def sqrtThisHistogram(hist):
     """

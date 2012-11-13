@@ -35,16 +35,18 @@ class ResStudy:
     self.quantList = quantList
     self.categoriesList = categoriesList
 
-  def plot(self):
+  def plot(self,ymax=None):
     plotPies = getattr(self,"plotPies")
     plotRes = getattr(self,"plotRes")
     plotPies()
-    plotRes()
+    plotRes(ymax)
 
-  def plotRes(self):
+  def plotRes(self,ymax=None):
     colors = ["b","r","g","k","p"]
     fig = mpl.figure()
     ax = fig.add_subplot(111)
+    if ymax != None:
+      ax.set_ylim(0.0,ymax)
     allCatList = []
     for cat in self.categoriesList:
       allCatList.extend(cat)
@@ -199,15 +201,14 @@ if __name__ == "__main__":
 
   infiles = []
   titles = []
-  infiles.append("input/smearing/ggHmumu125_8TeV.root")
-  infiles.append("input/smearing/vbfHmumu125_8TeV.root")
+  #infiles.append("input/smearing/ggHmumu125_8TeV.root")
+  #infiles.append("input/smearing/vbfHmumu125_8TeV.root")
   #infiles.append("input/ggHmumu125_8TeV.root")
   #infiles.append("input/vbfHmumu125_8TeV.root")
-  #infiles.append("input/rochester/ggHmumu125_8TeV.root")
-  #infiles.append("input/rochester/vbfHmumu125_8TeV.root")
+  infiles.append("input/rochester/ggHmumu125_8TeV.root")
+  infiles.append("input/rochester/vbfHmumu125_8TeV.root")
   titles.append("gg")
   titles.append("VBF")
 
   rs = ResStudy(infiles,titles)
-  rs.plot()
-  print rs.quantList
+  rs.plot(3.5)
