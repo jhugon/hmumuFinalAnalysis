@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from helpers import *
+from xsec import *
 import math
 import os.path
 import glob
@@ -16,7 +17,7 @@ def convertErrors(hist):
     hist.SetBinError(i,math.sqrt(x))
 
 class ShapePlotter:
-  def __init__(self,filename,titleMap,rebin=1):
+  def __init__(self,filename,titleMap,rebin=1,doSignalScaling=True):
     self.titleMap = titleMap
     self.filename = filename
     self.data = {}
@@ -36,7 +37,7 @@ class ShapePlotter:
       debugFolder = debugFolderKey.ReadObj()
       self.data[channelKey.GetName()] = {}
       for key in debugFolder.GetListOfKeys():
-        if re.match(r"TH1.*",key.GetClassName()) and (re.match(r"bak.*",key.GetName()) or key.GetName() == "data_obs" or key.GetName() == "sig"):
+        if re.match(r"TH1.*",key.GetClassName()):
           hist = key.ReadObj()
           hist = hist.Clone(channelKey.GetName()+"_"+key.GetName())
           hist.Rebin(rebin)
@@ -54,13 +55,78 @@ class ShapePlotter:
     self.colors = [root.kRed-9, root.kGreen-9, root.kBlue-9, root.kMagenta-9, root.kCyan-9]
     self.fillStyles = [3004,3005,3003,3006,3007]
 
+    makeNewSignalHists = getattr(self,"makeNewSignalHists")
+    makeNewSignalHists()
+    skimData = getattr(self,"skimData")
+    skimData()
     self.limit = 1.0
     #if len(self.data)==1:
-    if True:
+    if doSignalScaling:
         scaleSignal = getattr(self,"scaleSignal")
         scaleSignal()
     self.graphsListList = []
     self.padList = []
+
+  def makeNewSignalHists(self):
+    for channelName in self.data:
+      channel = self.data[channelName]
+      paramSet = set()
+      for histName in channel:
+        if re.match(r".*Hmumu.+Up",histName) or re.match(r".*Hmumu.+Down",histName):
+          tmp = re.sub(r".*Hmumu_","",histName)
+          tmp = re.sub(r"^.*_","",tmp)
+          tmp = tmp.replace("Up","")
+          tmp = tmp.replace("Down","")
+          if not (tmp in paramSet):
+            paramSet.add(tmp)
+      for param in paramSet:
+        tmpUp = channel["sig"].Clone("sig_"+param+"Up")
+        tmpDown = channel["sig"].Clone("sig_"+param+"Down")
+        tmpUp.Reset()
+        tmpDown.Reset()
+        for histName in channel:
+          if re.match(r".*Hmumu.*"+param+"Up",histName):
+            tmpUp.Add(channel[histName])
+          elif re.match(r".*Hmumu.*"+param+"Down",histName):
+            tmpDown.Add(channel[histName])
+        channel["sig_"+param+"Up"] = tmpUp
+        channel["sig_"+param+"Down"] = tmpDown
+      """
+      ## Now for non-shape systematics
+      errNameSet = set()
+      for errName in nuisanceMap:
+        tmpUp = channel["sig"].Clone("sig_"+errName+"Up")
+        tmpDown = channel["sig"].Clone("sig_"+errName+"Down")
+        tmpUp.Reset()
+        tmpDown.Reset()
+        filled = False
+        for sampleName in nuisanceMap[errName]:
+          for histName in channel:
+            if re.search(sampleName,histName):
+              tmpUp2 = channel["sig"].Clone(histName+errName+"Up")
+              tmpDown2 = channel["sig"].Clone(histName+errName+"Down")
+              err = nuisanceMap[errName][sampleName]
+              tmpUp2.Scale(1.0+err)
+              tmpDown2.Scale(1.0-err)
+              tmpUp.Add(tmpUp2)
+              tmpDown.Add(tmpDown2)
+              filled = True
+        if filled:
+          channel["sig_"+errName+"Up"] = tmpUp
+          channel["sig_"+errName+"Down"] = tmpDown
+      """
+
+  def skimData(self):
+    for channelName in self.data:
+      channel = self.data[channelName]
+      listToPop = []
+      for histName in channel:
+        if histName=="data_obs" or re.match(r"sig.*",histName) or re.match(r"bak.*",histName):
+          pass
+        else:
+          listToPop.append(histName)
+      for key in listToPop:
+        self.data[channelName].pop(key)
 
   def scaleSignal(self):
     limitfname = ""
@@ -89,8 +155,9 @@ class ShapePlotter:
       if self.limit != 1.0:
         for channelName in self.data:
           channel = self.data[channelName]
-          if channel.has_key("sig"):
-            channel["sig"].Scale(self.limit)
+          for key in channel:
+            if re.match(r"sig.*",key):
+              channel[key].Scale(self.limit)
 
   def hist2Graph(self,hist,outGraph):
     assert(hist.InheritsFrom("TH1"))
@@ -162,14 +229,21 @@ class ShapePlotter:
       sigGraph = root.TGraph()
       self.hist2Graph(sig,sigGraph)
       sigGraph.SetLineColor(root.kRed)
-      paramSet = set()
+      paramSetBak = set()
+      paramSetSig = set()
       for histName in channel:
-        if histName != "bak" and histName != "data_obs" and histName != "sig":
+        if re.match(r"bak_.*Up",histName) or re.match(r"bak_.*Down",histName) :
           tmp = histName.replace("bak_","")
           tmp = tmp.replace("Up","")
           tmp = tmp.replace("Down","")
-          if not (tmp in paramSet):
-            paramSet.add(tmp)
+          if not (tmp in paramSetBak):
+            paramSetBak.add(tmp)
+        if re.match(r"sig_.*Up",histName) or re.match(r"sig_.*Down",histName) :
+          tmp = histName.replace("sig_","")
+          tmp = tmp.replace("Up","")
+          tmp = tmp.replace("Down","")
+          if not (tmp in paramSetSig):
+            paramSetSig.add(tmp)
       obs.SetFillStyle(0)
       obs.SetLineStyle(1)
       obs.SetLineStyle(1)
@@ -180,25 +254,36 @@ class ShapePlotter:
         obs.GetXaxis().SetRangeUser(*plotRange)
       obs.GetYaxis().SetTitle("Events/Bin")
       graphs = []
-      for param,col,sty in zip(paramSet,self.colors,self.fillStyles):
+      for param,col,sty in zip(paramSetBak,self.colors,self.fillStyles):
         tmp = root.TGraphAsymmErrors()
         up = channel["bak_"+param+"Up"]
         down = channel["bak_"+param+"Down"]
         self.makeGraph(nominal,up,down,tmp)
-        #tmp.SetFillStyle(sty)
-        #tmp.SetFillColor(col)
-        #tmp.SetLineColor(col)
-        #tmp.SetMarkerColor(col)
-        #tmp.Draw("4")
         graphs.append(tmp)
       self.graphsListList.append(graphs)
       combinedErrorGraph = root.TGraphAsymmErrors()
       combinedErrorGraph.SetFillColor(root.kCyan)
       combinedErrorGraph.SetLineColor(root.kBlue+1)
       self.combineErrors(graphs,combinedErrorGraph)
+      sigGraphs = []
+      for param in paramSetSig:
+        tmp = root.TGraphAsymmErrors()
+        up = channel["sig_"+param+"Up"]
+        down = channel["sig_"+param+"Down"]
+        up.Add(nominal)
+        down.Add(nominal)
+        self.makeGraph(sig,up,down,tmp)
+        sigGraphs.append(tmp)
+      self.graphsListList.append(sigGraphs)
+      combinedSigErrorGraph = root.TGraphAsymmErrors()
+      combinedSigErrorGraph.SetFillColor(root.kRed-10)
+      combinedSigErrorGraph.SetLineColor(root.kRed)
+      self.combineErrors(sigGraphs,combinedSigErrorGraph)
+
       combinedErrorGraph.Draw("3")
-      sigGraph.Draw("C")
+      combinedSigErrorGraph.Draw("3")
       combinedErrorGraph.Draw("CX")
+      combinedSigErrorGraph.Draw("CX")
 
       normchi2 = nominal.Chi2Test(obs,"UW CHI2/NDF")
       print("Warning: chi2 is computed for weighted data!!!! Not suitable for real data!!!")
@@ -250,14 +335,14 @@ class ShapePlotter:
       pullErrs.SetLineColor(root.kBlue)
       pullErrs.SetFillColor(root.kCyan)
 
-      return obs, combinedErrorGraph, sigGraph, pullHist, pullGraph, pullErrs, normchi2
+      return obs, combinedErrorGraph, combinedSigErrorGraph, pullHist, pullGraph, pullErrs, normchi2
 
   def makePlot(self,outDir,plotRange=[]):
     dataLabel = "MC Data"
     canvas = root.TCanvas("canvas")
     for channelName in self.data:
       canvas.Clear()
-      obs, combinedErrorGraph, sigGraph, pulls, pullGraph, pullErrGraph, normchi2 = self.getPlots(channelName)
+      obs, combinedErrorGraph, combinedSigErrorGraph, pulls, pullGraph, pullErrGraph, normchi2 = self.getPlots(channelName)
 
       #Setup Canvas
       canvas.cd()
@@ -298,8 +383,9 @@ class ShapePlotter:
       obs.GetYaxis().SetTitleOffset(0.9*gStyle.GetTitleOffset("Y"))
       obs.GetXaxis().SetLabelOffset(0.70)
       obs.Draw("")
+      combinedSigErrorGraph.Draw("3")
+      combinedSigErrorGraph.Draw("CX")
       combinedErrorGraph.Draw("3")
-      sigGraph.Draw("C")
       combinedErrorGraph.Draw("CX")
       obs.Draw("same")
       pad1.Update()
@@ -390,7 +476,7 @@ class ShapePlotter:
       leg.SetLineColor(0)
       leg.AddEntry(obs,dataLabel,"pe")
       leg.AddEntry(combinedErrorGraph,"Background Model","lf")
-      leg.AddEntry(sigGraph,"SM Higgs #times {0:.1f}".format(self.limit),"l")
+      leg.AddEntry(combinedSigErrorGraph,"SM Higgs #times {0:.1f}".format(self.limit),"lf")
       leg.Draw()
 
       tlatex = root.TLatex()
@@ -477,4 +563,8 @@ if __name__ == "__main__":
     if fn.count("/Presel")>0:
       continue
     s = ShapePlotter(fn,titleMap,rebin)
+    for k1 in s.data:
+      print(k1)
+      for k2 in s.data[k1]:
+          print("  {}".format(k2))
     s.makePlot(outDir,plotRange)

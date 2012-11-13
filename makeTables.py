@@ -75,8 +75,18 @@ errNameMap = {
   "voitSig":"Voigtian $\sigma$",
   "voitmZ":"Voigtian Mass",
   "mixParam":"V/E Ratio",
-  "TotalSyst":"Total Background Syst.",
-  "Stat":"Background Stat.",
+  "TotalSyst":"Total Systematic",
+  "Stat":"Statistical",
+
+  "lumi":"Luminosity",
+  "br_Hmm":r"BR($H\rightarrow\mu\mu$)",
+  "xs_ggH":r"$\sigma(gg\rightarrow H)$",
+  "xs_vbfH":r"$\sigma(gg \rightarrow H)$",
+  "xs_wH":r"$\sigma(WH)$",
+  "xs_zH":r"$\sigma(ZH)$",
+
+  "ResASig":r"Muon Smearing $\sigma$",
+  "ResSig":r"Muon Smearing Mixing",
 }
 
 def convertHistToCounts(dataDict,ggFileName,vbfFileName):
@@ -112,8 +122,8 @@ def getShapeErrorsFromCounts(data):
       if name == "data_obs":
         tmpDict["data_obs"] = {"nom":channel[name]}
         continue
-      matchUp = re.match(r"(.+)_(.+)Up",name)
-      matchDown = re.match(r"(.+)_(.+)Down",name)
+      matchUp = re.match(r"([^_]+)_(.+)Up",name)
+      matchDown = re.match(r"([^_]+)_(.+)Down",name)
       if matchUp:
         histName = matchUp.group(1)
         parName = matchUp.group(2)
@@ -148,6 +158,7 @@ def getShapeErrorsFromCounts(data):
     ##################################
     # Now Process into Error Fractions
     for histName in tmpDict:
+      print histName
       nomVal = tmpDict[histName]["nom"]
       upSum2 = 0.0
       downSum2 = 0.0
@@ -169,6 +180,8 @@ def getShapeErrorsFromCounts(data):
       if histName == "bak":
         tmpDict[histName]["TotalSyst"] = {"Up":sqrt(upSum2),"Down":sqrt(downSum2)}
         tmpDict[histName]["Stat"] = {"Up":sqrt(nomVal)/nomVal,"Down":sqrt(nomVal)/nomVal}
+      if histName == "sig":
+        tmpDict[histName]["TotalSyst"] = {"Up":sqrt(upSum2),"Down":sqrt(downSum2)}
 
     for histName in tmpDict:
         print(histName+"  "+str(tmpDict[histName].keys()))
@@ -178,7 +191,7 @@ def getShapeErrorsFromCounts(data):
       
   return outDict
 
-def writeErrorTable(data,latex,niceTitles,mustMatchList=None,cantMatchList=None):
+def writeErrorTable(data,latex,niceTitles,mustMatchList=None,cantMatchList=None,sampleMustBe=""):
   def sortfun(s):
     ll = ["BB","BE","BO","OO","OE","EE","NotBB","!BB"]
     i = 0
@@ -208,6 +221,8 @@ def writeErrorTable(data,latex,niceTitles,mustMatchList=None,cantMatchList=None)
      if len(channelName) > maxChannelWidth:
         maxChannelWidth = len(channelName)
      for sampleName in channel:
+       if not re.search(sampleMustBe,sampleName):
+         continue
        sample = channel[sampleName]
        if niceTitles:
          sampleName = sampleNameMap[sampleName]
@@ -237,6 +252,8 @@ def writeErrorTable(data,latex,niceTitles,mustMatchList=None,cantMatchList=None)
   iErrName = 0
   for channelName in channelNames:
      for sampleName in data[channelName]:
+       if not re.search(sampleMustBe,sampleName):
+         continue
        for errName in data[channelName][sampleName]:
          if mustMatchList != None:
             if not matches(errName, mustMatchList):
@@ -271,6 +288,8 @@ def writeErrorTable(data,latex,niceTitles,mustMatchList=None,cantMatchList=None)
       errValsString2 += r"&"
     iErrVal = 1
     for sampleName in data[channelName]:
+      if not re.search(sampleMustBe,sampleName):
+         continue
       for errName in data[channelName][sampleName]:
         if mustMatchList != None:
             if not matches(errName, mustMatchList):
@@ -319,30 +338,54 @@ if __name__ == "__main__":
  #filenames = glob.glob(dataDir+"20*.root")
 
  for fn in filenames:
-  sPlotter = makeShapePlots.ShapePlotter(fn,makeShapePlots.titleMap)
+  sPlotter = makeShapePlots.ShapePlotter(fn,makeShapePlots.titleMap,doSignalScaling=False)
     
-  data = getShapeErrorsFromCounts(convertHistToCounts(sPlotter.data,ggFileName,vbfFileName))
+  counts = convertHistToCounts(sPlotter.data,ggFileName,vbfFileName)
+  shapeErrors = getShapeErrorsFromCounts(counts)
 
-  f = open("tableShapeErrors.tex","w")
-  f.write(writeErrorTable(data,True,True,mustMatchList=["TotalSyst"]))
-  f.close()
+  samples = ["sig","bak"]
+  titles = ["Signal","Background"]
+  for i, title in zip(samples,titles):
 
+    f = open("tableErrors"+title+".tex","w")
+    #f.write(writeErrorTable(shapeErrors,True,True,mustMatchList=["TotalSyst"]))
+    f.write(writeErrorTable(shapeErrors,True,True,sampleMustBe=i,cantMatchList=["br_","xs_"]))
+    f.close()
 
-  f = open("tableShapeErrorsTest.tex","w")
-  f.write(r"""
+  f = open("tableErrorsTest.tex","w")
+  testStr = r"""
 \documentclass[12pt,a4paper]{article}
 \usepackage{lscape}
 \begin{document}
 \begin{landscape}
 %\tiny
 \small
-\input{tableShapeErrors}
+
+"""
+  for t in titles:
+    testStr += r"\input{tableErrors"+t+"}\n \\\\ \n"
+  testStr += r"""
+
 \end{landscape}
 \end{document}
-         """)
+"""
+  f.write(testStr)
   f.close()
-  subprocess.call(["latex","tableShapeErrorsTest.tex"])
-  subprocess.call(["dvipdf","tableShapeErrorsTest.dvi"])
-  os.remove("tableShapeErrorsTest.aux")
-  os.remove("tableShapeErrorsTest.log")
-  os.remove("tableShapeErrorsTest.dvi")
+  subprocess.call(["latex","tableErrorsTest.tex"])
+  subprocess.call(["dvipdf","tableErrorsTest.dvi"])
+  os.remove("tableErrorsTest.aux")
+  os.remove("tableErrorsTest.log")
+  os.remove("tableErrorsTest.dvi")
+
+  for i in shapeErrors:
+    print(i)
+    for j in shapeErrors[i]:
+      print("  {}".format(j))
+      for k in shapeErrors[i][j]:
+        print("    {} {}".format(k,shapeErrors[i][j][k]))
+
+  for i in sPlotter.data:
+    print(i)
+    for j in sPlotter.data[i]:
+      tmp = sPlotter.data[i][j]
+      print("  {}: {}".format(j,tmp.Integral()))
