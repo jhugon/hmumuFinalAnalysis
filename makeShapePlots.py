@@ -278,7 +278,10 @@ class ShapePlotter:
       combinedSigErrorGraph = root.TGraphAsymmErrors()
       combinedSigErrorGraph.SetFillColor(root.kRed-10)
       combinedSigErrorGraph.SetLineColor(root.kRed)
-      self.combineErrors(sigGraphs,combinedSigErrorGraph)
+      if len(sigGraphs)>0:
+        self.combineErrors(sigGraphs,combinedSigErrorGraph)
+      else:
+        self.hist2Graph(sig,combinedSigErrorGraph)
 
       combinedErrorGraph.Draw("3")
       combinedSigErrorGraph.Draw("3")

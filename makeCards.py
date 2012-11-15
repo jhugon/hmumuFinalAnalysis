@@ -1577,7 +1577,7 @@ if __name__ == "__main__":
   #analyses = ["mDiMu"]
   #histPostFix=""
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
-  backgroundNames= ["DYJetsToLL","ttbar","WW","WZ","ZZ"]
+  backgroundNames= ["DYJetsToLL","ttbar"]
   dataDict = {}
   dataDict["8TeV"] = [
     #"SingleMuRun2012Av1",
