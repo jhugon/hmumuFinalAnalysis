@@ -20,7 +20,7 @@ canvas = root.TCanvas()
 
 massVeryLowRange = [80,95]
 massLowRange = [95,120]
-massHighRange = [130,180]
+massHighRange = [130,160]
 
 maxMass = massHighRange[1]
 minMass = massVeryLowRange[0]
@@ -34,16 +34,17 @@ mMuMu.setRange("signal",massLowRange[1],massHighRange[0])
 bwmZ = root.RooRealVar("bwmZ","bwmZ",85,95)
 bwSig = root.RooRealVar("bwSig","bwSig",0.0,30.0)
 bwLambda = root.RooRealVar("bwLambda","bwLambda",-1e-03,-1e-01,-1e-04)
-bwMmumu = root.RooGenericPdf("bwMmumu","exp(bwLambda*mMuMu)*bwSig/(((mMuMu-bwmZ)*(mMuMu-bwmZ) + bwSig*bwSig*0.25))",root.RooArgList( mMuMu, bwLambda, bwSig, bwmZ))
+mixParam = root.RooRealVar("mixParam","mixParam",0.5,0,1)
 
-phoMmumu = root.RooGenericPdf("phoMmumu","exp(bwLambda*mMuMu)/pow(mMuMu,2)",root.RooArgList(mMuMu,bwLambda))
+phoMmumu = root.RooGenericPdf("phoMmumu","pow(mMuMu,-2)",root.RooArgList(mMuMu))
+expMmumu = root.RooExponential("expMmumu","expMmumu",mMuMu,bwLambda)
+bwMmumu = root.RooBreitWigner("bwMmumu","bwMmumu",mMuMu,bwmZ,bwSig)
 
-tmpBW = root.RooGenericPdf("tmpBW","bwSig/(((mMuMu-bwmZ)*(mMuMu-bwmZ) + bwSig*bwSig*0.25))",root.RooArgList( mMuMu, bwSig, bwmZ))
 
-#mixParam = root.RooRealVar("mixParam","mixParam",0.5,0,1)
-mixParam = root.RooRealVar("mixParam","mixParam",0.99)
-
-pdfMmumu = root.RooAddPdf("pdfMmumu","pdfMmumu",root.RooArgList(bwMmumu,phoMmumu),root.RooArgList(mixParam))
+sumMmumu = root.RooAddPdf("pdfMmumu","pdfMmumu",root.RooArgList(bwMmumu,phoMmumu),root.RooArgList(mixParam))
+pdfMmumu = root.RooProdPdf("pdfMmumu","pdfMmumu",root.RooArgList(sumMmumu,expMmumu))
+#pdfMmumu = phoMmumu
+#pdfMmumu = bwMmumu
 
 #####################################################################
 
@@ -59,7 +60,7 @@ mDiMu.Rebin(2)
 
 mMuMuRooDataHist = root.RooDataHist("template","template",root.RooArgList(mMuMu),mDiMu)
 
-tmpBW.fitTo(mMuMuRooDataHist,root.RooFit.Range("z"),root.RooFit.SumW2Error(False),PRINTLEVEL)
+bwMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("z"),root.RooFit.SumW2Error(False),PRINTLEVEL)
 bwmZ.setConstant(True)
 bwSig.setConstant(True)
 
@@ -68,12 +69,17 @@ chi2 = pdfMmumu.createChi2(mMuMuRooDataHist)
 
 plotMmumu = mMuMu.frame()
 
-drawRange = [110,150]
-mMuMuRooDataHist.plotOn(plotMmumu)
+drawRange = [80,150]
+mMuMu.setRange(*drawRange)
+mMuMu.Print()
+plotMmumu.Print()
+mMuMuRooDataHist.plotOn(plotMmumu,root.RooFit.Range(*drawRange))
+"""
 pdfMmumu.plotOn(plotMmumu,root.RooFit.Range(*drawRange))
 pdfMmumu.plotOn(plotMmumu,root.RooFit.LineStyle(2),root.RooFit.Range(100,180))
 pdfMmumu.plotOn(plotMmumu,root.RooFit.Components("phoMmumu"),root.RooFit.LineStyle(2),root.RooFit.Range(*drawRange),root.RooFit.LineColor(root.kGreen+1))
 pdfMmumu.plotOn(plotMmumu,root.RooFit.Components("bwMmumu"),root.RooFit.LineStyle(2),root.RooFit.Range(*drawRange),root.RooFit.LineColor(root.kRed+1))
+"""
 
 plotMmumu.Draw()
 
