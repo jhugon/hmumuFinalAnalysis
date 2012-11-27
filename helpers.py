@@ -7,6 +7,7 @@ from math import sqrt
 import numpy
 import array
 import sys
+import matplotlib.pyplot as mpl
 
 def fit2DResHist(hist,color):
   histName = hist.GetName()
@@ -1262,6 +1263,59 @@ def shrinkTH1(hist,xlow,xhigh,deleteOld=False):
     hist.Delete()
   return newHist
 
+def linearChi2(xList,yList,order,yErrList=None,funcName="poly"):
+  assert(len(xList)==len(yList))
+  xList = numpy.array(xList)
+  yList = numpy.array(yList)
+
+  poly = None
+  stats = None
+  weights = None
+  if yErrList == None:
+    weights = 1.0/numpy.sqrt(yList)
+  else:
+    assert(len(yErrList)==len(yList))
+    yErrList = numpy.array(yErrList)
+    weights = 1.0/yErrList
+  if funcName == "poly":
+    poly,stats = numpy.polynomial.polyfit(xList,yList,order,full=True,w=weights)
+  else:
+    poly,stats = numpy.polynomial.chebfit(xList,yList,order,full=True,w=weights)
+
+  # For Debug
+  fig = mpl.figure()
+  ax = fig.add_subplot(111)
+  ax.errorbar(xList,yList,yerr=1.0/weights,linestyle="None",color="k")
+
+  polyInst = None
+
+  if funcName == "poly":
+    polyInst = numpy.polynomial.Polynomial(poly)
+  else:
+    polyInst = numpy.polynomial.Chebyshev(poly)
+
+  yy = polyInst(xList)
+  ax.plot(xList,yy,"-b")
+  
+  fig.savefig("debugLinearChi2.png")
+
+  return poly
+
+def linearChi2TH1(hist,order,funcName="poly"):
+  nBinsX = hist.GetNbinsX()
+  x = numpy.zeros(nBinsX)
+  y = numpy.zeros(nBinsX)
+  err = numpy.zeros(nBinsX)
+  for i in range(1,nBinsX+1):
+    x[i-1] = hist.GetXaxis().GetBinCenter(i)
+    y[i-1] = hist.GetBinContent(i)
+    err[i-1] = hist.GetBinError(i)
+  print x
+  print y
+  result = linearChi2(x,y,order,yErrList=err,funcName=funcName)
+  print result
+  return result
+
 def toyHistogram(hist):
   nBins = hist.GetNbinsX()
   random = root.TRandom3()
@@ -1319,13 +1373,12 @@ def setLegPos(leg,legPos):
 
 if __name__ == "__main__":
 
-  tmp = root.TH1F("tmp","tmp",4,-10,10)
-  tmp.FillRandom("gaus",10000)
+  x = numpy.arange(100)
+  y = 0.2*x*x*x+1.2*x*x+3.2*x+6.
 
-  out = shrinkTH1(tmp,-7,7)
+  theta = linearChi2(x,y,8,funcName="cheb")
 
-  #out.Draw()
-  #raw_input("press enter...")
+  for i in range(len(theta)):
+    print("Param {}: {:.2f}".format(i,theta[i]))
 
-  tmp.Print("all")
-  out.Print("all")
+

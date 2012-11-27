@@ -6,7 +6,6 @@ import ROOT as root
 import os
 import sys
 
-dataDir = "input/noZPeak/"
 dataDir = "input/"
 outDir = "output/"
 
@@ -18,8 +17,9 @@ integralPlot=False
 
 #anotateText = "80 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"
 #anotateText = "110 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"
-anotateText = "110 GeV < m_{#mu#mu} < 160 GeV"
-#anotateText = "80 GeV < m_{#mu#mu} < 160 GeV"
+#anotateText = "110 GeV < m_{#mu#mu} < 160 GeV"
+anotateText = "80 GeV < m_{#mu#mu} < 160 GeV"
+#anotateText = "VBF Preselection"
 
 urLegendPos = [0.70,0.67,0.9,0.9]
 ulLegendPos = [0.20,0.67,0.4,0.9]
@@ -32,7 +32,8 @@ stdLegendPos = urLegendPos
 histDirs = [""]
 histDirs = ["NotBlindWindow/"]
 histDirs = ["VBFPreselDiMuPtL20/","IncPreselDiMuPtL20/"]
-histDirs = ["VBFPresel/","IncPresel/"]
+histDirs = ["VBFPresel/","IncPresel/",""]
+histDirs = ["VBFBDTCut/","IncBDTCut/"]
 #histDirs = ["","PtDiMu100/","VBFPresel/","IncPresel/"]
 
 root.gErrorIgnoreLevel = root.kWarning
@@ -78,10 +79,8 @@ histNames["cosThetaStarCS"] = {"xlabel":"cos(#theta^{*}_{CS})","xlimits":[-1.0,1
 histNames["relIsoMu1"] = {"xlabel":"Leading Muon Relative PF Isolation","xlimits":[0,0.3],"rebin":2}
 histNames["relIsoMu2"] = {"xlabel":"Sub-Leading Muon Relative PF Isolation","xlimits":[0,0.3],"rebin":2}
 
-#histNames["likelihoodHistMuonOnly"] = {"xlabel":"Likelihood (Inclusive Category)","xlimits":[-0.5,0.5],"rebin":20}
-histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Inclusive Category)","xlimits":[-1,0],"rebin":2}
+histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Inclusive Category)","xlimits":[-0.6,0.6],"rebin":2}
 
-#histNames["likelihoodHistVBF"] = {"xlabel":"Likelihood (VBF Category)","xlimits":[-0.5,0.5],"rebin":2}
 histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.5,0.5],"rebin":2}
 
 histNames["puJetIDSimpleDiscJet1"] = {"xlabel":"PU Jet ID Simple Discriminator--Leading Jet","xlimits":[-1,1],"rebin":1}
@@ -286,9 +285,12 @@ for histName in bkgDatasetList[0].hists:
   saveName = saveName.replace("/","_")
   saveAs(canvas,outDir+saveName+"_"+RUNPERIOD)
 
-  match = re.match(r"(.*)_mDiMu",saveName)
+  match = re.match(r"(.*)_ptDiMu",saveName)
   if match:
     catName = match.group(1)
+    dataMCRatioStr += "{0:<10} Data/MC Ratio: {1:.3f}\n".format(catName,float(stack.nDataEvents)/stack.nMCEvents)
+  elif saveName == "ptDiMu":
+    catName = "All"
     dataMCRatioStr += "{0:<10} Data/MC Ratio: {1:.3f}\n".format(catName,float(stack.nDataEvents)/stack.nMCEvents)
 
 print(dataMCRatioStr)

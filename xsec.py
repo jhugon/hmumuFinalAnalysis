@@ -15,7 +15,7 @@ lumiDict["7TeV"] = 5.05 #2011AB
 #LUMI=2.739 #2011B
 
 scaleHiggsBy = 1.0
-#scaleHiggsBy = 50.0
+scaleHiggsBy = 20.0
 
 xsec = {}
 xsec["ggHmumu125_8TeV"] = 4.294e-3 * scaleHiggsBy
@@ -53,6 +53,15 @@ xsec["ZZ_7TeV"] =  5.9
 xsec["WJetsToLNu_7TeV"] = 27770.
 xsec["QCD_7TeV"] =  84679.
 
+#LHC Higgs XS WG: European Strat Group
+xsec["ggHmumu125_14TeV"] = 50.35*2.2e-4 * scaleHiggsBy
+xsec["vbfHmumu125_14TeV"] = 4.172*2.2e-4 * scaleHiggsBy
+xsec["zHmumu125_14TeV"] = 0.883*2.2e-4 * scaleHiggsBy
+xsec["wHmumu125_14TeV"] = 1.504*2.2e-4 * scaleHiggsBy
+
+xsec["DYJetsToLL_14TeV"] = 6131.
+xsec["ttbar_14TeV"] =   964.6 #LHC Higgs XS WG: European Strat Group
+
 nEventsMap = {}
 nEventsMap["ggHmumu125_8TeV"] = 9998
 nEventsMap["vbfHmumu125_8TeV"] = 9990
@@ -84,6 +93,13 @@ nEventsMap["WZ_7TeV"] = 4265243
 nEventsMap["ZZ_7TeV"] = 3991045
 nEventsMap["WJetsToLNu_7TeV"] =  0.00000001
 nEventsMap["QCD_7TeV"] =  0.00000001
+
+nEventsMap["ggHmumu125_14TeV"] = nEventsMap["ggHmumu125__8TeV"]
+nEventsMap["vbfHmumu125_14TeV"] = nEventsMap["vbfHmumu125__8TeV"]
+nEventsMap["zHmumu125_14TeV"] = nEventsMap["zHmumu125__8TeV"]
+nEventsMap["wHmumu125_14TeV"] = nEventsMap["wHmumu125__8TeV"]
+nEventsMap["DYJetsToLL_14TeV"] = nEventsMap["DYJetsToLL_8TeV"]
+nEventsMap["ttbar_14TeV"] = nEventsMap["ttbar_8TeV"]
 
 backgroundList = [
 #"DYToMuMu",
@@ -176,7 +192,12 @@ nuisanceMap["lumi"] = {
   "vbfHmumu125_7TeV":0.044,
   "ggHmumu125_7TeV":0.044,
   "wHmumu125_7TeV":0.044,
-  "zHmumu125_7TeV":0.044
+  "zHmumu125_7TeV":0.044,
+
+  "vbfHmumu125_14TeV":0.044,
+  "ggHmumu125_14TeV":0.044,
+  "wHmumu125_14TeV":0.044,
+  "zHmumu125_14TeV":0.044
 }
 
 nuisanceMap["br_Hmm"] = {
@@ -189,21 +210,30 @@ nuisanceMap["br_Hmm"] = {
   "ggHmumu125_7TeV":0.06,
   "wHmumu125_7TeV":0.06,
   "zHmumu125_7TeV":0.06
+
+  "vbfHmumu125_14TeV":0.06,
+  "ggHmumu125_14TeV":0.06,
+  "wHmumu125_14TeV":0.06,
+  "zHmumu125_14TeV":0.06,
 }
 
-nuisanceMap["xs_vbfH"] = {
-  "vbfHmumu125_8TeV": 0.03,
-  "vbfHmumu125_7TeV": 0.024
-}
 nuisanceMap["xs_ggH"] = {
+  "ggHmumu125_14TeV": 0.10,
   "ggHmumu125_8TeV": 0.147,
   "ggHmumu125_7TeV": 0.147
 }
+nuisanceMap["xs_vbfH"] = {
+  "vbfHmumu125_14TeV": 0.019,
+  "vbfHmumu125_8TeV": 0.03,
+  "vbfHmumu125_7TeV": 0.024
+}
 nuisanceMap["xs_wH"] = {
+  "wHmumu125_14TeV": 0.038,
   "wHmumu125_8TeV": 0.041,
   "wHmumu125_7TeV": 0.043
 }
 nuisanceMap["xs_zH"] = {
+  "zHmumu125_14TeV": 0.046,
   "zHmumu125_8TeV": 0.051,
   "zHmumu125_7TeV": 0.051
 }

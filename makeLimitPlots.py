@@ -92,6 +92,10 @@ comparisonMap = {
   "IncBDTCutCat":"Inc. BDT Res.",
   "VBFBDTCutCat":"VBF BDT Res.",
 
+  #"BDTCutCat":"Combination",
+  #"IncBDTCutCat":"Inclusive",
+  #"VBFBDTCutCat":"VBF",
+
   "PreselCat":"Presel. Res. Comb.",
   "IncPreselCat":"Inc. Res. Presel.",
   "VBFPreselCat":"VBF Res. Presel.",
@@ -380,18 +384,22 @@ if __name__ == "__main__":
       if len(data)<=1:
         continue
       incPlot = RelativePlot(data,canvas,legend,titleMap[plotName],caption2=caption2,ylimits=ylimits,energyStr=energyStr)
+      #incPlot = RelativePlot(data,canvas,legend,"Standard Model H#rightarrow#mu#mu",caption2=caption2,ylimits=ylimits,energyStr=energyStr)
       saveAs(canvas,outDir+plotName+"_"+energyStr)
 
     veto = [r"CNC",r"PM","BB","BO","BE","OO","OE","EE","NotBB"]
-    veto = [r"CNC",r"PM","Presel","BB","BO","BE","OO","OE","EE","NotBB"]
+    #veto = [r"CNC",r"PM","Presel","BB","BO","BE","OO","OE","EE","NotBB"]
     #veto = [r"CNC",r"PM","BDT","BB","BO","BE","OO","OE","EE","NotBB"]
     #veto = [r"CNC",r"PM","Presel"]
     #veto = [r"CNC",r"PM","BDT"]
+
+    mustBe = r"(.+)_(.+)_[.\d]+.txt.out"
+    #mustBe = r"(.+Cat)_(.+)_[.\d]+.txt.out"
     
     ## Compare all types of limits
     desiredLumiStr=str(lumisToUse[period])
     fnGlobStr = dirName+"*_"+energyStr+"_"+desiredLumiStr+".txt.out"
-    compareData = getData(fnGlobStr,matchString=r"(.+)_(.+)_[.\d]+.txt.out",dontMatchStrings=veto,doSort=False)
+    compareData = getData(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
     #print compareData
     if len(compareData)==0:
         print("No Data to Compare for {0}!!".format(period))

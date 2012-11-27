@@ -71,7 +71,8 @@ def findEndpoint(tree,):
   mi = -100.
   ma = 100.
   polyVarList = []
-  for polyVarI in range(5):
+  order = 5
+  for polyVarI in range(order):
     polyVarName = "a{0}".format(polyVarI)
     polyVarList.append(root.RooRealVar(polyVarName,polyVarName,0.0))
   for polyVar in polyVarList:
@@ -150,6 +151,7 @@ def silly():
   a3 = root.RooRealVar("a3","a3",1.,-10,10)
   a4 = root.RooRealVar("a4","a4",1.,-10,10)
 
+
   x = q
 
   #polyVars = root.RooArgList(a1,a2,a3,a4,a5,a6,a7,a8)
@@ -180,7 +182,64 @@ def silly():
   polyPDF.plotOn(plotPtInv)
   plotPtInv.Draw()
 
+def silly2(tree):
+  ptInvRange = [0.005,0.04]
+  cuts = "abs(eta)>2.098"
+
+  hist = root.TH1F("ptInv","ptInv",200,ptInvRange[0],ptInvRange[1])
+  tree.Draw("ptInv >> ptInv")
+
+  order = 18
+  #params = linearChi2TH1(hist,order,funcName="cheb")
+  params = linearChi2TH1(hist,order+1,funcName="poly")
+
+  ptInv = root.RooRealVar("ptInv","1/p_{T}",ptInvRange[0],ptInvRange[1])
+  ptInv.setRange("peak",0.02,0.03)
+  ptInv.setRange("peakMore",0.015,0.035)
+  pt = root.RooRealVar("pt","p_{T}",20.0,500.0)
+  eta = root.RooRealVar("eta","#eta",-2.4,2.4)
+  phi = root.RooRealVar("phi","#phi",-3.14,3.14)
+  q = root.RooRealVar("q","q",-1.0,1.0)
+  k = root.RooRealVar("k","k",0.0,-10000.,10000.)
+
+  polyVarList = []
+  for polyVarI in range(order):
+    polyVarName = "a{0}".format(polyVarI)
+    initVal = params[polyVarI+1]
+    minVal = initVal/5.
+    maxVal = initVal*5.
+    if initVal<0.0:
+      tmp = maxVal
+      maxVal = minVal
+      minVal = tmp
+    tmpVar = root.RooRealVar(polyVarName,polyVarName,initVal,minVal,maxVal)
+    polyVarList.append(tmpVar)
+
+  dataVars = root.RooArgSet(pt,eta,phi,ptInv,q)
+  data = root.RooDataSet("data","data",tree,dataVars,cuts)
+  data.Print()
+
+  corrPtInvVars = root.RooArgList(ptInv,q,k)
+  corrPtInv = root.RooFormulaVar("corrPtInv","abs(q*ptInv+k)",corrPtInvVars)
+
+  polyVars = root.RooArgList(*polyVarList)
+  #polyPDF = root.RooChebychev("polyPDF","polyPDF",corrPtInv,polyVars)
+  #polyPDF = root.RooPolynomial("polyPDF","polyPDF",corrPtInv,polyVars)
+  #polyPDF = root.RooChebychev("polyPDF","polyPDF",ptInv,polyVars)
+  polyPDF = root.RooPolynomial("polyPDF","polyPDF",ptInv,polyVars)
+
+  polyPDF.fitTo(data)
+
+  plotPtInv = ptInv.frame()
+  data.plotOn(plotPtInv)
+  polyPDF.plotOn(plotPtInv)
+  plotPtInv.Draw()
+
+  for a1 in polyVarList:
+    print("{0:<5} {1:<9.3g} +/- {2:<9.3g}".format(a1.GetName(),a1.getVal(),a1.getError()))
+
 tree = inFile.Get("tree")
-findEndpoint(tree)
+#findEndpoint(tree)
 #silly()
+silly2(tree)
 saveAs(canvas,"endPoint")

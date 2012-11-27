@@ -10,6 +10,8 @@ from ROOT import *
 gSystem.Load('libRooFit')
 import ROOT as root
 
+from helpers import *
+
 #root.gErrorIgnoreLevel = root.kWarning
 #root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.WARNING)
 #root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.ERROR)
