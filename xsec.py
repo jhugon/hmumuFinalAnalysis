@@ -15,7 +15,7 @@ lumiDict["7TeV"] = 5.05 #2011AB
 #LUMI=2.739 #2011B
 
 scaleHiggsBy = 1.0
-scaleHiggsBy = 20.0
+#scaleHiggsBy = 20.0
 
 xsec = {}
 xsec["ggHmumu125_8TeV"] = 4.294e-3 * scaleHiggsBy
@@ -94,10 +94,10 @@ nEventsMap["ZZ_7TeV"] = 3991045
 nEventsMap["WJetsToLNu_7TeV"] =  0.00000001
 nEventsMap["QCD_7TeV"] =  0.00000001
 
-nEventsMap["ggHmumu125_14TeV"] = nEventsMap["ggHmumu125__8TeV"]
-nEventsMap["vbfHmumu125_14TeV"] = nEventsMap["vbfHmumu125__8TeV"]
-nEventsMap["zHmumu125_14TeV"] = nEventsMap["zHmumu125__8TeV"]
-nEventsMap["wHmumu125_14TeV"] = nEventsMap["wHmumu125__8TeV"]
+nEventsMap["ggHmumu125_14TeV"] = nEventsMap["ggHmumu125_8TeV"]
+nEventsMap["vbfHmumu125_14TeV"] = nEventsMap["vbfHmumu125_8TeV"]
+nEventsMap["zHmumu125_14TeV"] = nEventsMap["zHmumu125_8TeV"]
+nEventsMap["wHmumu125_14TeV"] = nEventsMap["wHmumu125_8TeV"]
 nEventsMap["DYJetsToLL_14TeV"] = nEventsMap["DYJetsToLL_8TeV"]
 nEventsMap["ttbar_14TeV"] = nEventsMap["ttbar_8TeV"]
 
@@ -209,7 +209,7 @@ nuisanceMap["br_Hmm"] = {
   "vbfHmumu125_7TeV":0.06,
   "ggHmumu125_7TeV":0.06,
   "wHmumu125_7TeV":0.06,
-  "zHmumu125_7TeV":0.06
+  "zHmumu125_7TeV":0.06,
 
   "vbfHmumu125_14TeV":0.06,
   "ggHmumu125_14TeV":0.06,

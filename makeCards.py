@@ -26,6 +26,8 @@ BAKUNC = 0.1
 BAKUNCON = True
 SIGUNCON = False
 
+SIGGAUS = True
+
 from xsec import *
 
 if scaleHiggsBy != 1.0:
@@ -339,6 +341,126 @@ class MassPDFBak:
     canvas.SetName(self.name+"Canvas")
     canvas.Write()
 
+class MassPDFSig:
+  def __init__(self,name,names,histList,histMapErr,massRange,rooVars=None):
+    if rooVars == None:
+        print("Error: MassPDFSig requires rooVars list of variables, exiting.")
+        sys.exit(1)
+
+    self.debug = ""
+    self.debug += "### MassPDFSig: "+name+"\n"
+
+    maxMass = massRange[1]
+    minMass = massRange[0]
+    mMuMu = root.RooRealVar("mMuMu2","mMuMu",minMass,maxMass)
+
+    self.names = names
+    self.name = name
+    self.maxMass = maxMass
+    self.minMass = minMass
+    self.mMuMu = mMuMu
+
+    self.meanList = []
+    self.widthList = []
+    self.pdfList = []
+    self.histList = []
+    self.mMuMuRooDataHistList = []
+    self.nominalHistList = []
+    self.plotMmumuList = []
+    self.chi2List = []
+
+    for i,n in zip(range(len(names)),names):
+      hist = histList[i]
+      self.debug += "# "+n+":\n"
+      width = root.RooRealVar("width_"+n,"width_"+n,0.1,15.)
+      mean = root.RooRealVar("mean_"+n,"mean_"+n,100.,150.)
+
+      pdfMmumu = root.RooGaussian("pdfMmumu_"+n,"pdfMmumu_"+n,mMuMu,mean,width)
+
+      tmpAxis = hist.GetXaxis()
+      lowBin = tmpAxis.FindBin(minMass)
+      highBin = tmpAxis.FindBin(maxMass)
+      lowBin, highBin = getXbinsHighLow(hist,minMass,maxMass)
+      nBinsX = highBin - lowBin + 1
+      normalization = getIntegralAll(hist,[minMass,maxMass])
+      self.debug += "#   Int no bounds: {0:.3g}\n".format(hist.Integral())
+      self.debug += "#   Int bounds:    {0:.3g}\n".format(normalization)
+  
+      mMuMuRooDataHist = root.RooDataHist(name+"DataHist_"+n,name+"DataHist_"+n,root.RooArgList(mMuMu),hist)
+  
+      pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.SumW2Error(False),PRINTLEVEL)
+      chi2 = pdfMmumu.createChi2(mMuMuRooDataHist)
+
+      plotMmumu = mMuMu.frame()
+
+      mMuMuRooDataHist.plotOn(plotMmumu)
+      pdfMmumu.plotOn(plotMmumu)
+
+      mMuMuBinning = root.RooFit.Binning(nBinsX,minMass,maxMass)
+      nominalHist = pdfMmumu.createHistogram(n,mMuMu,mMuMuBinning)
+      nominalHist.Scale(normalization/getIntegralAll(nominalHist,[minMass,maxMass]))
+
+      self.meanList.append(mean)
+      self.widthList.append(mean)
+      self.pdfList.append(pdfMmumu)
+      self.histList.append(hist)
+      self.mMuMuRooDataHistList.append(mMuMuRooDataHist)
+      self.nominalHistList.append(nominalHist)
+      self.plotMmumuList.append(plotMmumu)
+      self.chi2List.append(chi2)
+
+      self.debug += "#   nominal Integral: {0:.3g}\n".format(getIntegralAll(nominalHist))
+      self.debug += "#   width: {0:.3g} +/- {1:.3g}\n".format(width.getVal(),width.getError())
+      self.debug += "#   mean: {0:.3g} +/- {1:.3g}\n".format(mean.getVal(),mean.getError())
+      self.debug += "#   chi2/ndf: {0:.3g}\n".format(chi2.getVal()/(nBinsX-1))
+
+      ## Error time
+      self.meanMapErr = {}
+      self.widthMapErr = {}
+      self.pdfMapErr = {}
+      self.histMapErr = {}
+
+      for key in histMapErr:
+        errHist = histMapErr[key][i]
+
+        widthE = root.RooRealVar("width_"+n+"_"+key,"width_"+n+"_"+key,0.1,15.)
+        meanE = root.RooRealVar("mean_"+n+"_"+key,"mean_"+n+"_"+key,100.,150.)
+        pdfMmumuE = root.RooGaussian("pdfMmumu_"+n+"_"+key,"pdfMmumu_"+n+"_"+key,mMuMu,meanE,widthE)
+
+        mMuMuRooDataHistE = root.RooDataHist(name+"DataHist_"+n+"_"+key,name+"DataHist_"+n+"_"+key,root.RooArgList(mMuMu),errHist)
+        pdfMmumuE.fitTo(mMuMuRooDataHistE,root.RooFit.SumW2Error(False),PRINTLEVEL)
+        chi2E = pdfMmumuE.createChi2(mMuMuRooDataHistE)
+
+        histE = pdfMmumuE.createHistogram(n+"_"+key,mMuMu,mMuMuBinning)
+        histE.Scale(normalization/getIntegralAll(histE,[minMass,maxMass]))
+
+        pdfMmumuE.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen+1),root.RooFit.LineStyle(2))
+
+        if self.meanMapErr.has_key(key):
+            self.meanMapErr[key] = [meanE]
+            self.widthMapErr[key] = [widthE]
+            self.pdfMapErr[key] = [pdfMmumuE]
+            self.histMapErr[key] = [histE]
+        else:
+            self.meanMapErr[key].append(meanE)
+            self.widthMapErr[key].append(widthE)
+            self.pdfMapErr[key].append(pdfMmumuE)
+            self.histMapErr[key].append(histE)
+
+        self.debug += "#   Error: {key}\n".format(key)
+        self.debug += "#     width: {0:.3g} +/- {1:.3g}\n".format(widthE.getVal(),widthE.getError())
+        self.debug += "#     mean: {0:.3g} +/- {1:.3g}\n".format(meanE.getVal(),meanE.getError())
+        self.debug += "#     chi2/ndf: {0:.3g}\n".format(chi2E.getVal()/(nBinsX-1))
+
+  def writeDebugHistsToCurrTDir(self,compareHist=None):
+    canvas = root.TCanvas("canvas")
+    canvas.cd()
+    #canvas.SetLogy(1)
+    for p,n in zip(self.plotMmumuList,self.names):
+      p.Draw()
+      canvas.SetName(n+"Canvas")
+      canvas.Write()
+
 ###################################################################################
 
 class Analysis:
@@ -508,6 +630,13 @@ class Analysis:
         if not errLong in self.sigErrNames:
             self.sigErrNames.add(errLong)
 
+    if SIGGAUS:
+      self.sigShapeMkr = MassPDFSig(analysis,signalNames,self.sigHists,
+                                self.sigErrHistsMap,
+                                [self.controlRegionLow[0],self.controlRegionHigh[1]],
+                                rooVars = [self.x,self.y]
+                                )
+
   def getSigEff(self,name):
     result = -1.0
     if self.sigNames.count(name)>0:
@@ -534,11 +663,16 @@ class Analysis:
     result = -1.0
     if self.sigNames.count(sigName)>0:
         i = self.sigNames.index(sigName)
-        result = self.sigHists[i]
+        if SIGGAUS:
+          result = self.sigShapeMkr.nominalHistList[i]
+        else:
+          result = self.sigHists[i]
     return result
   def getSigSystHist(self,sigName,systName):
     result = -1.0
     l = self.sigErrHistsMap[systName]
+    if SIGGAUS:
+      l = self.sigShapeMkr.histMapErr[systName]
     if self.sigNames.count(sigName)>0:
         i = self.sigNames.index(sigName)
         result = l[i]
@@ -861,6 +995,8 @@ class ShapeDataCardMaker(DataCardMaker):
         sumAllSigMCHist = None
         sumAllBakMCHist = None
         rootDebugString += "# channelName: {0}\n".format(channelName)
+        if SIGGAUS:
+          rootDebugString += channel.sigShapeMkr.debug
         for sigName in self.sigNames:
           tmpHist = channel.getSigHist(sigName).Clone(sigName)
           tmpHist.Scale(lumi)
@@ -1220,7 +1356,8 @@ if __name__ == "__main__":
 
   directory = "input/"
   outDir = "statsCards/"
-  periods = ["7TeV","8TeV"]
+  #periods = ["7TeV","8TeV"]
+  periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
@@ -1230,14 +1367,15 @@ if __name__ == "__main__":
   for a in analysesInc:
     for c in categoriesInc:
         tmpList.append(a+c)
-  analyses += tmpList
+  #analyses += tmpList
   tmpList = []
   for a in analysesVBF:
     for c in categoriesVBF:
         tmpList.append(a+c)
-  analyses += tmpList
+  #analyses += tmpList
   combinations = []
   combinationsLong = []
+  """
   combinations.append((
         ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
   ))
@@ -1262,6 +1400,7 @@ if __name__ == "__main__":
   combinationsLong.append((
         ["VBFBDTCut"+x for x in categoriesVBF]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))
+  """
   histPostFix="/mDiMu"
   #analyses = ["mDiMu"]
   #histPostFix=""
@@ -1282,7 +1421,7 @@ if __name__ == "__main__":
   lumiListLong = [20,30,50,100,500,1000,5000]
   lumiList = [lumiDict["8TeV"],20,25,30]
   lumiList = [20]
-  #lumiListLong = lumiList
+  lumiListLong = lumiList
 
   MassRebin = 1 # 4 Bins per GeV originally
   controlRegionVeryLow=[80,110]
