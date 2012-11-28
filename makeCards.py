@@ -352,7 +352,7 @@ class MassPDFSig:
 
     maxMass = massRange[1]
     minMass = massRange[0]
-    mMuMu = root.RooRealVar("mMuMu2","mMuMu",minMass,maxMass)
+    mMuMu = root.RooRealVar("mMuMu3","mMuMu",minMass,maxMass)
 
     self.names = names
     self.name = name
@@ -368,6 +368,11 @@ class MassPDFSig:
     self.nominalHistList = []
     self.plotMmumuList = []
     self.chi2List = []
+
+    self.meanMapErr = {}
+    self.widthMapErr = {}
+    self.pdfMapErr = {}
+    self.histMapErr = {}
 
     for i,n in zip(range(len(names)),names):
       hist = histList[i]
@@ -397,7 +402,7 @@ class MassPDFSig:
       pdfMmumu.plotOn(plotMmumu)
 
       mMuMuBinning = root.RooFit.Binning(nBinsX,minMass,maxMass)
-      nominalHist = pdfMmumu.createHistogram(n,mMuMu,mMuMuBinning)
+      nominalHist = pdfMmumu.createHistogram(name+"_"+n,mMuMu,mMuMuBinning)
       nominalHist.Scale(normalization/getIntegralAll(nominalHist,[minMass,maxMass]))
 
       self.meanList.append(mean)
@@ -415,11 +420,6 @@ class MassPDFSig:
       self.debug += "#   chi2/ndf: {0:.3g}\n".format(chi2.getVal()/(nBinsX-1))
 
       ## Error time
-      self.meanMapErr = {}
-      self.widthMapErr = {}
-      self.pdfMapErr = {}
-      self.histMapErr = {}
-
       for key in histMapErr:
         errHist = histMapErr[key][i]
 
@@ -431,23 +431,23 @@ class MassPDFSig:
         pdfMmumuE.fitTo(mMuMuRooDataHistE,root.RooFit.SumW2Error(False),PRINTLEVEL)
         chi2E = pdfMmumuE.createChi2(mMuMuRooDataHistE)
 
-        histE = pdfMmumuE.createHistogram(n+"_"+key,mMuMu,mMuMuBinning)
+        histE = pdfMmumuE.createHistogram(name+"_"+n+"_"+key,mMuMu,mMuMuBinning)
         histE.Scale(normalization/getIntegralAll(histE,[minMass,maxMass]))
 
         pdfMmumuE.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen+1),root.RooFit.LineStyle(2))
 
         if self.meanMapErr.has_key(key):
-            self.meanMapErr[key] = [meanE]
-            self.widthMapErr[key] = [widthE]
-            self.pdfMapErr[key] = [pdfMmumuE]
-            self.histMapErr[key] = [histE]
-        else:
             self.meanMapErr[key].append(meanE)
             self.widthMapErr[key].append(widthE)
             self.pdfMapErr[key].append(pdfMmumuE)
             self.histMapErr[key].append(histE)
+        else:
+            self.meanMapErr[key] = [meanE]
+            self.widthMapErr[key] = [widthE]
+            self.pdfMapErr[key] = [pdfMmumuE]
+            self.histMapErr[key] = [histE]
 
-        self.debug += "#   Error: {key}\n".format(key)
+        self.debug += "#   Error: {0}\n".format(key)
         self.debug += "#     width: {0:.3g} +/- {1:.3g}\n".format(widthE.getVal(),widthE.getError())
         self.debug += "#     mean: {0:.3g} +/- {1:.3g}\n".format(meanE.getVal(),meanE.getError())
         self.debug += "#     chi2/ndf: {0:.3g}\n".format(chi2E.getVal()/(nBinsX-1))
@@ -569,20 +569,6 @@ class Analysis:
     for hist in self.sigHistsRaw:
       vetoOutOfBoundsEvents(hist,boundaries=massBounds)
 
-    self.xsecSigTotal = 0.0
-    self.xsecSigList = []
-    self.effSigList = []
-    self.sigHists = []
-    for h,name in zip(self.sigHistsRaw,signalNames):
-      counts = getIntegralAll(h,boundaries=massBounds)
-      eff = counts/nEventsMap[name]*efficiencyMap[getPeriod(name)]
-      xs = eff*xsec[name]
-      self.xsecSigTotal += xs
-      self.xsecSigList.append(xs)
-      self.effSigList.append(eff)
-      h.Scale(xsec[name]/nEventsMap[name]*efficiencyMap[getPeriod(name)])
-      self.sigHists.append(h)
-
     self.xsecBakTotal = 0.0
     self.xsecBakList = []
     self.effBakList = []
@@ -620,6 +606,33 @@ class Analysis:
       else:
         self.datHistTotal.Add(h)
 
+    if SIGGAUS:
+      self.sigShapeMkr = MassPDFSig(analysis,signalNames,self.sigHistsRaw,
+                                self.sigErrHistsMap,
+                                [self.controlRegionLow[0],self.controlRegionHigh[1]],
+                                rooVars = [self.x,self.y]
+                                )
+      for i,name in zip(range(len(signalNames)),signalNames):
+        tmp = self.sigShapeMkr.nominalHistList[i]
+        tmp.Scale(xsec[name]/nEventsMap[name]*efficiencyMap[getPeriod(name)])
+        for err in self.sigErrHistsMap:
+          tmp = self.sigShapeMkr.histMapErr[err][i]
+          tmp.Scale(xsec[name]/nEventsMap[name]*efficiencyMap[getPeriod(name)])
+
+    self.xsecSigTotal = 0.0
+    self.xsecSigList = []
+    self.effSigList = []
+    self.sigHists = []
+    for h,name in zip(self.sigHistsRaw,signalNames):
+      counts = getIntegralAll(h,boundaries=massBounds)
+      eff = counts/nEventsMap[name]*efficiencyMap[getPeriod(name)]
+      xs = eff*xsec[name]
+      self.xsecSigTotal += xs
+      self.xsecSigList.append(xs)
+      self.effSigList.append(eff)
+      h.Scale(xsec[name]/nEventsMap[name]*efficiencyMap[getPeriod(name)])
+      self.sigHists.append(h)
+
     for err in self.sigErrHistsMap:
       for h,name in zip(self.sigErrHistsMap[err],signalNames):
         h.Scale(xsec[name]/nEventsMap[name]*efficiencyMap[getPeriod(name)])
@@ -629,13 +642,6 @@ class Analysis:
         errLong = re.sub(r"Down$","",errLong)
         if not errLong in self.sigErrNames:
             self.sigErrNames.add(errLong)
-
-    if SIGGAUS:
-      self.sigShapeMkr = MassPDFSig(analysis,signalNames,self.sigHists,
-                                self.sigErrHistsMap,
-                                [self.controlRegionLow[0],self.controlRegionHigh[1]],
-                                rooVars = [self.x,self.y]
-                                )
 
   def getSigEff(self,name):
     result = -1.0
@@ -1356,8 +1362,7 @@ if __name__ == "__main__":
 
   directory = "input/"
   outDir = "statsCards/"
-  #periods = ["7TeV","8TeV"]
-  periods = ["8TeV"]
+  periods = ["7TeV","8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
@@ -1367,15 +1372,14 @@ if __name__ == "__main__":
   for a in analysesInc:
     for c in categoriesInc:
         tmpList.append(a+c)
-  #analyses += tmpList
+  analyses += tmpList
   tmpList = []
   for a in analysesVBF:
     for c in categoriesVBF:
         tmpList.append(a+c)
-  #analyses += tmpList
+  analyses += tmpList
   combinations = []
   combinationsLong = []
-  """
   combinations.append((
         ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
   ))
@@ -1400,7 +1404,6 @@ if __name__ == "__main__":
   combinationsLong.append((
         ["VBFBDTCut"+x for x in categoriesVBF]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))
-  """
   histPostFix="/mDiMu"
   #analyses = ["mDiMu"]
   #histPostFix=""
@@ -1421,7 +1424,7 @@ if __name__ == "__main__":
   lumiListLong = [20,30,50,100,500,1000,5000]
   lumiList = [lumiDict["8TeV"],20,25,30]
   lumiList = [20]
-  lumiListLong = lumiList
+  #lumiListLong = lumiList
 
   MassRebin = 1 # 4 Bins per GeV originally
   controlRegionVeryLow=[80,110]
