@@ -1,5 +1,7 @@
 #!/bin/bash
 
+SIGNALSTRENGTH=20.0
+
 REMOTEDIR=/afs/cern.ch/user/j/jhugon/work/private/stats/CMSSW_5_2_5/stats/
 if ! `ssh lxplus touch $REMOTEDIR/touchfile.txt`; then
   echo "Error: Remote directory $REMOTEDIR doesn't exist or isn't writable"
@@ -11,7 +13,7 @@ rm -f statsCards/*
 rm -f statsInput/*
 rm -f statsOutput/*
 
-nice ./makeCards.py
+nice ./makeCards.py --signalInject $SIGNALSTRENGTH
 echo "Removing files in lxplus:$REMOTEDIR"
 ssh lxplus "cd /tmp/jhugon/; rm -rf $REMOTEDIR/*;echo \"Contents of dir: \`ls $REMOTEDIR \`\""
 echo "Copying input files to lxplus..."

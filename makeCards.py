@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+import argparse
+parser = argparse.ArgumentParser(description="Makes cards for use in the CMS Combine tool.")
+parser.add_argument("--signalInject", help="Inject Signal with Strength into data_obs",type=float,default=0.0)
+parser.add_argument("--toyData", help="Make Toy Data from PDFs for data_obs",action="store_true",default=False)
+args = parser.parse_args()
+
 import math
 import ROOT as root
 from helpers import *
@@ -784,7 +790,7 @@ class DataCardMaker:
       i = self.channelNames.index("")
       self.channelNames[i] = "Inc"
 
-  def write(self,outfilename,lumi):
+  def write(self,outfilename,lumi,sigInject=0.0):
     print("Writing Card: {0}".format(outfilename))
     lumi *= 1000.0
     nuisance = self.nuisance
@@ -812,7 +818,10 @@ class DataCardMaker:
       observationFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
       if channel.dataCountsTotal == None:
         print("Writing Pretend Data Counts")
-        observationFormatList.append(int(channel.getBakXSecTotal()*lumi))
+        counts = channel.getBakXSecTotal()*lumi
+        if sigInject != 0.0:
+          counts += channel.getSigXSecTotal()*lumi*sigInject
+        observationFormatList.append(int(counts))
       else:
         print("Writing Real Data Counts")
         observationFormatList.append(channel.dataCountsTotal)
@@ -980,7 +989,7 @@ class ShapeDataCardMaker(DataCardMaker):
       if channel.bakShape and writeBakShape:
         channel.bakShapeMkr.writeDebugHistsToCurrTDir()
 
-  def write(self,outfilename,lumi,sumAllBak=True,includeSigInAllMC=False):
+  def write(self,outfilename,lumi,sumAllBak=True,sigInject=0.0):
     lumi *= 1000.0
     nuisance = self.nuisance
 
@@ -1009,15 +1018,16 @@ class ShapeDataCardMaker(DataCardMaker):
           self.makeRFHistWrite(channel,tmpHist,tmpDir)
           #rootDebugString += "#     {0}: {1}\n".format(sigName,getIntegralAll(tmpHist))
           
-          if includeSigInAllMC:
-            if sumAllMCHist == None:
-              sumAllMCHist = tmpHist.Clone("data_obs")
-            else:
-              sumAllMCHist.Add(tmpHist)
           if sumAllSigMCHist == None:
             sumAllSigMCHist = tmpHist.Clone("sig")
           else:
             sumAllSigMCHist.Add(tmpHist)
+          if sigInject != 0.0:
+            tmpHist.Scale(sigInject)
+            if sumAllMCHist == None:
+              sumAllMCHist = tmpHist.Clone("data_obs")
+            else:
+              sumAllMCHist.Add(tmpHist)
 
           # Signal Shape Systematics
           for errHistKey in channel.sigErrHistsMap:
@@ -1028,6 +1038,7 @@ class ShapeDataCardMaker(DataCardMaker):
         if sumAllBak:
           #channel.dump()
           sumAllBakMCHist = channel.getBakHistTotal(lumi).Clone("bak")
+          sumAllBakMCHist = shrinkTH1(sumAllBakMCHist,self.controlRegionLow[0],self.controlRegionHigh[1])
           #channel.bakShapeMkr.dump()
           if self.shape:
             rootDebugString += channel.bakShapeMkr.debug
@@ -1040,13 +1051,21 @@ class ShapeDataCardMaker(DataCardMaker):
                 self.makeRFHistWrite(channel,tmpDown,tmpDir)
 
           # for simulated data_obs:
-          sumAllBakMCHistReal = channel.bakHistTotalReal.Clone("data_obs")
+          sumAllBakMCHistReal = channel.bakHistTotalReal.Clone("sumAllBakMCHistReal")
           sumAllBakMCHistReal.Scale(lumi)
+          sumAllBakMCHistReal = shrinkTH1(sumAllBakMCHistReal,self.controlRegionLow[0],self.controlRegionHigh[1])
 
-          if sumAllMCHist == None:
-            sumAllMCHist = sumAllBakMCHistReal
+          if self.toyData:
+            if sumAllMCHist == None:
+              sumAllMCHist = sumAllBakMCHist
+            else:
+              sumAllMCHist.Add(sumAllBakMCHist)
           else:
-            sumAllMCHist.Add(sumAllBakMCHistReal)
+            if sumAllMCHist == None:
+              sumAllMCHist = sumAllBakMCHistReal
+              sumAllMCHist.SetName("data_obs")
+            else:
+              sumAllMCHist.Add(sumAllBakMCHistReal)
         else:
           for bakName in self.bakNames:
             tmpHist = channel.getBakHist(bakName).Clone(bakName)
@@ -1063,7 +1082,7 @@ class ShapeDataCardMaker(DataCardMaker):
         if channel.datHistTotal == None:
           if self.toyData:
             print("Writing Toy Data Histogram")
-            toy = sumAllBakMCHist.Clone("data_obs")
+            toy = sumAllMCHist.Clone("data_obs")
             toyHistogram(toy)
             observedN[channelName] = getIntegralAll(toy,boundaries=massLimits)
             self.makeRFHistWrite(channel,toy,tmpDir) #Pretend Toy Data
@@ -1324,15 +1343,15 @@ class ThreadedCardMaker(myThread):
     self.writeArgsDict = {}
     if dictArgs.has_key("sumAllBak"):
         self.writeArgsDict["sumAllBak"] = dictArgs["sumAllBak"]
-    if dictArgs.has_key("includeSigInAllMC"):
-        self.writeArgsDict["includeSigInAllMC"] = dictArgs["includeSigInAllMC"]
+    if dictArgs.has_key("sigInject"):
+        self.writeArgsDict["sigInject"] = dictArgs["sigInject"]
     self.shapeDataCardMaker = True
     if dictArgs.has_key("shapeDataCardMaker"):
         self.shapeDataCardMaker = dictArgs["shapeDataCardMaker"]
         dictArgs.pop("shapeDataCardMaker",None)
     self.args = args
     dictArgs.pop("sumAllBak",None)
-    dictArgs.pop("includeSigInallMC",None)
+    dictArgs.pop("sigInject",None)
     dictArgs.pop("outfilename",None)
     dictArgs.pop("lumi",None)
     self.dictArgs = dictArgs
@@ -1372,14 +1391,15 @@ if __name__ == "__main__":
   for a in analysesInc:
     for c in categoriesInc:
         tmpList.append(a+c)
-  analyses += tmpList
+  #analyses += tmpList
   tmpList = []
   for a in analysesVBF:
     for c in categoriesVBF:
         tmpList.append(a+c)
-  analyses += tmpList
+  #analyses += tmpList
   combinations = []
   combinationsLong = []
+  """
   combinations.append((
         ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
   ))
@@ -1404,6 +1424,7 @@ if __name__ == "__main__":
   combinationsLong.append((
         ["VBFBDTCut"+x for x in categoriesVBF]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))
+  """
   histPostFix="/mDiMu"
   #analyses = ["mDiMu"]
   #histPostFix=""
@@ -1432,7 +1453,7 @@ if __name__ == "__main__":
   controlRegionHigh=[130,160]
 
   shape=True
-  toyData=False
+  toyData=args.toyData
 
   print("Simple Analyses to run:")
   for a in analyses:
@@ -1456,7 +1477,7 @@ if __name__ == "__main__":
           appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
           rebin=[MassRebin],bakShape=shape,
           controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,
+          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
           #write args:
           outfilename=outDir+ana+"_"+p+"_"+str(i)+".txt",lumi=i
           )
@@ -1470,7 +1491,7 @@ if __name__ == "__main__":
           appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
           rebin=[MassRebin], bakShape=shape,
           controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,
+          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
           #write args:
           outfilename=outDir+comb[1]+"_"+p+"_"+str(i)+".txt",lumi=i
         )
@@ -1506,7 +1527,7 @@ if __name__ == "__main__":
           appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
           rebin=[MassRebin], bakShape=shape,
           controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,
+          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
           #write args:
           outfilename=outDir+comb[1]+"_"+p+"_"+str(i)+".txt",lumi=i
         )
@@ -1610,6 +1631,18 @@ FILENAME=$i
 echo "executing combine -M Asymptotic $FILENAME >& $FILENAME.out"
 
 combine -M Asymptotic $FILENAME >& $FILENAME.out
+rm -f roostats*
+rm -f higgsCombineTest*.root
+
+echo "executing combine -M ProfileLikelihood --signifcance $FILENAME -t 100 --expectSignal=1 >& $FILENAME.sig"
+
+combine -M ProfileLikelihood --significance $FILENAME -t 100 --expectSignal=1 >& $FILENAME.expsig
+rm -f roostats*
+rm -f higgsCombineTest*.root
+
+echo "executing combine -M MaxLikelihoodFit $FILENAME >& $FILENAME.sig"
+
+combine -M MaxLikelihoodFit $FILENAME >& $FILENAME.mu
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
