@@ -1382,11 +1382,8 @@ if __name__ == "__main__":
   directory = "input/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  periods = ["8TeV"]
-  #analysesInc = ["IncPresel","IncBDTCut"]
-  #analysesVBF = ["VBFPresel","VBFBDTCut"]
-  analysesInc = ["IncBDTCut"]
-  analysesVBF = ["VBFBDTCut"]
+  analysesInc = ["IncPresel","IncBDTCut"]
+  analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
   categoriesInc = ["BB","BO","BE","OO","OE","EE"]
   categoriesVBF = ["BB","NotBB"]
@@ -1394,15 +1391,14 @@ if __name__ == "__main__":
   for a in analysesInc:
     for c in categoriesInc:
         tmpList.append(a+c)
-  #analyses += tmpList
+  analyses += tmpList
   tmpList = []
   for a in analysesVBF:
     for c in categoriesVBF:
         tmpList.append(a+c)
-  #analyses += tmpList
+  analyses += tmpList
   combinations = []
   combinationsLong = []
-  """
   combinations.append((
         ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
   ))
@@ -1424,10 +1420,15 @@ if __name__ == "__main__":
   combinations.append((
         ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
   ))
+  combinations.append((
+        ["VBFBDTCut"+x for x in categoriesVBF]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
+  ))
   combinationsLong.append((
         ["VBFBDTCut"+x for x in categoriesVBF]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))
-  """
+  #combinationsLong.append((
+  #      ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
+  #))
   histPostFix="/mDiMu"
   #analyses = ["mDiMu"]
   #histPostFix=""
@@ -1444,6 +1445,7 @@ if __name__ == "__main__":
     #"SingleMuRun2011Av1",
     #"SingleMuRun2011Bv1"
   ]
+  dataDict["14TeV"] = []
   lumiListLong = [5,10,15,20,25,30,40,50,75,100,200,500,1000,2000,5000]
   lumiListLong = [20,30,50,100,500,1000,5000]
   lumiList = [lumiDict["8TeV"],20,25,30]
@@ -1517,11 +1519,9 @@ if __name__ == "__main__":
       if p == "7TeV":
         break
 
-  for p in periods:
-    for i in lumiListLong:
-      if p == "7TeV":
-        i = lumiDict[p]
-      for comb in combinationsLong:
+  for i in lumiListLong:
+    p = "14TeV"
+    for comb in combinationsLong:
        threads.append(
         ThreadedCardMaker(
           #__init__ args:
@@ -1535,8 +1535,6 @@ if __name__ == "__main__":
           outfilename=outDir+comb[1]+"_"+p+"_"+str(i)+".txt",lumi=i
         )
        )
-      if p == "7TeV":
-        break
 
   nThreads = len(threads)
   print("nProcs: {0}".format(NPROCS))

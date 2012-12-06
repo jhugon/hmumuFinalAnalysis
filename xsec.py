@@ -176,11 +176,13 @@ colors["QCD"] = root.kSpring+8
 efficiencyMap = {}
 efficiencyMap["7TeV"] = 1.0
 efficiencyMap["8TeV"] = 1.0
+efficiencyMap["14TeV"] = 1.0
 
 # Data/MC scale factors
 mcPlotScaleFactorMap = {}
 mcPlotScaleFactorMap["7TeV"] = 1.0
 mcPlotScaleFactorMap["8TeV"] = 1.0
+mcPlotScaleFactorMap["14TeV"] = 1.0
 
 nuisanceMap = {}
 nuisanceMap["lumi"] = {

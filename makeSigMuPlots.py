@@ -210,7 +210,7 @@ def getDataMu(fileString,matchString=r"_([-\d.]+)\.txt\.mu",dontMatchStrings=[],
         obs = obsMatch.group(1)
         low1sig = obsMatch.group(2)
         high1sig = obsMatch.group(3)
-        print("original line: {0}\n  Extracted: {1} -{2} +{3}".format(obsMatch.group(0),obs,low1sig,high1sig))
+        #print("original line: {0}\n  Extracted: {1} -{2} +{3}".format(obsMatch.group(0),obs,low1sig,high1sig))
     thisPoint = [xNum,obs,low1sig,high1sig]
     if thisPoint.count("-10.0")>0:
         continue
@@ -222,48 +222,40 @@ def getDataMu(fileString,matchString=r"_([-\d.]+)\.txt\.mu",dontMatchStrings=[],
 
 
 class RelativePlot:
-  def __init__(self,dataPoints, canvas, legend, caption, ylabel="Expected 95% CL Limit #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV"):
-    expGraph = root.TGraph()
-    expGraph.SetLineStyle(2)
-    oneSigGraph = root.TGraphAsymmErrors()
-    oneSigGraph.SetFillColor(root.kGreen)
-    oneSigGraph.SetLineStyle(0)
-    twoSigGraph = root.TGraphAsymmErrors()
-    twoSigGraph.SetFillColor(root.kYellow)
-    twoSigGraph.SetLineStyle(0)
-    oneGraph = root.TGraph()
-    oneGraph.SetLineColor(root.kRed)
-    oneGraph.SetLineStyle(3)
+  def __init__(self,dataPoints, canvas, legend, caption, ylabel="Error on #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV"):
+    errGraph = root.TGraph()
+    #errGraph.SetLineStyle(2)
+    errGraph.SetLineColor(root.kRed)
+    self.errGraph = errGraph
     obsGraph = root.TGraph()
-    obsGraph.SetLineColor(1)
-    obsGraph.SetLineStyle(1)
-    self.expGraph = expGraph
-    self.oneSigGraph = oneSigGraph
-    self.twoSigGraph = twoSigGraph
-    self.oneGraph = oneGraph
+    obsGraph.SetLineColor(root.kRed)
+    #obsGraph.SetLineStyle(2)
     self.obsGraph = obsGraph
     iPoint = 0
     ymax = 1e-20
     ymin = 1e20
     for point in dataPoints:
+      value = None
+      obs = 0.0
       xNum = float(point[0])
       if len(xlimits)==2:
         if xNum<xlimits[0]:
             continue
         if xNum>xlimits[1]:
             continue
-      obs = float(point[1])
-      median = float(point[4])
-      low2sig = median - float(point[2])
-      low1sig = median - float(point[3])
-      high1sig = float(point[5]) - median
-      high2sig = float(point[6]) - median
-      expGraph.SetPoint(iPoint,xNum,median) 
-      oneSigGraph.SetPoint(iPoint,xNum,median) 
-      twoSigGraph.SetPoint(iPoint,xNum,median) 
-      oneSigGraph.SetPointError(iPoint,0.0,0.0,low1sig,high1sig) 
-      twoSigGraph.SetPointError(iPoint,0.0,0.0,low2sig,high2sig) 
-      oneGraph.SetPoint(iPoint,xNum,1.0)
+      if len(point)==4: #mu
+        #thisPoint = [xNum,obs,low1sig,high1sig]
+        high1sig = float(point[3])
+        low1sig = float(point[2])
+        if high1sig > low1sig:
+            value = high1sig
+        else:
+            value = low1sig
+      else: #sig len=3
+        #thisPoint = [xNum,obs,exp]
+        value = float(point[2])
+        obs = float(point[1])
+      errGraph.SetPoint(iPoint,xNum,value)
       obsGraph.SetPoint(iPoint,xNum,obs)
       iPoint += 1
 
@@ -286,14 +278,11 @@ class RelativePlot:
     label.SetTextAlign(22)
     self.label=label
 
-    twoSigGraph.Draw("a3")
-    twoSigGraph.GetXaxis().SetTitle(xlabel)
-    twoSigGraph.GetYaxis().SetTitle(ylabel)
+    errGraph.Draw("al")
+    errGraph.GetXaxis().SetTitle(xlabel)
+    errGraph.GetYaxis().SetTitle(ylabel)
     if len(ylimits)==2:
-        twoSigGraph.GetYaxis().SetRangeUser(*ylimits)
-    oneSigGraph.Draw("3")
-    expGraph.Draw("l")
-    oneGraph.Draw("l")
+        errGraph.GetYaxis().SetRangeUser(*ylimits)
     if showObs:
       obsGraph.Draw("l")
 
@@ -398,16 +387,16 @@ if __name__ == "__main__":
   setStyle()
   canvas = root.TCanvas()
   canvas.SetLogx(1)
-  canvas.SetLogy(1)
+  canvas.SetLogy(0)
   
   mpl.rcParams["font.family"] = "sans-serif"
   #print mpl.rcParams["backend"]
 
-  ylimits=[0.1,100.0]
+  ylimits=[]
 
   lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":20}
   
-  for period in ["7TeV","8TeV"]:
+  for period in ["7TeV","8TeV","14TeV"]:
     fnToGlob = dirName+"*_"+period+"_*.txt.out"
     allfiles = glob.glob(fnToGlob)
 
@@ -422,21 +411,32 @@ if __name__ == "__main__":
         plots.add(match.group(1))
         energyStr = match.group(2)
   
-    """
     caption2 = "#sqrt{s}="+energyStr
     legend = root.TLegend(0.58,0.70,0.9,0.9)
     legend.SetFillColor(0)
     legend.SetLineColor(0)
-    for plotName in plots:
-      data = getData(dirName+plotName+"_"+energyStr+"_*.txt.out")
-      if len(data)<=1:
-        continue
-      #incPlot = RelativePlot(data,canvas,legend,titleMap[plotName],caption2=caption2,ylimits=ylimits,energyStr=energyStr)
-      #incPlot = RelativePlot(data,canvas,legend,"Standard Model H#rightarrow#mu#mu",caption2=caption2,ylimits=ylimits,energyStr=energyStr)
-      #saveAs(canvas,outDir+plotName+"_"+energyStr)
-    """
+    
+    for ytitle,fnPref in zip(["Significance","$\sigma_{Measured}/\sigma_{SM}$"],["sig","mu"]):
+      for plotName in plots:
+        data = None
+        ylabel = None
+        if fnPref == "sig":
+          data = getDataSig(dirName+plotName+"_"+energyStr+"_*.txt*")
+          ylabel="Significance"
+        else:
+          data = getDataMu(dirName+plotName+"_"+energyStr+"_*.txt*")
+          ylabel="Error on #sigma/#sigma_{SM}"
+        print("{0} {1} v. Lumi: {2}".format(period,fnPref, data))
+        if len(data)<=1:
+          continue
+        title = titleMap[plotName]
+        title = "SM H#rightarrow#mu#mu"
+        incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylabel=ylabel,energyStr=energyStr)
+        saveAs(canvas,outDir+fnPref+plotName+"_"+energyStr)
     
     ## Compare all types of limits
+    if period == "14TeV":
+        continue
     #veto = [r"CNC",r"PM","BB","BO","BE","OO","OE","EE","NotBB"]
     #veto = [r"CNC",r"PM","Presel","BB","BO","BE","OO","OE","EE","NotBB"]
     #veto = [r"CNC",r"PM","BDT","BB","BO","BE","OO","OE","EE","NotBB"]
@@ -451,8 +451,8 @@ if __name__ == "__main__":
     fnGlobStr = dirName+"*_"+period+"_"+desiredLumiStr+".txt*"
     compareDataSig = getDataSig(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
     compareDataMu = getDataMu(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
-    print compareDataSig
-    print compareDataMu
+    #print compareDataSig
+    #print compareDataMu
 
     for datCase,ytitle,fnPref in zip([compareDataSig,compareDataMu],["Significance","$\sigma_{Measured}/\sigma_{SM}$"],["sig","mu"]):
       if len(datCase)==0:

@@ -360,7 +360,7 @@ if __name__ == "__main__":
 
   lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":20}
   
-  for period in ["7TeV","8TeV"]:
+  for period in ["7TeV","8TeV","14TeV"]:
     fnToGlob = dirName+"*_"+period+"_*.txt.out"
     allfiles = glob.glob(fnToGlob)
     
@@ -387,6 +387,10 @@ if __name__ == "__main__":
       #incPlot = RelativePlot(data,canvas,legend,"Standard Model H#rightarrow#mu#mu",caption2=caption2,ylimits=ylimits,energyStr=energyStr)
       saveAs(canvas,outDir+plotName+"_"+energyStr)
 
+    ## Compare all types of limits
+    if period == "14TeV":
+        continue
+
     veto = [r"CNC",r"PM","BB","BO","BE","OO","OE","EE","NotBB"]
     #veto = [r"CNC",r"PM","Presel","BB","BO","BE","OO","OE","EE","NotBB"]
     #veto = [r"CNC",r"PM","BDT","BB","BO","BE","OO","OE","EE","NotBB"]
@@ -396,7 +400,6 @@ if __name__ == "__main__":
     mustBe = r"(.+)_(.+)_[.\d]+.txt.out"
     #mustBe = r"(.+Cat)_(.+)_[.\d]+.txt.out"
     
-    ## Compare all types of limits
     desiredLumiStr=str(lumisToUse[period])
     fnGlobStr = dirName+"*_"+energyStr+"_"+desiredLumiStr+".txt.out"
     compareData = getData(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
