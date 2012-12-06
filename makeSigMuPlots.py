@@ -426,7 +426,7 @@ if __name__ == "__main__":
         else:
           data = getDataMu(dirName+plotName+"_"+energyStr+"_*.txt*")
           ylabel="Error on #sigma/#sigma_{SM}"
-        print("{0} {1} v. Lumi: {2}".format(period,fnPref, data))
+        #print("{0} {1} v. Lumi: {2}".format(period,fnPref, data))
         if len(data)<=1:
           continue
         title = titleMap[plotName]
