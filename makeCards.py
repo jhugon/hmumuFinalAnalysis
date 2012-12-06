@@ -1382,8 +1382,11 @@ if __name__ == "__main__":
   directory = "input/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  analysesInc = ["IncPresel","IncBDTCut"]
-  analysesVBF = ["VBFPresel","VBFBDTCut"]
+  periods = ["8TeV"]
+  #analysesInc = ["IncPresel","IncBDTCut"]
+  #analysesVBF = ["VBFPresel","VBFBDTCut"]
+  analysesInc = ["IncBDTCut"]
+  analysesVBF = ["VBFBDTCut"]
   analyses = analysesInc + analysesVBF
   categoriesInc = ["BB","BO","BE","OO","OE","EE"]
   categoriesVBF = ["BB","NotBB"]
@@ -1634,13 +1637,20 @@ combine -M Asymptotic $FILENAME >& $FILENAME.out
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
-echo "executing combine -M ProfileLikelihood --signifcance $FILENAME -t 100 --expectSignal=1 >& $FILENAME.sig"
+echo "executing combine -M ProfileLikelihood -d $FILENAME --signif >& $FILENAME.sig"
 
-combine -M ProfileLikelihood --significance $FILENAME -t 100 --expectSignal=1 >& $FILENAME.expsig
+combine -M ProfileLikelihood -d $FILENAME --signif >& $FILENAME.sig
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
-echo "executing combine -M MaxLikelihoodFit $FILENAME >& $FILENAME.sig"
+echo "executing combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig"
+
+combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 >& $FILENAME.expsig
+#combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig
+rm -f roostats*
+rm -f higgsCombineTest*.root
+
+echo "executing combine -M MaxLikelihoodFit $FILENAME >& $FILENAME.mu"
 
 combine -M MaxLikelihoodFit $FILENAME >& $FILENAME.mu
 rm -f roostats*
