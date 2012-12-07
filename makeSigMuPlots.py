@@ -422,7 +422,7 @@ if __name__ == "__main__":
         ylabel = None
         if fnPref == "sig":
           data = getDataSig(dirName+plotName+"_"+energyStr+"_*.txt*")
-          ylabel="Significance"
+          ylabel="Expected Significance"
         else:
           data = getDataMu(dirName+plotName+"_"+energyStr+"_*.txt*")
           ylabel="Error on #sigma/#sigma_{SM}"
@@ -430,7 +430,7 @@ if __name__ == "__main__":
         if len(data)<=1:
           continue
         title = titleMap[plotName]
-        title = "SM H#rightarrow#mu#mu"
+        title = "Standard Model H#rightarrow#mu#mu"
         incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylabel=ylabel,energyStr=energyStr)
         saveAs(canvas,outDir+fnPref+plotName+"_"+energyStr)
     
@@ -454,7 +454,7 @@ if __name__ == "__main__":
     #print compareDataSig
     #print compareDataMu
 
-    for datCase,ytitle,fnPref in zip([compareDataSig,compareDataMu],["Significance","$\sigma_{Measured}/\sigma_{SM}$"],["sig","mu"]):
+    for datCase,ytitle,fnPref in zip([compareDataSig,compareDataMu],["Expected Significance","$\sigma/\sigma_{SM}$"],["sig","mu"]):
       if len(datCase)==0:
         print("No Data to Compare for {0} {1}!!".format(period,fnPref))
         continue

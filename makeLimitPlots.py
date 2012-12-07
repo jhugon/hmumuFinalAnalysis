@@ -383,8 +383,9 @@ if __name__ == "__main__":
       data = getData(dirName+plotName+"_"+energyStr+"_*.txt.out")
       if len(data)<=1:
         continue
-      incPlot = RelativePlot(data,canvas,legend,titleMap[plotName],caption2=caption2,ylimits=ylimits,energyStr=energyStr)
-      #incPlot = RelativePlot(data,canvas,legend,"Standard Model H#rightarrow#mu#mu",caption2=caption2,ylimits=ylimits,energyStr=energyStr)
+      title = titleMap[plotName]
+      title = "Standard Model H#rightarrow#mu#mu"
+      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStr)
       saveAs(canvas,outDir+plotName+"_"+energyStr)
 
     ## Compare all types of limits
