@@ -1391,15 +1391,14 @@ if __name__ == "__main__":
   for a in analysesInc:
     for c in categoriesInc:
         tmpList.append(a+c)
-  #analyses += tmpList
+  analyses += tmpList
   tmpList = []
   for a in analysesVBF:
     for c in categoriesVBF:
         tmpList.append(a+c)
-  #analyses += tmpList
+  analyses += tmpList
   combinations = []
   combinationsLong = []
-  """
   combinations.append((
         ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
   ))
@@ -1424,7 +1423,9 @@ if __name__ == "__main__":
   combinations.append((
         ["VBFBDTCut"+x for x in categoriesVBF]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))
-  """
+  #combinationsLong.append((
+  #      ["IncBDTCut","VBFBDTCut"],"BDTCut"
+  #))
   combinationsLong.append((
         ["VBFBDTCut"+x for x in categoriesVBF]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))

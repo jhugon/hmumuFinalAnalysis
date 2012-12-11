@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+import argparse
+parser = argparse.ArgumentParser(description="Makes cards for use in the CMS Combine tool.")
+parser.add_argument("--signalInject", help="Inject Signal with Strength into data_obs",type=float,default=0.0)
+args = parser.parse_args()
+
 from helpers import *
 import ROOT as root
 import glob
@@ -222,15 +227,21 @@ def getDataMu(fileString,matchString=r"_([-\d.]+)\.txt\.mu",dontMatchStrings=[],
 
 
 class RelativePlot:
-  def __init__(self,dataPoints, canvas, legend, caption, ylabel="Error on #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV"):
+  def __init__(self,dataPoints, canvas, legend, caption, ylabel="Error on #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV",doMuExtraPlot=False):
     errGraph = root.TGraph()
     #errGraph.SetLineStyle(2)
     errGraph.SetLineColor(root.kRed)
     self.errGraph = errGraph
     obsGraph = root.TGraph()
     obsGraph.SetLineColor(root.kRed)
-    #obsGraph.SetLineStyle(2)
+    obsGraph.SetLineStyle(2)
     self.obsGraph = obsGraph
+    muExtraGraphErr = root.TGraphAsymmErrors()
+    muExtraGraph = root.TGraph()
+    muExtraGraph.SetLineColor(root.kBlue+1)
+    muExtraGraphErr.SetFillColor(root.kCyan)
+    self.muExtraGraph = muExtraGraph
+    self.muExtraGraphErr = muExtraGraphErr
     iPoint = 0
     ymax = 1e-20
     ymin = 1e20
@@ -257,6 +268,10 @@ class RelativePlot:
         obs = float(point[1])
       errGraph.SetPoint(iPoint,xNum,value)
       obsGraph.SetPoint(iPoint,xNum,obs)
+      if doMuExtraPlot:
+        muExtraGraph.SetPoint(iPoint,xNum,float(point[1]))
+        muExtraGraphErr.SetPoint(iPoint,xNum,float(point[1]))
+        muExtraGraphErr.SetPointError(iPoint,0.,0.,float(point[2]),float(point[3]))
       iPoint += 1
 
     self.vertLines = []
@@ -278,13 +293,40 @@ class RelativePlot:
     label.SetTextAlign(22)
     self.label=label
 
-    errGraph.Draw("al")
-    errGraph.GetXaxis().SetTitle(xlabel)
-    errGraph.GetYaxis().SetTitle(ylabel)
-    if len(ylimits)==2:
-        errGraph.GetYaxis().SetRangeUser(*ylimits)
-    if showObs:
-      obsGraph.Draw("l")
+    if doMuExtraPlot:
+      muExtraGraphErr.GetXaxis().SetTitle(xlabel)
+      muExtraGraphErr.GetYaxis().SetTitle(ylabel)
+      if len(ylimits)==2:
+        muExtraGraphErr.GetYaxis().SetRangeUser(*ylimits)
+      muExtraGraphErr.Draw("a3")
+      muExtraGraph.Draw("l")
+      #muExtraGraphErr.Draw("a4")
+      #muExtraGraph.Draw("c")
+    else:
+      errGraph.GetXaxis().SetTitle(xlabel)
+      errGraph.GetYaxis().SetTitle(ylabel)
+      if showObs:
+        if len(ylimits)==2:
+          errGraph.GetYaxis().SetRangeUser(*ylimits)
+        else:
+          maxVal = 0.0
+          tmpY = root.Double()
+          tmpX = root.Double()
+          for i in range(obsGraph.GetN()):
+            obsGraph.GetPoint(i,tmpX,tmpY)
+            if maxVal < float(tmpY):
+              maxVal = float(tmpY)
+          for i in range(errGraph.GetN()):
+            errGraph.GetPoint(i,tmpX,tmpY)
+            if maxVal < float(tmpY):
+              maxVal = float(tmpY)
+          errGraph.SetMaximum(maxVal)
+        errGraph.Draw("al")
+        obsGraph.Draw("l")
+      else:
+        if len(ylimits)==2:
+          errGraph.GetYaxis().SetRangeUser(*ylimits)
+        errGraph.Draw("al")
 
     tlatex = root.TLatex()
     tlatex.SetNDC()
@@ -416,22 +458,28 @@ if __name__ == "__main__":
     legend.SetFillColor(0)
     legend.SetLineColor(0)
     
-    for ytitle,fnPref in zip(["Significance","$\sigma_{Measured}/\sigma_{SM}$"],["sig","mu"]):
+    for ytitle,fnPref in zip(["Expected Significance","Error on #sigma_{Measured}/#sigma_{SM}","Toy #sigma_{Measured}/#sigma_{SM}"],["sig","mu","muToy"]):
       for plotName in plots:
         data = None
-        ylabel = None
+        doMuExtraPlot=False
+        caption3=""
+        showObs=False
         if fnPref == "sig":
           data = getDataSig(dirName+plotName+"_"+energyStr+"_*.txt*")
-          ylabel="Expected Significance"
+          if args.signalInject>0.0:
+            caption3 = "Signal Injected {0:.1f}#timesSM".format(args.signalInject)
+            showObs=True
         else:
           data = getDataMu(dirName+plotName+"_"+energyStr+"_*.txt*")
-          ylabel="Error on #sigma/#sigma_{SM}"
+        if fnPref == "muToy":
+          doMuExtraPlot = True
+          caption3 = "Signal Injected {0:.1f}#times SM".format(args.signalInject)
         #print("{0} {1} v. Lumi: {2}".format(period,fnPref, data))
         if len(data)<=1:
           continue
         title = titleMap[plotName]
         title = "Standard Model H#rightarrow#mu#mu"
-        incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylabel=ylabel,energyStr=energyStr)
+        incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,caption3=caption3,ylabel=ytitle,energyStr=energyStr,doMuExtraPlot=doMuExtraPlot,showObs=showObs)
         saveAs(canvas,outDir+fnPref+plotName+"_"+energyStr)
     
     ## Compare all types of limits

@@ -28,4 +28,4 @@ scp lxplus:$REMOTEDIR/*.mu statsInput/.
 
 nice ./makeShapePlots.py
 nice ./makeLimitPlots.py
-nice ./makeSigMuPlots.py
+nice ./makeSigMuPlots.py --signalInject $SIGNALSTRENGTH 
