@@ -25,7 +25,7 @@ root.gErrorIgnoreLevel = root.kWarning
 root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.ERROR)
 PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 
-NPROCS = 2
+NPROCS = 1
 
 BAKUNC = 0.1
 
@@ -84,179 +84,43 @@ def getRooVars(directory,signalNames,histNameBase,analysis):
 
 ###################################################################################
 
-class MassPDFBakMSSM:
-  def __init__(self,name,hist,massLowRange,massHighRange,massVeryLowRange,rooVars=None,smooth=False,hack=True):
-    if rooVars == None:
-        print("Error: MassPDFBakMSSM requires rooVars list of variables, exiting.")
-        sys.exit(1)
-    if len(massVeryLowRange)==0:
-        print("Error: MassPDFBakMSSM requires verylow mass range, exiting.")
-        sys.exit(1)
-
-    self.debug = ""
-    self.debug += "### MassPDFBakMSSM: "+name+"\n"
-
-    maxMass = massHighRange[1]
-    minMass = massVeryLowRange[0]
-    mMuMu = root.RooRealVar("mMuMu","mMuMu",minMass,maxMass)
-    mMuMu.setRange("z",88,94)
-    mMuMu.setRange("verylow",massVeryLowRange[0],massVeryLowRange[1])
-    mMuMu.setRange("low",massLowRange[0],massLowRange[1])
-    mMuMu.setRange("high",massHighRange[0],massHighRange[1])
-    mMuMu.setRange("signal",massLowRange[1],massHighRange[0])
-
-    bwmZ = root.RooRealVar("bwmZ","bwmZ",85,95)
-    bwSig = root.RooRealVar("bwSig","bwSig",0.0,30.0)
-    bwLambda = root.RooRealVar("bwLambda","bwLambda",-1e-03,-1e-01,-1e-04)
-    bwMmumu = root.RooGenericPdf("bwMmumu","exp(bwLambda*mMuMu)*bwSig/(((mMuMu-bwmZ)*(mMuMu-bwmZ) + bwSig*bwSig*0.25))",root.RooArgList( mMuMu, bwLambda, bwSig, bwmZ))
-
-    phoMmumu = root.RooGenericPdf("phoMmumu","exp(bwLambda*mMuMu)/pow(mMuMu,2)",root.RooArgList(mMuMu,bwLambda))
-
-    mixParam = root.RooRealVar("mixParam","mixParam",0.5,0,1)
-
-    pdfMmumu = root.RooAddPdf("pdfMmumu","pdfMmumu",root.RooArgList(bwMmumu,phoMmumu),root.RooArgList(mixParam))
-    
-    tmpAxis = hist.GetXaxis()
-    lowBin = tmpAxis.FindBin(minMass)
-    highBin = tmpAxis.FindBin(maxMass)
-    lowBin, highBin = getXbinsHighLow(hist,minMass,maxMass)
-    nBinsX = highBin - lowBin + 1
-    normalization = getIntegralAll(hist,[massLowRange[0],massHighRange[1]])
-    self.debug += "# bak Hist no bounds: {0:.3g}\n".format(hist.Integral())
-    self.debug += "# bak Hist bounds:    {0:.3g}\n".format(normalization)
-
-    mMuMuRooDataHist = root.RooDataHist(name+"DataHist",name+"DataHist",root.RooArgList(mMuMu),hist)
-
-    bwMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("z"),root.RooFit.SumW2Error(False),PRINTLEVEL)
-    bwmZ.setConstant(True)
-    bwSig.setConstant(True)
-
-    #phoMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("high"),root.RooFit.SumW2Error(False),PRINTLEVEL)
-    #bwLambda.setConstant(True)
-    
-    pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL)
-    chi2 = pdfMmumu.createChi2(mMuMuRooDataHist)
-
-    plotMmumu = mMuMu.frame()
-
-    mMuMuRooDataHist.plotOn(plotMmumu)
-    pdfMmumu.plotOn(plotMmumu,root.RooFit.Range("low,high"))
-    pdfMmumu.plotOn(plotMmumu,root.RooFit.LineStyle(2),root.RooFit.Range(minMass,maxMass))
-    pdfMmumu.plotOn(plotMmumu,root.RooFit.Components("phoMmumu"),root.RooFit.LineStyle(2),root.RooFit.Range(minMass,maxMass),root.RooFit.LineColor(root.kGreen+1))
-
-    mMuMuBinning = root.RooFit.Binning(nBinsX,minMass,maxMass)
-    nominalHist = pdfMmumu.createHistogram("pdf2dHist",mMuMu,mMuMuBinning)
-    nominalHist.Scale(normalization/getIntegralAll(nominalHist,[massLowRange[0],massHighRange[1]]))
-
+class Param:
+  def __init__(self,name,nominal,lowErr,highErr):
     self.name = name
-    self.hist = hist
-    self.mMuMuRooDataHist = mMuMuRooDataHist
-    self.lowBin = lowBin
-    self.highBin = highBin
-    self.nBinsX = nBinsX
-    self.bwmZ = bwmZ
-    self.bwSig = bwSig
-    self.bwLambda = bwLambda
-    self.bwMmumu = bwMmumu
-    self.phoMmumu = phoMmumu
-    self.mixParam = mixParam
-    self.pdfMmumu = pdfMmumu
-    self.mMuMuBinning = mMuMuBinning
-    self.nominalHist = nominalHist
-    self.maxMass = maxMass
-    self.minMass = minMass
-    self.mMuMu = mMuMu
-    self.plotMmumu = plotMmumu
-    self.chi2 = chi2
+    self.nominal = nominal
+    self.lowErr = lowErr
+    self.highErr = highErr
+  def __str__(self):
+    return "{0}: {1:.3g} +{2:.3g} -{3:.3g}".format(self.name,self.nominal,self.lowErr,self.highErr)
+  def __repr__(self):
+    return str(self)
+  def getErrString(self):
+    if self.lowErr == self.highErr:
+        return "{0:.5g}".format(self.lowErr)
+    else:
+        return "-{0:.5g}/+{1:.5g}".format(self.lowErr,self.highErr)
 
-    self.debug += "# nominal Integral: {0:.3g}\n".format(getIntegralAll(nominalHist))
-    self.debug += "# BW Sigma: {0:.3g} +/- {1:.3g}\n".format(bwSig.getVal(),bwSig.getError())
-    self.debug += "# BW mZ:    {0:.3g} +/- {1:.3g}\n".format(bwmZ.getVal(),bwmZ.getError())
-    self.debug += "# Lam:      {0:.3g} +/- {1:.3g}\n".format(bwLambda.getVal(),bwLambda.getError())
-    self.debug += "# BW Coef:  {0:.3g} +/- {1:.3g}\n".format(mixParam.getVal(),mixParam.getError())
-    self.debug += "# chi2/ndf: {0:.3g}\n".format(chi2.getVal()/(nBinsX-1))
+def makePDFBak(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
+    debug = ""
+    debug += "### makePDFBak: "+name+"\n"
 
-    ## Error time
+    channelName = name
 
-    self.errNames = []
-    self.errHists = {}
-    if BAKUNCON:
-      for errVar in [bwmZ,bwSig,bwLambda,mixParam]:
-        val = errVar.getVal()
-        err = errVar.getError()
-        varName = errVar.GetName()
+    voitWidth = root.RooRealVar(channelName+"_voitWidth","voitWidth",2.4952)
+    voitmZ = root.RooRealVar(channelName+"_voitmZ","voitmZ",85,95)
+    voitSig = root.RooRealVar(channelName+"_voitSig","voitSig",0.0,30.0)
+    voitMmumu = root.RooVoigtian("bak_voitMmumu","voitMmumu",mMuMu,voitmZ,voitWidth,voitSig)
 
-        errVar.setVal(val+err)
-        pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range(110,150),root.RooFit.LineStyle(3))
-        upHist = pdfMmumu.createHistogram(varName+"Up",mMuMu,mMuMuBinning)
+    expParam = root.RooRealVar(channelName+"_expParam","expParam",-1,0)
+    expMmumu = root.RooExponential("bak_expMmumu","expMmumu",mMuMu,expParam)
 
-        errVar.setVal(val-err)
-        pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range(110,150),root.RooFit.LineStyle(3))
-        downHist = pdfMmumu.createHistogram(varName+"Down",mMuMu,mMuMuBinning)
+    mixParam = root.RooRealVar(channelName+"_mixParam","mixParam",0,1)
 
-        errVar.setVal(val)
-
-        upHist.Scale(normalization/getIntegralAll(upHist,[massLowRange[0],massHighRange[1]]))
-        downHist.Scale(normalization/getIntegralAll(downHist,[massLowRange[0],massHighRange[1]]))
-
-        setattr(self,varName+"UpHist",upHist)
-        setattr(self,varName+"DownHist",downHist)
-
-        self.errNames.append(varName)
-        self.errHists[varName+"Up"] = upHist
-        self.errHists[varName+"Down"] = downHist
-
-  def writeDebugHistsToCurrTDir(self,compareHist=None):
-    canvas = root.TCanvas("canvas")
-    canvas.cd()
-    #canvas.SetLogy(1)
-    self.plotMmumu.Draw()
-    canvas.SetName(self.name+"Canvas")
-    canvas.Write()
-
-class MassPDFBak:
-  def __init__(self,name,hist,massLowRange,massHighRange,massVeryLowRange,rooVars=None,smooth=False,hack=True):
-    if rooVars == None:
-        print("Error: MassPDFBak requires rooVars list of variables, exiting.")
-        sys.exit(1)
-    if len(massVeryLowRange)==0:
-        print("Error: MassPDFBak requires verylow mass range, exiting.")
-        sys.exit(1)
-
-    self.debug = ""
-    self.debug += "### MassPDFBak: "+name+"\n"
-
-    maxMass = massHighRange[1]
-    minMass = massVeryLowRange[0]
-    mMuMu = root.RooRealVar("mMuMu2","mMuMu",minMass,maxMass)
-    mMuMu.setRange("z",88,94)
-    mMuMu.setRange("verylow",massVeryLowRange[0],massVeryLowRange[1])
-    mMuMu.setRange("low",massLowRange[0],massLowRange[1])
-    mMuMu.setRange("high",massHighRange[0],massHighRange[1])
-    mMuMu.setRange("signal",massLowRange[1],massHighRange[0])
-
-    voitWidth = root.RooRealVar("voitWidth","voitWidth",2.4952)
-    voitmZ = root.RooRealVar("voitmZ","voitmZ",85,95)
-    voitSig = root.RooRealVar("voitSig","voitSig",0.0,30.0)
-    voitMmumu = root.RooVoigtian("voitMmumu","voitMmumu",mMuMu,voitmZ,voitWidth,voitSig)
-
-    expParam = root.RooRealVar("expParam","expParam",-1,0)
-    expMmumu = root.RooExponential("expMmumu","expMmumu",mMuMu,expParam)
-
-    mixParam = root.RooRealVar("mixParam","mixParam",0,1)
-
-    pdfMmumu = root.RooAddPdf("pdfMmumu","pdfMmumu",root.RooArgList(voitMmumu,expMmumu),root.RooArgList(mixParam))
+    pdfMmumu = root.RooAddPdf("bak","bak",root.RooArgList(voitMmumu,expMmumu),root.RooArgList(mixParam))
     
-    tmpAxis = hist.GetXaxis()
-    lowBin = tmpAxis.FindBin(minMass)
-    highBin = tmpAxis.FindBin(maxMass)
-    lowBin, highBin = getXbinsHighLow(hist,minMass,maxMass)
-    nBinsX = highBin - lowBin + 1
-    normalization = getIntegralAll(hist,[massLowRange[0],massHighRange[1]])
-    self.debug += "# bak Hist no bounds: {0:.3g}\n".format(hist.Integral())
-    self.debug += "# bak Hist bounds:    {0:.3g}\n".format(normalization)
-
-    mMuMuRooDataHist = root.RooDataHist(name+"DataHist",name+"DataHist",root.RooArgList(mMuMu),hist)
+    mMuMuRooDataHist = root.RooDataHist("bak_Template","bak_Template",root.RooArgList(mMuMu),hist)
+    hist.Print()
+    mMuMuRooDataHist.Print()
 
     voitMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("z"),root.RooFit.SumW2Error(False),PRINTLEVEL)
     voitmZ.setConstant(True)
@@ -268,210 +132,47 @@ class MassPDFBak:
     pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL)
     chi2 = pdfMmumu.createChi2(mMuMuRooDataHist)
 
-    plotMmumu = mMuMu.frame()
+    ## Error time
 
-    mMuMuRooDataHist.plotOn(plotMmumu)
-    pdfMmumu.plotOn(plotMmumu,root.RooFit.Range("low,high"))
-    pdfMmumu.plotOn(plotMmumu,root.RooFit.LineStyle(2),root.RooFit.Range(minMass,maxMass))
-    pdfMmumu.plotOn(plotMmumu,root.RooFit.Components("expMmumu"),root.RooFit.LineStyle(2),root.RooFit.Range(minMass,maxMass),root.RooFit.LineColor(root.kGreen+1))
+    rooParamList = [voitmZ,voitSig,expParam,mixParam]
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
 
-    mMuMuBinning = root.RooFit.Binning(nBinsX,minMass,maxMass)
-    nominalHist = pdfMmumu.createHistogram("pdf2dHist",mMuMu,mMuMuBinning)
-    nominalHist.Scale(normalization/getIntegralAll(nominalHist,[massLowRange[0],massHighRange[1]]))
+    workspaceImportFn(pdfMmumu)
+    workspaceImportFn(mMuMuRooDataHist)
 
-    self.name = name
-    self.hist = hist
-    self.mMuMuRooDataHist = mMuMuRooDataHist
-    self.lowBin = lowBin
-    self.highBin = highBin
-    self.nBinsX = nBinsX
-    self.voitWidth = voitWidth
-    self.voitmZ = voitmZ
-    self.voitSig = voitSig
-    self.voitMmumu = voitMmumu
-    self.expParam = expParam
-    self.expMmumu = expMmumu
-    self.mixParam = mixParam
-    self.pdfMmumu = pdfMmumu
-    self.mMuMuBinning = mMuMuBinning
-    self.nominalHist = nominalHist
-    self.maxMass = maxMass
-    self.minMass = minMass
-    self.mMuMu = mMuMu
-    self.plotMmumu = plotMmumu
-    self.chi2 = chi2
+    #mMuMuRooDataHist2 = mMuMuRooDataHist.reduce(root.RooFit.CutRange("low,signal,high"))
+    #mMuMuRooDataHist2.SetName("bak_TemplateNoVeryLow")
+    #workspaceImportFn(mMuMuRooDataHist2)
 
-    self.debug += "# nominal Integral: {0:.3g}\n".format(getIntegralAll(nominalHist))
-    self.debug += "# V Width: {0:.3g} +/- {1:.3g}\n".format(voitWidth.getVal(),voitWidth.getError())
-    self.debug += "# V Sigma: {0:.3g} +/- {1:.3g}\n".format(voitSig.getVal(),voitSig.getError())
-    self.debug += "# V mZ:    {0:.3g} +/- {1:.3g}\n".format(voitmZ.getVal(),voitmZ.getError())
-    self.debug += "# Exp Par: {0:.3g} +/- {1:.3g}\n".format(expParam.getVal(),expParam.getError())
-    self.debug += "# V Coef:  {0:.3g} +/- {1:.3g}\n".format(mixParam.getVal(),mixParam.getError())
-    self.debug += "# chi2/ndf: {0:.3g}\n".format(chi2.getVal()/(nBinsX-1))
+    return paramList
+
+def makePDFSig(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName):
+
+    debug = ""
+    debug += "### makePDFSig: "+channelName+": "+name+"\n"
+
+    mean = root.RooRealVar(channelName+"_"+name+"_Mean",channelName+"_"+name+"_Mean",125.,100.,150.)
+    width = root.RooRealVar(channelName+"_"+name+"_Width",channelName+"_"+name+"_Width",5.0,0.5,20.0)
+    pdfMmumu = root.RooGaussian(name,name,mMuMu,mean,width)
+    
+    mMuMuRooDataHist = root.RooDataHist(name+"_Template",channelName+"_"+name+"_Template",root.RooArgList(mMuMu),hist)
+
+    pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.SumW2Error(False),PRINTLEVEL)
 
     ## Error time
 
-    self.errNames = []
-    self.errHists = {}
-    if BAKUNCON:
-      for errVar in [voitmZ,voitSig,expParam,mixParam]:
-        val = errVar.getVal()
-        err = errVar.getError()
-        varName = errVar.GetName()
+    rooParamList = [mean,width]
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+    for i in rooParamList:
+       i.setConstant(True)
 
-        errVar.setVal(val+err)
-        pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range(110,150),root.RooFit.LineStyle(3))
-        upHist = pdfMmumu.createHistogram(varName+"Up",mMuMu,mMuMuBinning)
-
-        errVar.setVal(val-err)
-        pdfMmumu.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen-1),root.RooFit.Range(110,150),root.RooFit.LineStyle(3))
-        downHist = pdfMmumu.createHistogram(varName+"Down",mMuMu,mMuMuBinning)
-
-        errVar.setVal(val)
-
-        upHist.Scale(normalization/getIntegralAll(upHist,[massLowRange[0],massHighRange[1]]))
-        downHist.Scale(normalization/getIntegralAll(downHist,[massLowRange[0],massHighRange[1]]))
-
-        setattr(self,varName+"UpHist",upHist)
-        setattr(self,varName+"DownHist",downHist)
-
-        self.errNames.append(varName)
-        self.errHists[varName+"Up"] = upHist
-        self.errHists[varName+"Down"] = downHist
-
-  def writeDebugHistsToCurrTDir(self,compareHist=None):
-    canvas = root.TCanvas("canvas")
-    canvas.cd()
-    #canvas.SetLogy(1)
-    self.plotMmumu.Draw()
-    canvas.SetName(self.name+"Canvas")
-    canvas.Write()
-
-class MassPDFSig:
-  def __init__(self,name,names,histList,histMapErr,massRange,rooVars=None):
-    if rooVars == None:
-        print("Error: MassPDFSig requires rooVars list of variables, exiting.")
-        sys.exit(1)
-
-    self.debug = ""
-    self.debug += "### MassPDFSig: "+name+"\n"
-
-    maxMass = massRange[1]
-    minMass = massRange[0]
-    mMuMu = root.RooRealVar("mMuMu3","mMuMu",minMass,maxMass)
-
-    self.names = names
-    self.name = name
-    self.maxMass = maxMass
-    self.minMass = minMass
-    self.mMuMu = mMuMu
-
-    self.meanList = []
-    self.widthList = []
-    self.pdfList = []
-    self.histList = []
-    self.mMuMuRooDataHistList = []
-    self.nominalHistList = []
-    self.plotMmumuList = []
-    self.chi2List = []
-
-    self.meanMapErr = {}
-    self.widthMapErr = {}
-    self.pdfMapErr = {}
-    self.histMapErr = {}
-
-    for i,n in zip(range(len(names)),names):
-      hist = histList[i]
-      self.debug += "# "+n+":\n"
-      width = root.RooRealVar("width_"+n,"width_"+n,0.1,15.)
-      mean = root.RooRealVar("mean_"+n,"mean_"+n,100.,150.)
-
-      pdfMmumu = root.RooGaussian("pdfMmumu_"+n,"pdfMmumu_"+n,mMuMu,mean,width)
-
-      tmpAxis = hist.GetXaxis()
-      lowBin = tmpAxis.FindBin(minMass)
-      highBin = tmpAxis.FindBin(maxMass)
-      lowBin, highBin = getXbinsHighLow(hist,minMass,maxMass)
-      nBinsX = highBin - lowBin + 1
-      normalization = getIntegralAll(hist,[minMass,maxMass])
-      self.debug += "#   Int no bounds: {0:.3g}\n".format(hist.Integral())
-      self.debug += "#   Int bounds:    {0:.3g}\n".format(normalization)
-  
-      mMuMuRooDataHist = root.RooDataHist(name+"DataHist_"+n,name+"DataHist_"+n,root.RooArgList(mMuMu),hist)
-  
-      pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.SumW2Error(False),PRINTLEVEL)
-      chi2 = pdfMmumu.createChi2(mMuMuRooDataHist)
-
-      plotMmumu = mMuMu.frame()
-
-      mMuMuRooDataHist.plotOn(plotMmumu)
-      pdfMmumu.plotOn(plotMmumu)
-
-      mMuMuBinning = root.RooFit.Binning(nBinsX,minMass,maxMass)
-      nominalHist = pdfMmumu.createHistogram(name+"_"+n,mMuMu,mMuMuBinning)
-      nominalHist.Scale(normalization/getIntegralAll(nominalHist,[minMass,maxMass]))
-
-      self.meanList.append(mean)
-      self.widthList.append(mean)
-      self.pdfList.append(pdfMmumu)
-      self.histList.append(hist)
-      self.mMuMuRooDataHistList.append(mMuMuRooDataHist)
-      self.nominalHistList.append(nominalHist)
-      self.plotMmumuList.append(plotMmumu)
-      self.chi2List.append(chi2)
-
-      self.debug += "#   nominal Integral: {0:.3g}\n".format(getIntegralAll(nominalHist))
-      self.debug += "#   width: {0:.3g} +/- {1:.3g}\n".format(width.getVal(),width.getError())
-      self.debug += "#   mean: {0:.3g} +/- {1:.3g}\n".format(mean.getVal(),mean.getError())
-      self.debug += "#   chi2/ndf: {0:.3g}\n".format(chi2.getVal()/(nBinsX-1))
-
-      ## Error time
-      for key in histMapErr:
-        errHist = histMapErr[key][i]
-
-        widthE = root.RooRealVar("width_"+n+"_"+key,"width_"+n+"_"+key,0.1,15.)
-        meanE = root.RooRealVar("mean_"+n+"_"+key,"mean_"+n+"_"+key,100.,150.)
-        pdfMmumuE = root.RooGaussian("pdfMmumu_"+n+"_"+key,"pdfMmumu_"+n+"_"+key,mMuMu,meanE,widthE)
-
-        mMuMuRooDataHistE = root.RooDataHist(name+"DataHist_"+n+"_"+key,name+"DataHist_"+n+"_"+key,root.RooArgList(mMuMu),errHist)
-        pdfMmumuE.fitTo(mMuMuRooDataHistE,root.RooFit.SumW2Error(False),PRINTLEVEL)
-        chi2E = pdfMmumuE.createChi2(mMuMuRooDataHistE)
-
-        histE = pdfMmumuE.createHistogram(name+"_"+n+"_"+key,mMuMu,mMuMuBinning)
-        histE.Scale(normalization/getIntegralAll(histE,[minMass,maxMass]))
-
-        pdfMmumuE.plotOn(plotMmumu,root.RooFit.LineColor(root.kGreen+1),root.RooFit.LineStyle(2))
-
-        if self.meanMapErr.has_key(key):
-            self.meanMapErr[key].append(meanE)
-            self.widthMapErr[key].append(widthE)
-            self.pdfMapErr[key].append(pdfMmumuE)
-            self.histMapErr[key].append(histE)
-        else:
-            self.meanMapErr[key] = [meanE]
-            self.widthMapErr[key] = [widthE]
-            self.pdfMapErr[key] = [pdfMmumuE]
-            self.histMapErr[key] = [histE]
-
-        self.debug += "#   Error: {0}\n".format(key)
-        self.debug += "#     width: {0:.3g} +/- {1:.3g}\n".format(widthE.getVal(),widthE.getError())
-        self.debug += "#     mean: {0:.3g} +/- {1:.3g}\n".format(meanE.getVal(),meanE.getError())
-        self.debug += "#     chi2/ndf: {0:.3g}\n".format(chi2E.getVal()/(nBinsX-1))
-
-  def writeDebugHistsToCurrTDir(self,compareHist=None):
-    canvas = root.TCanvas("canvas")
-    canvas.cd()
-    #canvas.SetLogy(1)
-    for p,n in zip(self.plotMmumuList,self.names):
-      p.Draw()
-      canvas.SetName(n+"Canvas")
-      canvas.Write()
+    workspaceImportFn(pdfMmumu)
+    workspaceImportFn(mMuMuRooDataHist)
 
 ###################################################################################
 
 class Analysis:
-  def __init__(self,directory,signalNames,backgroundNames,dataNames,analysis,x,y,controlRegionLow,controlRegionHigh,histNameBase="mDiMu",bakShape=False,rebin=[],histNameSuffix="",controlRegionVeryLow=[]):
-    self.bakShape = bakShape
+  def __init__(self,directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,histNameBase="mDiMu",rebin=[],histNameSuffix="",toyData=False,sigInject=0.0):
     self.sigNames = signalNames
     self.bakNames = backgroundNames
     self.datNames = dataNames
@@ -479,13 +180,20 @@ class Analysis:
     self.controlRegionLow = controlRegionLow
     self.controlRegionHigh = controlRegionHigh
     self.analysis = analysis
+    self.params = []
 
-    self.is2D = False
-    if y != None:
-      self.is2D = True
-    self.x = x
-    self.y = y
-    self.x1d = None
+    self.workspace = root.RooWorkspace(analysis)
+    wImport = getattr(self.workspace,"import")
+
+    maxMass = controlRegionHigh[1]
+    minMass = controlRegionVeryLow[0]
+    mMuMu = root.RooRealVar("mMuMu","mMuMu",minMass,maxMass)
+    minMass = controlRegionLow[0]
+    mMuMu.setRange("z",88,94)
+    mMuMu.setRange("verylow",controlRegionVeryLow[0],controlRegionVeryLow[1])
+    mMuMu.setRange("low",controlRegionLow[0],controlRegionLow[1])
+    mMuMu.setRange("high",controlRegionHigh[0],controlRegionHigh[1])
+    mMuMu.setRange("signal",controlRegionLow[1],controlRegionHigh[0])
 
     self.sigFiles = []
     self.sigHistsRaw = []
@@ -494,28 +202,6 @@ class Analysis:
       tmpH = tmpF.Get(histNameBase+analysis+histNameSuffix)
       self.sigFiles.append(tmpF)
       self.sigHistsRaw.append(tmpH)
-      if tmpH.InheritsFrom("TH2"):
-        self.is2D = True
-
-    # Signal Shape systematics
-    self.sigErrHistsMap = {}
-    if SIGUNCON:
-      for f in self.sigFiles:
-        name = histNameBase+analysis+histNameSuffix
-        name = name.split("/")
-        tmpDirKey = f.GetKey(name[0]) #Will break in main dir
-        tmpDir = tmpDirKey.ReadObj()
-        tmpDir.Print()
-        for key in tmpDir.GetListOfKeys():
-          matchUp = re.match(name[1]+".+Up",key.GetName())
-          matchDown = re.match(name[1]+".+Down",key.GetName())
-          if matchUp or matchDown:
-            self.sigErrHistsMap[re.sub(name[1],"",key.GetName())] = []
-        break
-      for f in self.sigFiles:
-        for sysName in self.sigErrHistsMap:
-          tmpHist = f.Get(histNameBase+analysis+histNameSuffix+sysName)
-          self.sigErrHistsMap[sysName].append(tmpHist)
 
     self.bakFiles = []
     self.bakHistsRaw = []
@@ -538,26 +224,20 @@ class Analysis:
     if type(rb) != list:
       print("Error: Analysis.rebin: argument must be a list!!  Exiting.")
       sys.exit(1)
-    if len(rb) == 2 and self.is2D:
+    if len(rb) == 2 and False:
         for hist in self.sigHistsRaw:
           hist.Rebin2D(*rb)
         for hist in self.bakHistsRaw:
           hist.Rebin2D(*rb)
         for hist in self.datHists:
           hist.Rebin2D(*rb)
-        for err in self.sigErrHistsMap:
-          for hist in self.sigErrHistsMap[err]:
-            hist.Rebin2D(*rb)
-    elif len(rb) == 1 and not self.is2D:
+    elif len(rb) == 1 and True:
         for hist in self.sigHistsRaw:
           hist.Rebin(*rb)
         for hist in self.bakHistsRaw:
           hist.Rebin(*rb)
         for hist in self.datHists:
           hist.Rebin(*rb)
-        for err in self.sigErrHistsMap:
-          for hist in self.sigErrHistsMap[err]:
-            hist.Rebin(*rb)
     elif len(rb) == 0:
       pass
     else:
@@ -569,11 +249,10 @@ class Analysis:
     xsecMap = {}
     lowBin = 0
     highBin = self.sigHistsRaw[0].GetNbinsX()+1
-    massBounds = [controlRegionLow[0],controlRegionHigh[1]]
+    #massBounds = [controlRegionLow[0],controlRegionHigh[1]]
+    #massBounds = [controlRegionVeryLow[0],controlRegionHigh[1]]
+    massBounds = [controlRegionVeryLow[0],controlRegionHigh[1]]
     self.massBounds = massBounds
-
-    for hist in self.sigHistsRaw:
-      vetoOutOfBoundsEvents(hist,boundaries=massBounds)
 
     self.xsecBakTotal = 0.0
     self.xsecBakList = []
@@ -594,10 +273,8 @@ class Analysis:
       else:
         self.bakHistTotal.Add(h)
 
+    self.bakHistTotal.Scale(lumi)
     self.bakHistTotalReal = self.bakHistTotal.Clone("data_obs")
-
-    self.bakShape = bakShape
-    self.bakShapeMkr = None
 
     self.dataCountsTotal = None
     self.datHistTotal = None
@@ -612,18 +289,17 @@ class Analysis:
       else:
         self.datHistTotal.Add(h)
 
-    if SIGGAUS:
-      self.sigShapeMkr = MassPDFSig(analysis,signalNames,self.sigHistsRaw,
-                                self.sigErrHistsMap,
-                                [self.controlRegionLow[0],self.controlRegionHigh[1]],
-                                rooVars = [self.x,self.y]
-                                )
-      for i,name in zip(range(len(signalNames)),signalNames):
-        tmp = self.sigShapeMkr.nominalHistList[i]
-        tmp.Scale(xsec[name]/nEventsMap[name]*efficiencyMap[getPeriod(name)])
-        for err in self.sigErrHistsMap:
-          tmp = self.sigShapeMkr.histMapErr[err][i]
-          tmp.Scale(xsec[name]/nEventsMap[name]*efficiencyMap[getPeriod(name)])
+    histToUseForBak = self.datHistTotal
+    if histToUseForBak is None:
+        histToUseForBak = self.bakHistTotal
+
+    self.params.extend(makePDFBak(analysis,histToUseForBak,
+                                mMuMu, minMass,maxMass,wImport
+                                 )
+                       )
+
+    for name, hist in zip(signalNames,self.sigHistsRaw):
+        makePDFSig(name,hist,mMuMu,minMass,maxMass,wImport,analysis)
 
     self.xsecSigTotal = 0.0
     self.xsecSigList = []
@@ -636,18 +312,44 @@ class Analysis:
       self.xsecSigTotal += xs
       self.xsecSigList.append(xs)
       self.effSigList.append(eff)
-      h.Scale(xsec[name]/nEventsMap[name]*efficiencyMap[getPeriod(name)])
-      self.sigHists.append(h)
 
-    for err in self.sigErrHistsMap:
-      for h,name in zip(self.sigErrHistsMap[err],signalNames):
-        h.Scale(xsec[name]/nEventsMap[name]*efficiencyMap[getPeriod(name)])
-    self.sigErrNames = set()
-    for errLong in self.sigErrHistsMap:
-        errLong = re.sub(r"Up$","",errLong)
-        errLong = re.sub(r"Down$","",errLong)
-        if not errLong in self.sigErrNames:
-            self.sigErrNames.add(errLong)
+    self.countsSigTotal = self.xsecSigTotal*lumi
+    self.countsBakTotal = self.xsecBakTotal*lumi
+    self.countsSigList = [x*lumi for x in self.xsecSigList]
+    self.countsBakList = [x*lumi for x in self.xsecBakList]
+
+    if toyData:
+      bakPDF = self.workspace.pdf("bak")
+      sigPDFList = [self.workspace.pdf(i) for i in signalNames]
+      self.dataCountsTotal = int(self.countsBakTotal)
+      toyDataset = bakPDF.generate(root.RooArgSet(mMuMu),self.dataCountsTotal)
+      if sigInject>0.0:
+        for name,counts in zip(signalNames,self.countsSigList):
+          counts = int(sigInect*counts)
+          if counts < 1:
+            continue
+          tmpSigPDF = self.workspace.pdf(name)
+          tmpSigDataset = tmpSigPDF.generate(root.RooArgSet(mMuMu),counts)
+          toyDataset.append(tmpSigdataset)
+          self.dataCountsTotal += counts
+
+      toyDataHist = toyDataSet.binnedClone("data_obs","Toy Data")
+      wImport(toyDataHist)
+    elif self.dataCountsTotal is None:
+      self.dataCountsTotal = int(self.countsBakTotal)
+      bakData = self.workspace.data("bak_Template")
+      obsData = bakData.Clone("data_obs")
+      obsData.SetTitle("MC Full-Sim Data")
+      wImport(obsData)
+      self.bakHistTotal.SetName("data_obs_"+analysis)
+      degubf = root.TFile("debug.root","recreate")
+      self.bakHistTotal.Write()
+      degubf.Close()
+    else:
+      realDataHist = root.RooDataHist("data_obs","Real Observed Data",root.RooArgList(mMuMu),self.datHistTotal)
+      wImport(realDataHist)
+      #realDataHistNotVeryLow = realDataHist.reduce(root.RooFit.CutRange("low,signal,high"))
+      #wImport(realDataHistNotVeryLow)
 
   def getSigEff(self,name):
     result = -1.0
@@ -671,96 +373,43 @@ class Analysis:
         i = self.bakNames.index(bakName)
         result = self.xsecBakList[i]
     return result
-  def getSigHist(self,sigName):
+  def getDataTotal(self):
+    return self.dataCountsTotal
+  def getParamList(self):
+    return self.params
+  def getSigCounts(self,name):
     result = -1.0
-    if self.sigNames.count(sigName)>0:
-        i = self.sigNames.index(sigName)
-        if SIGGAUS:
-          result = self.sigShapeMkr.nominalHistList[i]
-        else:
-          result = self.sigHists[i]
+    if self.sigNames.count(name)>0:
+        i = self.sigNames.index(name)
+        result = self.countsSigList[i]
     return result
-  def getSigSystHist(self,sigName,systName):
-    result = -1.0
-    l = self.sigErrHistsMap[systName]
-    if SIGGAUS:
-      l = self.sigShapeMkr.histMapErr[systName]
-    if self.sigNames.count(sigName)>0:
-        i = self.sigNames.index(sigName)
-        result = l[i]
-    return result
-  def getBakHist(self,bakName):
+  def getBakCounts(self,bakName):
     result = -1.0
     if self.bakNames.count(bakName)>0:
         i = self.bakNames.index(bakName)
-        result = self.bakHists[i]
+        result = self.countsBakList[i]
     return result
-  def getBakHistTotal(self,lumi):
-    analysis = self.analysis
-    bakShape = self.bakShape
-    if self.datHistTotal == None:
-      self.bakHistTotal = self.bakHistTotalReal.Clone("stuff")
-      self.bakHistTotal.Scale(lumi)
-    else:
-      self.bakHistTotal = self.datHistTotal.Clone("stuff")
-    if bakShape and self.is2D:
-      bakShapeMkr = MVAvMassPDFBak("pdfHists_"+analysis,
-                                self.bakHistTotal,
-                                self.controlRegionLow,self.controlRegionHigh,
-                                rooVars = [self.x,self.y]
-                                )
-      self.bakShapeMkr = bakShapeMkr
-      self.bakHistTotal = bakShapeMkr.hackHist
-      #self.xsecBakTotal = getIntegralAll(self.bakHistTotal,boundaries=massBounds)
-    elif bakShape:
-      bakShapeMkr = MassPDFBak("pdfHists_"+analysis,
-                                self.bakHistTotal,
-                                self.controlRegionLow,self.controlRegionHigh,
-                                self.controlRegionVeryLow,
-                                rooVars = [self.x]
-                                )
-      self.bakShapeMkr = bakShapeMkr
-      self.bakHistTotal = bakShapeMkr.nominalHist
-      #self.xsecBakTotal = getIntegralAll(self.bakHistTotal,boundaries=self.massBounds)
-    return self.bakHistTotal
-  def dump(self):
-    print("##########################################")
-    print("SigXSecTotal: {0}".format(self.xsecSigTotal))
-    print("BakXSecTotal: {0}".format(self.xsecBakTotal))
-    print("signames: {0}".format(self.sigNames))
-    print("baknames: {0}".format(self.bakNames))
-    print("sighists: {0}".format(self.sigHists))
-    for i in self.sigHists:
-        i.Print()
-    print("bakhists: {0}".format(self.bakHists))
-    for i in self.bakHists:
-        i.Print()
-    print("bakHistTotal: {0}".format(self.bakHistTotal))
-    self.bakHistTotal.Print()
-    print("##########################################")
+  def getSigCountsTotal(self):
+    return self.countsSigTotal
+  def getBakCountsTotal(self):
+    return self.countsBakTotal
 
 ###################################################################################
 
 class DataCardMaker:
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,dataNames,nuisanceMap=None,histNameBase="",controlRegionLow=[80,115],controlRegionHigh=[135,150],controlRegionVeryLow=[],bakShape=False,rebin=[],histNameSuffix=""):
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,dataNames,outfilename,lumi,nuisanceMap=None,histNameBase="",controlRegionLow=[110.,115],controlRegionHigh=[135,150],controlRegionVeryLow=[80.,110.],rebin=[],histNameSuffix="",sigInject=0.0,toyData=False):
+
+    ########################
+    ## Setup
+
     channels = []
     self.channelNames = copy.deepcopy(analysisNames)
     self.is2D = False
 
-    x = None
-    y = None
-    for analysis in analysisNames:
-      tmpList = getRooVars(directory,signalNames,histNameBase,analysis+histNameSuffix)
-      x = tmpList[0]
-      if len(tmpList)==2:
-        self.is2D = True
-        y = tmpList[1]
-    self.x = x
-    self.y = y
-    self.shape = bakShape
+    lumi *= 1000.0
 
     for analysis in analysisNames:
-      tmp = Analysis(directory,signalNames,backgroundNames,dataNames,analysis,x,y,controlRegionLow,controlRegionHigh,controlRegionVeryLow=controlRegionVeryLow,histNameBase=histNameBase,bakShape=bakShape,rebin=rebin,histNameSuffix=histNameSuffix)
+      tmp = Analysis(directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,histNameBase=histNameBase,rebin=rebin,histNameSuffix=histNameSuffix,toyData=toyData,sigInject=sigInject)
       channels.append(tmp)
     self.channels = channels
 
@@ -768,6 +417,8 @@ class DataCardMaker:
       self.nuisance = {}
     else:
       self.nuisance = nuisanceMap
+    nuisance = self.nuisance
+
 
     self.largestChannelName = 0
     for name in self.channelNames:
@@ -790,208 +441,10 @@ class DataCardMaker:
       i = self.channelNames.index("")
       self.channelNames[i] = "Inc"
 
-  def write(self,outfilename,lumi,sigInject=0.0):
-    print("Writing Card: {0}".format(outfilename))
-    lumi *= 1000.0
-    nuisance = self.nuisance
-    outfile = open(outfilename,"w")
-    outfile.write("# Hmumu combine datacard produced by makeTables.py\n")
-    now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
-    outfile.write("# {0}\n".format(now))
-    outfile.write("############################### \n")
-    outfile.write("############################### \n")
-    outfile.write("imax {0}\n".format(len(self.channels)))
-    #outfile.write("jmax {0}\n".format(len(backgroundNames)))
-    outfile.write("jmax {0}\n".format("*"))
-    outfile.write("kmax {0}\n".format(len(nuisance)))
-    outfile.write("------------\n")
-    outfile.write("# Channels, observed N events:\n")
-    # Make Channels String
-    binFormatString = "bin           "
-    observationFormatString = "observation  "
-    binFormatList = self.channelNames
-    observationFormatList = []
-    iParam = 0
-    for channel,channelName in zip(self.channels,self.channelNames):
-      binFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-      binFormatList.append(channelName)
-      observationFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-      if channel.dataCountsTotal == None:
-        print("Writing Pretend Data Counts")
-        counts = channel.getBakXSecTotal()*lumi
-        if sigInject != 0.0:
-          counts += channel.getSigXSecTotal()*lumi*sigInject
-        observationFormatList.append(int(counts))
-      else:
-        print("Writing Real Data Counts")
-        observationFormatList.append(channel.dataCountsTotal)
-      iParam += 1
-    binFormatString+= "\n"
-    observationFormatString+= "\n"
-    outfile.write(binFormatString.format(*binFormatList))
-    outfile.write(observationFormatString.format(*observationFormatList))
-    outfile.write("------------\n")
-    outfile.write("# Expected N events:\n")
-
-    binFormatString = "bin           "
-    proc1FormatString = "process       "
-    proc2FormatString = "process       "
-    rateFormatString = "rate          "
-    binFormatList = []
-    proc1FormatList = []
-    proc2FormatList = []
-    rateFormatList = []
-    iParam = 0
-    for channel,channelName in zip(self.channels,self.channelNames):
-        iProc = -len(channel.sigNames)+1
-        for sigName in self.sigNames:
-          binFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-          binFormatList.append(channelName)
-  
-          proc1FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-          proc1FormatList.append(sigName)
-  
-          proc2FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-          proc2FormatList.append(iProc)
-  
-          expNum = channel.getSigXSec(sigName)*lumi
-          decimals = ".4f"
-          if expNum>1000.0:
-            decimals = ".4e"
-          rateFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+decimals+"} "
-          rateFormatList.append(expNum)
-  
-          iParam += 1
-          iProc += 1
-        for bakName in self.bakNames:
-          binFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-          binFormatList.append(channelName)
-  
-          proc1FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-          proc1FormatList.append(bakName)
-  
-          proc2FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-          proc2FormatList.append(iProc)
-  
-          expNum = channel.getBakXSec(bakName)*lumi
-          decimals = ".4f"
-          if expNum>1000.0:
-            decimals = ".4e"
-          rateFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+decimals+"} "
-          rateFormatList.append(expNum)
-  
-          iParam += 1
-          iProc += 1
-    binFormatString+= "\n"
-    proc1FormatString+= "\n"
-    proc2FormatString+= "\n"
-    rateFormatString+= "\n"
-    outfile.write(binFormatString.format(*binFormatList))
-    outfile.write(proc1FormatString.format(*proc1FormatList))
-    outfile.write(proc2FormatString.format(*proc2FormatList))
-    outfile.write(rateFormatString.format(*rateFormatList))
-    outfile.write("------------\n")
-    outfile.write("# Uncertainties:\n")
-
-    for nu in nuisance:
-      thisNu = nuisance[nu]
-      formatString = "{0:<8} {1:^4} "
-      formatList = [nu,"lnN"]
-      iParam = 2
-      for channel,channelName in zip(self.channels,self.channelNames):
-          for sigName in self.sigNames:
-            formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-            value = "-"
-            if thisNu.has_key(sigName):
-              value = thisNu[sigName]+1.0
-            formatList.append(value)
-            iParam += 1
-          for bakName in self.bakNames:
-            formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-            value = "-"
-            if thisNu.has_key(bakName):
-              value = thisNu[bakName]+1.0
-            formatList.append(value)
-            iParam += 1
-      formatString += "\n"
-      #print formatString
-      #print formatList
-      outfile.write(formatString.format(*formatList))
-
-    #Debugging
-    outfile.write("#################################\n")
-    for channel,channelName in zip(self.channels,self.channelNames):
-        outfile.write("#\n")
-        outfile.write("#info: channel {0}: \n".format(channelName))
-        for sigName in self.sigNames:
-          outfile.write("#  {0} XS, Eff: {1:.3g}, {2:.3%} \n".format(sigName,
-                        channel.getSigXSec(sigName), channel.getSigEff(sigName)))
-        outfile.write("#   Mass: {0} \n".format(channel.massBounds))
-    outfile.close()
-
-###################################################################################
-
-class ShapeDataCardMaker(DataCardMaker):
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,dataNames,nuisanceMap=None,histNameBase="",rebin=[],useTH1=False,controlRegionLow=[80,115],controlRegionHigh=[135,200],controlRegionVeryLow=[],bakShape=False,histNameSuffix="",toyData=False):
-    DataCardMaker.__init__(self,directory,analysisNames,signalNames,backgroundNames,dataNames,nuisanceMap,histNameBase,controlRegionLow,controlRegionHigh,controlRegionVeryLow=controlRegionVeryLow,bakShape=bakShape,rebin=rebin,histNameSuffix=histNameSuffix)
-
-    self.useTH1 = useTH1
     self.controlRegionHigh = controlRegionHigh
     self.controlRegionLow = controlRegionLow
     self.controlRegionVeryLow = controlRegionVeryLow
     self.toyData = toyData
-
-  def makeRFHistWrite(self,channel,hist,thisDir,isData=True,compareHist=None,writeBakShape=False):
-    thisDir.cd()
-    is2D = hist.InheritsFrom("TH2")
-    if self.useTH1 and not is2D:
-        hist.Write()
-        return
-    if not is2D:
-      hist = shrinkTH1(hist,self.controlRegionLow[0],self.controlRegionHigh[1])
-    x = channel.x
-    origHist = hist
-    if is2D:
-      hist = hist2to1(hist)
-      hist.SetName(re.sub("_1d","",hist.GetName()))
-      if channel.x1d == None:
-        channel.x1d = root.RooRealVar("x1d","x1d",0,hist.GetNbinsX()+2)
-      x = channel.x1d
-    rfHist = root.RooDataHist(hist.GetName(),hist.GetName(),root.RooArgList(root.RooArgSet(x)),hist)
-    rfHistPdf = root.RooHistPdf(hist.GetName(),hist.GetName(),root.RooArgSet(x),rfHist)
-    if isData:
-      rfHist.Write()
-    else:
-      rfHistPdf.Write()
-    debugDir = thisDir.FindObject('debug')
-    if  debugDir==None:
-      debugDir = thisDir.mkdir("debug")
-    debugDir.cd()
-    hist.Write()
-    if is2D:
-      xBinning = root.RooFit.Binning(origHist.GetNbinsX())
-      yBinning = root.RooFit.Binning(origHist.GetNbinsY())
-      x = channel.x
-      y = channel.y
-      rfHistTH2 = rfHist.createHistogram(origHist.GetName()+"rfHist2d",x,xBinning,root.RooFit.YVar(y,yBinning))
-      rfHistPdfTH2 = rfHistPdf.createHistogram(origHist.GetName()+"rfHistPdf2d",x,xBinning,root.RooFit.YVar(y,yBinning))
-      rfHistTH2.Write()
-      rfHistPdfTH2.Write()
-      hist.Write()
-      if channel.bakShape and compareHist != None:
-        channel.bakShapeMkr.writeDebugHistsToCurrTDir(compareHist)
-    else:
-      plot = x.frame()
-      rfHist.plotOn(plot)
-      rfHistPdf.plotOn(plot)
-      plot.SetName(hist.GetName())
-      plot.Write()
-      if channel.bakShape and writeBakShape:
-        channel.bakShapeMkr.writeDebugHistsToCurrTDir()
-
-  def write(self,outfilename,lumi,sumAllBak=True,sigInject=0.0):
-    lumi *= 1000.0
-    nuisance = self.nuisance
 
     ### ROOT Part
     ##########################################################
@@ -1001,109 +454,8 @@ class ShapeDataCardMaker(DataCardMaker):
 
     rootDebugString = ""
 
-    observedN = {}
-
-    for channel,channelName in zip(self.channels,self.channelNames):
-        tmpDir = outRootFile.mkdir(channelName)
-        tmpDir.cd()
-        sumAllMCHist = None
-        sumAllSigMCHist = None
-        sumAllBakMCHist = None
-        rootDebugString += "# channelName: {0}\n".format(channelName)
-        if SIGGAUS:
-          rootDebugString += channel.sigShapeMkr.debug
-        for sigName in self.sigNames:
-          tmpHist = channel.getSigHist(sigName).Clone(sigName)
-          tmpHist.Scale(lumi)
-          self.makeRFHistWrite(channel,tmpHist,tmpDir)
-          #rootDebugString += "#     {0}: {1}\n".format(sigName,getIntegralAll(tmpHist))
-          
-          if sumAllSigMCHist == None:
-            sumAllSigMCHist = tmpHist.Clone("sig")
-          else:
-            sumAllSigMCHist.Add(tmpHist)
-          if sigInject != 0.0:
-            tmpHist.Scale(sigInject)
-            if sumAllMCHist == None:
-              sumAllMCHist = tmpHist.Clone("data_obs")
-            else:
-              sumAllMCHist.Add(tmpHist)
-
-          # Signal Shape Systematics
-          for errHistKey in channel.sigErrHistsMap:
-             tmpHist = channel.getSigSystHist(sigName,errHistKey).Clone(sigName+"_"+errHistKey)
-             tmpHist.Scale(lumi)
-             self.makeRFHistWrite(channel,tmpHist,tmpDir)
-  
-        if sumAllBak:
-          #channel.dump()
-          sumAllBakMCHist = channel.getBakHistTotal(lumi).Clone("bak")
-          sumAllBakMCHist = shrinkTH1(sumAllBakMCHist,self.controlRegionLow[0],self.controlRegionHigh[1])
-          #channel.bakShapeMkr.dump()
-          if self.shape:
-            rootDebugString += channel.bakShapeMkr.debug
-            for nuName in channel.bakShapeMkr.errNames:
-                origUp = channel.bakShapeMkr.errHists[nuName+"Up"]
-                origDown = channel.bakShapeMkr.errHists[nuName+"Down"]
-                tmpUp = origUp.Clone("bak_"+nuName+"Up")
-                tmpDown = origDown.Clone("bak_"+nuName+"Down")
-                self.makeRFHistWrite(channel,tmpUp,tmpDir)
-                self.makeRFHistWrite(channel,tmpDown,tmpDir)
-
-          # for simulated data_obs:
-          sumAllBakMCHistReal = channel.bakHistTotalReal.Clone("sumAllBakMCHistReal")
-          sumAllBakMCHistReal.Scale(lumi)
-          sumAllBakMCHistReal = shrinkTH1(sumAllBakMCHistReal,self.controlRegionLow[0],self.controlRegionHigh[1])
-
-          if self.toyData:
-            if sumAllMCHist == None:
-              sumAllMCHist = sumAllBakMCHist
-            else:
-              sumAllMCHist.Add(sumAllBakMCHist)
-          else:
-            if sumAllMCHist == None:
-              sumAllMCHist = sumAllBakMCHistReal
-              sumAllMCHist.SetName("data_obs")
-            else:
-              sumAllMCHist.Add(sumAllBakMCHistReal)
-        else:
-          for bakName in self.bakNames:
-            tmpHist = channel.getBakHist(bakName).Clone(bakName)
-            tmpHist.Scale(lumi)
-            self.makeRFHistWrite(channel,tmpHist,tmpDir)
-            #rootDebugString += "#     {0}: {1}\n".format(bakName,getIntegralAll(tmpHist,boundaries=massBounds))
-            
-            if sumAllMCHist == None:
-                sumAllMCHist = tmpHist.Clone("data_obs")
-            else:
-                sumAllMCHist.Add(tmpHist)
-        massLimits = [self.controlRegionLow[0],self.controlRegionHigh[1]]
-        sumAllMCHist.Scale(int(getIntegralAll(sumAllMCHist,boundaries=massLimits))/getIntegralAll(sumAllMCHist,boundaries=massLimits)) # Make Integer
-        if channel.datHistTotal == None:
-          if self.toyData:
-            print("Writing Toy Data Histogram")
-            toy = sumAllMCHist.Clone("data_obs")
-            toyHistogram(toy)
-            observedN[channelName] = getIntegralAll(toy,boundaries=massLimits)
-            self.makeRFHistWrite(channel,toy,tmpDir) #Pretend Toy Data
-          else:
-            print("Writing Pretend Data Histogram")
-            observedN[channelName] = getIntegralAll(sumAllMCHist,boundaries=massLimits)
-            self.makeRFHistWrite(channel,sumAllMCHist,tmpDir) #Pretend Data
-        else:
-          print("Writing Real Data Histogram")
-          observedN[channelName] = getIntegralAll(channel.datHistTotal,boundaries=massLimits)
-          self.makeRFHistWrite(channel,channel.datHistTotal,tmpDir) #Real Data
-        self.makeRFHistWrite(channel,sumAllSigMCHist,tmpDir) #Pretend Signal
-        self.makeRFHistWrite(channel,sumAllBakMCHist,tmpDir,compareHist=sumAllSigMCHist,writeBakShape=True) #Background Sum
-        rootDebugString += "#######################\n"
-        rootDebugString += "#     {0}\n".format(channelName)
-        rootDebugString += "#     Pretend Obs: {0}\n".format(getIntegralAll(sumAllMCHist,boundaries=massLimits))
-        rootDebugString += "#     All Signal:  {0}\n".format(getIntegralAll(sumAllSigMCHist,boundaries=massLimits))
-        rootDebugString += "#     All Bak:     {0}\n".format(getIntegralAll(sumAllBakMCHist,boundaries=massLimits))
-        #rootDebugString += "#     Pretend Obs: {0}\n".format(getIntegralAll(sumAllMCHist))
-        #rootDebugString += "#     All Signal:  {0}\n".format(getIntegralAll(sumAllSigMCHist))
-        #rootDebugString += "#     All Bak:     {0}\n".format(getIntegralAll(sumAllBakMCHist))
+    for channel in self.channels:
+        channel.workspace.Write()
 
     outRootFile.Close()
 
@@ -1112,7 +464,7 @@ class ShapeDataCardMaker(DataCardMaker):
 
     print("Writing Card: {0} & {1}".format(outfilename,outRootFilename))
     outfile = open(outfilename,"w")
-    outfile.write("# Hmumu shape combine datacard produced by makeTables.py\n")
+    outfile.write("# Hmumu shape combine datacard produced by makeCards.py\n")
     now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
     outfile.write("# {0}\n".format(now))
     outfile.write("############################### \n")
@@ -1122,7 +474,7 @@ class ShapeDataCardMaker(DataCardMaker):
     outfile.write("jmax {0}\n".format("*"))
     outfile.write("kmax {0}\n".format("*"))
     outfile.write("------------\n")
-    outfile.write("shapes * * {0} $CHANNEL/$PROCESS $CHANNEL/$PROCESS_$SYSTEMATIC\n".format( os.path.basename(outRootFilename)))
+    outfile.write("shapes * * {0} $CHANNEL:$PROCESS\n".format( os.path.basename(outRootFilename)))
     outfile.write("------------\n")
     outfile.write("# Channels, observed N events:\n")
     # Make Channels String
@@ -1135,7 +487,7 @@ class ShapeDataCardMaker(DataCardMaker):
       binFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
       binFormatList.append(channelName)
       observationFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-      observedNumber = observedN[channelName]
+      observedNumber = channel.getDataTotal()
       observationFormatList.append(observedNumber)
       #print("text Observed {0}: {1}".format(channelName,observedNumber))
       iParam += 1
@@ -1156,6 +508,8 @@ class ShapeDataCardMaker(DataCardMaker):
     rateFormatList = []
     iParam = 0
     for channel,channelName in zip(self.channels,self.channelNames):
+        ## Signal Time
+
         iProc = -len(channel.sigNames)+1
         for sigName in self.sigNames:
           binFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
@@ -1167,7 +521,7 @@ class ShapeDataCardMaker(DataCardMaker):
           proc2FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
           proc2FormatList.append(iProc)
   
-          expNum = channel.getSigXSec(sigName)*lumi
+          expNum = channel.getSigCounts(sigName)
           decimals = ".4f"
           if expNum>1000.0:
             decimals = ".4e"
@@ -1177,46 +531,26 @@ class ShapeDataCardMaker(DataCardMaker):
           iParam += 1
           iProc += 1
 
-        if sumAllBak:
+        ## Background Time
 
-          binFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-          binFormatList.append(channelName)
-    
-          proc1FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-          proc1FormatList.append("bak")
-    
-          proc2FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-          proc2FormatList.append(iProc)
+        binFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+        binFormatList.append(channelName)
+  
+        proc1FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+        proc1FormatList.append("bak")
+  
+        proc2FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+        proc2FormatList.append(iProc)
 
-          expNum = channel.getBakXSecTotal()*lumi
-          decimals = ".4f"
-          if expNum>1000.0:
-            decimals = ".4e"
-          rateFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+decimals+"} "
-          rateFormatList.append(expNum)
-      
-          iParam += 1
-          iProc += 1
-        else:
-          for bakName in self.bakNames:
-            binFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-            binFormatList.append(channelName)
+        expNum = channel.getBakCountsTotal()
+        decimals = ".4f"
+        if expNum>1000.0:
+          decimals = ".4e"
+        rateFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+decimals+"} "
+        rateFormatList.append(expNum)
     
-            proc1FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-            proc1FormatList.append(bakName)
-    
-            proc2FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-            proc2FormatList.append(iProc)
-    
-            expNum = channel.getBakXSec(bakName)*lumi
-            decimals = ".4f"
-            if expNum>1000.0:
-              decimals = ".4e"
-            rateFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+decimals+"} "
-            rateFormatList.append(expNum)
-    
-            iParam += 1
-            iProc += 1
+        iParam += 1
+        iProc += 1
     binFormatString+= "\n"
     proc1FormatString+= "\n"
     proc2FormatString+= "\n"
@@ -1228,6 +562,7 @@ class ShapeDataCardMaker(DataCardMaker):
     outfile.write("------------\n")
     outfile.write("# Uncertainties:\n")
 
+    # lnN Uncertainties
     for nu in nuisance:
       thisNu = nuisance[nu]
       formatString = "{0:<8} {1:^4} "
@@ -1241,7 +576,7 @@ class ShapeDataCardMaker(DataCardMaker):
               value = thisNu[sigName]+1.0
             formatList.append(value)
             iParam += 1
-          if sumAllBak:
+          if True:
               bakName="bak"
               formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
               value = "-"
@@ -1262,109 +597,36 @@ class ShapeDataCardMaker(DataCardMaker):
       #print formatList
       outfile.write(formatString.format(*formatList))
 
-    # Sig Shape Uncertainties (All Correlated)
+    # Parameter Uncertainties
     for channel,channelName in zip(self.channels,self.channelNames):
-      for nuisanceName in channel.sigErrNames:
-        formatString = "{0:<8} {1:^4} "
-        formatList = [nuisanceName,"shape"]
-        iParam = 2
-        for channel2,channelName2 in zip(self.channels,self.channelNames):
-          for sigName in self.sigNames:
-            formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-            value = "1"
-            formatList.append(value)
-            iParam += 1
-          if sumAllBak:
-              bakName="bak"
-              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-              value = "-"
-              formatList.append(value)
-              iParam += 1
-          else:
-            for bakName in self.bakNames:
-              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-              value = "-"
-              formatList.append(value)
-              iParam += 1
+      for nu in channel.params:
+        nuisanceName = nu.name
+        formatString = "{0:<25} {1:<6} {2:<10.5g} {3:<10}"
+        formatList = [nuisanceName,"param",nu.nominal,nu.getErrString()]
         formatString += "\n"
         #print formatString
         #print formatList
         outfile.write(formatString.format(*formatList))
-      break
-
-    # Bak Shape Uncertainties (All Correlated)
-    for channel,channelName in zip(self.channels,self.channelNames):
-      for nuisanceName in channel.bakShapeMkr.errNames:
-        formatString = "{0:<8} {1:^4} "
-        formatList = [nuisanceName,"shape"]
-        iParam = 2
-        for channel2,channelName2 in zip(self.channels,self.channelNames):
-          for sigName in self.sigNames:
-            formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-            value = "-"
-            formatList.append(value)
-            iParam += 1
-          if sumAllBak:
-              bakName="bak"
-              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-              value = "1"
-              formatList.append(value)
-              iParam += 1
-          else:
-            for bakName in self.bakNames:
-              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-              value = "-"
-              formatList.append(value)
-              iParam += 1
-        formatString += "\n"
-        #print formatString
-        #print formatList
-        outfile.write(formatString.format(*formatList))
-      break
-
 
     #Debugging
     outfile.write("#################################\n")
     for channel,channelName in zip(self.channels,self.channelNames):
         outfile.write("#\n")
         outfile.write("#info: channel {0}: \n".format(channelName))
-        outfile.write("#  x var name: {0} \n".format(channel.x.GetName()))
-        outfile.write("#  x var range: [{0:.3g},{1:.3g}] \n".format(channel.x.getMin(),channel.x.getMax()))
-        if channel.is2D:
-          outfile.write("#  y var name: {0} \n".format(channel.y.GetName()))
-          outfile.write("#  y var range: [{0:.3g},{1:.3g}] \n".format(channel.y.getMin(),channel.y.getMax()))
     outfile.write(rootDebugString)
     outfile.close()
 
 class ThreadedCardMaker(myThread):
   def __init__(self,*args,**dictArgs):
     myThread.__init__(self)
-    self.writeArgs = (dictArgs["outfilename"],dictArgs["lumi"])
-    self.writeArgsDict = {}
-    if dictArgs.has_key("sumAllBak"):
-        self.writeArgsDict["sumAllBak"] = dictArgs["sumAllBak"]
-    if dictArgs.has_key("sigInject"):
-        self.writeArgsDict["sigInject"] = dictArgs["sigInject"]
-    self.shapeDataCardMaker = True
-    if dictArgs.has_key("shapeDataCardMaker"):
-        self.shapeDataCardMaker = dictArgs["shapeDataCardMaker"]
-        dictArgs.pop("shapeDataCardMaker",None)
     self.args = args
-    dictArgs.pop("sumAllBak",None)
-    dictArgs.pop("sigInject",None)
-    dictArgs.pop("outfilename",None)
-    dictArgs.pop("lumi",None)
     self.dictArgs = dictArgs
     self.started = False
   def run(self):
     #try:
       self.started = True
       dataCardMassShape = None
-      if self.shapeDataCardMaker:
-        dataCardMassShape = ShapeDataCardMaker(*(self.args),**(self.dictArgs))
-      else:
-        dataCardMassShape = DataCardMaker(*(self.args),**(self.dictArgs))
-      dataCardMassShape.write(*(self.writeArgs),**(self.writeArgsDict))
+      dataCardMassShape = DataCardMaker(*(self.args),**(self.dictArgs))
     #except Exception as e:
     #  print("Error: Exception: {0}".format(e))
     #  print("  Thread Arguments: {0}, {1}".format(self.args,self.dictArgs))
@@ -1382,56 +644,60 @@ if __name__ == "__main__":
   directory = "input/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
+  periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
+  analysesInc = ["IncPresel"]
+  analysesVBF = ["VBFPresel"]
   analyses = analysesInc + analysesVBF
+  analyses = ["IncPresel"]
   categoriesInc = ["BB","BO","BE","OO","OE","EE"]
   categoriesVBF = ["BB","NotBB"]
   tmpList = []
   for a in analysesInc:
     for c in categoriesInc:
         tmpList.append(a+c)
-  analyses += tmpList
+#  analyses += tmpList
   tmpList = []
   for a in analysesVBF:
     for c in categoriesVBF:
         tmpList.append(a+c)
-  analyses += tmpList
+#  analyses += tmpList
   combinations = []
   combinationsLong = []
-  combinations.append((
-        ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
-  ))
-  combinations.append((
-        ["VBFBDTCut"+x for x in categoriesVBF],"VBFBDTCutCat"
-  ))
-  combinations.append((
-        ["IncPresel"+x for x in categoriesInc],"IncPreselCat"
-  ))
-  combinations.append((
-        ["VBFPresel"+x for x in categoriesVBF],"VBFPreselCat"
-  ))
-  combinations.append((
-        ["IncBDTCut","VBFBDTCut"],"BDTCut"
-  ))
-  combinations.append((
-        ["IncPresel","VBFPresel"],"Presel"
-  ))
-  combinations.append((
-        ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
-  ))
-  combinations.append((
-        ["VBFBDTCut"+x for x in categoriesVBF]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
-  ))
-  #combinationsLong.append((
-  #      ["IncBDTCut","VBFBDTCut"],"BDTCut"
-  #))
-  combinationsLong.append((
-        ["VBFBDTCut"+x for x in categoriesVBF]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
-  ))
-  #combinationsLong.append((
-  #      ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
-  #))
+#  combinations.append((
+#        ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
+#  ))
+#  combinations.append((
+#        ["VBFBDTCut"+x for x in categoriesVBF],"VBFBDTCutCat"
+#  ))
+#  combinations.append((
+#        ["IncPresel"+x for x in categoriesInc],"IncPreselCat"
+#  ))
+#  combinations.append((
+#        ["VBFPresel"+x for x in categoriesVBF],"VBFPreselCat"
+#  ))
+#  combinations.append((
+#        ["IncBDTCut","VBFBDTCut"],"BDTCut"
+#  ))
+#  combinations.append((
+#        ["IncPresel","VBFPresel"],"Presel"
+#  ))
+#  combinations.append((
+#        ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
+#  ))
+#  combinations.append((
+#        ["VBFBDTCut"+x for x in categoriesVBF]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
+#  ))
+#  combinationsLong.append((
+#        ["IncBDTCut","VBFBDTCut"],"BDTCut"
+#  ))
+#  combinationsLong.append((
+#        ["VBFBDTCut"+x for x in categoriesVBF]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
+#  ))
+#  combinationsLong.append((
+#        ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
+#  ))
   histPostFix="/mDiMu"
   #analyses = ["mDiMu"]
   #histPostFix=""
@@ -1456,7 +722,7 @@ if __name__ == "__main__":
   #lumiListLong = lumiList
 
   MassRebin = 1 # 4 Bins per GeV originally
-  controlRegionVeryLow=[80,110]
+  controlRegionVeryLow=[60,110]
   controlRegionLow=[110,120]
   controlRegionHigh=[130,160]
 
@@ -1483,7 +749,7 @@ if __name__ == "__main__":
           #__init__ args:
           directory,[ana],
           appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
-          rebin=[MassRebin],bakShape=shape,
+          rebin=[MassRebin],
           controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
           controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
           #write args:
@@ -1497,28 +763,13 @@ if __name__ == "__main__":
           directory,
           comb[0],
           appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
-          rebin=[MassRebin], bakShape=shape,
+          rebin=[MassRebin],
           controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
           controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
           #write args:
           outfilename=outDir+comb[1]+"_"+p+"_"+str(i)+".txt",lumi=i
         )
        )
-#      ## Cut and Count!!!
-#      for ana in analyses:
-#        tmp = ThreadedCardMaker(
-#          #__init__ args:
-#          directory,[ana],
-#          appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
-#          rebin=[MassRebin],bakShape=shape,
-#          controlRegionLow=[123.0,125.0],controlRegionHigh=[125.0,127.0],histNameSuffix=histPostFix,
-#          controlRegionVeryLow=controlRegionVeryLow,nuisanceMap=nuisanceMap,
-#          #write args:
-#          outfilename=outDir+"CNC_"+ana+"_"+p+"_"+str(i)+".txt",lumi=i,
-#  
-#          shapeDataCardMaker=False
-#          )
-#        threads.append(tmp)
       if p == "7TeV":
         break
 
@@ -1531,7 +782,7 @@ if __name__ == "__main__":
           directory,
           comb[0],
           appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
-          rebin=[MassRebin], bakShape=shape,
+          rebin=[MassRebin],
           controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
           controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
           #write args:

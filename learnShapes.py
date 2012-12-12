@@ -111,7 +111,7 @@ class DataCardMaker:
     print("Writing Card: {0}".format(outfilename))
     rootfileName = re.sub(r"\.txt",".root",outfilename)
     outfile = open(outfilename,"w")
-    outfile.write("# Hmumu combine datacard produced by makeTables.py\n")
+    outfile.write("# Hmumu combine datacard produced by learnShapes.py\n")
     now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
     outfile.write("# {0}\n".format(now))
     outfile.write("############################### \n")
