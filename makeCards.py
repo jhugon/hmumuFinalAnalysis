@@ -325,15 +325,14 @@ class Analysis:
       toyDataset = bakPDF.generate(root.RooArgSet(mMuMu),self.dataCountsTotal)
       if sigInject>0.0:
         for name,counts in zip(signalNames,self.countsSigList):
-          counts = int(sigInect*counts)
+          counts = int(sigInject*counts)
           if counts < 1:
             continue
           tmpSigPDF = self.workspace.pdf(name)
           tmpSigDataset = tmpSigPDF.generate(root.RooArgSet(mMuMu),counts)
-          toyDataset.append(tmpSigdataset)
+          toyDataset.append(tmpSigDataset)
           self.dataCountsTotal += counts
-
-      toyDataHist = toyDataSet.binnedClone("data_obs","Toy Data")
+      toyDataHist = toyDataset.binnedClone("data_obs","Toy Data")
       wImport(toyDataHist)
     elif self.dataCountsTotal is None:
       self.dataCountsTotal = int(self.countsBakTotal)
