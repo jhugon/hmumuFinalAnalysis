@@ -48,11 +48,11 @@ class Analysis:
     mMuMu.setRange("signal",massLowRange[1],massHighRange[0])
 
     #Background PDF
-    bwLambda = root.RooRealVar("bwLambda","bwLambda",-1e-03,-1e-01,-1e-05)
+    bwLambda = root.RooRealVar(name+"_"+"bwLambda","bwLambda",-1e-03,-1e-01,-1e-05)
     expMmumu = root.RooExponential("expMmumu","expMmumu",mMuMu,bwLambda)
 
-    mean = root.RooRealVar("mean","mean",125.0,100.0,150.0)
-    width = root.RooRealVar("width","width",8.0,2.0,20.0)
+    mean = root.RooRealVar(name+"_"+"mean","mean",125.0,100.0,150.0)
+    width = root.RooRealVar(name+"_"+"width","width",8.0,2.0,20.0)
     gausMmumu = root.RooGaussian("gausMmumu","gausMmumu",mMuMu,mean,width)
 
     rooParamList.append(bwLambda)
@@ -104,8 +104,8 @@ class DataCardMaker:
     pass
 
   def write(self,outfilename,lumi,sigInject=0.0):
-    self.channels = [Analysis("yay",lumi,sigInject)]
-    self.channelNames = ["yay"]
+    self.channels = [Analysis("yay",lumi,sigInject),Analysis("me",lumi*10.0,sigInject)]
+    self.channelNames = ["yay","me"]
     self.largestChannelName = 10
 
     print("Writing Card: {0}".format(outfilename))
@@ -239,14 +239,12 @@ class DataCardMaker:
     for channel,channelName in zip(self.channels,self.channelNames):
       for nu in channel.paramList:
         nuisanceName = nu.name
-        formatString = "{0:<8} {1:^5} {2:^5.2g} {3:^5.3g}"
+        formatString = "{0:<15} {1:<6} {2:<10.5g} {3:<10.5g}"
         formatList = [nuisanceName,"param",nu.nominal,nu.highErr]
         formatString += "\n"
         #print formatString
         #print formatList
         outfile.write(formatString.format(*formatList))
-      break
-
 
     outfile.write("#################################\n")
     outfile.close()
