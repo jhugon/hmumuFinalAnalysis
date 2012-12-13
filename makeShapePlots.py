@@ -44,7 +44,7 @@ class ShapePlotter:
     self.titleMap = titleMap
     self.filename = filename
     self.textFileName = os.path.splitext(filename)[0]+".txt"
-    self.textData = getattr(self,"readCard")(self.textFileName)
+    self.processNameMap, self.params = getattr(self,"readCard")(self.textFileName)
     self.colors = [root.kRed-9, root.kGreen-9, root.kBlue-9, root.kMagenta-9, root.kCyan-9]
     self.fillStyles = [3004,3005,3003,3006,3007]
 
@@ -81,6 +81,7 @@ class ShapePlotter:
          frame = mMuMu.frame()
       frame.SetTitle("")
       data_obs.plotOn(frame)
+      bakPDFwErr = getattr(self,"makeVariedModel")(bakPDF,data_obs,frame)
       bakPDF.plotOn(frame,root.RooFit.Range(*xlimits))
       #bakPDF.plotOn(frame,root.RooFit.LineStyle(2),root.RooFit.Range(*xlimits))
       chi2 = bakPDF.createChi2(data_obs)
@@ -88,7 +89,7 @@ class ShapePlotter:
       saveAs(self.canvas,outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName)
 
       #Templates Time
-      for processName in self.textData[channelName]:
+      for processName in self.processNameMap[channelName]:
         template = channelWS.data(processName+"_Template")
         pdf = channelWS.pdf(processName)
         tmpXlims = xlimits
@@ -103,6 +104,7 @@ class ShapePlotter:
         frame.SetTitle("")
         template.plotOn(frame)
         pdf.plotOn(frame,root.RooFit.Range(*tmpXlims))
+        pdfwErr = getattr(self,"makeVariedModel")(pdf,template,frame)
         #if processName == "bak":
         #  bakPDF.plotOn(frame,root.RooFit.LineStyle(2),root.RooFit.Range(*xlimits))
         chi2 = pdf.createChi2(template)
@@ -114,6 +116,7 @@ class ShapePlotter:
     foundBin = False
     binList = []
     processList = []
+    paramMap = {}
     for line in f:
       if re.search("^bin",line):
         if foundBin:
@@ -124,6 +127,10 @@ class ShapePlotter:
       if re.search("^process[\s]+[a-zA-Z]+",line):
           m =  re.findall("[\s]+[\w]+",line)
           processList.extend([i for i in m])
+      paramMatch = re.search(r"([a-zA-Z0-9_]+)[\s]+param[\s]+([-.+eE0-9]+)[\s]+([-.+eE0-9]+)",line)
+      if paramMatch:
+        gs = paramMatch.groups()
+        paramMap[gs[0]] = [gs[1],gs[2]]
     binList = [x.replace(r" ","") for x in binList]
     processList = [x.replace(r" ","") for x in processList]
     result = {}
@@ -132,7 +139,7 @@ class ShapePlotter:
         result[i] = []
     for b,p in zip(binList,processList):
       result[b].append(p)
-    return result
+    return result, paramMap
 
   def getRatioGraph(self,frame):
     def findI(graph,x):
@@ -185,6 +192,68 @@ class ShapePlotter:
       ratioPlot.SetPoint(i,histX,ratio)
       ratioPlot.SetPointError(i,0.,0.,ratioErrUp,ratioErrDown)
     return ratioPlot
+
+  def makeVariedModel(self,pdf,data,frame):
+    pdfParams = pdf.getParameters(data)
+    itr = pdfParams.createIterator()
+    curveNomName = pdf.GetName()+"_CurveNom"
+    pdf.plotOn(frame,root.RooFit.Name(pdf.GetName()+"_CurveNom"))
+    curveNames = []
+    for iParam in range(pdfParams.getSize()):
+      param = itr.Next()
+      paramName = param.GetName()
+      if self.params.has_key(paramName):
+        nominal,err = self.params[paramName]
+        nominal = float(nominal)
+        err = float(err)
+        tmpName = pdf.GetName()+"_Curve{0}p".format(iParam)
+        param.setVal(nominal+err)
+        pdf.plotOn(frame,root.RooFit.Name(tmpName))
+        curveNames.append(tmpName)
+        tmpName = pdf.GetName()+"_Curve{0}m".format(iParam)
+        param.setVal(nominal-err)
+        pdf.plotOn(frame,root.RooFit.Name(tmpName))
+        curveNames.append(tmpName)
+    varUp = []
+    varDown = []
+    for curveName in curveNames:
+      curve = frame.findObject(curveName)
+      if curveName[len(curveName)-1]=='p':
+        varUp.append(curve)
+      else:
+        varDown.append(curve)
+    curveNom = frame.findObject(curveNomName)
+    result = root.TGraphAsymmErrors()
+    iPoint = 0
+    for i in range(curveNom.GetN()):
+      xNom = root.Double()
+      yNom = root.Double()
+      xErr = root.Double()
+      yErr = root.Double()
+      curveNom.GetPoint(i,xNom,yNom)
+      errUp = 0.0
+      errDown = 0.0
+      badPoint = False
+      for errCurve in varUp:
+        iErr = errCurve.findPoint(xNom,1.0)
+        if iErr < 0:
+          badPoint = True
+        errCurve.GetPoint(iErr,xErr,yErr)
+        errUp += (yErr-float(yNom))**2
+      for errCurve in varDown:
+        iErr = errCurve.findPoint(xNom,1.0)
+        if iErr < 0:
+          badPoint = True
+        errCurve.GetPoint(iErr,xErr,yErr)
+        errDown += (yErr-float(yNom))**2
+      if badPoint:
+        continue
+      errUp = sqrt(errUp)
+      errDown = sqrt(errDown)
+      result.SetPoint(iPoint,xNom,yNom)
+      result.SetPointError(iPoint,0.,0.,errUp,errDown)
+      iPoint+=1
+    return result
 
   def draw(self,frame,xlimits,channelName,maxVal=None):
       dataLabel = "MC Data"

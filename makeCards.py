@@ -129,7 +129,8 @@ def makePDFBak(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     expMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("high"),root.RooFit.SumW2Error(False),PRINTLEVEL)
     expParam.setConstant(True)
     
-    pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL)
+    fr = pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr.SetName("bak"+"_fitResult")
     chi2 = pdfMmumu.createChi2(mMuMuRooDataHist)
 
     ## Error time
@@ -139,6 +140,7 @@ def makePDFBak(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
 
     workspaceImportFn(pdfMmumu)
     workspaceImportFn(mMuMuRooDataHist)
+    workspaceImportFn(fr)
 
     #mMuMuRooDataHist2 = mMuMuRooDataHist.reduce(root.RooFit.CutRange("low,signal,high"))
     #mMuMuRooDataHist2.SetName("bak_TemplateNoVeryLow")
@@ -157,7 +159,8 @@ def makePDFSig(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName):
     
     mMuMuRooDataHist = root.RooDataHist(name+"_Template",channelName+"_"+name+"_Template",root.RooArgList(mMuMu),hist)
 
-    pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.SumW2Error(False),PRINTLEVEL)
+    fr = pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr.SetName(name+"_fitResult")
 
     ## Error time
 
@@ -168,6 +171,7 @@ def makePDFSig(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName):
 
     workspaceImportFn(pdfMmumu)
     workspaceImportFn(mMuMuRooDataHist)
+    workspaceImportFn(fr)
 
 ###################################################################################
 
