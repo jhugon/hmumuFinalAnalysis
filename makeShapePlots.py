@@ -115,28 +115,18 @@ class ShapePlotter:
       result[b].append(p)
     return result, paramMap
 
-  def getRatioGraph(self,frame):
+  def getRatioGraph(self,hist,curve):
     def findI(graph,x):
       xList = []
       X = root.Double()
       Y = root.Double()
       for i in range(graph.GetN()):
         graph.GetPoint(i,X,Y)
-        xList.append(float(X))
-      return min(range(len(xList)), key=lambda i: xList[i])
-    curve = None
-    hist = None
-    for i in range(2):
-        obj = frame.getObject(i)
-        if obj.InheritsFrom("RooCurve"):
-            curve = obj
-        elif obj.InheritsFrom("RooHist"):
-            hist = obj
-    assert(hist != None)
-    assert(curve != None)
-    #frame.Print()
-    #curve.Print()
-    #hist.Print()
+        xList.append(abs(float(X)-float(x)))
+      bestI = min(range(len(xList)), key=lambda i: xList[i])
+      if xList[bestI]>1.0:
+        return -1
+      return bestI
     ratioPlot = root.TGraphAsymmErrors()
     histX = root.Double()
     histY = root.Double()
@@ -144,8 +134,7 @@ class ShapePlotter:
     curveY = root.Double()
     for i in range(hist.GetN()):
       hist.GetPoint(i,histX,histY)
-      #curveI = findI(curve,histX)
-      curveI = curve.findPoint(histX,1.0)
+      curveI = findI(curve,histX)
       if curveI < 0:
         continue
       curve.GetPoint(curveI,curveX,curveY)
@@ -294,6 +283,24 @@ class ShapePlotter:
         outGraph.SetMarkerStyle(graph.GetMarkerStyle())
         outGraph.SetMarkerSize(graph.GetMarkerSize())
         self.modelLines.append(outGraph)
+      def makeRatioModelPlots(graph,outRatio,outOne):
+        for i in range(graph.GetN()):
+          x = root.Double()
+          y = root.Double()
+          graph.GetPoint(i,x,y)
+          outOne.SetPoint(i,x,1.0)
+          outRatio.SetPoint(i,x,1.0)
+          errUp = graph.GetErrorXhigh(i)
+          errDown = graph.GetErrorXlow(i)
+          outRatio.SetPointError(i,0.,0.,errDown/float(y),errUp/float(y))
+        outOne.SetLineColor(graph.GetLineColor())
+        outOne.SetLineStyle(graph.GetLineStyle())
+        outOne.SetLineWidth(graph.GetLineWidth())
+        outRatio.SetLineColor(graph.GetLineColor())
+        outRatio.SetLineStyle(graph.GetLineStyle())
+        outRatio.SetLineWidth(graph.GetLineWidth())
+        self.modelLines.append(outOne)
+        self.modelLines.append(outRatio)
 
       maxVal = getMaxYVal(self,data)
       maxVal = max(getMaxYVal(self,model),maxVal)
@@ -346,6 +353,11 @@ class ShapePlotter:
       # Pulls Pad
       pad2.cd()
 
+      ratioGraph = self.getRatioGraph(data,model)
+      self.pullsList.append(ratioGraph)
+      doRatio = True
+      if doRatio:
+        pulls =  ratioGraph
       pulls.SetLineStyle(1)
       pulls.SetLineColor(1)
       pulls.SetMarkerColor(1)
@@ -357,8 +369,9 @@ class ShapePlotter:
       pulls.GetYaxis().SetNdivisions(5)
       pulls.GetXaxis().SetTitleSize(0.055*pad1ToPad2FontScalingFactor)
       pulls.GetXaxis().SetLabelSize(0.050*pad1ToPad2FontScalingFactor)
-      #pulls.GetYaxis().SetTitle("#frac{"+dataLabel+"}{Fit}")
       pulls.GetYaxis().SetTitle("#frac{"+dataLabel+"-Fit}{#sigma_{"+dataLabel+"}}")
+      if doRatio:
+        pulls.GetYaxis().SetTitle("#frac{"+dataLabel+"}{Fit}")
       pulls.GetYaxis().SetTitleSize(0.045*pad1ToPad2FontScalingFactor)
       pulls.GetYaxis().SetLabelSize(0.045*pad1ToPad2FontScalingFactor)
       pulls.GetYaxis().CenterTitle(1)
@@ -368,6 +381,13 @@ class ShapePlotter:
       pulls.GetXaxis().SetLabelSize(gStyle.GetLabelSize("X")*canvasToPad2FontScalingFactor)
 
       pulls.Draw("ape")
+      if doRatio:
+        modelRatio = root.TGraphAsymmErrors()
+        modelOne = root.TGraphAsymmErrors()
+        makeRatioModelPlots(model,modelRatio,modelOne)
+        modelRatio.Draw("3")
+        modelOne.Draw("l")
+        pulls.Draw("pe")
 
       ## Pretty Stuff
   
