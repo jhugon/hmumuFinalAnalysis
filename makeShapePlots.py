@@ -41,8 +41,10 @@ class ShapePlotter:
     self.padList = []
     self.pullsList = []
     self.legList = []
+    self.modelLines = []
     self.titleMap = titleMap
     self.filename = filename
+    self.xlimits = xlimits
     self.textFileName = os.path.splitext(filename)[0]+".txt"
     self.processNameMap, self.params = getattr(self,"readCard")(self.textFileName)
     self.colors = [root.kRed-9, root.kGreen-9, root.kBlue-9, root.kMagenta-9, root.kCyan-9]
@@ -67,48 +69,20 @@ class ShapePlotter:
       channelName = channelKey.GetName()
       channelWS = channelKey.ReadObj()
       mMuMu = channelWS.var("mMuMu")
-      mMuMu.SetTitle("m_{#mu#mu} [GeV]")
       bakPDF = channelWS.pdf("bak")
       data_obs = channelWS.data("data_obs")
-      maxVal = None
 
       #Data Time
-      if len(xlimits) ==2:
-         frame = mMuMu.frame(root.RooFit.Range(*xlimits))
-         maxVal = findMaxInRange(data_obs,mMuMu.GetName(),xlimits[0],xlimits[1])
-         frame.SetMaximum(maxVal)
-      else:
-         frame = mMuMu.frame()
-      frame.SetTitle("")
-      data_obs.plotOn(frame)
-      bakPDFwErr = getattr(self,"makeVariedModel")(bakPDF,data_obs,frame)
-      bakPDF.plotOn(frame,root.RooFit.Range(*xlimits))
-      #bakPDF.plotOn(frame,root.RooFit.LineStyle(2),root.RooFit.Range(*xlimits))
-      chi2 = bakPDF.createChi2(data_obs)
-      getattr(self,"draw")(frame,xlimits,channelName,maxVal)
+      dataGraph, bakPDFGraph, pullsGraph,chi2 = getattr(self,"makeTGraphs")(bakPDF,data_obs,mMuMu)
+      getattr(self,"draw")(channelName,dataGraph,bakPDFGraph,pullsGraph,chi2)
       saveAs(self.canvas,outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName)
 
       #Templates Time
       for processName in self.processNameMap[channelName]:
         template = channelWS.data(processName+"_Template")
         pdf = channelWS.pdf(processName)
-        tmpXlims = xlimits
-        if "125" in processName:
-            tmpXlims = [110.,140.]
-        if len(tmpXlims) ==2:
-           frame = mMuMu.frame(root.RooFit.Range(*tmpXlims))
-           maxVal = findMaxInRange(template,mMuMu.GetName(),tmpXlims[0],tmpXlims[1])
-           frame.SetMaximum(maxVal)
-        else:
-           frame = mMuMu.frame()
-        frame.SetTitle("")
-        template.plotOn(frame)
-        pdf.plotOn(frame,root.RooFit.Range(*tmpXlims))
-        pdfwErr = getattr(self,"makeVariedModel")(pdf,template,frame)
-        #if processName == "bak":
-        #  bakPDF.plotOn(frame,root.RooFit.LineStyle(2),root.RooFit.Range(*xlimits))
-        chi2 = pdf.createChi2(template)
-        getattr(self,"draw")(frame,tmpXlims,channelName,maxVal)
+        dataGraph, pdfGraph, pullsGraph,chi2 = getattr(self,"makeTGraphs")(pdf,template,mMuMu)
+        getattr(self,"draw")(channelName,dataGraph,pdfGraph,pullsGraph,chi2)
         saveAs(self.canvas,outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName+"_"+processName)
 
   def readCard(self,fn):
@@ -193,11 +167,21 @@ class ShapePlotter:
       ratioPlot.SetPointError(i,0.,0.,ratioErrUp,ratioErrDown)
     return ratioPlot
 
-  def makeVariedModel(self,pdf,data,frame):
+  def makeTGraphs(self,pdf,data,observable):
+    frame = None
+    if len(self.xlimits) == 2:
+      frame = observable.frame(root.RooFit.Range(*self.xlimits))
+    else:
+      frame = observable.frame()
     pdfParams = pdf.getParameters(data)
     itr = pdfParams.createIterator()
     curveNomName = pdf.GetName()+"_CurveNom"
-    pdf.plotOn(frame,root.RooFit.Name(pdf.GetName()+"_CurveNom"))
+    curveDataName = data.GetName()+"_Curve"
+    rng = root.RooFit.Range(*self.xlimits)
+    data.plotOn(frame,root.RooFit.Name(curveDataName))
+    pdf.plotOn(frame,root.RooFit.Name(curveNomName),rng)
+    pulls = frame.pullHist(curveDataName,curveNomName)
+    chi2 = frame.chiSquare()
     curveNames = []
     for iParam in range(pdfParams.getSize()):
       param = itr.Next()
@@ -208,11 +192,11 @@ class ShapePlotter:
         err = float(err)
         tmpName = pdf.GetName()+"_Curve{0}p".format(iParam)
         param.setVal(nominal+err)
-        pdf.plotOn(frame,root.RooFit.Name(tmpName))
+        pdf.plotOn(frame,root.RooFit.Name(tmpName),rng)
         curveNames.append(tmpName)
         tmpName = pdf.GetName()+"_Curve{0}m".format(iParam)
         param.setVal(nominal-err)
-        pdf.plotOn(frame,root.RooFit.Name(tmpName))
+        pdf.plotOn(frame,root.RooFit.Name(tmpName),rng)
         curveNames.append(tmpName)
     varUp = []
     varDown = []
@@ -223,13 +207,16 @@ class ShapePlotter:
       else:
         varDown.append(curve)
     curveNom = frame.findObject(curveNomName)
-    result = root.TGraphAsymmErrors()
+    curveData = frame.findObject(curveDataName)
+    modelGraph = root.TGraphAsymmErrors()
+    dataGraph = root.TGraphAsymmErrors()
+    pullsGraph = root.TGraphAsymmErrors()
     iPoint = 0
+    xNom = root.Double()
+    yNom = root.Double()
+    xErr = root.Double()
+    yErr = root.Double()
     for i in range(curveNom.GetN()):
-      xNom = root.Double()
-      yNom = root.Double()
-      xErr = root.Double()
-      yErr = root.Double()
       curveNom.GetPoint(i,xNom,yNom)
       errUp = 0.0
       errDown = 0.0
@@ -250,20 +237,74 @@ class ShapePlotter:
         continue
       errUp = sqrt(errUp)
       errDown = sqrt(errDown)
-      result.SetPoint(iPoint,xNom,yNom)
-      result.SetPointError(iPoint,0.,0.,errUp,errDown)
+      modelGraph.SetPoint(iPoint,xNom,yNom)
+      modelGraph.SetPointError(iPoint,0.,0.,errUp,errDown)
       iPoint+=1
-    return result
+    iPoint = 0
+    for i in range(curveData.GetN()):
+      curveData.GetPoint(i,xNom,yNom)
+      if yNom <=0.0:
+        continue
+      dataGraph.SetPoint(iPoint,xNom,yNom)
+      errUp = curveData.GetErrorXhigh(i)
+      errDown = curveData.GetErrorXlow(i)
+      dataGraph.SetPointError(iPoint,0.,0.,errUp,errDown)
+      iPoint+=1
+    iPoint = 0
+    for i in range(pulls.GetN()):
+      pulls.GetPoint(i,xNom,yNom)
+      pullsGraph.SetPoint(iPoint,xNom,yNom)
+      errUp = pulls.GetErrorXhigh(i)
+      errDown = pulls.GetErrorXlow(i)
+      pullsGraph.SetPointError(iPoint,0.,0.,errUp,errDown)
+      iPoint+=1
+    dataGraph.SetName(curveData.GetName()+"_TGraph")
+    modelGraph.SetName(curveNom.GetName()+"_TGraph")
+    pullsGraph.SetName(curveData.GetName()+"_pullsTGraph")
+    dataGraph.SetMarkerColor(1)
+    modelGraph.SetLineColor(root.kBlue+1)
+    modelGraph.SetFillColor(root.kCyan)
+    modelGraph.SetFillStyle(1)
+    return dataGraph, modelGraph, pullsGraph, chi2
 
-  def draw(self,frame,xlimits,channelName,maxVal=None):
+  def draw(self,channelName,data,model,pulls,chi2):
+      def getMaxYVal(self,graph):
+        l = []
+        x = root.Double()
+        y = root.Double()
+        for i in range(graph.GetN()):
+          graph.GetPoint(i,x,y)
+          if len(self.xlimits)==2:
+            if x < self.xlimits[0]:
+                continue
+            if x > self.xlimits[1]:
+                continue
+          l.append(float(y))
+        return max(l)
+      def copyGraphNoErrs(graph,outGraph):
+        x = root.Double()
+        y = root.Double()
+        for i in range(graph.GetN()):
+          graph.GetPoint(i,x,y)
+          outGraph.SetPoint(i,x,y)
+        outGraph.SetLineColor(graph.GetLineColor())
+        outGraph.SetLineStyle(graph.GetLineStyle())
+        outGraph.SetLineWidth(graph.GetLineWidth())
+        outGraph.SetMarkerColor(graph.GetMarkerColor())
+        outGraph.SetMarkerStyle(graph.GetMarkerStyle())
+        outGraph.SetMarkerSize(graph.GetMarkerSize())
+        self.modelLines.append(outGraph)
+
+      maxVal = getMaxYVal(self,data)
+      maxVal = max(getMaxYVal(self,model),maxVal)
       dataLabel = "MC Data"
 
       #Setup Canvas
       self.canvas.cd()
       self.canvas.Clear()
       self.canvas.SetLogy(0)
-      pad1 = root.TPad("pad1"+frame.GetName(),"",0.02,0.30,0.98,0.98,0)
-      pad2 = root.TPad("pad2"+frame.GetName(),"",0.02,0.01,0.98,0.29,0)
+      pad1 = root.TPad("pad1"+data.GetName(),"",0.02,0.30,0.98,0.98,0)
+      pad2 = root.TPad("pad2"+data.GetName(),"",0.02,0.01,0.98,0.29,0)
     
       pad1.SetBottomMargin(0.005);
       pad2.SetTopMargin   (0.005);
@@ -283,34 +324,41 @@ class ShapePlotter:
     
       # Main Pad
       pad1.cd();
-      frame.Draw()
-      frame.GetYaxis().SetTitle("Events/Bin")
-      frame.GetYaxis().SetTitleSize(gStyle.GetTitleSize("Y")*canvasToPad1FontScalingFactor)
-      frame.GetYaxis().SetLabelSize(gStyle.GetLabelSize("Y")*canvasToPad1FontScalingFactor)
-      frame.GetYaxis().SetTitleOffset(0.9*gStyle.GetTitleOffset("Y"))
-      frame.GetXaxis().SetLabelOffset(0.70)
-      frame.Draw("")
+      data.Draw("ape")
+      data.GetYaxis().SetTitle("Events/Bin")
+      data.GetYaxis().SetTitleSize(gStyle.GetTitleSize("Y")*canvasToPad1FontScalingFactor)
+      data.GetYaxis().SetLabelSize(gStyle.GetLabelSize("Y")*canvasToPad1FontScalingFactor)
+      data.GetYaxis().SetTitleOffset(0.9*gStyle.GetTitleOffset("Y"))
+      data.GetXaxis().SetLabelOffset(0.70)
+      data.GetXaxis().SetTitle("m_{#mu#mu} [GeV]")
+      if len(self.xlimits) == 2:
+        data.GetXaxis().SetRangeUser(*self.xlimits)
       if maxVal != None:
-        frame.GetYaxis().SetRangeUser(0.0,maxVal*1.05)
+        data.GetYaxis().SetRangeUser(0.0,maxVal*1.05)
+      modelLine = root.TGraph()
+      copyGraphNoErrs(model,modelLine)
+      model.Draw("3")
+      modelLine.Draw("l")
+      data.Draw("pe")
       pad1.Update()
       pad1.RedrawAxis() # Updates Axis Lines
 
       # Pulls Pad
       pad2.cd()
 
-      pulls = getattr(self,"getRatioGraph")(frame)
-
       pulls.SetLineStyle(1)
       pulls.SetLineColor(1)
       pulls.SetMarkerColor(1)
       pulls.SetTitle("")
-      pulls.GetXaxis().SetRangeUser(*xlimits)
+      if len(self.xlimits) ==2:
+        pulls.GetXaxis().SetRangeUser(*self.xlimits)
       pulls.GetXaxis().SetTitle("m_{#mu#mu} [GeV]")
       pulls.GetXaxis().CenterTitle(1)
       pulls.GetYaxis().SetNdivisions(5)
       pulls.GetXaxis().SetTitleSize(0.055*pad1ToPad2FontScalingFactor)
       pulls.GetXaxis().SetLabelSize(0.050*pad1ToPad2FontScalingFactor)
-      pulls.GetYaxis().SetTitle("#frac{"+dataLabel+"}{Fit}")
+      #pulls.GetYaxis().SetTitle("#frac{"+dataLabel+"}{Fit}")
+      pulls.GetYaxis().SetTitle("#frac{"+dataLabel+"-Fit}{#sigma_{"+dataLabel+"}}")
       pulls.GetYaxis().SetTitleSize(0.045*pad1ToPad2FontScalingFactor)
       pulls.GetYaxis().SetLabelSize(0.045*pad1ToPad2FontScalingFactor)
       pulls.GetYaxis().CenterTitle(1)
@@ -323,10 +371,10 @@ class ShapePlotter:
 
       ## Pretty Stuff
   
-      normchi2 = frame.chiSquare()
+      normchi2 = chi2
       problatex = root.TLatex()
       problatex.SetNDC()
-      problatex.SetTextFont(frame.GetXaxis().GetLabelFont())
+      problatex.SetTextFont(data.GetXaxis().GetLabelFont())
       problatex.SetTextSize(pulls.GetYaxis().GetLabelSize())
       problatex.SetTextAlign(12)
       problatex.DrawLatex(0.18,0.41,"#chi^{{2}}/NDF: {0:.3g}".format(normchi2))
@@ -337,23 +385,12 @@ class ShapePlotter:
     
       pad1.cd()
 
-      curve = None
-      hist = None
-      for i in range(2):
-        obj = frame.getObject(i)
-        if obj.InheritsFrom("RooCurve"):
-            curve = obj
-        elif obj.InheritsFrom("RooHist"):
-            hist = obj
-      assert(hist != None)
-      assert(curve != None)
-
       legPos = [0.65,0.65,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
       leg = root.TLegend(*legPos)
       leg.SetFillColor(0)
       leg.SetLineColor(0)
-      leg.AddEntry(hist,dataLabel,"pe")
-      leg.AddEntry(curve,"Model","l")
+      leg.AddEntry(data,dataLabel,"pe")
+      leg.AddEntry(model,"Model","lf")
       #leg.AddEntry(combinedSigErrorGraph,"SM Higgs #times {0:.1f}".format(self.limit),"lf")
       leg.Draw()
 
