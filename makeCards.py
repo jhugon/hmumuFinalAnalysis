@@ -146,6 +146,15 @@ def makePDFBak(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     #mMuMuRooDataHist2.SetName("bak_TemplateNoVeryLow")
     #workspaceImportFn(mMuMuRooDataHist2)
 
+#    ## Debug Time
+#    frame = mMuMu.frame()
+#    frame.SetName("bak_Plot")
+#    mMuMuRooDataHist.plotOn(frame)
+#    pdfMmumu.plotOn(frame)
+#    canvas = root.TCanvas()
+#    frame.Draw()
+#    saveAs(canvas,"debug_bak")
+
     return paramList
 
 def makePDFSig(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName):
@@ -159,7 +168,7 @@ def makePDFSig(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName):
     
     mMuMuRooDataHist = root.RooDataHist(name+"_Template",channelName+"_"+name+"_Template",root.RooArgList(mMuMu),hist)
 
-    fr = pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr = pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True),root.RooFit.Range("signal"))
     fr.SetName(name+"_fitResult")
 
     ## Error time
@@ -172,6 +181,15 @@ def makePDFSig(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName):
     workspaceImportFn(pdfMmumu)
     workspaceImportFn(mMuMuRooDataHist)
     workspaceImportFn(fr)
+
+#    ## Debug Time
+#    frame = mMuMu.frame()
+#    frame.SetName(name+"_Plot")
+#    mMuMuRooDataHist.plotOn(frame)
+#    pdfMmumu.plotOn(frame)
+#    canvas = root.TCanvas()
+#    frame.Draw()
+#    saveAs(canvas,"debug_"+name)
 
 ###################################################################################
 
