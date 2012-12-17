@@ -671,7 +671,7 @@ if __name__ == "__main__":
   analysesInc = ["IncPresel"]
   analysesVBF = ["VBFPresel"]
   analyses = analysesInc + analysesVBF
-  analyses = ["IncPresel"]
+  analyses = []
   categoriesInc = ["BB","BO","BE","OO","OE","EE"]
   categoriesVBF = ["BB","NotBB"]
   tmpList = []
@@ -698,9 +698,9 @@ if __name__ == "__main__":
 #  combinations.append((
 #        ["VBFPresel"+x for x in categoriesVBF],"VBFPreselCat"
 #  ))
-#  combinations.append((
-#        ["IncBDTCut","VBFBDTCut"],"BDTCut"
-#  ))
+  combinations.append((
+        ["IncBDTCut","VBFBDTCut"],"BDTCut"
+  ))
 #  combinations.append((
 #        ["IncPresel","VBFPresel"],"Presel"
 #  ))
