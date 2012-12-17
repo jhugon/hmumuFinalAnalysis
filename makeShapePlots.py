@@ -36,6 +36,15 @@ def findMaxInRange(dataHist,xName,minX,maxX):
       result = y
   return result
 
+def getGraphIntegral(graph):
+  X = root.Double()
+  Y = root.Double()
+  result = 0.0
+  for i in range(graph.GetN()):
+    graph.GetPoint(i,X,Y)
+    result += float(Y)
+  return result
+
 class ShapePlotter:
   def __init__(self,filename,outDir,titleMap,rebin=1,doSignalScaling=True,xlimits=[]):
     self.padList = []
@@ -90,6 +99,7 @@ class ShapePlotter:
     foundBin = False
     binList = []
     processList = []
+    rateList = []
     paramMap = {}
     for line in f:
       if re.search("^bin",line):
@@ -101,6 +111,9 @@ class ShapePlotter:
       if re.search("^process[\s]+[a-zA-Z]+",line):
           m =  re.findall("[\s]+[\w]+",line)
           processList.extend([i for i in m])
+      if re.search("^rate[\s]+[-+eE.0-9]+",line):
+          m =  re.findall("[\s]+[-+eE.0-9]+",line)
+          rateList.extend([float(i) for i in m])
       paramMatch = re.search(r"([a-zA-Z0-9_]+)[\s]+param[\s]+([-.+eE0-9]+)[\s]+([-.+eE0-9]+)",line)
       if paramMatch:
         gs = paramMatch.groups()
@@ -110,9 +123,9 @@ class ShapePlotter:
     result = {}
     for i in binList:
       if not result.has_key(i):
-        result[i] = []
-    for b,p in zip(binList,processList):
-      result[b].append(p)
+        result[i] = {}
+    for b,p,r in zip(binList,processList,rateList):
+      result[b][p] = r
     return result, paramMap
 
   def getRatioGraph(self,hist,curve):
@@ -167,6 +180,8 @@ class ShapePlotter:
     curveNomName = pdf.GetName()+"_CurveNom"
     curveDataName = data.GetName()+"_Curve"
     rng = root.RooFit.Range(*self.xlimits)
+    if "Hmumu125" in data.GetName():
+      rng = root.RooFit.Range(110.,140.)
     data.plotOn(frame,root.RooFit.Name(curveDataName))
     pdf.plotOn(frame,root.RooFit.Name(curveNomName),rng)
     pulls = frame.pullHist(curveDataName,curveNomName)
@@ -257,16 +272,18 @@ class ShapePlotter:
     return dataGraph, modelGraph, pullsGraph, chi2
 
   def draw(self,channelName,data,model,pulls,chi2):
+      drawXLimits = self.xlimits
+      if "Hmumu125" in data.GetName():
+        drawXLimits = [110.,140.]
       def getMaxYVal(self,graph):
         l = []
         x = root.Double()
         y = root.Double()
         for i in range(graph.GetN()):
           graph.GetPoint(i,x,y)
-          if len(self.xlimits)==2:
-            if x < self.xlimits[0]:
+          if x < drawXLimits[0]:
                 continue
-            if x > self.xlimits[1]:
+          if x > drawXLimits[1]:
                 continue
           l.append(float(y))
         return max(l)
@@ -338,8 +355,7 @@ class ShapePlotter:
       data.GetYaxis().SetTitleOffset(0.9*gStyle.GetTitleOffset("Y"))
       data.GetXaxis().SetLabelOffset(0.70)
       data.GetXaxis().SetTitle("m_{#mu#mu} [GeV]")
-      if len(self.xlimits) == 2:
-        data.GetXaxis().SetRangeUser(*self.xlimits)
+      data.GetXaxis().SetRangeUser(*drawXLimits)
       if maxVal != None:
         data.GetYaxis().SetRangeUser(0.0,maxVal*1.05)
       modelLine = root.TGraph()
@@ -362,8 +378,7 @@ class ShapePlotter:
       pulls.SetLineColor(1)
       pulls.SetMarkerColor(1)
       pulls.SetTitle("")
-      if len(self.xlimits) ==2:
-        pulls.GetXaxis().SetRangeUser(*self.xlimits)
+      pulls.GetXaxis().SetRangeUser(*drawXLimits)
       pulls.GetXaxis().SetTitle("m_{#mu#mu} [GeV]")
       pulls.GetXaxis().CenterTitle(1)
       pulls.GetYaxis().SetNdivisions(5)
@@ -372,6 +387,7 @@ class ShapePlotter:
       pulls.GetYaxis().SetTitle("#frac{"+dataLabel+"-Fit}{#sigma_{"+dataLabel+"}}")
       if doRatio:
         pulls.GetYaxis().SetTitle("#frac{"+dataLabel+"}{Fit}")
+        pulls.GetYaxis().SetRangeUser(0,2)
       pulls.GetYaxis().SetTitleSize(0.045*pad1ToPad2FontScalingFactor)
       pulls.GetYaxis().SetLabelSize(0.045*pad1ToPad2FontScalingFactor)
       pulls.GetYaxis().CenterTitle(1)
