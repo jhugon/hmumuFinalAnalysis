@@ -505,5 +505,7 @@ if __name__ == "__main__":
 
   rebin=1
 
+  shapePlotterList = []
   for fn in glob.glob(dataDir+"*20.root")+glob.glob(dataDir+"*5.05.root"):
     s = ShapePlotter(fn,outDir,titleMap,rebin,xlimits=plotRange)
+    shapePlotterList.append(s)
