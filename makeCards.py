@@ -164,6 +164,42 @@ def makePDFSig(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName):
 
     mean = root.RooRealVar(channelName+"_"+name+"_Mean",channelName+"_"+name+"_Mean",125.,100.,150.)
     width = root.RooRealVar(channelName+"_"+name+"_Width",channelName+"_"+name+"_Width",5.0,0.5,20.0)
+    alpha = root.RooRealVar(channelName+"_"+name+"_Alpha",channelName+"_"+name+"_Alpha",1.0,0.1,10.0)
+    n = root.RooRealVar(channelName+"_"+name+"_n",channelName+"_"+name+"_n",1.0,0.1,10.0)
+    pdfMmumu = root.RooCBShape(name,name,mMuMu,mean,width,alpha,n)
+    
+    mMuMuRooDataHist = root.RooDataHist(name+"_Template",channelName+"_"+name+"_Template",root.RooArgList(mMuMu),hist)
+
+    fr = pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True),root.RooFit.Range("signal"))
+    fr.SetName(name+"_fitResult")
+
+    ## Error time
+
+    rooParamList = [mean,width,alpha,n]
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+    for i in rooParamList:
+       i.setConstant(True)
+
+    workspaceImportFn(pdfMmumu)
+    workspaceImportFn(mMuMuRooDataHist)
+    workspaceImportFn(fr)
+
+#    ## Debug Time
+#    frame = mMuMu.frame()
+#    frame.SetName(name+"_Plot")
+#    mMuMuRooDataHist.plotOn(frame)
+#    pdfMmumu.plotOn(frame)
+#    canvas = root.TCanvas()
+#    frame.Draw()
+#    saveAs(canvas,"debug_"+name)
+
+def makePDFSigGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName):
+
+    debug = ""
+    debug += "### makePDFSig: "+channelName+": "+name+"\n"
+
+    mean = root.RooRealVar(channelName+"_"+name+"_Mean",channelName+"_"+name+"_Mean",125.,100.,150.)
+    width = root.RooRealVar(channelName+"_"+name+"_Width",channelName+"_"+name+"_Width",5.0,0.5,20.0)
     pdfMmumu = root.RooGaussian(name,name,mMuMu,mean,width)
     
     mMuMuRooDataHist = root.RooDataHist(name+"_Template",channelName+"_"+name+"_Template",root.RooArgList(mMuMu),hist)

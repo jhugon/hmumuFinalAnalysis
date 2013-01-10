@@ -110,6 +110,45 @@ class ResCompare:
       leg.Draw()
       saveAs(self.canvas,saveNameBase+i)
 
+  def printVars(self,saveNameBase,tex=False,varNames=["Mean","Width","Alpha","n"]):
+    for i in self.categories:
+      output = " "*10
+      if tex:
+        output += r" & "
+      for v in varNames:
+        output += "{0:<10}".format(v)
+        if tex:
+          output += " & "
+      if tex:
+        output = output[:len(output)-3]
+        output += r" \\ \hline \hline"
+      output += "\n"
+      for j in range(self.nFiles):
+        output += "{0:<10}".format(self.titles[j])
+        if tex:
+          output += r" & "
+        for v in varNames:
+          tmpVar = self.workspace.var(i+"_"+i+str(j)+"_"+v)
+          val = tmpVar.getVal()
+          output += "{0:<10.2f}".format(val)
+          if tex:
+            output += " & "
+        if tex:
+          output = output[:len(output)-3]
+          output += r" \\ \hline"
+        output += "\n"
+      if tex:
+        columnFormat = "|l|" + "c|"*len(varNames)
+        output = r"\begin{tabular}{"+columnFormat+"} \hline \n" + output + r"\end{tabular}"+"\n"
+      if saveNameBase != None:
+        f = open(saveNameBase+i+".tex")
+        f.write(output)
+        f.close()
+      else:
+        print(i)
+        print("")
+        print(output)
+
 if __name__ == "__main__":
 
   categories = ["IncPresel","VBFPresel","IncBDTCut","VBFBDTCut"]
@@ -133,3 +172,4 @@ if __name__ == "__main__":
   rs = ResCompare(infiles,titles,categories)
   rs.plotData("resData")
   rs.plotPDF("resShape")
+  rs.printVars(None)
