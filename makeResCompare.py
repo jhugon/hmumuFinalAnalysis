@@ -150,7 +150,7 @@ class ResCompare:
         tlatex.SetTextFont(root.gStyle.GetLabelFont())
         tlatex.SetTextSize(0.05)
         tlatex.SetTextAlign(22)
-        tlatex.DrawLatex(0.75,0.85,"#chi^2/NDF = {0:.2f}".format(chi2ondf))
+        tlatex.DrawLatex(0.75,0.85,"#chi^{2}/NDF = {0:.2f}".format(chi2ondf))
 
         tlatex.DrawLatex(0.33,0.96,"CMS Internal")
         
