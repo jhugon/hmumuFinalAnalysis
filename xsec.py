@@ -191,10 +191,10 @@ nuisanceMap["lumi"] = {
   "wHmumu125_8TeV":0.044,
   "zHmumu125_8TeV":0.044,
 
-  "vbfHmumu125_7TeV":0.044,
-  "ggHmumu125_7TeV":0.044,
-  "wHmumu125_7TeV":0.044,
-  "zHmumu125_7TeV":0.044,
+  "vbfHmumu125_7TeV":0.022,
+  "ggHmumu125_7TeV":0.022,
+  "wHmumu125_7TeV":0.022,
+  "zHmumu125_7TeV":0.022,
 
   "vbfHmumu125_14TeV":0.044,
   "ggHmumu125_14TeV":0.044,
