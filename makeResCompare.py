@@ -13,12 +13,23 @@ root.gStyle.SetOptStat(0)
 #from ROOT import gSystem
 #gSystem.Load('libRooFit')
 
-from makeCards import makePDFSig
+from makeCards import makePDFSig, SIGNALFIT
 
 root.gErrorIgnoreLevel = root.kWarning
 #root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.WARNING)
 root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.ERROR)
 PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
+
+#urLegendPos = [0.70,0.67,0.9,0.9]
+urLegendPos = [0.65,0.67,0.9,0.9]
+
+minMass = 110.
+maxMass = 160.
+vminMass = 60.
+vmaxMass = 160.
+signalRange = [120.,130.]
+plotRange = [105.,145.]
+rooPlotRange = root.RooFit.Range(*plotRange)
 
 class ResCompare:
   def __init__(self,fileNames,titles,categories):
@@ -45,17 +56,20 @@ class ResCompare:
         tmpHist = tmpFile.Get(strToGet)
         self.histsCatDict[i].append(tmpHist)
     
-    minMass = 110
-    maxMass = 140
-
     self.workspace = root.RooWorkspace("w")
     wImport = getattr(self.workspace,"import")
-    mMuMu = root.RooRealVar("mMuMu","m_{#mu#mu} [GeV]",minMass,maxMass)
+    mMuMu = root.RooRealVar("mMuMu","m_{#mu#mu} [GeV]",vminMass,vmaxMass)
+    mMuMu.setRange("signal",signalRange[0],signalRange[1])
+    mMuMu.setRange("signalfit",SIGNALFIT[0],SIGNALFIT[1])
+    mMuMu.setRange("all",minMass,maxMass)
+    mMuMu.setRange("vall",vminMass,vmaxMass)
+    mMuMu.setRange("draw",plotRange[0],plotRange[1])
     wImport(mMuMu)
     self.mMuMu = mMuMu
     for i in categories:
      for j in range(self.nFiles):
-       makePDFSig(i+str(j),self.histsCatDict[i][j],mMuMu,minMass,maxMass,wImport,i)
+       tmpParamList, tmpDebug = makePDFSig(i+str(j),self.histsCatDict[i][j],mMuMu,minMass,maxMass,wImport,i)
+       #print tmpDebug
 
     #self.workspace.Print()
 
@@ -65,10 +79,9 @@ class ResCompare:
     datasets = []
     for i in self.categories:
       self.canvas.Clear()
-      frame = self.mMuMu.frame()
+      frame = self.mMuMu.frame(rooPlotRange)
       frame.SetTitle("")
       frame.SetYTitle("Signal MC Events")
-      urLegendPos = [0.70,0.67,0.9,0.9]
       leg = root.TLegend(*urLegendPos)
       leg.SetFillColor(0)
       leg.SetLineColor(0)
@@ -96,10 +109,9 @@ class ResCompare:
     curves = []
     for i in self.categories:
       self.canvas.Clear()
-      frame = self.mMuMu.frame()
+      frame = self.mMuMu.frame(rooPlotRange)
       frame.SetTitle("")
       frame.SetYTitle("Signal MC Events")
-      urLegendPos = [0.70,0.67,0.9,0.9]
       leg = root.TLegend(*urLegendPos)
       leg.SetFillColor(0)
       leg.SetLineColor(0)
@@ -108,7 +120,8 @@ class ResCompare:
         rooLCol = root.RooFit.LineColor(self.colors[j])
         rooNameStr = "Curve_"+i+str(j)
         rooName = root.RooFit.Name(rooNameStr)
-        tmpCurve.plotOn(frame,rooLCol,rooName)
+        rooRange = root.RooFit.Range("all")
+        tmpCurve.plotOn(frame,rooLCol,rooName,rooRange)
         tmpCurveH = frame.getCurve(rooNameStr)
         leg.AddEntry(tmpCurveH,self.titles[j],"l")
         curves.append(tmpCurve)
@@ -128,7 +141,7 @@ class ResCompare:
     for i in self.categories:
       for j in range(self.nFiles):
         self.canvas.Clear()
-        frame = self.mMuMu.frame()
+        frame = self.mMuMu.frame(rooPlotRange)
         frame.SetTitle("")
         frame.SetYTitle("Signal MC Events")
         tmpDataset = self.workspace.data(i+str(j)+"_Template")
@@ -150,7 +163,7 @@ class ResCompare:
         tlatex.SetTextFont(root.gStyle.GetLabelFont())
         tlatex.SetTextSize(0.05)
         tlatex.SetTextAlign(22)
-        tlatex.DrawLatex(0.75,0.85,"#chi^{2}/NDF = {0:.2f}".format(chi2ondf))
+        tlatex.DrawLatex(0.75,0.85,"#chi^{{2}}/NDF = {0:.2f}".format(chi2ondf))
 
         tlatex.DrawLatex(0.33,0.96,"CMS Internal")
         
@@ -159,7 +172,7 @@ class ResCompare:
   def printVars(self,saveNameBase,tex=False,varNames=["Mean","Width","Alpha","n"]):
     doNum = True
     for i in self.categories:
-      output = " "*10
+      output = " "*14
       if tex:
         output += r" & "
       for v in varNames:
@@ -178,7 +191,7 @@ class ResCompare:
         output += r" \\ \hline \hline"
       output += "\n"
       for j in range(self.nFiles):
-        output += "{0:<10}".format(self.titles[j])
+        output += "{0:<14}".format(self.titles[j])
         if tex:
           output += r" & "
         for v in varNames:
@@ -245,16 +258,23 @@ class ResCompare:
 if __name__ == "__main__":
 
   #categories = ["IncPresel","VBFPresel","IncBDTCut","VBFBDTCut"]
-  categories = ["IncPresel","VBFPresel"]
+  #categories = ["IncPresel","VBFPresel"]
+  categories = ["IncPresel"]
 
   infiles = []
   titles = []
-  infiles.append("input/ggHmumu125_8TeV.root")
+  #infiles.append("input/ggHmumu125_8TeV.root")
   infiles.append("input/smearing/ggHmumu125_8TeV.root")
   infiles.append("input/rochester/ggHmumu125_8TeV.root")
   infiles.append("input/muscle/ggHmumu125_8TeV.root")
-  titles.append("Default")
-  titles.append("Smearing")
+
+  #infiles.append("input/vbfHmumu125_8TeV.root")
+  #infiles.append("input/smearing/vbfHmumu125_8TeV.root")
+  #infiles.append("input/rochester/vbfHmumu125_8TeV.root")
+  #infiles.append("input/muscle/vbfHmumu125_8TeV.root")
+
+  #titles.append("CMS FullSim")
+  titles.append("Uncorrected")
   titles.append("Rochester")
   titles.append("MuScle")
 
@@ -266,5 +286,6 @@ if __name__ == "__main__":
   rs = ResCompare(infiles,titles,categories)
   rs.plotData("resData")
   rs.plotPDF("resShape")
-  rs.printVars("resTable",True)
+  #rs.printVars(None,False,varNames=["Mean","Width"]) #to just print
+  rs.printVars("resTable",True,varNames=["Mean","Width","Width2","Alpha","n","mix"])
   rs.plotDataPDF("resData")

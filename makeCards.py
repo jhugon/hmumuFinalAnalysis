@@ -30,9 +30,10 @@ NPROCS = 1
 BAKUNC = 0.1
 
 BAKUNCON = True
-SIGUNCON = False
 
 SIGGAUS = True
+
+SIGNALFIT = [110.,140.]
 
 from xsec import *
 
@@ -119,8 +120,6 @@ def makePDFBak(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     pdfMmumu = root.RooAddPdf("bak","bak",root.RooArgList(voitMmumu,expMmumu),root.RooArgList(mixParam))
     
     mMuMuRooDataHist = root.RooDataHist("bak_Template","bak_Template",root.RooArgList(mMuMu),hist)
-    hist.Print()
-    mMuMuRooDataHist.Print()
 
     voitMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("z"),root.RooFit.SumW2Error(False),PRINTLEVEL)
     voitmZ.setConstant(True)
@@ -157,26 +156,37 @@ def makePDFBak(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
 
     return paramList
 
-def makePDFSig(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName):
+def makePDFSigCBPlusGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName):
 
     debug = ""
-    debug += "### makePDFSig: "+channelName+": "+name+"\n"
+    debug += "### makePDFSigCBPlusGaus: "+channelName+": "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
 
     mean = root.RooRealVar(channelName+"_"+name+"_Mean",channelName+"_"+name+"_Mean",125.,100.,150.)
     width = root.RooRealVar(channelName+"_"+name+"_Width",channelName+"_"+name+"_Width",5.0,0.5,20.0)
+    width2 = root.RooRealVar(channelName+"_"+name+"_Width2",channelName+"_"+name+"_Width2",5.0,0.1,20.0)
     alpha = root.RooRealVar(channelName+"_"+name+"_Alpha",channelName+"_"+name+"_Alpha",1.0,0.1,10.0)
     n = root.RooRealVar(channelName+"_"+name+"_n",channelName+"_"+name+"_n",1.0,0.1,10.0)
-    pdfMmumu = root.RooCBShape(name,name,mMuMu,mean,width,alpha,n)
+    mix = root.RooRealVar(channelName+"_"+name+"_mix",channelName+"_"+name+"_mix",0.5,0.0,1.0)
+    cb = root.RooCBShape(name+"_CB",name+"_CB",mMuMu,mean,width,alpha,n)
+    gaus = root.RooGaussian(name+"_Gaus",name+"_Gaus",mMuMu,mean,width2)
+    pdfMmumu = root.RooAddPdf(name,name,cb,gaus,mix)
     
     mMuMuRooDataHist = root.RooDataHist(name+"_Template",channelName+"_"+name+"_Template",root.RooArgList(mMuMu),hist)
 
-    fr = pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True),root.RooFit.Range("signal"))
+    fr = pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True),root.RooFit.Range("signalfit"))
     fr.SetName(name+"_fitResult")
+
+    #mean.setVal(125.)
+    #width.setVal(2.)
+    #alpha.setVal(1.4)
+    #n.setVal(2.2)
 
     ## Error time
 
-    rooParamList = [mean,width,alpha,n]
-    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+    rooParamList = [mean,width,width2,alpha,n,mix]
+    #paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+    paramList = []
     for i in rooParamList:
        i.setConstant(True)
 
@@ -193,24 +203,91 @@ def makePDFSig(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName):
 #    frame.Draw()
 #    saveAs(canvas,"debug_"+name)
 
+    for i in rooParamList:
+      debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+
+    return paramList, debug
+
+def makePDFSigCB(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName):
+
+    debug = ""
+    debug += "### makePDFSigCB: "+channelName+": "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
+
+    mean = root.RooRealVar(channelName+"_"+name+"_Mean",channelName+"_"+name+"_Mean",125.,100.,150.)
+    width = root.RooRealVar(channelName+"_"+name+"_Width",channelName+"_"+name+"_Width",5.0,0.5,20.0)
+    alpha = root.RooRealVar(channelName+"_"+name+"_Alpha",channelName+"_"+name+"_Alpha",1.0,0.1,10.0)
+    n = root.RooRealVar(channelName+"_"+name+"_n",channelName+"_"+name+"_n",1.0,0.1,10.0)
+    #pdfMmumu = root.RooGaussian(name,name,mMuMu,mean,width)
+    pdfMmumu = root.RooCBShape(name,name,mMuMu,mean,width,alpha,n)
+    
+    mMuMuRooDataHist = root.RooDataHist(name+"_Template",channelName+"_"+name+"_Template",root.RooArgList(mMuMu),hist)
+
+    fr = pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True),root.RooFit.Range("signalfit"))
+    fr.SetName(name+"_fitResult")
+
+    #mean.setVal(125.)
+    #width.setVal(2.)
+    #alpha.setVal(1.4)
+    #n.setVal(2.2)
+
+    ## Error time
+
+    rooParamList = [mean,width,alpha,n]
+    #paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+    paramList = []
+    for i in rooParamList:
+       i.setConstant(True)
+
+    workspaceImportFn(pdfMmumu)
+    workspaceImportFn(mMuMuRooDataHist)
+    workspaceImportFn(fr)
+
+#    ## Debug Time
+#    frame = mMuMu.frame()
+#    frame.SetName(name+"_Plot")
+#    mMuMuRooDataHist.plotOn(frame)
+#    pdfMmumu.plotOn(frame)
+#    canvas = root.TCanvas()
+#    frame.Draw()
+#    saveAs(canvas,"debug_"+name)
+
+    for i in rooParamList:
+      debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+
+    return paramList, debug
+
 def makePDFSigGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName):
 
     debug = ""
-    debug += "### makePDFSig: "+channelName+": "+name+"\n"
+    debug += "### makePDFSigGaus: "+channelName+": "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
 
     mean = root.RooRealVar(channelName+"_"+name+"_Mean",channelName+"_"+name+"_Mean",125.,100.,150.)
     width = root.RooRealVar(channelName+"_"+name+"_Width",channelName+"_"+name+"_Width",5.0,0.5,20.0)
     pdfMmumu = root.RooGaussian(name,name,mMuMu,mean,width)
     
     mMuMuRooDataHist = root.RooDataHist(name+"_Template",channelName+"_"+name+"_Template",root.RooArgList(mMuMu),hist)
+    #debug += "#    DatasetInfo: \n"
+    #debug += "#      sumEntries: {0:.2f} nEntries: {1}\n".format(mMuMuRooDataHist.sumEntries(),mMuMuRooDataHist.numEntries())
+    #debug += "#      Mean: {0:.2f} Sigma: {1:.2f}\n".format(mMuMuRooDataHist.mean(mMuMu),mMuMuRooDataHist.sigma(mMuMu))
 
-    fr = pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True),root.RooFit.Range("signal"))
+    fr = pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True),root.RooFit.Range("signalfit"))
     fr.SetName(name+"_fitResult")
+
+    #mean.setVal(125.)
+    #width.setVal(2.)
+
+    #mMuMu.Print()
+    #pdfMmumu.Print()
+    #hist.Print()
+    #print hist.GetNbinsX()
 
     ## Error time
 
     rooParamList = [mean,width]
-    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+    #paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+    paramList = []
     for i in rooParamList:
        i.setConstant(True)
 
@@ -218,14 +295,21 @@ def makePDFSigGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName
     workspaceImportFn(mMuMuRooDataHist)
     workspaceImportFn(fr)
 
-#    ## Debug Time
-#    frame = mMuMu.frame()
-#    frame.SetName(name+"_Plot")
-#    mMuMuRooDataHist.plotOn(frame)
-#    pdfMmumu.plotOn(frame)
-#    canvas = root.TCanvas()
-#    frame.Draw()
-#    saveAs(canvas,"debug_"+name)
+    ### Debug Time
+    #frame = mMuMu.frame()
+    #frame.SetName(name+"_Plot")
+    #mMuMuRooDataHist.plotOn(frame)
+    #pdfMmumu.plotOn(frame)
+    #canvas = root.TCanvas()
+    #frame.Draw()
+    #saveAs(canvas,"debug_"+name)
+
+    for i in rooParamList:
+      debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+
+    return paramList, debug
+
+makePDFSig = makePDFSigCBPlusGaus
 
 ###################################################################################
 
@@ -239,6 +323,7 @@ class Analysis:
     self.controlRegionHigh = controlRegionHigh
     self.analysis = analysis
     self.params = []
+    self.debug = ""
 
     self.workspace = root.RooWorkspace(analysis)
     wImport = getattr(self.workspace,"import")
@@ -252,6 +337,7 @@ class Analysis:
     mMuMu.setRange("low",controlRegionLow[0],controlRegionLow[1])
     mMuMu.setRange("high",controlRegionHigh[0],controlRegionHigh[1])
     mMuMu.setRange("signal",controlRegionLow[1],controlRegionHigh[0])
+    mMuMu.setRange("signalfit",SIGNALFIT[0],SIGNALFIT[1])
 
     self.sigFiles = []
     self.sigHistsRaw = []
@@ -357,7 +443,9 @@ class Analysis:
                        )
 
     for name, hist in zip(signalNames,self.sigHistsRaw):
-        makePDFSig(name,hist,mMuMu,minMass,maxMass,wImport,analysis)
+        sigParams, sigDebug = makePDFSig(name,hist,mMuMu,minMass,maxMass,wImport,analysis)
+        self.params.extend(sigParams)
+        self.debug += sigDebug
 
     self.xsecSigTotal = 0.0
     self.xsecSigList = []
@@ -670,6 +758,7 @@ class DataCardMaker:
     for channel,channelName in zip(self.channels,self.channelNames):
         outfile.write("#\n")
         outfile.write("#info: channel {0}: \n".format(channelName))
+        outfile.write(channel.debug)
     outfile.write(rootDebugString)
     outfile.close()
 
@@ -699,15 +788,13 @@ if __name__ == "__main__":
   root.gROOT.SetBatch(True)
 
   directory = "input/"
+  directory = "input/muscle/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
   periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
-  analysesInc = ["IncPresel"]
-  analysesVBF = ["VBFPresel"]
   analyses = analysesInc + analysesVBF
-  analyses = []
   categoriesInc = ["BB","BO","BE","OO","OE","EE"]
   categoriesVBF = ["BB","NotBB"]
   tmpList = []
@@ -737,9 +824,9 @@ if __name__ == "__main__":
   combinations.append((
         ["IncBDTCut","VBFBDTCut"],"BDTCut"
   ))
-#  combinations.append((
-#        ["IncPresel","VBFPresel"],"Presel"
-#  ))
+  combinations.append((
+        ["IncPresel","VBFPresel"],"Presel"
+  ))
 #  combinations.append((
 #        ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
 #  ))
@@ -756,8 +843,6 @@ if __name__ == "__main__":
 #        ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
 #  ))
   histPostFix="/mDiMu"
-  #analyses = ["mDiMu"]
-  #histPostFix=""
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar"]
   dataDict = {}
@@ -970,7 +1055,27 @@ done
 date
 echo "done"
 """
-  runFile.write(batchString)
+
+  simpleBatchString = \
+"""#!/bin/bash
+echo "running notlxbatch.sh Simple Style"
+date
+for i in *.txt; do
+    [[ -e "$i" ]] || continue
+FILENAME=$i
+echo "executing combine -M Asymptotic $FILENAME >& $FILENAME.out"
+
+combine -M Asymptotic $FILENAME >& $FILENAME.out
+rm -f roostats*
+rm -f higgsCombineTest*.root
+done
+
+date
+echo "done"
+"""
+
+#  runFile.write(batchString)
+  runFile.write(simpleBatchString)
   runFile.close()
 
   runFile = open(outDir+"getStatus.sh","w")
