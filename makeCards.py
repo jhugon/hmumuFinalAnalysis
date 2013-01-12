@@ -829,7 +829,6 @@ if __name__ == "__main__":
   print "Started makeCards.py"
   root.gROOT.SetBatch(True)
 
-  directory = "input/"
   directory = "input/muscle/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
@@ -890,13 +889,13 @@ if __name__ == "__main__":
     ["IncPresel"],"IncBDTCut",0.05,-0.8,-0.1,"BDTHistMuonOnlyVMass"
   ))
   combinationsBDTCut.append((
-    ["VBFPresel"],"VBFBDTCut",0.05,-0.3,-0.3,"BDHistVBFVMass"
+    ["VBFPresel"],"VBFBDTCut",0.05,-0.3,0.3,"BDTHistVBFVMass"
   ))
   combinationsBDTCut.append((
     ["IncPresel"+x for x in categoriesInc],"IncBDTCutCat",0.05,-0.8,0.1,"BDTHistMuonOnlyVMass"
   ))
   combinationsBDTCut.append((
-    ["VBFPresel"+x for x in categoriesVBF],"VBFBDTCutCat",0.05,-0.3,0.3,"BDHistVBFVMass"
+    ["VBFPresel"+x for x in categoriesVBF],"VBFBDTCutCat",0.05,-0.3,0.3,"BDTHistVBFVMass"
   ))
 
   histPostFix="/mDiMu"
@@ -1015,7 +1014,7 @@ if __name__ == "__main__":
                controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix="/"+comb[5],
                controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
                #write args:
-               outfilename=outDir+comb[1]+"_"+p+"_"+str(bdtCutVal)+".txt",lumi=i,
+               outfilename=outDir+comb[1]+str(i)+"_"+p+"_"+str(bdtCutVal)+".txt",lumi=i,
                bdtCut=bdtCutVal
              )
             )

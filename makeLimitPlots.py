@@ -271,11 +271,11 @@ class RelativePlot:
     tlatex.SetTextSize(0.04)
     tlatex.SetTextAlign(12)
     tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
+    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.88,caption2)
+    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.82,caption3)
+
     tlatex.SetTextAlign(32)
     tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption)
-
-    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin()-0.03,0.88,caption2)
-    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin()-0.03,0.82,caption3)
 
     for g in self.vertLines:
       g.Draw("l")
@@ -364,6 +364,8 @@ if __name__ == "__main__":
   #print mpl.rcParams["backend"]
 
   ylimits=[0.1,100.0]
+  if args.bdtCut:
+    ylimits=[1.,100.0]
 
   lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":20}
   
@@ -375,7 +377,7 @@ if __name__ == "__main__":
     energyStr = ""
     plots = set()
     for fn in allfiles:
-      match = re.search(r".*/(.+)_(.+)_[.\d]+.txt.out",fn)
+      match = re.search(r".*/(.+)_(.+)_[-.\d]+.txt.out",fn)
       badPlot = re.search(r"Silly",fn)
       badPlot2 = re.search(r"Silly",fn)
       if match and not (badPlot or badPlot2):
@@ -390,13 +392,19 @@ if __name__ == "__main__":
       data = getData(dirName+plotName+"_"+energyStr+"_*.txt.out")
       if len(data)<=1:
         continue
-      title = titleMap[plotName]
-      if period == "14TeV":
-        title = "Standard Model H#rightarrow#mu#mu"
       xlabel="Integrated Luminosity [fb^{-1}]"
+      caption3 = ""
       if args.bdtCut:
         xlabel="BDT Output Cut"
-      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStr,xlabel=xlabel)
+        match = re.match(r"([^0-9.]*)([0-9.]*)",plotName)
+        assert(match)
+        caption3 = "L = {0:.1f} fb^{{-1}}".format(float(match.group(2)))
+        title = titleMap[match.group(1)]
+      #elif period == "14TeV":
+      #  title = "Standard Model H#rightarrow#mu#mu"
+      else:
+        title = titleMap[plotName]
+      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStr,xlabel=xlabel,caption3=caption3)
       saveAs(canvas,outDir+plotName+"_"+energyStr)
 
     if args.bdtCut:

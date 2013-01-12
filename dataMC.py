@@ -6,7 +6,7 @@ import ROOT as root
 import os
 import sys
 
-dataDir = "input/"
+dataDir = "input/muscle/"
 outDir = "output/"
 
 RUNPERIOD="8TeV"
