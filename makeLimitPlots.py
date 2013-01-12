@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+import argparse
+parser = argparse.ArgumentParser(description="Makes Limit Plots from output text from combine tool.")
+parser.add_argument("--bdtCut", help="Makes plots v. BDT Cut Instead of Luminosity",action="store_true",default=False)
+args = parser.parse_args()
+
+
 from helpers import *
 import ROOT as root
 import glob
@@ -350,7 +356,8 @@ if __name__ == "__main__":
   root.gROOT.SetBatch(True)
   setStyle()
   canvas = root.TCanvas()
-  canvas.SetLogx(1)
+  if not args.bdtCut:
+    canvas.SetLogx(1)
   canvas.SetLogy(1)
   
   mpl.rcParams["font.family"] = "sans-serif"
@@ -384,9 +391,16 @@ if __name__ == "__main__":
       if len(data)<=1:
         continue
       title = titleMap[plotName]
-      title = "Standard Model H#rightarrow#mu#mu"
-      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStr)
+      if period == "14TeV":
+        title = "Standard Model H#rightarrow#mu#mu"
+      xlabel="Integrated Luminosity [fb^{-1}]"
+      if args.bdtCut:
+        xlabel="BDT Output Cut"
+      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStr,xlabel=xlabel)
       saveAs(canvas,outDir+plotName+"_"+energyStr)
+
+    if args.bdtCut:
+        continue
 
     ## Compare all types of limits
     if period == "14TeV":

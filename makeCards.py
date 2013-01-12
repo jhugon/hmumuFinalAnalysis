@@ -4,6 +4,7 @@ import argparse
 parser = argparse.ArgumentParser(description="Makes cards for use in the CMS Combine tool.")
 parser.add_argument("--signalInject", help="Inject Signal with Strength into data_obs",type=float,default=0.0)
 parser.add_argument("--toyData", help="Make Toy Data from PDFs for data_obs",action="store_true",default=False)
+parser.add_argument("--bdtCut", help="Creates Cards with different BDT Cuts",action="store_true",default=False)
 args = parser.parse_args()
 
 import math
@@ -314,7 +315,9 @@ makePDFSig = makePDFSigCBPlusGaus
 ###################################################################################
 
 class Analysis:
-  def __init__(self,directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,histNameBase="mDiMu",rebin=[],histNameSuffix="",toyData=False,sigInject=0.0):
+  def __init__(self,directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,histNameBase="mDiMu",rebin=[],histNameSuffix="",toyData=False,sigInject=0.0,bdtCut=None):
+    getCutHist = getattr(self,"getCutHist")
+
     self.sigNames = signalNames
     self.bakNames = backgroundNames
     self.datNames = dataNames
@@ -344,6 +347,11 @@ class Analysis:
     for name in signalNames:
       tmpF = root.TFile(directory+name+".root")
       tmpH = tmpF.Get(histNameBase+analysis+histNameSuffix)
+      if bdtCut != None:
+        tmpH1 = tmpF.Get(histNameBase+analysis+"/mDiMu")
+        tmpH1.Reset()
+        tmpH = self.getCutHist(tmpH,tmpH1,bdtCut)
+        tmpH = tmpH1
       self.sigFiles.append(tmpF)
       self.sigHistsRaw.append(tmpH)
 
@@ -352,6 +360,11 @@ class Analysis:
     for name in backgroundNames:
       tmpF = root.TFile(directory+name+".root")
       tmpH = tmpF.Get(histNameBase+analysis+histNameSuffix)
+      if bdtCut != None:
+        tmpH1 = tmpF.Get(histNameBase+analysis+"/mDiMu")
+        tmpH1.Reset()
+        tmpH = self.getCutHist(tmpH,tmpH1,bdtCut)
+        tmpH = tmpH1
       self.bakFiles.append(tmpF)
       self.bakHistsRaw.append(tmpH)
 
@@ -360,6 +373,11 @@ class Analysis:
     for name in dataNames:
       tmpF = root.TFile(directory+name+".root")
       tmpH = tmpF.Get(histNameBase+analysis+histNameSuffix)
+      if bdtCut != None:
+        tmpH1 = tmpF.Get(histNameBase+analysis+"/mDiMu")
+        tmpH1.Reset()
+        tmpH = self.getCutHist(tmpH,tmpH1,bdtCut)
+        tmpH = tmpH1
       self.datFiles.append(tmpF)
       self.datHists.append(tmpH)
 
@@ -496,6 +514,29 @@ class Analysis:
       #realDataHistNotVeryLow = realDataHist.reduce(root.RooFit.CutRange("low,signal,high"))
       #wImport(realDataHistNotVeryLow)
 
+  def getCutHist(self,inHist,outHist,cut):
+    if not inHist.InheritsFrom("TH1"):
+      print("Error: Analysis.getCutHist(): inHist is not a hist exiting.")
+      sys.exit(1)
+    if not inHist.InheritsFrom("TH2"):
+      print("Error: Analysis.getCutHist(): inHist is not 2D!! exiting.")
+      sys.exit(1)
+    if not outHist.InheritsFrom("TH1"):
+      print("Error: Analysis.getCutHist(): outHist is not a hist exiting.")
+      sys.exit(1)
+    if outHist.InheritsFrom("TH2"):
+      print("Error: Analysis.getCutHist(): outHist is 2D!! exiting.")
+      sys.exit(1)
+    cutBin = inHist.GetYaxis().FindBin(cut)
+    nBinsY = inHist.GetYaxis().GetNbins()
+    nBinsX = inHist.GetXaxis().GetNbins()
+    #print("max bin: {0}, cutBin: {1}".format(nBinsY,cutBin))
+    for iX in range(0,nBinsX+2):
+      mySum = 0.
+      for iY in range(cutBin,nBinsY+2):
+        mySum += inHist.GetBinContent(iX,iY)
+      outHist.SetBinContent(iX,mySum)
+
   def getSigEff(self,name):
     result = -1.0
     if self.sigNames.count(name)>0:
@@ -542,7 +583,7 @@ class Analysis:
 ###################################################################################
 
 class DataCardMaker:
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,dataNames,outfilename,lumi,nuisanceMap=None,histNameBase="",controlRegionLow=[110.,115],controlRegionHigh=[135,150],controlRegionVeryLow=[80.,110.],rebin=[],histNameSuffix="",sigInject=0.0,toyData=False):
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,dataNames,outfilename,lumi,nuisanceMap=None,histNameBase="",controlRegionLow=[110.,115],controlRegionHigh=[135,150],controlRegionVeryLow=[80.,110.],rebin=[],histNameSuffix="",sigInject=0.0,toyData=False,bdtCut=None):
 
     ########################
     ## Setup
@@ -554,7 +595,7 @@ class DataCardMaker:
     lumi *= 1000.0
 
     for analysis in analysisNames:
-      tmp = Analysis(directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,histNameBase=histNameBase,rebin=rebin,histNameSuffix=histNameSuffix,toyData=toyData,sigInject=sigInject)
+      tmp = Analysis(directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,histNameBase=histNameBase,rebin=rebin,histNameSuffix=histNameSuffix,toyData=toyData,sigInject=sigInject,bdtCut=bdtCut)
       channels.append(tmp)
     self.channels = channels
 
@@ -768,6 +809,7 @@ class ThreadedCardMaker(myThread):
     self.args = args
     self.dictArgs = dictArgs
     self.started = False
+    #print("\nPos Args:\n {0} \nKeyword Args:\n {1}\n\n".format(self.args,self.dictArgs))
   def run(self):
     #try:
       self.started = True
@@ -842,6 +884,21 @@ if __name__ == "__main__":
 #  combinationsLong.append((
 #        ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
 #  ))
+
+  combinationsBDTCut = []
+  combinationsBDTCut.append((
+    ["IncPresel"],"IncBDTCut",0.05,-0.8,-0.1,"BDTHistMuonOnlyVMass"
+  ))
+  combinationsBDTCut.append((
+    ["VBFPresel"],"VBFBDTCut",0.05,-0.3,-0.3,"BDHistVBFVMass"
+  ))
+  combinationsBDTCut.append((
+    ["IncPresel"+x for x in categoriesInc],"IncBDTCutCat",0.05,-0.8,0.1,"BDTHistMuonOnlyVMass"
+  ))
+  combinationsBDTCut.append((
+    ["VBFPresel"+x for x in categoriesVBF],"VBFBDTCutCat",0.05,-0.3,0.3,"BDHistVBFVMass"
+  ))
+
   histPostFix="/mDiMu"
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar"]
@@ -871,66 +928,97 @@ if __name__ == "__main__":
   shape=True
   toyData=args.toyData
 
-  print("Simple Analyses to run:")
-  for a in analyses:
-    print("  {0}".format(a))
-  print("Combination Analyses to run:")
-  for c in combinations:
-    print("  {0}".format(c[1]))
-    for a in c[0]:
-      print("    {0}".format(a))
 
-  print("Creating Threads...")
   threads = []
-  for p in periods:
-    for i in lumiList:
-      if p == "7TeV":
-        i = lumiDict[p]
-      for ana in analyses:
-        tmp = ThreadedCardMaker(
-          #__init__ args:
-          directory,[ana],
-          appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
-          rebin=[MassRebin],
-          controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
-          #write args:
-          outfilename=outDir+ana+"_"+p+"_"+str(i)+".txt",lumi=i
+  if not args.bdtCut:
+    print("Simple Analyses to run:")
+    for a in analyses:
+      print("  {0}".format(a))
+    print("Combination Analyses to run:")
+    for c in combinations:
+      print("  {0}".format(c[1]))
+      for a in c[0]:
+        print("    {0}".format(a))
+  
+    print("Creating Threads...")
+    for p in periods:
+      for i in lumiList:
+        if p == "7TeV":
+          i = lumiDict[p]
+        for ana in analyses:
+          tmp = ThreadedCardMaker(
+            #__init__ args:
+            directory,[ana],
+            appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
+            rebin=[MassRebin],
+            controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
+            controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
+            #write args:
+            outfilename=outDir+ana+"_"+p+"_"+str(i)+".txt",lumi=i
+            )
+          threads.append(tmp)
+        for comb in combinations:
+         threads.append(
+          ThreadedCardMaker(
+            #__init__ args:
+            directory,
+            comb[0],
+            appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
+            rebin=[MassRebin],
+            controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
+            controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
+            #write args:
+            outfilename=outDir+comb[1]+"_"+p+"_"+str(i)+".txt",lumi=i
           )
-        threads.append(tmp)
-      for comb in combinations:
-       threads.append(
-        ThreadedCardMaker(
-          #__init__ args:
-          directory,
-          comb[0],
-          appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
-          rebin=[MassRebin],
-          controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
-          #write args:
-          outfilename=outDir+comb[1]+"_"+p+"_"+str(i)+".txt",lumi=i
-        )
-       )
-      if p == "7TeV":
-        break
-
-  for i in lumiListLong:
-    p = "14TeV"
-    for comb in combinationsLong:
-       threads.append(
-        ThreadedCardMaker(
-          #__init__ args:
-          directory,
-          comb[0],
-          appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
-          rebin=[MassRebin],
-          controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
-          controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
-          #write args:
-          outfilename=outDir+comb[1]+"_"+p+"_"+str(i)+".txt",lumi=i
-        )
-       )
+         )
+        if p == "7TeV":
+          break
+  
+    for i in lumiListLong:
+      p = "14TeV"
+      for comb in combinationsLong:
+         threads.append(
+          ThreadedCardMaker(
+            #__init__ args:
+            directory,
+            comb[0],
+            appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
+            rebin=[MassRebin],
+            controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
+            controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
+            #write args:
+            outfilename=outDir+comb[1]+"_"+p+"_"+str(i)+".txt",lumi=i
+          )
+         )
+  else: #Do bdtCut Stuff
+    for p in periods:
+      i = lumiDict[p]
+      for comb in combinationsBDTCut:
+          bdtCutList = []
+          tmpCut = float(comb[3])
+          while True:
+            if tmpCut > float(comb[4]):
+                break
+            bdtCutList.append(tmpCut)
+            tmpCut += float(comb[2])
+            if abs(tmpCut) < 1e-10:
+              tmpCut = 0.0
+          for bdtCutVal in bdtCutList:
+            print("BDT Cut Card: {0} {1} {2} fb^-1 hist={3} cut={4}".format(p,comb[1],i,comb[5],bdtCutVal))
+            threads.append(
+             ThreadedCardMaker(
+               #__init__ args:
+               directory,
+               comb[0],
+               appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
+               rebin=[MassRebin],
+               controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix="/"+comb[5],
+               controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
+               #write args:
+               outfilename=outDir+comb[1]+"_"+p+"_"+str(bdtCutVal)+".txt",lumi=i,
+               bdtCut=bdtCutVal
+             )
+            )
 
   nThreads = len(threads)
   print("nProcs: {0}".format(NPROCS))
@@ -958,7 +1046,7 @@ if __name__ == "__main__":
     nRunning = len(threadsRunning)
     nNotStarted = len(threadsNotStarted)
     if nRunning == 0 and nNotStarted == 0:
-        break
+          break
 
     time.sleep(0.1)
       
