@@ -358,14 +358,14 @@ if __name__ == "__main__":
   canvas = root.TCanvas()
   if not args.bdtCut:
     canvas.SetLogx(1)
-  canvas.SetLogy(1)
+    canvas.SetLogy(1)
   
   mpl.rcParams["font.family"] = "sans-serif"
   #print mpl.rcParams["backend"]
 
   ylimits=[0.1,100.0]
   if args.bdtCut:
-    ylimits=[1.,100.0]
+    ylimits=[1.,25.0]
 
   lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":20}
   
@@ -377,7 +377,7 @@ if __name__ == "__main__":
     energyStr = ""
     plots = set()
     for fn in allfiles:
-      match = re.search(r".*/(.+)_(.+)_[-.\d]+.txt.out",fn)
+      match = re.search(r".*/(.+)_(.+)_[-.\d]+\.txt\.out",fn)
       badPlot = re.search(r"Silly",fn)
       badPlot2 = re.search(r"Silly",fn)
       if match and not (badPlot or badPlot2):

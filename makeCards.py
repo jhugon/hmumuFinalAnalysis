@@ -886,16 +886,16 @@ if __name__ == "__main__":
 
   combinationsBDTCut = []
   combinationsBDTCut.append((
-    ["IncPresel"],"IncBDTCut",0.05,-0.8,-0.1,"BDTHistMuonOnlyVMass"
+    ["IncPresel"],"IncBDTCut",0.025,-0.7,-0.35,"BDTHistMuonOnlyVMass"
   ))
   combinationsBDTCut.append((
-    ["VBFPresel"],"VBFBDTCut",0.05,-0.3,0.3,"BDTHistVBFVMass"
+    ["VBFPresel"],"VBFBDTCut",0.025,-0.3,0.1,"BDTHistVBFVMass"
   ))
   combinationsBDTCut.append((
-    ["IncPresel"+x for x in categoriesInc],"IncBDTCutCat",0.05,-0.8,0.1,"BDTHistMuonOnlyVMass"
+    ["IncPresel"+x for x in categoriesInc],"IncBDTCutCat",0.025,-0.7,-0.35,"BDTHistMuonOnlyVMass"
   ))
   combinationsBDTCut.append((
-    ["VBFPresel"+x for x in categoriesVBF],"VBFBDTCutCat",0.05,-0.3,0.3,"BDTHistVBFVMass"
+    ["VBFPresel"+x for x in categoriesVBF],"VBFBDTCutCat",0.025,-0.2,0.0,"BDTHistVBFVMass"
   ))
 
   histPostFix="/mDiMu"
@@ -1174,6 +1174,39 @@ echo "Files Found: `ls *.out | wc -l` of `ls *.txt | wc -l`"
 echo "==========================="
 for i in *.out; do wc $i; done
 echo "==========================="
+"""
+  runFile.write(batchString)
+  runFile.close()
+
+  runFile = open(outDir+"getStatus2.sh","w")
+  batchString = \
+"""#!/bin/bash
+
+echo "==========================="
+
+NJOBS=`ls *.txt | wc -l`
+STARTTIME=`date +%s`
+
+while true; do
+  NCOMPLETE="0"
+  for i in *.out; do
+    NTMP=`cat $i | wc -l`
+    if [ "$NTMP" -gt "0" ]; then
+        NCOMPLETE=$(( $NCOMPLETE + 1 ))
+    fi  
+  done
+  NSTARTED=`ls *.out | wc -l`
+  echo "`date --rfc-3339=seconds` Jobs: $NJOBS Started: $NSTARTED Complete: $NCOMPLETE"
+  if [ "$NCOMPLETE" -eq "$NJOBS" ]; then
+    ENDTIME=`date +%s`
+    echo "Took $(( $ENDTIME - $STARTTIME )) seconds"
+    echo "All Jobs Complete"
+    echo "==========================="
+    exit "0"
+  fi
+  sleep 10
+done
+
 """
   runFile.write(batchString)
   runFile.close()
