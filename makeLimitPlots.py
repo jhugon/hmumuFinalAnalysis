@@ -365,7 +365,7 @@ if __name__ == "__main__":
 
   ylimits=[0.1,100.0]
   if args.bdtCut:
-    ylimits=[1.,25.0]
+    ylimits=[1.,30.0]
 
   lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":20}
   
@@ -395,15 +395,14 @@ if __name__ == "__main__":
       xlabel="Integrated Luminosity [fb^{-1}]"
       caption3 = ""
       if args.bdtCut:
-        xlabel="BDT Output Cut"
+        xlabel="BDT Discriminant Cut"
         match = re.match(r"([^0-9.]*)([0-9.]*)",plotName)
         assert(match)
         caption3 = "L = {0:.1f} fb^{{-1}}".format(float(match.group(2)))
-        title = titleMap[match.group(1)]
+        plotName = match.group(1)
       #elif period == "14TeV":
       #  title = "Standard Model H#rightarrow#mu#mu"
-      else:
-        title = titleMap[plotName]
+      title = titleMap[plotName]
       incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStr,xlabel=xlabel,caption3=caption3)
       saveAs(canvas,outDir+plotName+"_"+energyStr)
 

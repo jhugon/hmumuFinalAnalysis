@@ -530,7 +530,7 @@ def makeWeightHist(f1,canvas,leg):
   leg.Draw("same")
 
 class DataMCStack:
-  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="Events", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV"):
+  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="Events", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",doRatio=True):
     nBinsX = dataHist.GetNbinsX()
     self.nBinsX = nBinsX
     self.dataHist = dataHist
@@ -586,15 +586,32 @@ class DataMCStack:
     # Make Pull Hist
     self.pullHist = dataHist.Clone("pullHist"+dataHist.GetName())
     self.pullHist.Reset()
-    for i in range(1,self.pullHist.GetNbinsX()):
+    self.oneGraph = root.TGraph()
+    self.oneGraph.SetLineWidth(2)
+    self.oneGraph.SetLineStyle(2)
+    iGraph = 0
+    for i in range(0,self.pullHist.GetNbinsX()+2):
       nData = dataHist.GetBinContent(i)
       nMC = self.mcSumHist.GetBinContent(i)
       error = dataHist.GetBinError(i)
       pull = 0.0
+      self.oneGraph.SetPoint(iGraph,dataHist.GetXaxis().GetBinCenter(i),1.0)
+      iGraph += 1
       if error != 0.0:
         pull = (nData -nMC)/error
-      self.pullHist.SetBinContent(i,pull)
-      #print("nData: %f, nMC: %f, error: %f, pull: %f" % (nData,nMC,error,pull))
+      ratio = 0.0
+      ratioErr = 0.0
+      if nMC != 0.0:
+        ratio = nData/nMC
+        ratioErr = error/nMC
+      if doRatio:
+        self.pullHist.SetBinContent(i,ratio)
+        self.pullHist.SetBinError(i,ratioErr)
+        #print("nData: {0:.2f} +/- {1:.2f}, nMC: {2:.2f}, ratio: {3:.2f} +/- {4:.2f}".format(nData,error,nMC,ratio,ratioErr))
+      else:
+        self.pullHist.SetBinContent(i,pull)
+        #print("nData: %f, nMC: %f, error: %f, pull: %f" % (nData,nMC,error,pull))
+
 
     #Find Maximum y-value
     if xlimits != []:
@@ -701,7 +718,14 @@ class DataMCStack:
     self.pullHist.GetYaxis().SetTitleOffset(0.70)
     self.pullHist.SetFillColor(856)
     self.pullHist.SetFillStyle(1001)
-    self.pullHist.Draw("histo b")
+    if doRatio:
+      #pad2.SetGridy(1)
+      self.pullHist.GetYaxis().SetTitle("#frac{Data}{MC}")
+      self.pullHist.Draw("")
+      self.oneGraph.Draw()
+      self.pullHist.Draw("same")
+    else:
+      self.pullHist.Draw("histo b")
 
     if showCompatabilityTests:
       self.problatex = root.TLatex()

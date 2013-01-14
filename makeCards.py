@@ -829,10 +829,10 @@ if __name__ == "__main__":
   print "Started makeCards.py"
   root.gROOT.SetBatch(True)
 
-  directory = "input/muscle/"
+  directory = "input/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  periods = ["8TeV"]
+  periods = ["7TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
@@ -842,38 +842,39 @@ if __name__ == "__main__":
   for a in analysesInc:
     for c in categoriesInc:
         tmpList.append(a+c)
-#  analyses += tmpList
+  analyses += tmpList
   tmpList = []
   for a in analysesVBF:
     for c in categoriesVBF:
         tmpList.append(a+c)
-#  analyses += tmpList
+  analyses += tmpList
+  analyses = ["VBFPresel","IncPresel"]
   combinations = []
   combinationsLong = []
-#  combinations.append((
-#        ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
-#  ))
-#  combinations.append((
-#        ["VBFBDTCut"+x for x in categoriesVBF],"VBFBDTCutCat"
-#  ))
-#  combinations.append((
-#        ["IncPresel"+x for x in categoriesInc],"IncPreselCat"
-#  ))
-#  combinations.append((
-#        ["VBFPresel"+x for x in categoriesVBF],"VBFPreselCat"
-#  ))
+  combinations.append((
+        ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
+  ))
+  combinations.append((
+        ["VBFBDTCut"+x for x in categoriesVBF],"VBFBDTCutCat"
+  ))
+  #combinations.append((
+  #      ["IncPresel"+x for x in categoriesInc],"IncPreselCat"
+  #))
+  #combinations.append((
+  #      ["VBFPresel"+x for x in categoriesVBF],"VBFPreselCat"
+  #))
   combinations.append((
         ["IncBDTCut","VBFBDTCut"],"BDTCut"
   ))
   combinations.append((
         ["IncPresel","VBFPresel"],"Presel"
   ))
-#  combinations.append((
-#        ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
-#  ))
-#  combinations.append((
-#        ["VBFBDTCut"+x for x in categoriesVBF]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
-#  ))
+  #combinations.append((
+  #      ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
+  #))
+  combinations.append((
+        ["VBFBDTCut"+x for x in categoriesVBF]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
+  ))
 #  combinationsLong.append((
 #        ["IncBDTCut","VBFBDTCut"],"BDTCut"
 #  ))
@@ -1059,7 +1060,7 @@ chmod +x lxbatch.sh
 for i in *.txt; do
     [[ -e "$i" ]] || continue
 echo "Running on "$i
-bsub lxbatch.sh $i
+bsub -o /dev/null lxbatch.sh $i
 #bsub -q 1nh lxbatch.sh $i
 done
 """
@@ -1095,8 +1096,30 @@ echo "executing combine -M Asymptotic $FILENAME >& $FILENAME.out"
 
 combine -M Asymptotic $FILENAME >& $FILENAME.out
 
-cp $FILENAME.out ..
+echo "executing combine -M ProfileLikelihood -d $FILENAME --signif >& $FILENAME.sig"
 
+combine -M ProfileLikelihood -d $FILENAME --signif >& $FILENAME.sig
+rm -f roostats*
+rm -f higgsCombineTest*.root
+
+echo "executing combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig"
+
+combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 >& $FILENAME.expsig
+#combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig
+rm -f roostats*
+rm -f higgsCombineTest*.root
+
+echo "executing combine -M MaxLikelihoodFit $FILENAME >& $FILENAME.mu"
+
+combine -M MaxLikelihoodFit $FILENAME >& $FILENAME.mu
+rm -f roostats*
+rm -f higgsCombineTest*.root
+
+
+cp $FILENAME.out ..
+cp $FILENAME.mu ..
+cp $FILENAME.sig ..
+cp $FILENAME.expsig ..
 
 echo "done"
 date

@@ -6,7 +6,7 @@ import ROOT as root
 import os
 import sys
 
-dataDir = "input/muscle/"
+dataDir = "input/"
 outDir = "output/"
 
 RUNPERIOD="8TeV"
@@ -32,8 +32,8 @@ stdLegendPos = urLegendPos
 histDirs = [""]
 histDirs = ["NotBlindWindow/"]
 histDirs = ["VBFPreselDiMuPtL20/","IncPreselDiMuPtL20/"]
-histDirs = ["VBFPresel/","IncPresel/",""]
-histDirs = ["VBFBDTCut/","IncBDTCut/"]
+histDirs = ["VBFPresel/","IncPresel/"]
+#histDirs = ["VBFBDTCut/","IncBDTCut/"]
 #histDirs = ["","PtDiMu100/","VBFPresel/","IncPresel/"]
 
 root.gErrorIgnoreLevel = root.kWarning
@@ -45,10 +45,11 @@ histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[80.0,150.0],"rebin"
 histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV]","xlimits":[0.0,100.0],"rebin":0}
 #histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV]","xlimits":[0.0,200.0],"rebin":5}
 
-histNames["mDiJet"] = {"xlabel":"m_{jj} [GeV]","xlimits":[0.0,1200.0],"rebin":5}
-histNames["ptDiJet"] = {"xlabel":"p_{T,jj} [GeV]","xlimits":[0.0,200.0],"rebin":2}
-histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj}","xlimits":[0.0,8.5]}
+histNames["mDiJet"] = {"xlabel":"m_{jj} [GeV]","xlimits":[300.0,1400.0],"rebin":5}
+histNames["ptDiJet"] = {"xlabel":"p_{T,jj} [GeV]","xlimits":[0.0,400.0],"rebin":2}
+#histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj}","xlimits":[0.0,8.5]}
 histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj}","xlimits":[3.0,8.5]}
+"""
 histNames["deltaRJets"] = {"xlabel":"#DeltaR_{jj}","xlimits":[0.0,8.5]}
 histNames["deltaPhiJets"] = {"xlabel":"#Delta#phi_{jj}","xlimits":[0.0,3.2],"rebin":2,"leg":ulLegendPos}
 histNames["deltaEtaMuons"] = {"xlabel":"#Delta#eta_{#mu#mu}","xlimits":[0.0,4.5]}
@@ -71,9 +72,12 @@ histNames["etaMu2"] = {"xlabel":"Sub-Leading Muon #eta","xlimits":[-2.4,2.4],"re
 histNames["etaJet1"] = {"xlabel":"Leading Jet #eta","xlimits":[-5.0,5.0],"rebin":2}
 histNames["etaJet2"] = {"xlabel":"Sub-Leading Jet #eta","xlimits":[-5.0,5.0],"rebin":2}
 
+"""
 histNames["yDiMu"] = {"xlabel":"y_{#mu#mu} [GeV]","xlimits":[-2.2,2.2],"rebin":2,"leg":lcLegendPos}
+histNames["yDiJet"] = {"xlabel":"y_{#mu#mu} [GeV]","xlimits":[-5.0,5.0],"rebin":2,"leg":lcLegendPos}
 
 histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1.0,1.0],"rebin":2,"leg":lcLegendPos}
+"""
 histNames["cosThetaStarCS"] = {"xlabel":"cos(#theta^{*}_{CS})","xlimits":[-1.0,1.0],"rebin":2,"leg":lcLegendPos}
 
 histNames["relIsoMu1"] = {"xlabel":"Leading Muon Relative PF Isolation","xlimits":[0,0.3],"rebin":2}
@@ -91,8 +95,12 @@ histNames["puJetIDSimpleJet1"] = {"xlabel":"PU Jet Simple Loose ID--Leading Jet"
 histNames["puJetIDSimpleJet2"] = {"xlabel":"PU Jet Simple Loose ID--Sub-Leading Jet","xlimits":[],"rebin":1}
 histNames["puJetIDSimpleJet3"] = {"xlabel":"PU Jet Simple Loose ID--3rd Leading Jet","xlimits":[],"rebin":1}
 
+"""
 histNames["nVtx"] = {"xlabel":"N_{vtx}","xlimits":[0,40],"leg":stdLegendPos}
+"""
 histNames["met"] = {"xlabel":"E_{T}^{Miss}","xlimits":[0,300],"leg":stdLegendPos}
+"""
+histNames["ptmiss"] = {"xlabel":"p_{T}^{Miss}","xlimits":[0,250],"leg":stdLegendPos}
 
 tlatex = root.TLatex()
 tlatex.SetNDC()
@@ -262,21 +270,38 @@ for histName in bkgDatasetList[0].hists:
   stack = DataMCStack(bkgHistList, dataHist, canvas, xtitle,lumi=LUMI,logy=LOGY,xlimits=histNames[histBaseName]["xlimits"],signalsNoStack=sigHistList,integralPlot=integralPlot,energyStr=RUNPERIOD)
 
   legLeftPos = stdLegendPos[0]
+  legRightPos = stdLegendPos[2]
+  scaleHiggsPos = "std"
   if histNames[histBaseName].has_key("leg"):
     setLegPos(leg,(histNames[histBaseName]["leg"]))
     legLeftPos = histNames[histBaseName]["leg"][0]
+    legRightPos = histNames[histBaseName]["leg"][2]
+    tmplegPos = histNames[histBaseName]["leg"]
+    if tmplegPos == lcLegendPos:
+      scaleHiggsPos = "lc"
   else:
     setLegPos(leg,stdLegendPos)
   leg.Draw("same")
 
-  if scaleHiggsBy != 1.0:
-    tlatex.SetTextSize(0.07)
-    tlatex.SetTextAlign(32)
-    tlatex.DrawLatex(legLeftPos-0.02,0.8,"Higgs #times {0:.0f}".format(scaleHiggsBy))
+  if scaleHiggsPos == "lc":
+    if scaleHiggsBy != 1.0:
+      tlatex.SetTextSize(0.07)
+      tlatex.SetTextAlign(22)
+      tlatex.DrawLatex(0.55,0.7,"Higgs #times {0:.0f}".format(scaleHiggsBy))
 
-  tlatex.SetTextSize(0.03)
-  tlatex.SetTextAlign(33)
-  tlatex.DrawLatex(legLeftPos-0.02,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
+    tlatex.SetTextSize(0.03)
+    tlatex.SetTextAlign(22)
+    tlatex.DrawLatex(0.55,0.75,anotateText)
+  #elif scaleHiggsPos == "std":
+  else:
+    if scaleHiggsBy != 1.0:
+      tlatex.SetTextSize(0.07)
+      tlatex.SetTextAlign(32)
+      tlatex.DrawLatex(legLeftPos-0.02,0.8,"Higgs #times {0:.0f}".format(scaleHiggsBy))
+
+    tlatex.SetTextSize(0.03)
+    tlatex.SetTextAlign(33)
+    tlatex.DrawLatex(legLeftPos-0.02,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
 
   saveName = histName.replace("(","")
   saveName = saveName.replace(")","")
