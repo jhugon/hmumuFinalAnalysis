@@ -11,35 +11,82 @@ root.gErrorIgnoreLevel = root.kWarning
 root.gROOT.SetBatch(True)
 root.gStyle.SetOptStat(0)
 
+from makeCards import makePDFSig, SIGNALFIT
+
+urLegendPos = [0.65,0.67,0.9,0.9]
+minMass = 110.
+maxMass = 160.
+vminMass = 60.
+vmaxMass = 160.
+signalRange = [120.,130.]
+plotRange = [105.,145.]
+rooPlotRange = root.RooFit.Range(*plotRange)
+
 class ResStudy:
-  def __init__(self,fileNames,titles):
+  def __init__(self,fileName,title):
+    f = root.TFile(fileName)
+    self.f = f
+    self.colors = [1,root.kRed+1,root.kBlue+1,root.kGreen+1,root.kCyan,root.kPink]
+    self.title = title
+    self.saveTitle = re.sub(r"rightarrow","",title)
+    self.saveTitle = re.sub(r"#","",self.saveTitle)
+    self.saveTitle = re.sub(r"{\W}+","",self.saveTitle)
+    self.saveTitle = re.sub(r" +","",self.saveTitle)
+    print self.title
+    print self.saveTitle
+    # Old Code
     getData = getattr(self,"getData")
     countsList = []
     resList = []
     quantList = []
     categoriesList = []
-    for fn in fileNames:
-        prefix = "IncPresel"
-        categories = ["BB","BO","BE","OO","OE","EE"]
-        if re.search(r"VBF",fn) or re.search(r"vbf",fn) :
-          prefix = "VBFPresel"
-          categories = ["BB","NotBB"]
-        tmpCounts, tmpRes, tmpQuants = getData(fn,categories,prefix)
-        countsList.append(tmpCounts)
-        resList.append(tmpRes)
-        quantList.append(tmpQuants)
-        categoriesList.append(categories)
-    self.titles = titles
+    prefix = "IncPresel"
+    categories = ["BB","BO","BE","OO","OE","EE"]
+    if re.search(r"VBF",fileName) or re.search(r"vbf",fileName) :
+      prefix = "VBFPresel"
+      categories = ["BB","NotBB"]
+    self.categories = categories
+    if True:
+      tmpCounts, tmpRes, tmpQuants, hists = getData(f,categories,prefix)
+      countsList.append(tmpCounts)
+      resList.append(tmpRes)
+      quantList.append(tmpQuants)
+      categoriesList.append(categories)
+      self.histsCatDict = hists
+    self.titles = [title]
     self.countsList = countsList
     self.resList = resList
     self.quantList = quantList
     self.categoriesList = categoriesList
 
+    # New Code
+    self.workspace = root.RooWorkspace("w")
+    wImport = getattr(self.workspace,"import")
+    mMuMu = root.RooRealVar("mMuMu","m_{#mu#mu} [GeV]",vminMass,vmaxMass)
+    mMuMu.setRange("signal",signalRange[0],signalRange[1])
+    mMuMu.setRange("signalfit",SIGNALFIT[0],SIGNALFIT[1])
+    mMuMu.setRange("all",minMass,maxMass)
+    mMuMu.setRange("vall",vminMass,vmaxMass)
+    mMuMu.setRange("draw",plotRange[0],plotRange[1])
+    wImport(mMuMu)
+    self.mMuMu = mMuMu
+    for i in categories:
+       tmpParamList, tmpDebug = makePDFSig(i,self.histsCatDict[i],mMuMu,minMass,maxMass,wImport,i)
+       #print tmpDebug
+
+    #self.workspace.Print()
+
+    self.canvas = root.TCanvas("canvas")
+
   def plot(self,ymax=None):
     plotPies = getattr(self,"plotPies")
     plotRes = getattr(self,"plotRes")
+    plotPDF = getattr(self,"plotPDF")
+    plotData = getattr(self,"plotData")
     plotPies()
     plotRes(ymax)
+    plotPDF()
+    plotData()
 
   def plotRes(self,ymax=None):
     colors = ["b","r","g","k","p"]
@@ -85,46 +132,58 @@ class ResStudy:
     tickPos = numpy.arange(len(allCatList))+0.25
     ax.set_xticks(tickPos+0.25)
     ax.set_xticklabels(tuple(allCatList))
-    ax.set_title(r"$H \rightarrow \mu\mu$ Width")
-    ax.set_ylabel(r"$\sigma$  [GeV]")
+    title2 = r"$gg \rightarrow H \rightarrow \mu\mu$ Width"
+    if "VBF" in title or "vbf" in title:
+      title2 = r"VBF $H \rightarrow \mu\mu$ Width"
+    ax.set_title(title2)
+    ax.set_ylabel(r"$1\sigma$ Quantile Width  [GeV]")
 
     iPlot = 0
-    for x, title, in zip(dataCoords, self.titles):
+    for x in dataCoords:
       color = colors[iPlot]
       iPlot += 1
       dataCord = (x,1.)
       displayCord = ax.transData.transform(dataCord)
       figCord = fig.transFigure.inverted().transform(displayCord)
-      text = r"$gg \rightarrow H \rightarrow \mu\mu$"
-      if title == "VBF" or title == "vbf":
-        text = r"VBF $H \rightarrow \mu\mu$"
-      fig.text(figCord[0],amountUp*0.3,text,color=color,
-            ha="center",va="center")
 
-    fig.savefig("resPlot.png")
+    fig.savefig("resPlot"+self.saveTitle+".png")
+    fig.savefig("resPlot"+self.saveTitle+".pdf")
 
   def plotPies(self):
-    #fig = mpl.figure(figsize=(8,16))
-    fig = mpl.figure(figsize=(8,12))
-    subplotBase = len(self.titles)*100+11
+    vertical = True
+    fig = None
+    subplotBase = None
+    if len(self.titles) == 1:
+      fig = mpl.figure(figsize=(8,8))
+    elif vertical:
+      fig = mpl.figure(figsize=(8,12))
+      subplotBase = len(self.titles)*100+11
+    else:
+      pass
     iPlot = 0
     for title, countsMap, categories in zip(self.titles,self.countsList,self.categoriesList):
-      ax = fig.add_subplot(subplotBase+iPlot)
+      ax = None
+      if len(self.titles) == 1:
+        ax = fig.add_subplot(111)
+      elif vertical:
+        ax = fig.add_subplot(subplotBase+iPlot)
+      else:
+        pass
       ax.pie([countsMap[i] for i in categories],labels=tuple(categories),
             shadow=False,autopct="%1.0f%%")
-      if title == "VBF" or title == "vbf":
+      if "VBF" in title or "vbf" in title:
         ax.set_title(r"VBF $H \rightarrow \mu\mu$ Fractions")
       else:
         ax.set_title(r"$gg \rightarrow H \rightarrow \mu\mu$ Fractions")
       iPlot += 1
-    fig.savefig("resFractions.png")
+    fig.savefig("resFractions"+self.saveTitle+".png")
+    fig.savefig("resFractions"+self.saveTitle+".pdf")
 
-  def getData(self,infilename,categories, prefix=""):
+  def getData(self,infile,categories, prefix=""):
     keyList = categories + ["All"]
     histMap = {}
     countsMap = {}
     colors = [root.kRed,root.kBlue,root.kGreen,root.kOrange,root.kPink,root.kCyan,root.kBlue+1,root.kBlack]
-    infile = root.TFile(infilename)
     histBase = "mDiMu"
     
     histMap["All"] = infile.Get(prefix+"/"+histBase)
@@ -194,20 +253,94 @@ class ResStudy:
     saveAs(canvas,"resolutionCategories")
     """
 
-    return countsMap, resMap, quantMap
+    return countsMap, resMap, quantMap, histMap
+
+  def plotData(self):
+    saveNameBase = "resSigHist_"+self.saveTitle
+    datasets = []
+    iColor = 0
+    if True:
+      self.canvas.Clear()
+      frame = self.mMuMu.frame(rooPlotRange)
+      frame.SetTitle("")
+      frame.SetYTitle("Signal MC Events")
+      leg = root.TLegend(*urLegendPos)
+      leg.SetFillColor(0)
+      leg.SetLineColor(0)
+      for i in self.categories:
+        tmpDataset = self.workspace.data(i+"_Template")
+        rooLCol = root.RooFit.LineColor(self.colors[iColor])
+        rooMCol = root.RooFit.MarkerColor(self.colors[iColor])
+        rooNameStr = "Curve_"+i+"_Template"
+        rooName = root.RooFit.Name(rooNameStr)
+        tmpDataset.plotOn(frame,rooLCol,rooMCol,rooName)
+        tmpDatasetH = frame.getHist(rooNameStr)
+        leg.AddEntry(tmpDatasetH,i,"p")
+        datasets.append(tmpDataset)
+        iColor +=1
+      frame.Draw()
+      leg.Draw()
+      tlatex = root.TLatex()
+      tlatex.SetNDC()
+      tlatex.SetTextFont(root.gStyle.GetLabelFont())
+      tlatex.SetTextSize(0.05)
+      tlatex.SetTextAlign(12)
+      tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
+      tlatex.SetTextAlign(32)
+      tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
+      saveAs(self.canvas,saveNameBase)
+
+  def plotPDF(self):
+    saveNameBase = "resSigShape_"+self.saveTitle
+    curves = []
+    iColor = 0
+    self.canvas.Clear()
+    frame = self.mMuMu.frame(rooPlotRange)
+    frame.SetTitle("")
+    frame.SetYTitle("Signal MC Events")
+    leg = root.TLegend(*urLegendPos)
+    leg.SetFillColor(0)
+    leg.SetLineColor(0)
+    for i in self.categories:
+      if True:
+        tmpCurve = self.workspace.pdf(i)
+        rooLCol = root.RooFit.LineColor(self.colors[iColor])
+        rooNameStr = "Curve_"+i
+        rooName = root.RooFit.Name(rooNameStr)
+        rooRange = root.RooFit.Range("all")
+        tmpCurve.plotOn(frame,rooLCol,rooName,rooRange)
+        tmpCurveH = frame.getCurve(rooNameStr)
+        leg.AddEntry(tmpCurveH,i,"l")
+        curves.append(tmpCurve)
+        iColor += 1
+    frame.Draw()
+    leg.Draw()
+    tlatex = root.TLatex()
+    tlatex.SetNDC()
+    tlatex.SetTextFont(root.gStyle.GetLabelFont())
+    tlatex.SetTextSize(0.05)
+    tlatex.SetTextAlign(12)
+    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
+    tlatex.SetTextAlign(32)
+    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
+
+    saveAs(self.canvas,saveNameBase)
 
 if __name__ == "__main__":
 
   infiles = []
   titles = []
+  #infiles.append("input/ggHmumu125_8TeV.root")
+  #infiles.append("input/vbfHmumu125_8TeV.root")
+  infiles.append("input/muscle/ggHmumu125_8TeV.root")
+  infiles.append("input/muscle/vbfHmumu125_8TeV.root")
   #infiles.append("input/smearing/ggHmumu125_8TeV.root")
   #infiles.append("input/smearing/vbfHmumu125_8TeV.root")
-  infiles.append("input/ggHmumu125_8TeV.root")
-  infiles.append("input/vbfHmumu125_8TeV.root")
   #infiles.append("input/rochester/ggHmumu125_8TeV.root")
   #infiles.append("input/rochester/vbfHmumu125_8TeV.root")
-  titles.append("gg")
-  titles.append("VBF")
+  titles.append("gg #rightarrow H #rightarrow #mu#mu")
+  titles.append("VBF H #rightarrow #mu#mu")
 
-  rs = ResStudy(infiles,titles)
-  rs.plot(3.5)
+  for f,t in zip(infiles,titles):
+    rs = ResStudy(f,t)
+    rs.plot(3.5)

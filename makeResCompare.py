@@ -264,8 +264,8 @@ if __name__ == "__main__":
   infiles = []
   titles = []
   #infiles.append("input/ggHmumu125_8TeV.root")
-  infiles.append("input/smearing/ggHmumu125_8TeV.root")
-  infiles.append("input/rochester/ggHmumu125_8TeV.root")
+  infiles.append("input/smear/ggHmumu125_8TeV.root")
+  infiles.append("input/roch/ggHmumu125_8TeV.root")
   infiles.append("input/muscle/ggHmumu125_8TeV.root")
 
   #infiles.append("input/vbfHmumu125_8TeV.root")
