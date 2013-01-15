@@ -413,11 +413,16 @@ if __name__ == "__main__":
     if period == "14TeV":
         continue
 
-    veto = [r"CNC",r"PM","BB","BO","BE","OO","OE","EE","NotBB"]
+    veto = []
+    #veto = [r"CNC",r"PM","BB","BO","BE","OO","OE","EE","NotBB"]
     #veto = [r"CNC",r"PM","Presel","BB","BO","BE","OO","OE","EE","NotBB"]
     #veto = [r"CNC",r"PM","BDT","BB","BO","BE","OO","OE","EE","NotBB"]
     #veto = [r"CNC",r"PM","Presel"]
     #veto = [r"CNC",r"PM","BDT"]
+
+    #veto = ["Cat","Presel"]
+    #veto = ["Cat","Comb","Presel"]
+    #veto = ["Comb","Presel"]
 
     mustBe = r"(.+)_(.+)_[.\d]+.txt.out"
     #mustBe = r"(.+Cat)_(.+)_[.\d]+.txt.out"

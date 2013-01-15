@@ -530,7 +530,7 @@ def makeWeightHist(f1,canvas,leg):
   leg.Draw("same")
 
 class DataMCStack:
-  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="Events", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",doRatio=True):
+  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="Events", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",doRatio=True,ylimits=[],ylimitsRatio=[]):
     nBinsX = dataHist.GetNbinsX()
     self.nBinsX = nBinsX
     self.dataHist = dataHist
@@ -582,7 +582,11 @@ class DataMCStack:
     self.normchi2 = dataHist.Chi2Test(self.mcSumHist,"UW CHI2/NDF")
     self.chi2Prob = dataHist.Chi2Test(self.mcSumHist,"UW")
     self.KSProb = dataHist.KolmogorovTest(self.mcSumHist)
-  
+    if self.chi2Prob < 1e-10:
+        self.chi2Prob = 0.0
+    if self.KSProb < 1e-10:
+        self.KSProb = 0.0
+
     # Make Pull Hist
     self.pullHist = dataHist.Clone("pullHist"+dataHist.GetName())
     self.pullHist.Reset()
@@ -673,6 +677,8 @@ class DataMCStack:
       self.stack.SetMaximum(ymax*1.00)
       if logy:
         self.stack.SetMinimum(1.00e-1)
+      if len(ylimits) == 2:
+        self.stack.SetMaximum(ylimits[1])
       self.stack.Draw("hist")
       pad1.Update()
     else:
@@ -693,6 +699,8 @@ class DataMCStack:
         self.mcSumHist.GetYaxis().SetRangeUser(0.0,ymax*1.04)
       if xlimits != []:
         self.mcSumHist.GetXaxis().SetRangeUser(*xlimits)
+      if len(ylimits) == 2:
+        self.stack.GetYaxis().SetRangeUser(*ylimits)
       self.mcSumHist.Draw("histo b")
     for sigHist in signalsNoStack:
       sigHist.Draw("histo same")
@@ -718,6 +726,8 @@ class DataMCStack:
     self.pullHist.GetYaxis().SetTitleOffset(0.70)
     self.pullHist.SetFillColor(856)
     self.pullHist.SetFillStyle(1001)
+    if len(ylimitsRatio) == 2:
+      self.pullHist.GetYaxis().SetRangeUser(*ylimitsRatio)
     if doRatio:
       #pad2.SetGridy(1)
       self.pullHist.GetYaxis().SetTitle("#frac{Data}{MC}")
@@ -733,9 +743,11 @@ class DataMCStack:
       self.problatex.SetTextFont(root.gStyle.GetLabelFont())
       self.problatex.SetTextSize(self.pullHist.GetYaxis().GetLabelSize())
       self.problatex.SetTextAlign(12)
-      #self.problatex.DrawLatex(0.18,0.50,"#chi^{{2}}  Prob: {0:.3g}".format(self.chi2Prob))
-      #self.problatex.DrawLatex(0.18,0.41,"KS Prob: {0:.3g}".format(self.KSProb))
-      self.problatex.DrawLatex(0.18,0.41,"#chi^{{2}}/NDF: {0:.3g}".format(self.normchi2))
+      yToDraw = 0.41 #bottom
+      yToDraw = 0.92 #top
+      #self.problatex.DrawLatex(0.18,yToDraw,"KS Prob: {0:.3g}".format(self.KSProb))
+      self.problatex.DrawLatex(0.18,yToDraw,"#chi^{{2}}/NDF: {0:.3g}".format(self.normchi2))
+      self.problatex.DrawLatex(0.18,yToDraw-0.08,"#chi^{{2}}  Prob: {0:.3g}".format(self.chi2Prob))
 
     pad2.Update()
     pad2.GetFrame().DrawClone()
@@ -1385,8 +1397,8 @@ def getIntegralLowHigh(hist,lowBoundaries,highBoundaries):
 
 def saveAs(canvas,name):
   canvas.SaveAs(name+".png")
-  #canvas.SaveAs(name+".pdf")
-  #canvas.SaveAs(name+".eps")
+  canvas.SaveAs(name+".pdf")
+  canvas.SaveAs(name+".eps")
   #canvas.SaveAs(name+".root")
 
 def setLegPos(leg,legPos):

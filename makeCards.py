@@ -26,7 +26,7 @@ root.gErrorIgnoreLevel = root.kWarning
 root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.ERROR)
 PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 
-NPROCS = 1
+NPROCS = 2
 
 BAKUNC = 0.1
 
@@ -829,10 +829,10 @@ if __name__ == "__main__":
   print "Started makeCards.py"
   root.gROOT.SetBatch(True)
 
-  directory = "input/"
+  directory = "input/muscle/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  periods = ["7TeV"]
+  periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
@@ -842,13 +842,12 @@ if __name__ == "__main__":
   for a in analysesInc:
     for c in categoriesInc:
         tmpList.append(a+c)
-  analyses += tmpList
+  #analyses += tmpList
   tmpList = []
   for a in analysesVBF:
     for c in categoriesVBF:
         tmpList.append(a+c)
-  analyses += tmpList
-  analyses = ["VBFPresel","IncPresel"]
+  #analyses += tmpList
   combinations = []
   combinationsLong = []
   combinations.append((
@@ -857,21 +856,21 @@ if __name__ == "__main__":
   combinations.append((
         ["VBFBDTCut"+x for x in categoriesVBF],"VBFBDTCutCat"
   ))
-  #combinations.append((
-  #      ["IncPresel"+x for x in categoriesInc],"IncPreselCat"
-  #))
-  #combinations.append((
-  #      ["VBFPresel"+x for x in categoriesVBF],"VBFPreselCat"
-  #))
+  combinations.append((
+        ["IncPresel"+x for x in categoriesInc],"IncPreselCat"
+  ))
+  combinations.append((
+        ["VBFPresel"+x for x in categoriesVBF],"VBFPreselCat"
+  ))
   combinations.append((
         ["IncBDTCut","VBFBDTCut"],"BDTCut"
   ))
   combinations.append((
         ["IncPresel","VBFPresel"],"Presel"
   ))
-  #combinations.append((
-  #      ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
-  #))
+  combinations.append((
+        ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
+  ))
   combinations.append((
         ["VBFBDTCut"+x for x in categoriesVBF]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))
