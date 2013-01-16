@@ -240,6 +240,23 @@ nuisanceMap["xs_zH"] = {
   "zHmumu125_7TeV": 0.051
 }
 
+nuisanceMap["muonRes"] = {
+  "vbfHmumu125_8TeV":0.03,
+  "ggHmumu125_8TeV":0.03,
+  "wHmumu125_8TeV":0.03,
+  "zHmumu125_8TeV":0.03,
+
+  "vbfHmumu125_7TeV":0.03,
+  "ggHmumu125_7TeV":0.03,
+  "wHmumu125_7TeV":0.03,
+  "zHmumu125_7TeV":0.03,
+
+  "vbfHmumu125_14TeV":0.03,
+  "ggHmumu125_14TeV":0.03,
+  "wHmumu125_14TeV":0.03,
+  "zHmumu125_14TeV":0.03,
+}
+
 def getLegendEntry(ds):
   return legendEntries[re.sub(r"_.*","",ds)]
 def getColor(ds):

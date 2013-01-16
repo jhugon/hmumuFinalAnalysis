@@ -31,6 +31,7 @@ NPROCS = 2
 BAKUNC = 0.1
 
 BAKUNCON = True
+SIGUNCON = False
 
 SIGGAUS = True
 
@@ -186,14 +187,14 @@ def makePDFSigCBPlusGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,chann
     ## Error time
 
     rooParamList = [mean,width,width2,alpha,n,mix]
-    #paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
-    paramList = []
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
     for i in rooParamList:
        i.setConstant(True)
 
-    workspaceImportFn(pdfMmumu)
-    workspaceImportFn(mMuMuRooDataHist)
-    workspaceImportFn(fr)
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(mMuMuRooDataHist)
+      workspaceImportFn(fr)
 
 #    ## Debug Time
 #    frame = mMuMu.frame()
@@ -235,14 +236,15 @@ def makePDFSigCB(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName):
     ## Error time
 
     rooParamList = [mean,width,alpha,n]
-    #paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
-    paramList = []
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
     for i in rooParamList:
        i.setConstant(True)
 
-    workspaceImportFn(pdfMmumu)
-    workspaceImportFn(mMuMuRooDataHist)
-    workspaceImportFn(fr)
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(mMuMuRooDataHist)
+      workspaceImportFn(fr)
+
 
 #    ## Debug Time
 #    frame = mMuMu.frame()
@@ -287,14 +289,14 @@ def makePDFSigGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName
     ## Error time
 
     rooParamList = [mean,width]
-    #paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
-    paramList = []
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
     for i in rooParamList:
        i.setConstant(True)
 
-    workspaceImportFn(pdfMmumu)
-    workspaceImportFn(mMuMuRooDataHist)
-    workspaceImportFn(fr)
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(mMuMuRooDataHist)
+      workspaceImportFn(fr)
 
     ### Debug Time
     #frame = mMuMu.frame()
@@ -381,6 +383,26 @@ class Analysis:
       self.datFiles.append(tmpF)
       self.datHists.append(tmpH)
 
+    # Signal Shape systematics
+    self.sigErrHistsMap = {}
+    if SIGUNCON:
+      for f in self.sigFiles:
+        name = histNameBase+analysis+"/mDiMu"
+        name = name.split("/")
+        tmpDirKey = f.GetKey(name[0]) #Will break in main dir
+        tmpDir = tmpDirKey.ReadObj()
+        #tmpDir.Print()
+        for key in tmpDir.GetListOfKeys():
+          matchUp = re.match(name[1]+".+Up",key.GetName())
+          matchDown = re.match(name[1]+".+Down",key.GetName())
+          if matchUp or matchDown:
+            self.sigErrHistsMap[re.sub(name[1],"",key.GetName())] = []
+        break
+      for f in self.sigFiles:
+        for sysName in self.sigErrHistsMap:
+          tmpHist = f.Get(histNameBase+analysis+histNameSuffix+sysName)
+          self.sigErrHistsMap[sysName].append(tmpHist)
+
     #Rebin
     rb = rebin
     if type(rb) != list:
@@ -460,10 +482,41 @@ class Analysis:
                                  )
                        )
 
+    self.sigParamListList = []
     for name, hist in zip(signalNames,self.sigHistsRaw):
         sigParams, sigDebug = makePDFSig(name,hist,mMuMu,minMass,maxMass,wImport,analysis)
-        self.params.extend(sigParams)
+        self.sigParamListList.append(sigParams)
         self.debug += sigDebug
+    if SIGUNCON:
+      for name, iSignal, paramsNoErr in zip(signalNames,
+            range(len(signalNames)),self.sigParamListList):
+        firstHist = True
+        paramErrList = []
+        for errName in self.sigErrHistsMap:
+          nameNew = name+"_"+errName
+          hist = self.sigErrHistsMap[errName][iSignal]
+          sigParams, sigDebug = makePDFSig(nameNew,hist,mMuMu,minMass,maxMass,None,analysis)
+          self.debug += sigDebug
+          for curErr, nominal, i in zip(sigParams,paramsNoErr,range(len(sigParams))):
+                val = curErr.nominal
+                nomVal = nominal.nominal
+                err = abs(val-nomVal)
+                if firstHist:
+                  paramErrList.append(err)
+                else:
+                  if err > paramErrList[i]:
+                    paramErrList[i] = err
+          firstHist = False
+        for i in range(len(paramErrList)):
+            paramsNoErr[i].highErr = paramErrList[i]
+            paramsNoErr[i].lowErr = paramErrList[i]
+      for i in self.sigParamListList:
+        for j in i:
+          if "Width2" in j.name:
+            self.params.append(j)
+      # To Make sure nothing got messed up!
+      for name, hist in zip(signalNames,self.sigHistsRaw):
+        sigParams, sigDebug = makePDFSig(name,hist,mMuMu,minMass,maxMass,None,analysis)
 
     self.xsecSigTotal = 0.0
     self.xsecSigList = []
