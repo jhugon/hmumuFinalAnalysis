@@ -286,6 +286,8 @@ class ShapePlotter:
           if x > drawXLimits[1]:
                 continue
           l.append(float(y))
+        if len(l) == 0:
+            return -1.0
         return max(l)
       def copyGraphNoErrs(graph,outGraph):
         x = root.Double()

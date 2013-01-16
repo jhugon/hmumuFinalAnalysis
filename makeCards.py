@@ -848,29 +848,30 @@ if __name__ == "__main__":
     for c in categoriesVBF:
         tmpList.append(a+c)
   #analyses += tmpList
+  analyses = []
   combinations = []
   combinationsLong = []
-  combinations.append((
-        ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
-  ))
-  combinations.append((
-        ["VBFBDTCut"+x for x in categoriesVBF],"VBFBDTCutCat"
-  ))
-  combinations.append((
-        ["IncPresel"+x for x in categoriesInc],"IncPreselCat"
-  ))
-  combinations.append((
-        ["VBFPresel"+x for x in categoriesVBF],"VBFPreselCat"
-  ))
+#  combinations.append((
+#        ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
+#  ))
+#  combinations.append((
+#        ["VBFBDTCut"+x for x in categoriesVBF],"VBFBDTCutCat"
+#  ))
+#  combinations.append((
+#        ["IncPresel"+x for x in categoriesInc],"IncPreselCat"
+#  ))
+#  combinations.append((
+#        ["VBFPresel"+x for x in categoriesVBF],"VBFPreselCat"
+#  ))
   combinations.append((
         ["IncBDTCut","VBFBDTCut"],"BDTCut"
   ))
-  combinations.append((
-        ["IncPresel","VBFPresel"],"Presel"
-  ))
-  combinations.append((
-        ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
-  ))
+#  combinations.append((
+#        ["IncPresel","VBFPresel"],"Presel"
+#  ))
+#  combinations.append((
+#        ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
+#  ))
   combinations.append((
         ["VBFBDTCut"+x for x in categoriesVBF]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))
