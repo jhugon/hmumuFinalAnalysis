@@ -19,7 +19,7 @@ maxMass = 160.
 vminMass = 60.
 vmaxMass = 160.
 signalRange = [120.,130.]
-plotRange = [105.,145.]
+plotRange = [110,140.]
 rooPlotRange = root.RooFit.Range(*plotRange)
 
 class ResStudy:
