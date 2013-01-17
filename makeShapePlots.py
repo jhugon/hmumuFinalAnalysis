@@ -167,12 +167,13 @@ class ShapePlotter:
       ratioErrUp = 0.0
       ratioErrDown = 0.0
       if curveY != 0.0 and histY != 0.0:
-        histYErrUp = hist.GetErrorYhigh(i)/histY
-        histYErrDown = hist.GetErrorYlow(i)/histY
+        histYErrUp = hist.GetErrorYhigh(i)
+        histYErrDown = hist.GetErrorYlow(i)
         ratio = histY/curveY
-        ratioErrUp = (histY+histYErrUp)/curveY - ratio
-        ratioErrDown = ratio - (histY-histYErrDown)/curveY
+        ratioErrUp = histYErrUp/curveY
+        ratioErrDown = histYErrDown/curveY
         #if "bak" in curve.GetName():
+          #print("hx: {:<10.1f} cx: {:<10.1f} hy: {:<10.1f} cy: {:<10.1f} ratio: {:<10.3f} hyErrUp: {:<10.1f}".format(histX,curveX,histY,curveY,ratio,hist.GetErrorYhigh(i)))
           #print("{:<5.1f}: hx: {:<10.1f} cx: {:<10.1f} ratio: {:<10.3f}".format(histX,histX,curveX,ratio))
           #print("{:<5.1f}: h: {:<10.1f} c: {:<10.1f} ratio: {:<10.3f}".format(histX,histY,curveY,ratio))
       else:
@@ -423,6 +424,12 @@ class ShapePlotter:
       pulls.GetXaxis().SetLabelSize(gStyle.GetLabelSize("X")*canvasToPad2FontScalingFactor)
 
       pulls.Draw("ape")
+      pulls.GetXaxis().SetRangeUser(*drawXLimits)
+      if pulls.GetXaxis().GetXmax() > 1e4:
+        pulls.GetXaxis().SetRangeUser(*drawXLimits)
+        print "min {1}, max {0}".format(pulls.GetXaxis().GetXmax(),pulls.GetXaxis().GetXmin())
+        print "N bins {0}, last {1}".format(pulls.GetXaxis().GetNbins(),pulls.GetXaxis().GetLast())
+      pulls.Draw("ape")
       if doRatio:
         modelRatio = root.TGraphAsymmErrors()
         modelOne = root.TGraphAsymmErrors()
@@ -430,6 +437,7 @@ class ShapePlotter:
         modelRatio.Draw("3")
         modelOne.Draw("l")
         pulls.Draw("pe")
+
 
       ## Pretty Stuff
   
@@ -442,7 +450,6 @@ class ShapePlotter:
       problatex.DrawLatex(0.18,0.41,"#chi^{{2}}/NDF: {0:.3g}".format(normchi2))
   
       pad2.Update()
-      pad2.GetFrame().DrawClone()
       pad2.RedrawAxis() # Updates Axis Lines
     
       pad1.cd()
