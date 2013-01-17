@@ -932,9 +932,9 @@ if __name__ == "__main__":
 #  combinations.append((
 #        ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
 #  ))
-#  combinations.append((
-#        ["VBFBDTCut"+x for x in categoriesVBF]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
-#  ))
+  combinations.append((
+        ["VBFBDTCut"+x for x in categoriesVBF]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
+  ))
 #  combinationsLong.append((
 #        ["IncBDTCut","VBFBDTCut"],"BDTCut"
 #  ))

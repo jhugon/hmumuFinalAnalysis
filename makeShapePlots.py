@@ -47,6 +47,7 @@ def getGraphIntegral(graph):
 
 class ShapePlotter:
   def __init__(self,filename,outDir,titleMap,rebin=1,doSignalScaling=True,xlimits=[]):
+    self.histList = []
     self.padList = []
     self.pullsList = []
     self.legList = []
@@ -341,6 +342,40 @@ class ShapePlotter:
         outRatio.SetFillStyle(graph.GetFillStyle())
         self.modelLines.append(outOne)
         self.modelLines.append(outRatio)
+      def getHistArgsFromGraph(graph,drawXLimits):
+        if graph.GetN() < 2:
+          return graph.GetName(),graph.GetTitle(),100,drawXLimits[0],drawXLimits[1]
+        diffs = []
+        x = root.Double()
+        y = root.Double()
+        for i in range(graph.GetN()-1):
+          graph.GetPoint(i,x,y)
+          x1 = float(x)
+          graph.GetPoint(i+1,x,y)
+          x2 = float(x)
+          diffs.append(x2-x1)
+        #return max(set(diffs), key=diffs.count)
+        nBins = int((drawXLimits[1]-drawXLimits[0])/min(diffs))
+        return graph.GetName(),graph.GetTitle(),nBins,drawXLimits[0],drawXLimits[1]
+      def getHistFromGraph(graph,hist):
+        x = root.Double()
+        y = root.Double()
+        for i in range(graph.GetN()-1):
+          graph.GetPoint(i,x,y)
+          yErr = graph.GetErrorYhigh(i)
+          iBin = hist.GetXaxis().FindBin(x)
+          hist.SetBinContent(iBin,y)
+          hist.SetBinError(iBin,yErr)
+        hist.SetMarkerColor(1)
+        hist.SetLineColor(1)
+
+      th1Args = getHistArgsFromGraph(data,drawXLimits)
+      dataHist = root.TH1F(*th1Args)
+      self.histList.append(dataHist)
+      pullHist = root.TH1F(*th1Args)
+      self.histList.append(pullHist)
+
+      getHistFromGraph(data,dataHist)
 
       maxVal = getMaxYVal(self,data)
       maxVal = max(getMaxYVal(self,model),maxVal)
@@ -375,21 +410,21 @@ class ShapePlotter:
     
       # Main Pad
       pad1.cd();
-      data.Draw("ape")
-      data.GetYaxis().SetTitle("Events/Bin")
-      data.GetYaxis().SetTitleSize(gStyle.GetTitleSize("Y")*canvasToPad1FontScalingFactor)
-      data.GetYaxis().SetLabelSize(gStyle.GetLabelSize("Y")*canvasToPad1FontScalingFactor)
-      data.GetYaxis().SetTitleOffset(0.9*gStyle.GetTitleOffset("Y"))
-      data.GetXaxis().SetLabelOffset(0.70)
-      data.GetXaxis().SetTitle("m_{#mu#mu} [GeV]")
-      data.GetXaxis().SetRangeUser(*drawXLimits)
+      dataHist.Draw("")
+      dataHist.GetYaxis().SetTitle("Events/Bin")
+      dataHist.GetYaxis().SetTitleSize(gStyle.GetTitleSize("Y")*canvasToPad1FontScalingFactor)
+      dataHist.GetYaxis().SetLabelSize(gStyle.GetLabelSize("Y")*canvasToPad1FontScalingFactor)
+      dataHist.GetYaxis().SetTitleOffset(0.9*gStyle.GetTitleOffset("Y"))
+      dataHist.GetXaxis().SetLabelOffset(0.70)
+      dataHist.GetXaxis().SetTitle("m_{#mu#mu} [GeV]")
+      #dataHist.GetXaxis().SetRangeUser(*drawXLimits)
       if maxVal != None:
-        data.GetYaxis().SetRangeUser(0.0,maxVal*1.05)
+        dataHist.GetYaxis().SetRangeUser(0.0,maxVal*1.05)
       modelLine = root.TGraph()
       copyGraphNoErrs(model,modelLine)
       model.Draw("3")
       modelLine.Draw("l")
-      data.Draw("pe")
+      dataHist.Draw("same")
       pad1.Update()
       pad1.RedrawAxis() # Updates Axis Lines
 
@@ -401,42 +436,37 @@ class ShapePlotter:
       doRatio = True
       if doRatio:
         pulls =  ratioGraph
-      pulls.SetLineStyle(1)
-      pulls.SetLineColor(1)
-      pulls.SetMarkerColor(1)
-      pulls.SetTitle("")
-      pulls.GetXaxis().SetRangeUser(*drawXLimits)
-      pulls.GetXaxis().SetTitle("m_{#mu#mu} [GeV]")
-      pulls.GetXaxis().CenterTitle(1)
-      pulls.GetYaxis().SetNdivisions(5)
-      pulls.GetXaxis().SetTitleSize(0.055*pad1ToPad2FontScalingFactor)
-      pulls.GetXaxis().SetLabelSize(0.050*pad1ToPad2FontScalingFactor)
-      pulls.GetYaxis().SetTitle("#frac{"+dataLabel+"-Fit}{#sigma_{"+dataLabel+"}}")
+      getHistFromGraph(pulls,pullHist)
+      pullHist.SetLineStyle(1)
+      pullHist.SetLineColor(1)
+      pullHist.SetMarkerColor(1)
+      pullHist.SetTitle("")
+      pullHist.GetXaxis().SetRangeUser(*drawXLimits)
+      pullHist.GetXaxis().SetTitle("m_{#mu#mu} [GeV]")
+      pullHist.GetXaxis().CenterTitle(1)
+      pullHist.GetYaxis().SetNdivisions(5)
+      pullHist.GetXaxis().SetTitleSize(0.055*pad1ToPad2FontScalingFactor)
+      pullHist.GetXaxis().SetLabelSize(0.050*pad1ToPad2FontScalingFactor)
+      pullHist.GetYaxis().SetTitle("#frac{"+dataLabel+"-Fit}{#sigma_{"+dataLabel+"}}")
       if doRatio:
-        pulls.GetYaxis().SetTitle("#frac{"+dataLabel+"}{Fit}")
-        pulls.GetYaxis().SetRangeUser(0,2)
-      pulls.GetYaxis().SetTitleSize(0.045*pad1ToPad2FontScalingFactor)
-      pulls.GetYaxis().SetLabelSize(0.045*pad1ToPad2FontScalingFactor)
-      pulls.GetYaxis().CenterTitle(1)
-      pulls.GetXaxis().SetTitleOffset(0.75*pulls.GetXaxis().GetTitleOffset())
-      pulls.GetYaxis().SetTitleOffset(0.70)
+        pullHist.GetYaxis().SetTitle("#frac{"+dataLabel+"}{Fit}")
+        pullHist.GetYaxis().SetRangeUser(0,2)
+      pullHist.GetYaxis().SetTitleSize(0.045*pad1ToPad2FontScalingFactor)
+      pullHist.GetYaxis().SetLabelSize(0.045*pad1ToPad2FontScalingFactor)
+      pullHist.GetYaxis().CenterTitle(1)
+      pullHist.GetXaxis().SetTitleOffset(0.75*pullHist.GetXaxis().GetTitleOffset())
+      pullHist.GetYaxis().SetTitleOffset(0.70)
 
-      pulls.GetXaxis().SetLabelSize(gStyle.GetLabelSize("X")*canvasToPad2FontScalingFactor)
+      pullHist.GetXaxis().SetLabelSize(gStyle.GetLabelSize("X")*canvasToPad2FontScalingFactor)
 
-      pulls.Draw("ape")
-      pulls.GetXaxis().SetRangeUser(*drawXLimits)
-      if pulls.GetXaxis().GetXmax() > 1e4:
-        pulls.GetXaxis().SetRangeUser(*drawXLimits)
-        print "min {1}, max {0}".format(pulls.GetXaxis().GetXmax(),pulls.GetXaxis().GetXmin())
-        print "N bins {0}, last {1}".format(pulls.GetXaxis().GetNbins(),pulls.GetXaxis().GetLast())
-      pulls.Draw("ape")
+      pullHist.Draw("")
       if doRatio:
         modelRatio = root.TGraphAsymmErrors()
         modelOne = root.TGraphAsymmErrors()
         makeRatioModelPlots(model,modelRatio,modelOne)
         modelRatio.Draw("3")
         modelOne.Draw("l")
-        pulls.Draw("pe")
+        pullHist.Draw("same")
 
 
       ## Pretty Stuff
@@ -444,8 +474,8 @@ class ShapePlotter:
       normchi2 = chi2
       problatex = root.TLatex()
       problatex.SetNDC()
-      problatex.SetTextFont(data.GetXaxis().GetLabelFont())
-      problatex.SetTextSize(pulls.GetYaxis().GetLabelSize())
+      problatex.SetTextFont(dataHist.GetXaxis().GetLabelFont())
+      problatex.SetTextSize(pullHist.GetYaxis().GetLabelSize())
       problatex.SetTextAlign(12)
       problatex.DrawLatex(0.18,0.41,"#chi^{{2}}/NDF: {0:.3g}".format(normchi2))
   
@@ -458,7 +488,7 @@ class ShapePlotter:
       leg = root.TLegend(*legPos)
       leg.SetFillColor(0)
       leg.SetLineColor(0)
-      leg.AddEntry(data,dataLabel,"pe")
+      leg.AddEntry(dataHist,dataLabel,"pe")
       leg.AddEntry(model,"Model","lf")
       #leg.AddEntry(combinedSigErrorGraph,"SM Higgs #times {0:.1f}".format(self.limit),"lf")
       leg.Draw()
