@@ -977,7 +977,7 @@ if __name__ == "__main__":
   lumiListLong = [5,10,15,20,25,30,40,50,75,100,200,500,1000,2000,5000]
   lumiListLong = [20,30,50,100,500,1000,5000]
   lumiList = [lumiDict["8TeV"],20,25,30]
-  lumiList = [20]
+  lumiList = [lumiDict["8TeV"]]
   #lumiListLong = lumiList
 
   MassRebin = 1 # 4 Bins per GeV originally

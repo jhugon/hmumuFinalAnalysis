@@ -80,18 +80,30 @@ class ShapePlotter:
       mMuMu = channelWS.var("mMuMu")
       bakPDF = channelWS.pdf("bak")
       data_obs = channelWS.data("data_obs")
+      rooDataTitle = data_obs.GetTitle()
+      if rebin != 1:
+        tmpHist = data_obs.createHistogram("mMuMu")
+        tmpHist.Rebin(rebin)
+        data_obs =  root.RooDataHist(data_obs.GetName(),data_obs.GetTitle(),
+                                                            root.RooArgList(mMuMu),tmpHist)
 
       #Data Time
       dataGraph, bakPDFGraph, pullsGraph,chi2 = getattr(self,"makeTGraphs")(bakPDF,data_obs,mMuMu)
-      getattr(self,"draw")(channelName,dataGraph,bakPDFGraph,pullsGraph,chi2)
+      getattr(self,"draw")(channelName,dataGraph,bakPDFGraph,pullsGraph,chi2,rooDataTitle)
       saveAs(self.canvas,outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName)
 
       #Templates Time
       for processName in self.processNameMap[channelName]:
         template = channelWS.data(processName+"_Template")
+        rooDataTitle = template.GetTitle()
+        if rebin != 1:
+            tmpHist = template.createHistogram("mMuMu")
+            tmpHist.Rebin(rebin)
+            template =  root.RooDataHist(template.GetName(),template.GetTitle(),
+                                                            root.RooArgList(mMuMu),tmpHist)
         pdf = channelWS.pdf(processName)
         dataGraph, pdfGraph, pullsGraph,chi2 = getattr(self,"makeTGraphs")(pdf,template,mMuMu)
-        getattr(self,"draw")(channelName,dataGraph,pdfGraph,pullsGraph,chi2)
+        getattr(self,"draw")(channelName,dataGraph,pdfGraph,pullsGraph,chi2,rooDataTitle)
         saveAs(self.canvas,outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName+"_"+processName)
 
   def readCard(self,fn):
@@ -170,6 +182,13 @@ class ShapePlotter:
     return ratioPlot
 
   def makeTGraphs(self,pdf,data,observable):
+    avgWeight = 1.0
+    isRealData = (data.GetTitle() == "Real Observed Data")
+    if (not isRealData) and (data.GetName() == "data_obs" or "bak" in data.GetName()):
+      for i in backgroundList:
+        if "DY" in i:
+          datasetName = i + "_" + self.energyStr
+          avgWeight = self.lumi*1000.0*xsec[datasetName]/nEventsMap[datasetName]
     frame = None
     if len(self.xlimits) == 2:
       frame = observable.frame(root.RooFit.Range(*self.xlimits))
@@ -250,8 +269,8 @@ class ShapePlotter:
       if yNom <=0.0:
         continue
       dataGraph.SetPoint(iPoint,xNom,yNom)
-      errUp = curveData.GetErrorXhigh(i)
-      errDown = curveData.GetErrorXlow(i)
+      errUp = sqrt(yNom)*sqrt(avgWeight)
+      errDown = sqrt(yNom)*sqrt(avgWeight)
       dataGraph.SetPointError(iPoint,0.,0.,errUp,errDown)
       iPoint+=1
     iPoint = 0
@@ -271,7 +290,7 @@ class ShapePlotter:
     modelGraph.SetFillStyle(1)
     return dataGraph, modelGraph, pullsGraph, chi2
 
-  def draw(self,channelName,data,model,pulls,chi2):
+  def draw(self,channelName,data,model,pulls,chi2,rooDataTitle):
       drawXLimits = self.xlimits
       if "Hmumu125" in data.GetName():
         drawXLimits = [110.,140.]
@@ -324,7 +343,11 @@ class ShapePlotter:
 
       maxVal = getMaxYVal(self,data)
       maxVal = max(getMaxYVal(self,model),maxVal)
-      dataLabel = "MC Data"
+      dataLabel = "FullSim Data"
+      if rooDataTitle == "Toy Data":
+        dataLabel = "Toy Data"
+      elif rooDataTitle == "Real Observed Data":
+        dataLabel = "Data"
 
       #Setup Canvas
       self.canvas.cd()

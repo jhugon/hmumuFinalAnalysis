@@ -275,8 +275,10 @@ if __name__ == "__main__":
   if scaleHiggsBy != 1:  
     print("**** Higgs XSEC Scaled by Factor of: {} ****".format(scaleHiggsBy))
   print("Integrated Lumi for Datasets: [fb^-1]")
-  for i in xsec: 
+  sortedXsec = xsec.keys()
+  sortedXsec.sort()
+  for i in sortedXsec: 
     print("{0:<15} {1:.3f}".format(i,nEventsMap[i]/xsec[i]/1000.))
   print("xsec/nEvent Scale Factors for Datasets: [fb/event]")
-  for i in xsec: 
+  for i in sortedXsec: 
     print("{0:<15} {1:.3g}".format(i,xsec[i]/nEventsMap[i]*1000.))

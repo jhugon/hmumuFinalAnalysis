@@ -236,7 +236,10 @@ class TableMaker:
     outString = r"Category & $N_{Data}$ & $N_{Predicted}$ & Background Error \\ \hline \hline"+'\n'
     maxChannelNameLength = max([len(i) for i in dataDict])
     numberLength = 8
-    for channelName in dataDict:
+    channels = dataDict.keys()
+    channels.sort()
+    channels.reverse()
+    for channelName in channels:
       errList = []
       errNamesString = ""
       iErrName = 0
