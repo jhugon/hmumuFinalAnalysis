@@ -5,6 +5,7 @@ from xsec import *
 import math
 import os.path
 import glob
+import random
 
 from ROOT import gSystem
 gSystem.Load('libRooFit')
@@ -294,8 +295,11 @@ class ShapePlotter:
 
   def draw(self,channelName,data,model,pulls,chi2,rooDataTitle):
       drawXLimits = self.xlimits
+      isSignalMC = False
       if "Hmumu125" in data.GetName():
         drawXLimits = [110.,140.]
+      if "Hmumu" in data.GetName():
+        isSignalMC=True
       def getMaxYVal(self,graph):
         l = []
         x = root.Double()
@@ -356,7 +360,7 @@ class ShapePlotter:
           diffs.append(x2-x1)
         #return max(set(diffs), key=diffs.count)
         nBins = int((drawXLimits[1]-drawXLimits[0])/min(diffs))
-        return graph.GetName(),graph.GetTitle(),nBins,drawXLimits[0],drawXLimits[1]
+        return graph.GetName()+str(random.randint(0,10000)),graph.GetTitle(),nBins,drawXLimits[0],drawXLimits[1]
       def getHistFromGraph(graph,hist):
         x = root.Double()
         y = root.Double()
@@ -369,10 +373,9 @@ class ShapePlotter:
         hist.SetMarkerColor(1)
         hist.SetLineColor(1)
 
-      th1Args = getHistArgsFromGraph(data,drawXLimits)
-      dataHist = root.TH1F(*th1Args)
+      dataHist = root.TH1F(*getHistArgsFromGraph(data,drawXLimits))
       self.histList.append(dataHist)
-      pullHist = root.TH1F(*th1Args)
+      pullHist = root.TH1F(*getHistArgsFromGraph(data,drawXLimits))
       self.histList.append(pullHist)
 
       getHistFromGraph(data,dataHist)
@@ -502,8 +505,11 @@ class ShapePlotter:
       tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
       tlatex.SetTextAlign(32)
       tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.titleMap[channelName])
-      tlatex.DrawLatex(legPos[0]-0.01,0.875,self.lumiStr)
-      tlatex.DrawLatex(legPos[0]-0.01,0.82,"#sqrt{s}="+self.energyStr)
+      if not isSignalMC:
+      #  tlatex.DrawLatex(legPos[0]-0.01,0.875,self.lumiStr)
+        tlatex.DrawLatex(legPos[0]-0.01,0.80,self.lumiStr)
+      #tlatex.DrawLatex(legPos[0]-0.01,0.82,"#sqrt{s}="+self.energyStr)
+      tlatex.DrawLatex(legPos[0]-0.01,0.875,"#sqrt{s}="+self.energyStr)
 
       self.padList.extend([pad1,pad2])
       self.pullsList.append(pulls)
@@ -566,7 +572,7 @@ if __name__ == "__main__":
   plotRange= [110,160]
   #plotRange= []
 
-  rebin=1
+  rebin=2
 
   shapePlotterList = []
   #for fn in glob.glob(dataDir+"*20.root")+glob.glob(dataDir+"*5.05.root"):
