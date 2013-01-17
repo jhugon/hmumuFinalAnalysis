@@ -309,6 +309,8 @@ class ShapePlotter:
           graph.GetPoint(i,x,y)
           outOne.SetPoint(i,x,1.0)
           outRatio.SetPoint(i,x,1.0)
+          if y == 0.0:
+            continue
           errUp = graph.GetErrorYhigh(i)
           errDown = graph.GetErrorYlow(i)
           outRatio.SetPointError(i,0.,0.,errDown/float(y),errUp/float(y))
@@ -501,12 +503,13 @@ if __name__ == "__main__":
   dataDir = "statsCards/"
   outDir = "shapes/"
 
-  plotRange= [105,160]
+  plotRange= [110,160]
   #plotRange= []
 
   rebin=1
 
   shapePlotterList = []
-  for fn in glob.glob(dataDir+"*20.root")+glob.glob(dataDir+"*5.05.root"):
+  #for fn in glob.glob(dataDir+"*20.root")+glob.glob(dataDir+"*5.05.root"):
+  for fn in glob.glob(dataDir+"*.root"):
     s = ShapePlotter(fn,outDir,titleMap,rebin,xlimits=plotRange)
     shapePlotterList.append(s)

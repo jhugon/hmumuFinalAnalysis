@@ -415,6 +415,9 @@ class Analysis:
           hist.Rebin2D(*rb)
         for hist in self.datHists:
           hist.Rebin2D(*rb)
+        for key in self.sigErrHistsMap:
+          for hist in self.sigErrHistsMap[key]:
+            hist.Rebin2D(*rb)
     elif len(rb) == 1 and True:
         for hist in self.sigHistsRaw:
           hist.Rebin(*rb)
@@ -422,6 +425,9 @@ class Analysis:
           hist.Rebin(*rb)
         for hist in self.datHists:
           hist.Rebin(*rb)
+        for key in self.sigErrHistsMap:
+          for hist in self.sigErrHistsMap[key]:
+            hist.Rebin2D(*rb)
     elif len(rb) == 0:
       pass
     else:
@@ -694,6 +700,7 @@ class DataCardMaker:
     rootDebugString = ""
 
     for channel in self.channels:
+        print (channel.workspace.data("data_obs").GetTitle())
         channel.workspace.Write()
 
     outRootFile.Close()

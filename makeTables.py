@@ -11,7 +11,13 @@ import re
 
 from xsec import *
 
-import makeShapePlots
+from ROOT import gSystem
+gSystem.Load('libRooFit')
+
+root.gErrorIgnoreLevel = root.kWarning
+#root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.WARNING)
+root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.ERROR)
+PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 
 channelNameMap = {
   "AllCat":"All Cat. Comb.",
@@ -89,242 +95,240 @@ errNameMap = {
   "ResSig":r"Muon Smearing Mixing",
 }
 
-def convertHistToCounts(dataDict,ggFileName,vbfFileName):
-  ggFile = root.TFile(ggFileName)
-  vbfFile = root.TFile(vbfFileName)
+class TableMaker:
+  def __init__(self,filename,outNameBase,titleMap,sampleNameMap,errNameMap,xRange=[120.,130.]):
+    assert(len(xRange) ==2)
+    self.textFileName = os.path.splitext(filename)[0]+".txt"
+    self.processNameMap, self.params = getattr(self,"readCard")(self.textFileName)
+    self.titleMap = titleMap
+    self.sampleNameMap = sampleNameMap
+    self.errNameMap = errNameMap
+    self.lumi = -1
+    self.lumiStr = ""
+    self.energyStr = ""
+    tmpMatch = re.search(r"([\w]*)_(.+)_([.0-9]+)\.root",filename)
+    if tmpMatch:
+      self.lumi = int(float(tmpMatch.group(3)))
+      self.lumiStr = "$\\mathcal{{L}}$ = {0} fb$^{{-1}}$".format(self.lumi)
+      self.energyStr = "$\\sqrt{s}$="+tmpMatch.group(2)
 
-  outDict = {}
-  for channelName in dataDict:
-    tmpHist = None
-    histNameToGet = channelName+"/mDiMu"
-    if re.search("VBF",channelName) or re.search("vbf",channelName):
-      tmpHist = vbfFile.Get(histNameToGet)
-    else:
-      tmpHist = ggFile.Get(histNameToGet)
-    quantiles = getMedianAndQuantileInterval(tmpHist,0.159)
-    tmpDict = {}
-    channel = dataDict[channelName]
-    lowBin = 0
-    highBin = 0
-    for histName in channel:
-      hist = channel[histName]
-      val = getIntegralAll(hist,[quantiles[0],quantiles[2]])
-      tmpDict[histName] = val
-    outDict[channelName] = tmpDict
-  return outDict
-  
-def getShapeErrorsFromCounts(data):
-  outDict = {}
-  for channelName in data:
-    tmpDict = {}
-    channel = data[channelName]
-    for name in channel:
-      if name == "data_obs":
-        tmpDict["data_obs"] = {"nom":channel[name]}
+    rooXRange = root.RooFit.Range("tableRange")
+    rooAllNormRange = root.RooFit.NormRange("all")
+    #rooNormSet = root.RooFit.NormSet(rooAllNormRange)
+
+    #print("==================================================")
+    #print(filename)
+    self.f = root.TFile(filename)
+    dataDict2 = {}
+    dataDict = {}
+    for channelKey in self.f.GetListOfKeys():
+      if channelKey.GetClassName() != "RooWorkspace":
         continue
-      matchUp = re.match(r"([^_]+)_(.+)Up",name)
-      matchDown = re.match(r"([^_]+)_(.+)Down",name)
-      if matchUp:
-        histName = matchUp.group(1)
-        parName = matchUp.group(2)
-        if tmpDict.has_key(histName):
-          if tmpDict[histName].has_key(parName):
-            tmpDict[histName][parName]["Up"] = channel[name]
+      channelName = channelKey.GetName()
+      dataDict[channelName] = {}
+      dataDict2[channelName] = {}
+      channelWS = channelKey.ReadObj()
+      mMuMu = channelWS.var("mMuMu")
+      mMuMu.setRange("tableRange",xRange[0],xRange[1])
+      mMuMuArgSet = root.RooArgSet(mMuMu)
+      rooNormSet = root.RooFit.NormSet(mMuMuArgSet)
+      #mMuMu.Print("verbose")
+      bakPDF = channelWS.pdf("bak")
+      data_obs = channelWS.data("data_obs")
+
+      nData = data_obs.sumEntries("mMuMu > {0} && mMuMu < {1}".format(*xRange))
+      nDataTotal = data_obs.sumEntries("mMuMu > 0.0")
+      bakInt = bakPDF.createIntegral(mMuMuArgSet,rooXRange,rooNormSet)
+      nBak = bakInt.getVal()*nDataTotal
+
+      pdfParams = bakPDF.getParameters(data_obs)
+      itr = pdfParams.createIterator()
+
+      nBakErrUpList = []
+      nBakErrDownList = []
+      for iParam in range(pdfParams.getSize()):
+        param = itr.Next()
+        paramName = param.GetName()
+        if self.params.has_key(paramName):
+          nominal,err = self.params[paramName]
+          nominal = float(nominal)
+          err = float(err)
+          param.setVal(nominal+err)
+          nBakErrUp = bakInt.getVal()*nDataTotal
+          param.setVal(nominal-err)
+          nBakErrDown = bakInt.getVal()*nDataTotal
+          nBakErrUp -= nBak
+          nBakErrDown -= nBak
+          if nBakErrUp > 0.0:
+            nBakErrUpList.append(nBakErrUp**2)
           else:
-            tmpDict[histName][parName] = {}
-            tmpDict[histName][parName]["Up"] = channel[name]
-        else:
-          tmpDict[histName] = {}
-          tmpDict[histName][parName] = {}
-          tmpDict[histName][parName]["Up"] = channel[name]
-      elif matchDown:
-        histName = matchDown.group(1)
-        parName = matchDown.group(2)
-        if tmpDict.has_key(histName):
-          if tmpDict[histName].has_key(parName):
-            tmpDict[histName][parName]["Down"] = channel[name]
+            nBakErrDownList.append(nBakErrUp**2)
+          if nBakErrDown > 0.0:
+            nBakErrUpList.append(nBakErrDown**2)
           else:
-            tmpDict[histName][parName] = {}
-            tmpDict[histName][parName]["Down"] = channel[name]
+            nBakErrDownList.append(nBakErrDown**2)
+          dataDict2[channelName][paramName] = {"nom":nominal,"err":err}
+      nBakErrUp = 0.
+      nBakErrDown = 0.
+      #print [sqrt(x) for x in nBakErrUpList]
+      #print [sqrt(x) for x in nBakErrDownList]
+#      if len(nBakErrUpList)>0:
+#        nBakErrUp = sqrt(reduce(lambda x, y: x+y,nBakErrUpList))
+#      if len(nBakErrDownList)>0:
+#        nBakErrDown = sqrt(reduce(lambda x, y: x+y,nBakErrDownList))
+      if len(nBakErrUpList)>0:
+        nBakErrUp = sqrt(max(nBakErrUpList))/nBak
+      if len(nBakErrDownList)>0:
+        nBakErrDown = sqrt(max(nBakErrDownList))/nBak
+      #print("{0:<20} Data: {1:<10} Predict: {2:<10.1f} +{3:<10.2%} -{4:<10.2%}".format(channelName,nData,nBak,nBakErrUp,nBakErrDown))
+      dataDict[channelName]["nData"] = nData
+      dataDict[channelName]["nBak"] = nBak
+      dataDict[channelName]["bakUpErr"] = nBakErrUp
+      dataDict[channelName]["bakDownErr"] = nBakErrDown
+#      #Templates Time
+#      for processName in self.processNameMap[channelName]:
+#        if processName == "bak":
+#          continue
+#        template = channelWS.data(processName+"_Template")
+#        nTemplateTotal = data_obs.sumEntries("mMuMu > 0.0")
+#        eff = float(nTemplateTotal)/nEventsMap[processName]
+    self.dataDict = dataDict
+    self.dataDict2 = dataDict2
+
+
+  def readCard(self,fn):
+    f = open(fn)
+    foundBin = False
+    binList = []
+    processList = []
+    rateList = []
+    paramMap = {}
+    for line in f:
+      if re.search("^bin",line):
+        if foundBin:
+          m =  re.findall("[\s]+[\w]+",line)
+          binList.extend([i for i in m])
         else:
-          tmpDict[histName] = {}
-          tmpDict[histName][parName] = {}
-          tmpDict[histName][parName]["Down"] = channel[name]
-      else:
-        if tmpDict.has_key(name):
-          tmpDict[name]["nom"] = channel[name]
-        else:
-          tmpDict[name] = {"nom":channel[name]}
-    ##################################
-    # Now Process into Error Fractions
-    for histName in tmpDict:
-      print histName
-      nomVal = tmpDict[histName]["nom"]
-      upSum2 = 0.0
-      downSum2 = 0.0
-      for errName in tmpDict[histName]:
-        if errName == "nom":
-            continue
-        upVal = tmpDict[histName][errName]["Up"]
-        downVal = tmpDict[histName][errName]["Down"]
-        if upVal < downVal:
-          tmpVal = upVal
-          upVal = downVal
-          downVal = tmpVal
-        upErr = (upVal-nomVal)/nomVal
-        downErr = (nomVal-downVal)/nomVal
-        tmpDict[histName][errName]["Up"] = upErr
-        tmpDict[histName][errName]["Down"] = downErr
-        upSum2 += upErr**2
-        downSum2 += downErr**2
-      if histName == "bak":
-        tmpDict[histName]["TotalSyst"] = {"Up":sqrt(upSum2),"Down":sqrt(downSum2)}
-        tmpDict[histName]["Stat"] = {"Up":sqrt(nomVal)/nomVal,"Down":sqrt(nomVal)/nomVal}
-      if histName == "sig":
-        tmpDict[histName]["TotalSyst"] = {"Up":sqrt(upSum2),"Down":sqrt(downSum2)}
+          foundBin = True
+      if re.search("^process[\s]+[a-zA-Z]+",line):
+          m =  re.findall("[\s]+[\w]+",line)
+          processList.extend([i for i in m])
+      if re.search("^rate[\s]+[-+eE.0-9]+",line):
+          m =  re.findall("[\s]+[-+eE.0-9]+",line)
+          rateList.extend([float(i) for i in m])
+      paramMatch = re.search(r"([a-zA-Z0-9_]+)[\s]+param[\s]+([-.+eE0-9]+)[\s]+([-.+eE0-9]+)",line)
+      if paramMatch:
+        gs = paramMatch.groups()
+        paramMap[gs[0]] = [gs[1],gs[2]]
+    binList = [x.replace(r" ","") for x in binList]
+    processList = [x.replace(r" ","") for x in processList]
+    result = {}
+    for i in binList:
+      if not result.has_key(i):
+        result[i] = {}
+    for b,p,r in zip(binList,processList,rateList):
+      result[b][p] = r
+    return result, paramMap
 
-    for histName in tmpDict:
-        print(histName+"  "+str(tmpDict[histName].keys()))
-        
-    outDict[channelName] = tmpDict
-      
-      
-  return outDict
+  def printBakPredict(self):
+    dataDict = self.dataDict
+    titleMap = self.titleMap
+    outString = r"Category & $N_{Data}$ & $N_{Predicted}$ & Background Error \\ \hline \hline"+'\n'
+    maxChannelNameLength = max([len(i) for i in dataDict])
+    numberLength = 8
+    for channelName in dataDict:
+      errList = []
+      errNamesString = ""
+      iErrName = 0
+      errList.append(titleMap[channelName])
+      errNamesString += "{"+str(iErrName)+":<"+str(maxChannelNameLength)+"} & "
+      iErrName +=1
+      errList.append(dataDict[channelName]["nData"])
+      errNamesString += "{"+str(iErrName)+":<"+str(numberLength)+".0f} & "
+      iErrName +=1
+      errList.append(dataDict[channelName]["nBak"])
+      errNamesString += "{"+str(iErrName)+":<"+str(numberLength)+".1f} & "
+      iErrName +=1
+      errList.append(dataDict[channelName]["bakUpErr"])
+      errNamesString += "+{"+str(iErrName)+":<"+str(numberLength)+".2%} "
+      iErrName +=1
+      errList.append(dataDict[channelName]["bakDownErr"])
+      errNamesString += "-{"+str(iErrName)+":<"+str(numberLength)+".2%} "
+      iErrName +=1
+      errNamesString += r"\\ \hline"+"\n"
+      outString += errNamesString.format(*errList)
 
-def writeErrorTable(data,latex,niceTitles,mustMatchList=None,cantMatchList=None,sampleMustBe=""):
-  def sortfun(s):
-    ll = ["BB","BE","BO","OO","OE","EE","NotBB","!BB"]
-    i = 0
-    for l in ll:
-      match = re.match(r"(.*)("+l+r")",s)
-      if match:
-        result = match.group(1)+str(i)
-        return result
-      i += 1
-    return s
-  def matches(s,ll):
-    for l in ll:
-      if re.match(l,s):
-        return True
-    return False
-  outString = ""
-  # Get Widths
-  maxChannelWidth = 0
-  maxSampleWidth = 0
-  maxErrWidth = 0
-  channelNames = data.keys()
-  channelNames.sort(key=sortfun)
-  for channelName in channelNames:
-     channel = data[channelName]
-     if niceTitles:
-        channelName = channelNameMap[channelName]
-     if len(channelName) > maxChannelWidth:
-        maxChannelWidth = len(channelName)
-     for sampleName in channel:
-       if not re.search(sampleMustBe,sampleName):
-         continue
-       sample = channel[sampleName]
-       if niceTitles:
-         sampleName = sampleNameMap[sampleName]
-       if len(sampleName) > maxSampleWidth:
-          maxSampleWidth = len(sampleName)
-       for errName in sample:
-         if mustMatchList != None:
-            if not matches(errName, mustMatchList):
-              continue
-         if cantMatchList != None:
-            if matches(errName, cantMatchList):
-              continue
-         if errName == "nom":
-            continue
-         if niceTitles:
-           errName = errNameMap[errName]
-         if len(errName) > maxErrWidth:
-            maxErrWidth = len(errName)
-  maxChannelWidth = str(maxChannelWidth+2)
-  maxSampleWidth = str(maxSampleWidth+2)
-  maxErrWidth = str(maxErrWidth+2)
-  # Get Err Names
-  errNames = []
-  errNamesString = " "*int(maxChannelWidth)
-  if latex:
-    errNamesString += "&"
-  iErrName = 0
-  for channelName in channelNames:
-     for sampleName in data[channelName]:
-       if not re.search(sampleMustBe,sampleName):
-         continue
-       for errName in data[channelName][sampleName]:
-         if mustMatchList != None:
-            if not matches(errName, mustMatchList):
-              continue
-         if cantMatchList != None:
-            if matches(errName, cantMatchList):
-              continue
-         if errName == "nom":
-            continue
-         if niceTitles:
-           errName = errNameMap[errName]
-         errNames.append(errName)
-         errNamesString += "{"+str(iErrName)+":^"+str(len(errName)+2)+"}"
-         if latex:
-           errNamesString += "&"
-         iErrName += 1
-     break
-  if latex:
-    errNamesString = errNamesString.rstrip("&")
-    errNamesString += r"\\ \hline \hline"
-  errNamesString = errNamesString.format(*errNames)
-  outString += "\n"+errNamesString+"\n"
-  for channelName in channelNames:
-    errVals = [channelName]
-    if niceTitles:
-      errVals = [channelNameMap[channelName]]
-    errVals2 = [""]
-    errValsString = "{0:<"+maxChannelWidth+"}"
-    errValsString2 = "{0:<"+maxChannelWidth+"}"
-    if latex:
-      errValsString += r"&"
-      errValsString2 += r"&"
-    iErrVal = 1
-    for sampleName in data[channelName]:
-      if not re.search(sampleMustBe,sampleName):
-         continue
-      for errName in data[channelName][sampleName]:
-        if mustMatchList != None:
-            if not matches(errName, mustMatchList):
-              continue
-        if cantMatchList != None:
-            if matches(errName, cantMatchList):
-              continue
-        if errName == "nom":
-            continue
-        errVals.append("+{0:.3%}".format(data[channelName][sampleName][errName]["Up"]))
-        errVals2.append("-{0:.3%}".format(data[channelName][sampleName][errName]["Down"]))
-        if niceTitles:
-            errName = errNameMap[errName]
-        errValsString += "{"+str(iErrVal)+":^"+str(len(errName)+2)+"}"
-        errValsString2 += "{"+str(iErrVal)+":^"+str(len(errName)+2)+"}"
-        if latex:
-           errValsString += "&"
-           errValsString2 += "&"
-        iErrVal += 1
-    errValsString = errValsString.format(*errVals)
-    errValsString2 = errValsString2.format(*errVals2)
-    if latex:
-      errValsString = errValsString.rstrip("&")
-      errValsString2 = errValsString2.rstrip("&")
-      errValsString += r"\\"
-      errValsString2 += r"\\ \hline"
-    errValsString += "\n"+errValsString2+"\n"
-    outString += errValsString
-
-  if latex:
-    columnFormat = "|l|" + "c|"*len(errNames)
-    outString = r"\begin{tabular}{"+columnFormat+"} \hline" + outString + r"\end{tabular}"+"\n"
+    outString = r"\begin{tabular}{|l|c|c|c|c|} \hline"+"\n" + outString + r"\end{tabular}"+"\n"
+    outString += r"\\ "+self.lumiStr+", "+self.energyStr
     outString = outString.replace(r"%",r"\%")
+    print
+    print outString
 
-  return outString
+  def printBakErrors(self):
+    dataDict = self.dataDict2
+    titleMap = self.titleMap
+    errNameMap = self.errNameMap
+    outString = r"Category & "
+    maxErrNameLengthList = []
+    channelNames = dataDict.keys()
+    channelNames.sort()
+    for channelName in channelNames:
+      channel = dataDict[channelName]
+      errNames = channel.keys()
+      errNames.sort()
+      errNames.reverse()
+      for errName in errNames:
+        maxErrNameLengthList.append(errName)
+      break
+    maxErrNameLength = max([len(i) for i in maxErrNameLengthList])
+    errNameList = []
+    errNamesString = ""
+    iErrName = 0
+    for channelName in channelNames:
+      channel = dataDict[channelName]
+      errNames = channel.keys()
+      errNames.sort()
+      errNames.reverse()
+      for errName in errNames:
+        errNamesString += " {"+str(iErrName)+":<"+str(maxErrNameLength)+"} &"
+        errNameList.append(errNameMap[re.sub(r".*_","",errName)])
+        iErrName +=1
+      break
+    errNamesString = errNamesString.rstrip("&")
+    outString += errNamesString.format(*errNameList)
+
+    outString += r" \\ \hline \hline"+'\n'
+    maxChannelNameLength = max([len(i) for i in dataDict])
+    numberLength = 8
+    for channelName in channelNames:
+      errList = []
+      errNamesString = ""
+      iErrName = 0
+      errList.append(titleMap[channelName])
+      errNamesString += "{"+str(iErrName)+":<"+str(maxChannelNameLength)+"} & "
+      iErrName += 1
+      channel = dataDict[channelName]
+      errNames = channel.keys()
+      errNames.sort()
+      errNames.reverse()
+      for errName in errNames:
+        errDict = channel[errName]
+        errList.append(errDict["nom"])
+        errList.append(errDict["err"])
+        errNamesString += " {"+str(iErrName)+":<"+str(numberLength)+".3f} $\pm$ {"+str(iErrName+1)+":<"+str(numberLength)+".3f} &"
+        iErrName += 2
+      errNamesString = errNamesString.rstrip("&")
+      errNamesString = errNamesString.format(*errList)
+      errNamesString += r"\\ \hline"+"\n"
+      outString += errNamesString
+
+    
+    outString = r"\begin{tabular}{|l|"+'c|'*len(maxErrNameLengthList)+"} \hline"+"\n" + outString + r"\end{tabular}"+"\n"
+    outString += r"\\ "+self.lumiStr+", "+self.energyStr
+    outString = outString.replace(r"%",r"\%")
+    print
+    print outString
+
     
 if __name__ == "__main__":
  import subprocess
@@ -334,58 +338,15 @@ if __name__ == "__main__":
  vbfFileName = "input/vbfHmumu125_8TeV.root"
  dataDir = "statsCards/"
  #filenames = ["statsCards/BDTCut_8TeV_20.root"]
- filenames = ["statsCards/BDTCutCat_8TeV_20.root"]
- #filenames = glob.glob(dataDir+"20*.root")
+ #filenames = ["statsCards/BDTCutCat_8TeV_20.root"]
+ filenames = glob.glob(dataDir+"*.root")
 
  for fn in filenames:
-  sPlotter = makeShapePlots.ShapePlotter(fn,makeShapePlots.titleMap,doSignalScaling=False)
-    
-  counts = convertHistToCounts(sPlotter.data,ggFileName,vbfFileName)
-  shapeErrors = getShapeErrorsFromCounts(counts)
+    tm = TableMaker(fn,"sillyTables",channelNameMap,sampleNameMap,errNameMap)
+    print("===========================")
+    print(fn)
+    print
+    #tm.printBakPredict()
+    tm.printBakErrors()
 
-  samples = ["sig","bak"]
-  titles = ["Signal","Background"]
-  for i, title in zip(samples,titles):
 
-    f = open("tableErrors"+title+".tex","w")
-    #f.write(writeErrorTable(shapeErrors,True,True,mustMatchList=["TotalSyst"]))
-    f.write(writeErrorTable(shapeErrors,True,True,sampleMustBe=i,cantMatchList=["br_","xs_"]))
-    f.close()
-
-  f = open("tableErrorsTest.tex","w")
-  testStr = r"""
-\documentclass[12pt,a4paper]{article}
-\usepackage{lscape}
-\begin{document}
-\begin{landscape}
-%\tiny
-\small
-
-"""
-  for t in titles:
-    testStr += r"\input{tableErrors"+t+"}\n \\\\ \n"
-  testStr += r"""
-
-\end{landscape}
-\end{document}
-"""
-  f.write(testStr)
-  f.close()
-  subprocess.call(["latex","tableErrorsTest.tex"])
-  subprocess.call(["dvipdf","tableErrorsTest.dvi"])
-  os.remove("tableErrorsTest.aux")
-  os.remove("tableErrorsTest.log")
-  os.remove("tableErrorsTest.dvi")
-
-  for i in shapeErrors:
-    print(i)
-    for j in shapeErrors[i]:
-      print("  {}".format(j))
-      for k in shapeErrors[i][j]:
-        print("    {} {}".format(k,shapeErrors[i][j][k]))
-
-  for i in sPlotter.data:
-    print(i)
-    for j in sPlotter.data[i]:
-      tmp = sPlotter.data[i][j]
-      print("  {}: {}".format(j,tmp.Integral()))
