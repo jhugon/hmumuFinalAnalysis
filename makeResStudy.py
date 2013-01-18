@@ -132,11 +132,11 @@ class ResStudy:
     tickPos = numpy.arange(len(allCatList))+0.25
     ax.set_xticks(tickPos+0.25)
     ax.set_xticklabels(tuple(allCatList))
-    title2 = r"$gg \rightarrow H \rightarrow \mu\mu$ Width"
+    title2 = r"$gg \rightarrow H \rightarrow \mu\mu$ Resolution"
     if "VBF" in title or "vbf" in title:
-      title2 = r"VBF $H \rightarrow \mu\mu$ Width"
+      title2 = r"VBF $H \rightarrow \mu\mu$ Resolution"
     ax.set_title(title2)
-    ax.set_ylabel(r"$1\sigma$ Quantile Width  [GeV]")
+    ax.set_ylabel(r"$1\sigma$ Quantile Resolution  [GeV]")
 
     iPlot = 0
     for x in dataCoords:
@@ -212,7 +212,7 @@ class ResStudy:
     resMap={}
     quantMap={}
     quantilesString = ""
-    quantilesString += "{0:<8}{1:<10}{2:^24}{3:^24}\n".format("","Median","1 Sigma Quantile Width","2 Sigma Quantile Width")
+    quantilesString += "{0:<8}{1:<10}{2:^24}{3:^24}\n".format("","Median","1 Sigma Quantile Resolution","2 Sigma Quantile Resolution")
     for c in keyList:
       quantiles = getMedianAndQuantileInterval(histMap[c],0.159)
       err = (quantiles[2]-quantiles[0])/2.

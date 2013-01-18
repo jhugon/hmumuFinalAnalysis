@@ -106,7 +106,9 @@ class ShapePlotter:
         pdf = channelWS.pdf(processName)
         dataGraph, pdfGraph, pullsGraph,chi2 = getattr(self,"makeTGraphs")(pdf,template,mMuMu)
         getattr(self,"draw")(channelName,dataGraph,pdfGraph,pullsGraph,chi2,rooDataTitle)
-        saveAs(self.canvas,outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName+"_"+processName)
+        saveName=outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName+"_"+processName
+        saveName = re.sub(r"([\d]+)\.[\d]+",r"\1",saveName)
+        saveAs(self.canvas,saveName)
 
   def readCard(self,fn):
     f = open(fn)
