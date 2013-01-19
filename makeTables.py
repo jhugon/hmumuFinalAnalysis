@@ -110,7 +110,7 @@ class TableMaker:
     if tmpMatch:
       self.lumi = int(float(tmpMatch.group(3)))
       self.lumiStr = "$\\mathcal{{L}}$ = {0} fb$^{{-1}}$".format(self.lumi)
-      self.energyStr = "$\\sqrt{s}$="+tmpMatch.group(2)
+      self.energyStr = "$\\sqrt{s}$="+re.sub(r"TeV"," TeV",tmpMatch.group(2))
 
     rooXRange = root.RooFit.Range("tableRange")
     rooAllNormRange = root.RooFit.NormRange("all")

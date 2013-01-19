@@ -889,9 +889,10 @@ if __name__ == "__main__":
   print "Started makeCards.py"
   root.gROOT.SetBatch(True)
 
-  directory = "input/notblind/"
+  directory = "input/testing/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
+  periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
@@ -908,14 +909,15 @@ if __name__ == "__main__":
         tmpList.append(a+c)
   #analyses += tmpList
   analyses = ["IncBDTCut","VBFBDTCut"]
+  analyses = []
   combinations = []
   combinationsLong = []
-  combinations.append((
-        ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
-  ))
-  combinations.append((
-        ["VBFBDTCut"+x for x in categoriesVBF],"VBFBDTCutCat"
-  ))
+#  combinations.append((
+#        ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
+#  ))
+#  combinations.append((
+#        ["VBFBDTCut"+x for x in categoriesVBF],"VBFBDTCutCat"
+#  ))
 #  combinations.append((
 #        ["IncPresel"+x for x in categoriesInc],"IncPreselCat"
 #  ))
@@ -963,14 +965,14 @@ if __name__ == "__main__":
   backgroundNames= ["DYJetsToLL","ttbar"]
   dataDict = {}
   dataDict["8TeV"] = [
-    "SingleMuRun2012Av1",
-    "SingleMuRun2012Bv1",
-    "SingleMuRun2012Cv1",
-    "SingleMuRun2012Cv2"
+#    "SingleMuRun2012Av1",
+#    "SingleMuRun2012Bv1",
+#    "SingleMuRun2012Cv1",
+#    "SingleMuRun2012Cv2"
   ]
   dataDict["7TeV"] = [
-    "SingleMuRun2011Av1",
-    "SingleMuRun2011Bv1"
+#    "SingleMuRun2011Av1",
+#    "SingleMuRun2011Bv1"
   ]
   dataDict["14TeV"] = []
   lumiListLong = [5,10,15,20,25,30,40,50,75,100,200,500,1000,2000,5000]

@@ -20,8 +20,8 @@ channelNameMap = {
   "VBFCat":"VBF Cat. Comb.",
 
   "Presel":"Presel. Comb.",
-  "IncPresel":"Inc. Presel.",
-  "VBFPresel":"VBF Presel.",
+  "IncPresel":"Inclusive Category",
+  "VBFPresel":"VBF Category",
 
   "Pt0to30":"$p_{T}^{\mu\mu} \in [0,30]$",
   "Pt30to50":"$p_{T}^{\mu\mu} \in [30,50]$",
@@ -73,15 +73,18 @@ sampleNameMap = {
 }
 
 class Counts:
-  def __init__(self,filenames,categories,massBoudaries):
+  def __init__(self,filenames,categories,massBoudaries,chopDir=True,chopExt=True):
     data = {}
     self.filenames = filenames
     self.data = data
     self.categories = categories
     for f in filenames:
       rf = root.TFile(f)
+      fDir = os.path.dirname(f)
       fName = os.path.basename(f)
-      fNameNoExt = os.path.splitext(fName)[0]
+      fNameSplitExt = os.path.splitext(fName)
+      fNameNoExt = fNameSplitExt[0]
+      fNameExt = fNameSplitExt[1]
       scaleBy = 1.0
       energyStr = None
       if "Run2012" in fNameNoExt:
@@ -92,8 +95,13 @@ class Counts:
         energyStr = fNameNoExt.split('_')[1]
         if xsec.has_key(fNameNoExt) and nEventsMap.has_key(fNameNoExt):
           scaleBy *= xsec[fNameNoExt]/nEventsMap[fNameNoExt]*lumiDict[energyStr]
-      data[fNameNoExt] = {}
-      data[fNameNoExt]["misc"] = {
+      fNameKey = fNameNoExt
+      if not chopDir:
+        fNameKey = fDir+'/'+fNameNoExt
+      if not chopExt:
+        fNameKey += fNameExt
+      data[fNameKey] = {}
+      data[fNameKey]["misc"] = {
         "scaleBy":scaleBy,
         "energyStr": energyStr,
         "lumi": lumiDict[energyStr]
@@ -106,14 +114,89 @@ class Counts:
         tmpHist = rf.Get(strToGet)
         nEvents = getIntegralAll(tmpHist,massBoudaries)
         nEvents *= scaleBy
-        data[fNameNoExt][i] = nEvents
+        data[fNameKey][i] = nEvents
+
+def compareDirs(dirNameDict,sigFileDict,bakFileNames,categories=["IncPresel","VBFPresel"],massBoundaries=[120,130]):
+  data = {}
+  dirNames = sorted(dirNameDict.keys())
+  signals = sorted(sigFileDict.keys())
+  #signals.append("bak")
+  #sigFileDict["bak"] = "Background"
+  for dirName in dirNames:
+    data[dirName] = {}
+    for sig in signals:
+      data[dirName][sig] = {}
+    data[dirName]["bak"] = {}
+
+  energyStr = ""
+  lumi = ""
+  for dirName in dirNames:
+    tmpCounts = Counts([dirName+fn for fn in signals+bakFileNames],categories,massBoundaries,False,False)
+    for sig in signals:
+      for cat in categories:
+        energyStr = tmpCounts.data[dirName+sig]["misc"]["energyStr"]
+        lumi = tmpCounts.data[dirName+sig]["misc"]["lumi"]
+        data[dirName][sig][cat] = tmpCounts.data[dirName+sig][cat]
+    for cat in categories:
+      tmp = 0.0
+      for bak in bakFileNames:
+        tmp += tmpCounts.data[dirName+bak][cat]
+      data[dirName]["bak"][cat] = tmp
+
+  signals.append("bak")
+  sigFileDict["bak"] = "Background"
+
+  ncols = len(categories)*len(signals)
+  outString = ""
+  # Header Line 1
+  nsignals = len(signals)
+  #outString += "Category &"
+  outString += " &"
+  for i in categories:
+    outString += r" \multicolumn{"+str(nsignals)+r"}{|"+'c|'
+    outString += r"}{"+channelNameMap[i]+"} &"
+  outString = outString.rstrip(r"&")
+  outString += r"\\ \hline" + '\n'
+
+  #outString += "Sample &"
+  outString += " &"
+  for i in categories:
+    for j in signals:
+      outString += " "+ sigFileDict[j] + " &"
+  outString = outString.rstrip(r"&")
+  outString += r"\\ \hline" + '\n'
+
+  for dirName in dirNames:
+    outString += dirNameDict[dirName] + " &"
+    for i in categories:
+      for j in signals:
+        if j == "bak":
+          outString += " {0:<5.0f}".format(data[dirName][j][i]) + " &"
+        else:
+          outString += " {0:<5.2e}".format(data[dirName][j][i]) + " &"
+        #print("dir: {0:<18} sig: {1:<10} cat: {2:<10} n: {3}".format(dirName,j,i,data[dirName][j][i]))
+    outString = outString.rstrip(r"&")
+    outString += r"\\ \hline" + '\n'
+  
+  outString = r"\begin{tabular}{|l|"+'c|'*ncols+"} \hline"+"\n" + outString + r"\end{tabular}"+"\n"
+  outString = outString.replace(r"%",r"\%")
+
+  outString = re.sub(r"([-\d.+]+)e([-+])0([\d])",r"\1e\2\3",outString)
+  outString = re.sub(r"([-\d.+]+)e([-\d+]+)",r"$\1 \\times 10^{\2}$",outString)
+
+  lumi = "$\\mathcal{{L}}$ = {0:.0f} fb$^{{-1}}$".format(float(lumi))
+  energyStr = "$\\sqrt{s}=$"+re.sub(r"TeV"," TeV",energyStr)
+  outString += r"\\ "+lumi+", "+energyStr
+
+  return '\n'+outString+'\n'
+    
       
 if __name__ == "__main__":
   
+  """
   filenames = glob.glob("input/vladEventCounts/*.root")
   categories = ["VBFPresel"]
   mBounds = [110.,160.]
-  mBounds = [0.,1000.]
   c = Counts(filenames,categories,mBounds)
 
   print("=============================\nFor Vladimir: ({0})".format(categories[0]))
@@ -124,7 +207,30 @@ if __name__ == "__main__":
     toPrint = r"{0:<"+maxFNLength+r"} {1:<20.0f}"
     print(toPrint.format(fn,n))
   print("=============================")
+  """
 
  ######################################################
 
+  filenames = glob.glob("input/trk*/gg*.root")
+  filenames += glob.glob("input/pf*/gg*.root")
+  categories = ["VBFPresel"]
+  mBounds = [110.,160.]
 
+  dirs = {
+    "input/trkLooseIso/":"Trk Loose Iso",
+    "input/trkTightIso/":"Trk Tight Iso",
+    "input/pfLooseIso/":"PF Loose Iso",
+    "input/pfTightIso/":"PF Tight Iso"
+  }
+  sigFileNames = {
+    "ggHmumu125_8TeV.root":"gg H",
+    "vbfHmumu125_8TeV.root":"VBF H"
+  }
+  bakFileNames = [
+    "SingleMuRun2012Av1.root",
+    "SingleMuRun2012Bv1.root",
+    "SingleMuRun2012Cv1.root",
+    "SingleMuRun2012Cv2.root"
+  ]
+
+  print compareDirs(dirs,sigFileNames,bakFileNames)
