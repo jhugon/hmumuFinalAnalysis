@@ -889,10 +889,9 @@ if __name__ == "__main__":
   print "Started makeCards.py"
   root.gROOT.SetBatch(True)
 
-  directory = "input/testing/"
+  directory = "input/new/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
@@ -908,28 +907,26 @@ if __name__ == "__main__":
     for c in categoriesVBF:
         tmpList.append(a+c)
   #analyses += tmpList
-  analyses = ["IncBDTCut","VBFBDTCut"]
-  analyses = []
   combinations = []
   combinationsLong = []
-#  combinations.append((
-#        ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
-#  ))
-#  combinations.append((
-#        ["VBFBDTCut"+x for x in categoriesVBF],"VBFBDTCutCat"
-#  ))
-#  combinations.append((
-#        ["IncPresel"+x for x in categoriesInc],"IncPreselCat"
-#  ))
-#  combinations.append((
-#        ["VBFPresel"+x for x in categoriesVBF],"VBFPreselCat"
-#  ))
+  combinations.append((
+        ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
+  ))
+  combinations.append((
+        ["VBFBDTCut"+x for x in categoriesVBF],"VBFBDTCutCat"
+  ))
+  combinations.append((
+        ["IncPresel"+x for x in categoriesInc],"IncPreselCat"
+  ))
+  combinations.append((
+        ["VBFPresel"+x for x in categoriesVBF],"VBFPreselCat"
+  ))
   combinations.append((
         ["IncBDTCut","VBFBDTCut"],"BDTCut"
   ))
-#  combinations.append((
-#        ["IncPresel","VBFPresel"],"Presel"
-#  ))
+  combinations.append((
+        ["IncPresel","VBFPresel"],"Presel"
+  ))
 #  combinations.append((
 #        ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
 #  ))
@@ -945,6 +942,9 @@ if __name__ == "__main__":
 #  combinationsLong.append((
 #        ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
 #  ))
+  combinations.append((
+        ["VBFBDTCut"]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCatIncOnly"
+  ))
 
   combinationsBDTCut = []
   combinationsBDTCut.append((
@@ -971,14 +971,15 @@ if __name__ == "__main__":
 #    "SingleMuRun2012Cv2"
   ]
   dataDict["7TeV"] = [
-#    "SingleMuRun2011Av1",
-#    "SingleMuRun2011Bv1"
+    "SingleMuRun2011Av1",
+    "SingleMuRun2011Bv1"
   ]
   dataDict["14TeV"] = []
   lumiListLong = [5,10,15,20,25,30,40,50,75,100,200,500,1000,2000,5000]
   lumiListLong = [20,30,50,100,500,1000,5000]
   lumiList = [lumiDict["8TeV"],20,25,30]
   lumiList = [lumiDict["8TeV"]]
+  lumiList = [19.4]
   #lumiListLong = lumiList
 
   MassRebin = 1 # 4 Bins per GeV originally

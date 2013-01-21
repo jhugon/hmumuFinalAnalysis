@@ -127,24 +127,36 @@ def compareDirs(dirNameDict,sigFileDict,bakFileNames,categories=["IncPresel","VB
     for sig in signals:
       data[dirName][sig] = {}
     data[dirName]["bak"] = {}
+    data[dirName]["sig"] = {}
+    data[dirName]["sob"] = {}
 
   energyStr = ""
   lumi = ""
   for dirName in dirNames:
     tmpCounts = Counts([dirName+fn for fn in signals+bakFileNames],categories,massBoundaries,False,False)
-    for sig in signals:
-      for cat in categories:
+    for cat in categories:
+      nbak = 0.0
+      nsig = 0.0
+      for sig in signals:
         energyStr = tmpCounts.data[dirName+sig]["misc"]["energyStr"]
         lumi = tmpCounts.data[dirName+sig]["misc"]["lumi"]
-        data[dirName][sig][cat] = tmpCounts.data[dirName+sig][cat]
-    for cat in categories:
-      tmp = 0.0
+        tmp = tmpCounts.data[dirName+sig][cat]
+        data[dirName][sig][cat] = tmp
+        nsig += tmp
       for bak in bakFileNames:
-        tmp += tmpCounts.data[dirName+bak][cat]
-      data[dirName]["bak"][cat] = tmp
+        nbak += tmpCounts.data[dirName+bak][cat]
+      data[dirName]["bak"][cat] = nbak
+      data[dirName]["sig"][cat] = nsig
+      if nbak > 0:
+        data[dirName]["sob"][cat] = nsig/nbak
+      else:
+        data[dirName]["sob"][cat] = 0.0
 
   signals.append("bak")
   sigFileDict["bak"] = "Background"
+  sigFileDict["sig"] = "Signal"
+  sigFileDict["sob"] = "$S/B$"
+  signals = ["sig","bak","sob"]
 
   ncols = len(categories)*len(signals)
   outString = ""
@@ -170,11 +182,12 @@ def compareDirs(dirNameDict,sigFileDict,bakFileNames,categories=["IncPresel","VB
     outString += dirNameDict[dirName] + " &"
     for i in categories:
       for j in signals:
+        #print("dir: {0:<18} sig: {1:<10} cat: {2:<10}".format(dirName,j,i))
+        #print("dir: {0:<18} sig: {1:<10} cat: {2:<10} n: {3}".format(dirName,j,i,data[dirName][j][i]))
         if j == "bak":
           outString += " {0:<5.0f}".format(data[dirName][j][i]) + " &"
         else:
           outString += " {0:<5.2e}".format(data[dirName][j][i]) + " &"
-        #print("dir: {0:<18} sig: {1:<10} cat: {2:<10} n: {3}".format(dirName,j,i,data[dirName][j][i]))
     outString = outString.rstrip(r"&")
     outString += r"\\ \hline" + '\n'
   

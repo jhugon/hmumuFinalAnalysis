@@ -367,7 +367,8 @@ if __name__ == "__main__":
   if args.bdtCut:
     ylimits=[1.,30.0]
 
-  lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":20}
+  #lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":lumiDict["8TeV"]}
+  lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":19.4}
   
   for period in ["7TeV","8TeV","14TeV"]:
     fnToGlob = dirName+"*_"+period+"_*.txt.out"
@@ -434,13 +435,14 @@ if __name__ == "__main__":
     if len(compareData)==0:
         print("No Data to Compare for {0}!!".format(period))
         continue
-    comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=True)
-    comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+desiredLumiStr+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
-    comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStr,horizontalalignment="right",size="x-large")
-    comparePlot.fig.text(0.9,0.13,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
-    comparePlot.save(outDir+"compareObs"+"_"+energyStr)
+    #comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=True)
+    #comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+desiredLumiStr+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
+    #comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStr,horizontalalignment="right",size="x-large")
+    #comparePlot.fig.text(0.9,0.13,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
+    #comparePlot.save(outDir+"compareObs"+"_"+energyStr)
     
     comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=False)
     comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+desiredLumiStr+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
     comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStr,horizontalalignment="right",size="x-large")
+    comparePlot.fig.text(0.9,0.55,"Calculated from MC",horizontalalignment="right",size="x-large")
     comparePlot.save(outDir+"compare"+"_"+energyStr)

@@ -13,7 +13,7 @@ from xsec import *
 #######################################
 
 class BarPlot:
-  def __init__(self,data,xlabel="Expected 95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},showObs=False,xlim=[0,15]):
+  def __init__(self,data,xlabel="Expected 95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},showObs=False,xlim=[0,20]):
     fig = mpl.figure()
     self.fig = fig
     ax1 = fig.add_subplot(111)
@@ -82,8 +82,20 @@ if __name__ == "__main__":
   # Wrong Dataformat: title, obs, median, 1sig high, 1sig low, 2sig high, 2sig low
 
   data = [
-    ("MuScle PFIso",4.2, 2.2, 3.0,4.33,6.2,8.8), #Cat ISMEAR=2
-    ("MuScle TrkIso",4.98, 2.84,3.84,5.4,7.8,10.9) #Cat ISMEAR=2
+    #("MuScle PFIso",4.2, 2.2, 3.0,4.33,6.2,8.8), #Cat ISMEAR=2
+    #("MuScle TrkIso",4.98, 2.84,3.84,5.4,7.8,10.9) #Cat ISMEAR=2
+
+    #BDT Comb no cat
+    #("PFIsoLooseBDT",6.399,2.67,3.689,5.359,7.944,11.37), #No Smearing
+    #("PFIsoTightBDT",4.352,3.011,4.126,5.953,8.78,12.46), #no smear
+    #("TrkIsoLooseBDT",11.02,3.55,4.833,6.9,10.1,14.13), #no smear
+    #("TrkIsoTightBDT",12.63,4.04,5.5,7.8,11.3,15.8), #no smear
+
+    #Presel Comb no cat
+    ("PF Loose Iso",5.31,4.2,5.7,8.16,11.8,16.5), #No Smearing
+    ("PF Tight Iso",5.6,4.14,5.6,8.,11.5,16.19), #no smear
+    ("Trk Loose Iso",6.0,4.6,6.18,8.66,12.35,17.2), #no smear
+    ("Trk Tight Iso",7.23,4.62,6.15,8.66,12.3,17.2), #no smear
   ]
 
   data2 = [
@@ -92,18 +104,22 @@ if __name__ == "__main__":
     ("+3% $\ln(N)$ Unc.", 3.2, 2.49, 3.39,4.859,7.,9.8 ) #Cat
   ]
 
-  energyStr = "8TeV"
-  desiredLumiStr = "20"
+  energyStr = "8 TeV"
+  desiredLumiStr = "12"
 
 
   myPlot = BarPlot(data)
   myPlot.fig.text(0.9,0.2,"$\mathcal{L}="+desiredLumiStr+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
   myPlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStr,horizontalalignment="right",size="x-large")
-  myPlot.fig.text(0.9,0.54,"Preliminary!!",horizontalalignment="right",size="x-large")
-  myPlot.fig.text(0.9,0.47,"Using Untested Smearing!",horizontalalignment="right",size="x-large")
+  #myPlot.fig.text(0.9,0.54,"Preliminary!!",horizontalalignment="right",size="x-large")
+  #myPlot.fig.text(0.9,0.47,"Using Untested Smearing!",horizontalalignment="right",size="x-large")
+  myPlot.fig.text(0.9,0.55,"No BDTs",horizontalalignment="right",size="x-large")
+  myPlot.fig.text(0.9,0.48,"No Resolution Categories",horizontalalignment="right",size="x-large")
   myPlot.save("trkIsoCompare")
 
   myPlot = BarPlot(data2)
   myPlot.fig.text(0.9,0.2,"$\mathcal{L}="+desiredLumiStr+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
   myPlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStr,horizontalalignment="right",size="x-large")
   myPlot.save("resErrLimits")
+
+

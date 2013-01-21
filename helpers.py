@@ -635,6 +635,8 @@ class DataMCStack:
     canvas.cd()
     pad1 = root.TPad("pad1"+dataHist.GetName(),"",0.02,0.30,0.98,0.98,0)
     pad2 = root.TPad("pad2"+dataHist.GetName(),"",0.02,0.01,0.98,0.29,0)
+    self.pad1 = pad1
+    self.pad2 = pad2
   
     pad1.SetBottomMargin(0.005);
     pad2.SetTopMargin   (0.005);
@@ -679,6 +681,7 @@ class DataMCStack:
         self.stack.SetMinimum(1.00e-1)
       if len(ylimits) == 2:
         self.stack.SetMaximum(ylimits[1])
+        self.stack.SetMinimum(ylimits[0])
       self.stack.Draw("hist")
       pad1.Update()
     else:

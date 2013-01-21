@@ -6,7 +6,7 @@ import ROOT as root
 import os
 import sys
 
-dataDir = "input/110to150NotBlind/"
+dataDir = "input/new110to160/"
 outDir = "output/"
 
 RUNPERIOD="8TeV"
@@ -18,14 +18,16 @@ ylimitsRatio = [0.5,1.5]
 
 #anotateText = "80 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"
 #anotateText = "110 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"
-anotateText = "110 GeV < m_{#mu#mu} < 150 GeV"
-#anotateText = "80 GeV < m_{#mu#mu} < 160 GeV"
+#anotateText = "110 GeV < m_{#mu#mu} < 150 GeV"
+anotateText = "80 GeV < m_{#mu#mu} < 160 GeV"
+anotateText = "110 GeV < m_{#mu#mu} < 160 GeV"
 #anotateText = "VBF Preselection"
 
 urLegendPos = [0.70,0.67,0.9,0.9]
 ulLegendPos = [0.20,0.67,0.4,0.9]
 ucLegendPos = [0.46,0.67,0.64,0.9]
 lcLegendPos = [0.46,0.35,0.64,0.63]
+llLegendPos = [0.20,0.35,0.4,0.63]
 ccLegendPos = [0.46,0.47,0.64,0.7]
 stdLegendPos = urLegendPos
 
@@ -34,22 +36,26 @@ histDirs = [""]
 histDirs = ["NotBlindWindow/"]
 histDirs = ["VBFPreselDiMuPtL20/","IncPreselDiMuPtL20/"]
 histDirs = ["VBFPresel/","IncPresel/"]
+histDirs = ["IncPresel/"]
 #histDirs = ["VBFBDTCut/","IncBDTCut/"]
 #histDirs = ["","PtDiMu100/","VBFPresel/","IncPresel/"]
 
 root.gErrorIgnoreLevel = root.kWarning
 
 histNames = {}
+"""
 histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[110.0,150.0],"rebin":2}
 #histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[80.0,150.0],"rebin":2}
 
 #histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV]","xlimits":[0.0,20.0],"rebin":1}
+"""
 histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV]","xlimits":[0.0,200.0],"rebin":2}
 
 histNames["mDiJet"] = {"xlabel":"m_{jj} [GeV]","xlimits":[300.0,1400.0],"rebin":5}
 histNames["ptDiJet"] = {"xlabel":"p_{T,jj} [GeV]","xlimits":[0.0,400.0],"rebin":2}
 #histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj}","xlimits":[0.0,8.5]}
-histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj}","xlimits":[3.0,7.5],"ylimits":[0.,1e3]}
+histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj}","xlimits":[3.0,7.5],"ylimits":[0.1,1e3]}
+"""
 histNames["deltaRJets"] = {"xlabel":"#DeltaR_{jj}","xlimits":[0.0,8.5]}
 histNames["deltaPhiJets"] = {"xlabel":"#Delta#phi_{jj}","xlimits":[0.0,3.2],"rebin":2,"leg":ulLegendPos}
 histNames["deltaEtaMuons"] = {"xlabel":"#Delta#eta_{#mu#mu}","xlimits":[0.0,4.5]}
@@ -72,32 +78,38 @@ histNames["etaMu2"] = {"xlabel":"Sub-Leading Muon #eta","xlimits":[-2.4,2.4],"re
 histNames["etaJet1"] = {"xlabel":"Leading Jet #eta","xlimits":[-5.0,5.0],"rebin":2}
 histNames["etaJet2"] = {"xlabel":"Sub-Leading Jet #eta","xlimits":[-5.0,5.0],"rebin":2}
 
+"""
 #histNames["yDiMu"] = {"xlabel":"y_{#mu#mu}","xlimits":[-2.2,2.2],"rebin":2,"leg":lcLegendPos}
-histNames["yDiMu"] = {"xlabel":"y_{#mu#mu}","xlimits":[-2.2,2.2],"rebin":2,"ylimits":[0.,9e6]}
-histNames["yDiJet"] = {"xlabel":"y_{jj}","xlimits":[-5.0,5.0],"rebin":4,"ylimits":[0.,1e3]}
+histNames["yDiMu"] = {"xlabel":"y_{#mu#mu}","xlimits":[-2.2,2.2],"rebin":2,"ylimits":[0.1,9e6]}
+histNames["yDiJet"] = {"xlabel":"y_{jj}","xlimits":[-5.0,5.0],"rebin":4,"ylimits":[0.1,1e3]}
 
 #histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1.0,1.0],"rebin":2,"leg":lcLegendPos}
-histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1.0,1.0],"rebin":2,"ylimits":[0.,1e7]}
+histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1.0,1.0],"rebin":2,"ylimits":[0.1,1e7]}
+"""
 histNames["cosThetaStarCS"] = {"xlabel":"cos(#theta^{*}_{CS})","xlimits":[-1.0,1.0],"rebin":2,"leg":lcLegendPos}
 
 histNames["relIsoMu1"] = {"xlabel":"Leading Muon Relative PF Isolation","xlimits":[0,0.3],"rebin":2}
 histNames["relIsoMu2"] = {"xlabel":"Sub-Leading Muon Relative PF Isolation","xlimits":[0,0.3],"rebin":2}
 
-histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Inclusive Category)","xlimits":[-0.75,0.0],"rebin":2,"ylimits":[0.1,1e5]}
+"""
+histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Inclusive Category)","xlimits":[-0.8,0.0],"rebin":2,"ylimits":[0.1,1e5],'vertLines':{"8TeV":-0.55,"7TeV":-0.48}}
 
-histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.45,0.30],"rebin":2,"ylimits":[0.1,1e2]}
+histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.55,0.30],"rebin":2,"ylimits":[0.1,5e2],'vertLines':{"8TeV":-0.04,"7TeV":-0.03}}
 
-histNames["puJetIDSimpleDiscJet1"] = {"xlabel":"PU Jet ID Simple Discriminator--Leading Jet","xlimits":[-1,1],"rebin":1}
-histNames["puJetIDSimpleDiscJet2"] = {"xlabel":"PU Jet ID Simple Discriminator--Sub-Leading Jet","xlimits":[-1,1],"rebin":1}
-histNames["puJetIDSimpleDiscJet3"] = {"xlabel":"PU Jet ID Simple Discriminator--3rd Leading Jet","xlimits":[-1,1],"rebin":1}
+histNames["puJetIDSimpleDiscJet1"] = {"xlabel":"PU Jet ID Simple Discriminator--Leading Jet","xlimits":[-1,1],"rebin":2,"leg":ulLegendPos,"ylimits":[0.1,500.]}
+histNames["puJetIDSimpleDiscJet2"] = {"xlabel":"PU Jet ID Simple Discriminator--Sub-Leading Jet","xlimits":[-1,1],"rebin":2,"leg":ulLegendPos,"ylimits":[0.1,5e3]}
+histNames["puJetIDSimpleDiscJet3"] = {"xlabel":"PU Jet ID Simple Discriminator--3rd Leading Jet","xlimits":[-1,1],"rebin":2,"leg":ulLegendPos,"ylimits":[0.1,500.]}
 
-histNames["puJetIDSimpleJet1"] = {"xlabel":"PU Jet Simple Loose ID--Leading Jet","xlimits":[],"rebin":1}
-histNames["puJetIDSimpleJet2"] = {"xlabel":"PU Jet Simple Loose ID--Sub-Leading Jet","xlimits":[],"rebin":1}
-histNames["puJetIDSimpleJet3"] = {"xlabel":"PU Jet Simple Loose ID--3rd Leading Jet","xlimits":[],"rebin":1}
+"""
+histNames["puJetIDSimpleJet1"] = {"xlabel":"PU Jet Simple Loose ID--Leading Jet","xlimits":[],"rebin":1,"leg":llLegendPos}
+histNames["puJetIDSimpleJet2"] = {"xlabel":"PU Jet Simple Loose ID--Sub-Leading Jet","xlimits":[],"rebin":1,"leg":llLegendPos}
+histNames["puJetIDSimpleJet3"] = {"xlabel":"PU Jet Simple Loose ID--3rd Leading Jet","xlimits":[],"rebin":1,"leg":llLegendPos}
 
 histNames["nVtx"] = {"xlabel":"N_{vtx}","xlimits":[0,40],"leg":stdLegendPos}
 histNames["met"] = {"xlabel":"E_{T}^{Miss}","xlimits":[0,300],"leg":stdLegendPos}
+"""
 histNames["ptmiss"] = {"xlabel":"p_{T}^{Miss}","xlimits":[0,200],"leg":stdLegendPos}
+histNames["deltaPhiHJ1"] = {"xlabel":"#Delta#phi(j_{1},H)","xlimits":[0,3.2],'rebin':2,"leg":stdLegendPos,"ylimits":[5e-3,5e4]}
 
 tlatex = root.TLatex()
 tlatex.SetNDC()
@@ -174,7 +186,7 @@ for i in backgroundList:
       if tmp.isZombie():
         print ("Warning: file for dataset {0} is Zombie!!".format(i))
         continue
-      print("Loading Dataset: {0}".format(i))
+      #print("Loading Dataset: {0}".format(i))
       for hDir in histDirs:
         tmp.loadHistos(histNames,prefix=hDir)
       bkgDatasetList.append(tmp)
@@ -191,7 +203,7 @@ for i in signalList:
       if tmp.isZombie():
         print ("Warning: file for dataset {0} is Zombie!!".format(i))
         continue
-      print("Loading Dataset: {0}".format(i))
+      #print("Loading Dataset: {0}".format(i))
       for hDir in histDirs:
         tmp.loadHistos(histNames,prefix=hDir)
       sigDatasetList.append(tmp)
@@ -206,7 +218,7 @@ for i in dataDict[RUNPERIOD]:
       if tmp.isZombie():
         print ("Error: file for dataset {0} is Zombie!!".format(i))
         sys.exit(1)
-      print("Loading Dataset: {0}".format(i))
+      #print("Loading Dataset: {0}".format(i))
       for hDir in histDirs:
         tmp.loadHistos(histNames,prefix=hDir)
       realDatasetList.append(tmp)
@@ -242,7 +254,7 @@ for ds in realDatasetList:
 dataMCRatioStr = "############################################\n"
 
 for histName in bkgDatasetList[0].hists:
-  print("Making Histo: %s" % histName)
+  #print("Making Histo: %s" % histName)
   canvas.Clear()
   bkgHistList = []
   sigHistList = []
@@ -279,9 +291,19 @@ for histName in bkgDatasetList[0].hists:
     tmplegPos = histNames[histBaseName]["leg"]
     if tmplegPos == lcLegendPos:
       scaleHiggsPos = "lc"
+    elif tmplegPos == llLegendPos:
+      scaleHiggsPos = "ll"
+    elif tmplegPos == ulLegendPos:
+      scaleHiggsPos = "ul"
   else:
     setLegPos(leg,stdLegendPos)
   leg.Draw("same")
+  #print("{},{},{},{}".format(leg.GetX1NDC(),leg.GetY1NDC(),leg.GetX2NDC(),leg.GetY2NDC()))
+
+  #if histBaseName == "deltaPhiHJ1":
+  if False:
+    print "justin justin justin"
+    print histNames[histBaseName]
 
   if scaleHiggsPos == "lc":
     if scaleHiggsBy != 1.0:
@@ -292,7 +314,15 @@ for histName in bkgDatasetList[0].hists:
     tlatex.SetTextSize(0.03)
     tlatex.SetTextAlign(22)
     tlatex.DrawLatex(0.55,0.75,anotateText)
-  #elif scaleHiggsPos == "std":
+  elif scaleHiggsPos == "ll" or scaleHiggsPos == "ul":
+    if scaleHiggsBy != 1.0:
+      tlatex.SetTextSize(0.07)
+      tlatex.SetTextAlign(22)
+      tlatex.DrawLatex(0.55,0.8,"Higgs #times {0:.0f}".format(scaleHiggsBy))
+
+    tlatex.SetTextSize(0.03)
+    tlatex.SetTextAlign(22)
+    tlatex.DrawLatex(0.55,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
   else:
     if scaleHiggsBy != 1.0:
       tlatex.SetTextSize(0.07)
@@ -302,6 +332,27 @@ for histName in bkgDatasetList[0].hists:
     tlatex.SetTextSize(0.03)
     tlatex.SetTextAlign(33)
     tlatex.DrawLatex(legLeftPos-0.02,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
+
+  vertLine = None
+  if histNames[histBaseName].has_key("vertLines"):
+    print("In vertLines for hist: {0}".format(histBaseName))
+    padX1 = stack.pad1.GetX1()
+    padX2 = stack.pad1.GetX2()
+    padY1 = stack.pad1.GetY1()
+    padY2 = stack.pad1.GetY2()
+    print(padX1,padX2,padY1,padY2)
+    stack.pad1.cd()
+    vertLineX = histNames[histBaseName]["vertLines"][RUNPERIOD]
+    vertLine = root.TLine()
+    vertLine.SetLineColor(root.kRed+1)
+    vertLine.SetLineWidth(3)
+    pad1Width = stack.pad1.XtoPixel(stack.pad1.GetX2())-stack.pad1.XtoPixel(stack.pad1.GetX1())
+    pad1Height = stack.pad1.YtoPixel(stack.pad1.GetY1())
+    #vertLine.DrawLineNDC(0.1,0.1,stack.pad1.XtoPixel(0.0)/pad1Width,0.9)
+    #vertLine.DrawLine(0.1,0.1,-0.4,10.)
+    vertLine.DrawLine(vertLineX,stack.stack.GetMinimum(),vertLineX,stack.stack.GetMaximum()*2)
+    print(pad1Height)
+    print(pad1Width)
 
   saveName = histName.replace("(","")
   saveName = saveName.replace(")","")
