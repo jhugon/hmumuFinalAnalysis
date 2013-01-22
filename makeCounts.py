@@ -69,6 +69,7 @@ channelNameMap = {
 sampleNameMap = {
   "data_obs":"Data",
   "bak":"Background",
+  "bakWide":"Background in Sidebands",
   "sig":"Signal",
   "sob":"$S/B$",
   "sosqrtb":"$S/\sqrt{B}$",
@@ -224,7 +225,6 @@ def cutFlow(sigFileNames,bakFileNames,channel,massBoundaries=[120.,130.]):
   data["sosqrtsb"] = {}
 
   categories = ['',"IncPresel","VBFPresel","VBFBDTCut","IncBDTCut"]
-  massBoundaries = [60,200]
 
   energyStr = ""
   lumi = ""
@@ -298,6 +298,76 @@ def cutFlow(sigFileNames,bakFileNames,channel,massBoundaries=[120.,130.]):
   for s in samples:
     n = data[s][channel+"BDTCut"]
     if s=="bak" or s=="sob" or s=="sosqrtb" or s=="sosqrtsb" :
+       outString += " {0:.2e} &".format(n)
+       continue
+    outString += " {0:.2f} &".format(n)
+  outString = outString.rstrip(r"&")
+  outString += r"\\ \hline" + '\n'
+
+  outString = r"\begin{tabular}{|l|"+'c|'*ncols+"} \hline"+"\n" + outString + r"\end{tabular}"+"\n"
+  outString = outString.replace(r"%",r"\%")
+
+  outString = re.sub(r"([-\d.+]+)e([-+])0([\d])",r"\1e\2\3",outString)
+  outString = re.sub(r"([-\d.+]+)e[+]*([-\d]+)",r"$\1 \\times 10^{\2}$",outString)
+
+  lumi = "$\\mathcal{{L}}$ = {0:.0f} fb$^{{-1}}$".format(float(lumi))
+  energyStr = "$\\sqrt{s}$ = "+re.sub(r"TeV"," TeV",energyStr)
+  massStr = r"{0} GeV $< m_{{\mu\mu}} <$ {1} GeV".format(*massBoundaries)
+  outString += r"\\ "+massStr+", "+energyStr + ", "+lumi+"\n"
+
+  return outString
+
+def inMassWindowTableMkr(sigFileNames,bakFileNames,channel,massBoundaries=[120.,130.]):
+  data = {}
+  data["bak"] = {}
+  data["sig"] = {}
+  data["sob"] = {}
+  data["sosqrtb"] = {}
+  data["sosqrtsb"] = {}
+
+  energyStr = ""
+  lumi = ""
+  categories = [channel]
+  sigCounts = Counts(sigFileNames,categories,massBoundaries)
+  bakCounts = Counts(bakFileNames,categories,massBoundaries)
+  for sig in sigCounts.data:
+    data[sig] = {}
+  for cat in categories:
+    nBak = 0.0
+    for bak in bakCounts.data:
+      nBak += bakCounts.data[bak][cat]
+    data["bak"][cat] = nBak
+    nSig = 0.0
+    for sig in sigCounts.data:
+      energyStr = sigCounts.data[sig]["misc"]["energyStr"]
+      lumi = sigCounts.data[sig]["misc"]["lumi"]
+      nSig += sigCounts.data[sig][cat]
+      data[sig][cat] = sigCounts.data[sig][cat]
+    data["sig"][cat] = nSig
+    data["sob"][cat] = float(nSig)/nBak
+    data["sosqrtb"][cat] = float(nSig)/sqrt(float(nBak))
+    data["sosqrtsb"][cat] = float(nSig)/sqrt(float(nBak+nSig))
+
+  countsWide = Counts(bakFileNames,categories,[110.,160.])
+  nBakWide = 0.0
+  for bak in bakCounts.data:
+    nBakWide += countsWide.data[bak][channel]
+  data["bakWide"] = {channel:nBakWide-data["bak"][channel]}
+  print nBakWide
+
+  samples = ["ggHmumu125_8TeV","vbfHmumu125_8TeV","bak","bakWide"]
+  ncols = len(samples)
+
+  outString = " &"
+  for i in samples:
+    outString += " "+sampleNameMap[i]+" &"
+  outString = outString.rstrip(r"&")
+  outString += r"\\ \hline" + '\n'
+
+  outString += "Events &"
+  for s in samples:
+    n = data[s][channel]
+    if s=="bak" or s=="sob" or s=="sosqrtb" or s=="sosqrtsb" or s=="bakWide" :
        outString += " {0:.2e} &".format(n)
        continue
     outString += " {0:.2f} &".format(n)
@@ -419,6 +489,29 @@ if __name__ == "__main__":
   )
   cutTableFile.close()
 
+  #####################################################
 
+  inMassWindowTableFile = open("inMassWindowTable.tex",'w')
+  inMassWindowTableFile.write( r"""
+\documentclass[12pt,a4paper]{article}
+\usepackage{lscape}
+\begin{document}
+%\tiny
+\small
+\begin{center}
 
+"""
+  )
+  inMassWindowTable =  inMassWindowTableMkr(signames,baknames,"IncBDTCut")
+  inMassWindowTableFile.write(r" {\large Not-VBF BDT Cut} \\"+'\n')
+  inMassWindowTableFile.write(inMassWindowTable)
+  inMassWindowTable =  inMassWindowTableMkr(signames,baknames,"VBFBDTCut")
+  inMassWindowTableFile.write(r"\vspace {4em}\\ {\large VBF BDT Cut} \\"+'\n')
+  inMassWindowTableFile.write(inMassWindowTable)
+  inMassWindowTableFile.write(     r"""
+\end{center}
+\end{document}
+"""
+  )
+  inMassWindowTableFile.close()
 
