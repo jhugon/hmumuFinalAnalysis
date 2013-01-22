@@ -519,10 +519,10 @@ class ShapePlotter:
 
 titleMap = {
   "AllCat":"All Categories Comb.",
-  "IncCat":"Inclusive Categories Comb.",
+  "IncCat":"Non-VBF Categories Comb.",
   "VBFCat":"VBF Categories Comb.",
 
-  "IncPresel":"Inclusive Preselection",
+  "IncPresel":"Non-VBF Preselection",
   "VBFPresel":"VBF Preselection",
 
   "Pt0to30":"p_{T}^{#mu#mu} #in [0,30]",
@@ -537,32 +537,32 @@ titleMap = {
   "VBFVeryTight":"VBFVT",
 
   "BDTCut":"BDT Cut Combination",
-  "IncBDTCut":"Inclusive BDT Cut",
+  "IncBDTCut":"Non-VBF BDT Cut",
   "VBFBDTCut":"VBF BDT Cut",
 
   "BDTCutCat":"BDT Cut Cat. Combination",
-  "IncBDTCutCat":"Inclusive BDT Cut",
+  "IncBDTCutCat":"Non-VBF BDT Cut",
   "VBFBDTCutCat":"VBF BDT Cut",
 
-  "IncPreselCat":"Inclusive Cat. Preselection",
+  "IncPreselCat":"Non-VBF Cat. Preselection",
   "VBFPreselCat":"VBF Cat. Preselection",
 
-  "IncBDTCutBB":"Inclusive BDT Cut BB",
-  "IncBDTCutBO":"Inclusive BDT Cut BO",
-  "IncBDTCutBE":"Inclusive BDT Cut BE",
-  "IncBDTCutOO":"Inclusive BDT Cut OO",
-  "IncBDTCutOE":"Inclusive BDT Cut OE",
-  "IncBDTCutEE":"Inclusive BDT Cut EE",
-  "IncBDTCutNotBB":"Inclusive BDT Cut !BB",
+  "IncBDTCutBB":"Non-VBF BDT Cut BB",
+  "IncBDTCutBO":"Non-VBF BDT Cut BO",
+  "IncBDTCutBE":"Non-VBF BDT Cut BE",
+  "IncBDTCutOO":"Non-VBF BDT Cut OO",
+  "IncBDTCutOE":"Non-VBF BDT Cut OE",
+  "IncBDTCutEE":"Non-VBF BDT Cut EE",
+  "IncBDTCutNotBB":"Non-VBF BDT Cut !BB",
   "VBFBDTCutBB":"VBF BDT Cut BB",
   "VBFBDTCutNotBB":"VBF BDT Cut !BB",
-  "IncPreselBB":"Inclusive Preselection BB",
-  "IncPreselBO":"Inclusive Preselection BO",
-  "IncPreselBE":"Inclusive Preselection BE",
-  "IncPreselOO":"Inclusive Preselection OO",
-  "IncPreselOE":"Inclusive Preselection OE",
-  "IncPreselEE":"Inclusive Preselection EE",
-  "IncPreselNotBB":"Inclusive Preselection !BB",
+  "IncPreselBB":"Non-VBF Preselection BB",
+  "IncPreselBO":"Non-VBF Preselection BO",
+  "IncPreselBE":"Non-VBF Preselection BE",
+  "IncPreselOO":"Non-VBF Preselection OO",
+  "IncPreselOE":"Non-VBF Preselection OE",
+  "IncPreselEE":"Non-VBF Preselection EE",
+  "IncPreselNotBB":"Non-VBF Preselection !BB",
   "VBFPreselBB":"VBF Preselection BB",
   "VBFPreselNotBB":"VBF Preselection !BB"
 }
