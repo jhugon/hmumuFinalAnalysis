@@ -889,7 +889,7 @@ if __name__ == "__main__":
   print "Started makeCards.py"
   root.gROOT.SetBatch(True)
 
-  directory = "input/newVBFOnlyInVBFTraining/"
+  directory = "input/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
   periods = ["8TeV"]

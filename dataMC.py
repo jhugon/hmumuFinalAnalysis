@@ -6,14 +6,14 @@ import ROOT as root
 import os
 import sys
 
-dataDir = "input/muscleNotBlind/"
+dataDir = "input/"
 outDir = "output/"
 
 RUNPERIOD="8TeV"
 LUMI=lumiDict[RUNPERIOD]
 
 LOGY=True
-integralPlot=True
+integralPlot=False
 ylimitsRatio = [0.5,1.5]
 
 #anotateText = "80 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"

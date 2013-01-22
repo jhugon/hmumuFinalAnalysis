@@ -7,7 +7,7 @@ import os
 import sys
 import random
 
-dataDir = "input/muscleNotBlind/"
+dataDir = "input/"
 outDir = "output/"
 
 RUNPERIOD="8TeV"
@@ -39,13 +39,15 @@ histDirs = ["VBFPresel/","IncPresel/"]
 root.gErrorIgnoreLevel = root.kWarning
 
 histNames = {}
-histNames["BDTHistMuonOnlyVMass"] = {"xlabel":"BDT (Non-VBF Category)","xlimits":[-0.8,0.0],
+histNames["BDTHistMuonOnlyVMass"] = {"xlabel":"BDT Cut (Non-VBF Category)","xlimits":[-0.8,0.0],
                                         'ylimits':[1e-6,10.0],
                                         'ylimitsSqrt':[1e-3,10],
+                                'vertLines':{"8TeV":-0.55,"7TeV":-0.48 },
                                         "rebin":1}
-histNames["BDTHistVBFVMass"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.5,0.3],
+histNames["BDTHistVBFVMass"] = {"xlabel":"BDT Cut (VBF Category)","xlimits":[-0.5,0.3],
                                         'ylimits':[1e-6,100.0],
                                         'ylimitsSqrt':[1e-2,1.0],
+                                'vertLines':{"8TeV":-0.04,"7TeV":-0.03},
                                         "rebin":1}
 
 tlatex = root.TLatex()
@@ -259,6 +261,14 @@ for histName in bkgDatasetList[0].hists:
   setLegPos(leg,(ulLegendPos))
   leg.Draw()
 
+  vertLine = None
+  if histNames[histName].has_key("vertLines"):
+    vertLineX = histNames[histName]["vertLines"][RUNPERIOD]
+    vertLine = root.TLine()
+    vertLine.SetLineColor(root.kRed+1)
+    vertLine.SetLineWidth(3)
+    vertLine.DrawLine(vertLineX,sobHistList[0].GetMinimum(),vertLineX,sobHistList[0].GetMaximum())
+
   saveName = histName.replace("(","")
   saveName = saveName.replace(")","")
   saveName = saveName.replace("[","")
@@ -294,5 +304,14 @@ for histName in bkgDatasetList[0].hists:
   drawLatex()
   setLegPos(leg,(ulLegendPos))
   leg.Draw()
+
+  vertLine = None
+  if histNames[histName].has_key("vertLines"):
+    vertLineX = histNames[histName]["vertLines"][RUNPERIOD]
+    vertLine = root.TLine()
+    vertLine.SetLineColor(root.kRed+1)
+    vertLine.SetLineWidth(3)
+    vertLine.DrawLine(vertLineX,sosqrtbHistList[0].GetMinimum(),vertLineX,sosqrtbHistList[0].GetMaximum())
+
   saveAs(canvas,outDir+"sosqrtb_"+saveName+"_"+RUNPERIOD)
 
