@@ -14,8 +14,8 @@ lumiDict["7TeV"] = 5.05 #2011AB
 #LUMI=2.311 #2011A
 #LUMI=2.739 #2011B
 
-scaleHiggsBy = 1.0
-#scaleHiggsBy = 100.0
+#scaleHiggsBy = 1.0
+scaleHiggsBy = 10.0
 
 xsec = {}
 xsec["ggHmumu125_8TeV"] = 4.294e-3 * scaleHiggsBy

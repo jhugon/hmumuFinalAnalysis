@@ -558,6 +558,9 @@ class DataMCStack:
         newSigHistList.append(getIntegralHist(i))
       signalsNoStack = newSigHistList
       ytitle = "Integral of "+ytitle+" #geq X"
+    self.signalsNoStack = signalsNoStack
+    self.mcHistList = mcHistList
+    self.dataHist = dataHist
   
     # Make MC Stack/sumHist
     self.stack = root.THStack()
@@ -1274,6 +1277,40 @@ def hist2to1(hist):
       k += 1
   return result
 
+def hist2to1CollapseY(hist,xcuts=[]):
+  assert(hist.InheritsFrom("TH1"))
+  result = None
+  nBinsX = hist.GetNbinsX()
+  nBinsY = hist.GetNbinsY()
+  ymin = hist.GetYaxis().GetXmin()
+  ymax = hist.GetYaxis().GetXmax()
+  totalBins = (nBinsX+2)*(nBinsY+2) - 2 #include underflow/overflow
+  if hist.InheritsFrom("TH2F"):
+    result = root.TH1F(hist.GetName()+"_1d","",nBinsY,ymin,ymax)
+  elif hist.InheritsFrom("TH2D"):
+    result = root.TH1D(hist.GetName()+"_1d","",nBinsY,ymin,ymax)
+  else:
+    print("Error: hist2to1CollapseY: Input hist must be TH2F or TH2D, exiting.")
+    sys.exit(1)
+  minBinX = 0
+  maxBinX = nBinsX+2
+  if len(xcuts)==2:
+    minBinX = hist.GetXaxis().FindBin(xcuts[0])
+    maxBinX = hist.GetXaxis().FindBin(xcuts[1])
+    if hist.GetXaxis().GetBinCenter(maxBinX)> xcuts[1]:
+        maxBinX -= 1
+  for j in range(nBinsY+2):
+    tmpSum = 0.0
+    tmpSumErr2 = 0.0
+    for i in range(minBinX,maxBinX):
+      tmp = hist.GetBinContent(i,j)
+      tmpErr = hist.GetBinError(i,j)
+      tmpSum += tmp
+      tmpSumErr2 += tmpErr*tmpErr
+    result.SetBinContent(j,tmpSum)
+    result.SetBinError(j,sqrt(tmpSumErr2))
+  return result
+
 def shrinkTH1(hist,xlow,xhigh,deleteOld=False):
   assert(hist.InheritsFrom("TH1"))
   taxis=hist.GetXaxis()
@@ -1397,6 +1434,13 @@ def getIntegralLowHigh(hist,lowBoundaries,highBoundaries):
   highInt = getIntegralAll(hist,highBoundaries)
   return lowInt+highInt
 
+def sqrtTH1(hist):
+  nBins = hist.GetNbinsX()
+  for i in range(nBins+2):
+    n = hist.GetBinContent(i)
+    if n < 0.0:
+      n = 0.0
+    hist.SetBinContent(i,sqrt(n))
 
 def saveAs(canvas,name):
   canvas.SaveAs(name+".png")
@@ -1420,4 +1464,28 @@ if __name__ == "__main__":
   for i in range(len(theta)):
     print("Param {}: {:.2f}".format(i,theta[i]))
 
+  f = root.TFile("input/ggHmumu125_8TeV.root")
+  h1 = f.Get("BDTHistMuonOnly")
+  h2 = f.Get("BDTHistMuonOnlyVMass")
+  h2Col = hist2to1CollapseY(h2,[120.,130.])
+  h2Col.SetLineColor(root.kRed)
+  #h1.Draw()
+  #h2Col.Draw("same")
+  h2Col.Draw()
+
+  h1.Print()
+  h2.Print()
+  h2Col.Print()
+  print h1.GetNbinsX()
+  print h2.GetNbinsY()
+  print h2Col.GetNbinsX()
+  print h1.GetXaxis().GetXmax()
+  print h2.GetYaxis().GetXmax()
+  print h2Col.GetXaxis().GetXmax()
+  print h1.GetXaxis().GetXmin()
+  print h2.GetYaxis().GetXmin()
+  print h2Col.GetXaxis().GetXmin()
+  silly = raw_input("Press Enter to continue")
+
+  silly = raw_input("Press Enter to continue")
 
