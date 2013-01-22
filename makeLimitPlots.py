@@ -98,6 +98,8 @@ comparisonMap = {
   "IncBDTCutCat":"Inc. BDT Res.",
   "VBFBDTCutCat":"VBF BDT Res.",
 
+  "BDTCutCatIncOnly":"BDT Comb. Inc Res.",
+
   #"BDTCutCat":"Combination",
   #"IncBDTCutCat":"Inclusive",
   #"VBFBDTCutCat":"VBF",
@@ -424,6 +426,7 @@ if __name__ == "__main__":
     #veto = ["Cat","Presel"]
     #veto = ["Cat","Comb","Presel"]
     #veto = ["Comb","Presel"]
+    veto = ["Presel"]
 
     mustBe = r"(.+)_(.+)_[.\d]+.txt.out"
     #mustBe = r"(.+Cat)_(.+)_[.\d]+.txt.out"
@@ -444,5 +447,5 @@ if __name__ == "__main__":
     comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=False)
     comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+desiredLumiStr+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
     comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStr,horizontalalignment="right",size="x-large")
-    comparePlot.fig.text(0.9,0.55,"Calculated from MC",horizontalalignment="right",size="x-large")
+    comparePlot.fig.text(0.9,0.50,"Calculated from MC",horizontalalignment="right",size="x-large")
     comparePlot.save(outDir+"compare"+"_"+energyStr)

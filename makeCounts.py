@@ -114,6 +114,8 @@ class Counts:
         tmpHist = rf.Get(strToGet)
         nEvents = getIntegralAll(tmpHist,massBoudaries)
         nEvents *= scaleBy
+        if i == ''
+          i = "all"
         data[fNameKey][i] = nEvents
 
 def compareDirs(dirNameDict,sigFileDict,bakFileNames,categories=["IncPresel","VBFPresel"],massBoundaries=[120,130]):

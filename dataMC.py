@@ -6,7 +6,7 @@ import ROOT as root
 import os
 import sys
 
-dataDir = "input/new110to160/"
+dataDir = "input/newVBFOnlyInVBFTraining/"
 outDir = "output/"
 
 RUNPERIOD="8TeV"
@@ -20,7 +20,7 @@ ylimitsRatio = [0.5,1.5]
 #anotateText = "110 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"
 #anotateText = "110 GeV < m_{#mu#mu} < 150 GeV"
 anotateText = "80 GeV < m_{#mu#mu} < 160 GeV"
-anotateText = "110 GeV < m_{#mu#mu} < 160 GeV"
+#anotateText = "110 GeV < m_{#mu#mu} < 160 GeV"
 #anotateText = "VBF Preselection"
 
 urLegendPos = [0.70,0.67,0.9,0.9]
@@ -36,7 +36,7 @@ histDirs = [""]
 histDirs = ["NotBlindWindow/"]
 histDirs = ["VBFPreselDiMuPtL20/","IncPreselDiMuPtL20/"]
 histDirs = ["VBFPresel/","IncPresel/"]
-histDirs = ["IncPresel/"]
+histDirs = ["VBFPresel/"]
 #histDirs = ["VBFBDTCut/","IncBDTCut/"]
 #histDirs = ["","PtDiMu100/","VBFPresel/","IncPresel/"]
 
