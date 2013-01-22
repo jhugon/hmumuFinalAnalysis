@@ -69,7 +69,14 @@ channelNameMap = {
 sampleNameMap = {
   "data_obs":"Data",
   "bak":"Background",
-  "sig":"Signal"
+  "sig":"Signal",
+  "sob":"$S/B$",
+  "sosqrtb":"$S/\sqrt{B}$",
+  "sosqrtsb":"$S/\sqrt{S+B}$",
+  "ggHmumu125_8TeV":r"$gg \rightarrow H$",
+  "vbfHmumu125_8TeV":r"VBF H",
+  "ggHmumu125_7TeV":r"$gg \rightarrow H$",
+  "vbfHmumu125_7TeV":r"VBF H"
 }
 
 class Counts:
@@ -94,7 +101,7 @@ class Counts:
       else:
         energyStr = fNameNoExt.split('_')[1]
         if xsec.has_key(fNameNoExt) and nEventsMap.has_key(fNameNoExt):
-          scaleBy *= xsec[fNameNoExt]/nEventsMap[fNameNoExt]*lumiDict[energyStr]
+          scaleBy = xsec[fNameNoExt]/nEventsMap[fNameNoExt]*lumiDict[energyStr]*1000.
       fNameKey = fNameNoExt
       if not chopDir:
         fNameKey = fDir+'/'+fNameNoExt
@@ -114,7 +121,7 @@ class Counts:
         tmpHist = rf.Get(strToGet)
         nEvents = getIntegralAll(tmpHist,massBoudaries)
         nEvents *= scaleBy
-        if i == ''
+        if i == '':
           i = "all"
         data[fNameKey][i] = nEvents
 
@@ -188,8 +195,10 @@ def compareDirs(dirNameDict,sigFileDict,bakFileNames,categories=["IncPresel","VB
         #print("dir: {0:<18} sig: {1:<10} cat: {2:<10} n: {3}".format(dirName,j,i,data[dirName][j][i]))
         if j == "bak":
           outString += " {0:<5.0f}".format(data[dirName][j][i]) + " &"
-        else:
+        elif j == "sob":
           outString += " {0:<5.2e}".format(data[dirName][j][i]) + " &"
+        else:
+          outString += " {0:<5.3g}".format(data[dirName][j][i]) + " &"
     outString = outString.rstrip(r"&")
     outString += r"\\ \hline" + '\n'
   
@@ -197,14 +206,117 @@ def compareDirs(dirNameDict,sigFileDict,bakFileNames,categories=["IncPresel","VB
   outString = outString.replace(r"%",r"\%")
 
   outString = re.sub(r"([-\d.+]+)e([-+])0([\d])",r"\1e\2\3",outString)
-  outString = re.sub(r"([-\d.+]+)e([-\d+]+)",r"$\1 \\times 10^{\2}$",outString)
+  outString = re.sub(r"([-\d.+]+)e[+]*([-\d]+)",r"$\1 \\times 10^{\2}$",outString)
 
   lumi = "$\\mathcal{{L}}$ = {0:.0f} fb$^{{-1}}$".format(float(lumi))
-  energyStr = "$\\sqrt{s}=$"+re.sub(r"TeV"," TeV",energyStr)
-  outString += r"\\ "+lumi+", "+energyStr
+  energyStr = "$\\sqrt{s}$ = "+re.sub(r"TeV"," TeV",energyStr)
+  massStr = r"{0} GeV $< m_{{\mu\mu}} <$ {1} GeV".format(*massBoundaries)
+  outString += r"\\ "+massStr+", "+energyStr + ", "+lumi+"\n"
 
   return '\n'+outString+'\n'
-    
+
+def cutFlow(sigFileNames,bakFileNames,channel,massBoundaries=[120.,130.]):
+  data = {}
+  data["bak"] = {}
+  data["sig"] = {}
+  data["sob"] = {}
+  data["sosqrtb"] = {}
+  data["sosqrtsb"] = {}
+
+  categories = ['',"IncPresel","VBFPresel","VBFBDTCut","IncBDTCut"]
+  massBoundaries = [60,200]
+
+  energyStr = ""
+  lumi = ""
+  sigCounts = Counts(sigFileNames,categories,massBoundaries)
+  bakCounts = Counts(bakFileNames,categories,massBoundaries)
+  for sig in sigCounts.data:
+    data[sig] = {}
+  categories.remove('')
+  categories.append("all")
+  for cat in categories:
+    nBak = 0.0
+    for bak in bakCounts.data:
+      nBak += bakCounts.data[bak][cat]
+    data["bak"][cat] = nBak
+    nSig = 0.0
+    for sig in sigCounts.data:
+      energyStr = sigCounts.data[sig]["misc"]["energyStr"]
+      lumi = sigCounts.data[sig]["misc"]["lumi"]
+      nSig += sigCounts.data[sig][cat]
+      data[sig][cat] = sigCounts.data[sig][cat]
+    data["sig"][cat] = nSig
+    data["sob"][cat] = float(nSig)/nBak
+    data["sosqrtb"][cat] = float(nSig)/sqrt(float(nBak))
+    data["sosqrtsb"][cat] = float(nSig)/sqrt(float(nBak+nSig))
+
+  samples = ["ggHmumu125_8TeV","vbfHmumu125_8TeV","bak","sob","sosqrtsb"]
+  ncols = len(samples)
+
+  outString = " &"
+  for i in samples:
+    outString += " "+sampleNameMap[i]+" &"
+  outString = outString.rstrip(r"&")
+  outString += r"\\ \hline" + '\n'
+
+  outString += "No Cuts &"
+  for s in samples:
+    if s=="bak" or s=="sob" or s=="sosqrtb" or s=="sosqrtsb" :
+        outString += "  &"
+        continue
+    outString += " {0:.2f} &".format(xsec[s]*lumiDict[energyStr]*1000.)
+  outString = outString.rstrip(r"&")
+  outString += r"\\ \hline" + '\n'
+
+  outString += "Muon Cuts &"
+  for s in samples:
+    n = data[s]['all']
+    if s=="bak" or s=="sob" or s=="sosqrtb" or s=="sosqrtsb" :
+       outString += " {0:.2e} &".format(n)
+       continue
+    outString += " {0:.2f} &".format(n)
+  outString = outString.rstrip(r"&")
+  outString += r"\\ \hline" + '\n'
+
+  if channel == "Inc":
+    outString += "!VBF Presel. &"
+  else:
+    outString += "VBF Presel. &"
+  for s in samples:
+    n = data[s][channel+"Presel"]
+    if s=="bak" or s=="sob" or s=="sosqrtb" or s=="sosqrtsb" :
+       outString += " {0:.2e} &".format(n)
+       continue
+    outString += " {0:.2f} &".format(n)
+  outString = outString.rstrip(r"&")
+  outString += r"\\ \hline" + '\n'
+
+  if channel == "Inc":
+    outString += "!VBF BDT Cut &"
+  else:
+    outString += "VBF BDT Cut &"
+  for s in samples:
+    n = data[s][channel+"BDTCut"]
+    if s=="bak" or s=="sob" or s=="sosqrtb" or s=="sosqrtsb" :
+       outString += " {0:.2e} &".format(n)
+       continue
+    outString += " {0:.2f} &".format(n)
+  outString = outString.rstrip(r"&")
+  outString += r"\\ \hline" + '\n'
+
+  outString = r"\begin{tabular}{|l|"+'c|'*ncols+"} \hline"+"\n" + outString + r"\end{tabular}"+"\n"
+  outString = outString.replace(r"%",r"\%")
+
+  outString = re.sub(r"([-\d.+]+)e([-+])0([\d])",r"\1e\2\3",outString)
+  outString = re.sub(r"([-\d.+]+)e[+]*([-\d]+)",r"$\1 \\times 10^{\2}$",outString)
+
+  lumi = "$\\mathcal{{L}}$ = {0:.0f} fb$^{{-1}}$".format(float(lumi))
+  energyStr = "$\\sqrt{s}$ = "+re.sub(r"TeV"," TeV",energyStr)
+  massStr = r"{0} GeV $< m_{{\mu\mu}} <$ {1} GeV".format(*massBoundaries)
+  outString += r"\\ "+massStr+", "+energyStr + ", "+lumi+"\n"
+
+  return outString
+
       
 if __name__ == "__main__":
   
@@ -224,12 +336,13 @@ if __name__ == "__main__":
   print("=============================")
   """
 
- ######################################################
+  ######################################################
 
   filenames = glob.glob("input/trk*/gg*.root")
   filenames += glob.glob("input/pf*/gg*.root")
   categories = ["VBFPresel"]
-  mBounds = [110.,160.]
+  #mBounds = [110.,160.]
+  mBounds = [120.,130.]
 
   dirs = {
     "input/trkLooseIso/":"Trk Loose Iso",
@@ -248,4 +361,64 @@ if __name__ == "__main__":
     "SingleMuRun2012Cv2.root"
   ]
 
-  print compareDirs(dirs,sigFileNames,bakFileNames)
+  isoCountsTable = compareDirs(dirs,sigFileNames,bakFileNames,massBoundaries=mBounds)
+  isoTableFile = open("isoTable.tex",'w')
+  isoTableFile.write( r"""
+\documentclass[12pt,a4paper]{article}
+\usepackage{lscape}
+\begin{document}
+%\tiny
+\small
+\begin{center}
+
+"""
+  )
+  isoTableFile.write(isoCountsTable)
+  isoTableFile.write(     r"""
+
+\end{center}
+\end{document}
+"""
+  )
+  isoTableFile.close()
+
+
+  ######################################################
+  signames = ["ggHmumu125_8TeV.root","vbfHmumu125_8TeV.root"]
+  baknames = [
+    "SingleMuRun2012Av1.root",
+    "SingleMuRun2012Bv1.root",
+    "SingleMuRun2012Cv1.root",
+    "SingleMuRun2012Cv2.root"
+  ]
+  signames = ["input/notblind/"+i for i in signames]
+  baknames = ["input/notblind/"+i for i in baknames]
+
+  cutTableFile = open("cutTable.tex",'w')
+  cutTableFile.write( r"""
+\documentclass[12pt,a4paper]{article}
+\usepackage{lscape}
+\begin{document}
+%\tiny
+\small
+\begin{center}
+
+"""
+  )
+  cutTable =  cutFlow(signames,baknames,"Inc")
+  cutTableFile.write(r" {\large Not-VBF Category} \\"+'\n')
+  cutTableFile.write(cutTable)
+  cutTable =  cutFlow(signames,baknames,"VBF")
+  cutTableFile.write(r"\vspace {4em}\\ {\large VBF Category} \\"+'\n')
+  cutTableFile.write(cutTable)
+  cutTableFile.write(     r"""
+
+\end{center}
+\end{document}
+"""
+  )
+  cutTableFile.close()
+
+
+
+
