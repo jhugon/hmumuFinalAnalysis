@@ -183,7 +183,7 @@ efficiencyMap["14TeV"] = 1.0
 # Data/MC scale factors
 mcPlotScaleFactorMap = {}
 mcPlotScaleFactorMap["7TeV"] = 1.0 #IncPresel
-mcPlotScaleFactorMap["8TeV"] = 0.972 #IncPresel
+mcPlotScaleFactorMap["8TeV"] = 1.03 #IncPresel
 mcPlotScaleFactorMap["14TeV"] = 1.0
 
 nuisanceMap = {}
