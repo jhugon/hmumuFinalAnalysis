@@ -200,7 +200,8 @@ class Dataset:
     self.color = color
     self.scaleFactor = scaleFactor
 
-    self.rootFile = root.TFile(filename)
+    if filename != "":
+      self.rootFile = root.TFile(filename)
     self.hists = {}
     self.datasetName = os.path.basename(filename)
     self.datasetName = self.datasetName.replace(".root","")
