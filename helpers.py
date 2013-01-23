@@ -534,7 +534,7 @@ def makeWeightHist(f1,canvas,leg):
   leg.Draw("same")
 
 class DataMCStack:
-  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="Events", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",doRatio=True,ylimits=[],ylimitsRatio=[]):
+  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="Events", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",doRatio=True,ylimits=[],ylimitsRatio=[],adrian1Errors=True):
     nBinsX = dataHist.GetNbinsX()
     self.nBinsX = nBinsX
     self.dataHist = dataHist
@@ -606,23 +606,27 @@ class DataMCStack:
       nMC = self.mcSumHist.GetBinContent(i)
       error = dataHist.GetBinError(i)
       pull = 0.0
+      ratio = 0.0
+      ratioErr = 0.0
       self.oneGraph.SetPoint(iGraph,dataHist.GetXaxis().GetBinCenter(i),1.0)
       iGraph += 1
       if error != 0.0:
-        pull = (nData -nMC)/error
-      ratio = 0.0
-      ratioErr = 0.0
+        if adrian1Errors:
+          pull = (nData -nMC)/nData
+        else:
+          pull = (nData -nMC)/error
       if nMC != 0.0:
         ratio = nData/nMC
         ratioErr = error/nMC
-      if doRatio:
+      if adrian1Errors:
+        self.pullHist.SetBinContent(i,pull)
+      elif doRatio:
         self.pullHist.SetBinContent(i,ratio)
         self.pullHist.SetBinError(i,ratioErr)
         #print("nData: {0:.2f} +/- {1:.2f}, nMC: {2:.2f}, ratio: {3:.2f} +/- {4:.2f}".format(nData,error,nMC,ratio,ratioErr))
       else:
         self.pullHist.SetBinContent(i,pull)
         #print("nData: %f, nMC: %f, error: %f, pull: %f" % (nData,nMC,error,pull))
-
 
     #Find Maximum y-value
     if xlimits != []:
@@ -728,7 +732,13 @@ class DataMCStack:
     self.pullHist.GetXaxis().SetNdivisions(nDivX)
     self.pullHist.GetXaxis().SetTitleSize(0.055*pad1ToPad2FontScalingFactor)
     self.pullHist.GetXaxis().SetLabelSize(0.050*pad1ToPad2FontScalingFactor)
-    self.pullHist.GetYaxis().SetTitle("#frac{Data-MC}{Error}")
+    if adrian1Errors:
+      self.pullHist.GetYaxis().SetTitle("#frac{Data-MC}{Data}")
+      self.pullHist.SetLineColor(root.kBlue)
+      self.pullHist.SetLineStyle(1)
+      self.pullHist.SetLineWidth(2)
+    else:
+      self.pullHist.GetYaxis().SetTitle("#frac{Data-MC}{Error}")
     self.pullHist.GetYaxis().SetTitleSize(0.040*pad1ToPad2FontScalingFactor)
     self.pullHist.GetYaxis().SetLabelSize(0.040*pad1ToPad2FontScalingFactor)
     self.pullHist.GetYaxis().CenterTitle(1)
@@ -738,7 +748,10 @@ class DataMCStack:
     self.pullHist.SetFillStyle(1001)
     if len(ylimitsRatio) == 2:
       self.pullHist.GetYaxis().SetRangeUser(*ylimitsRatio)
-    if doRatio:
+
+    if adrian1Errors:
+      self.pullHist.Draw("histo")
+    elif doRatio:
       #pad2.SetGridy(1)
       self.pullHist.GetYaxis().SetTitle("#frac{Data}{MC}")
       self.pullHist.Draw("")

@@ -2,8 +2,7 @@ import re
 import ROOT as root
 
 lumiDict={}
-lumiDict["8TeV"] = 12.034 #2012ABC
-#lumiDict["8TeV"] = 19.39 #2012AARecovBCD
+lumiDict["8TeV"] = 19.39 #2012AARecovBCD
 lumiDict["7TeV"] = 5.05 #2011AB
 
 #LUMI=0.807 #2012A
@@ -16,7 +15,7 @@ lumiDict["7TeV"] = 5.05 #2011AB
 #LUMI=2.739 #2011B
 
 scaleHiggsBy = 1.0
-#scaleHiggsBy = 100.0
+#scaleHiggsBy = 10.0
 
 xsec = {}
 xsec["ggHmumu125_8TeV"] = 4.294e-3 * scaleHiggsBy
@@ -123,10 +122,12 @@ signalList = [
 dataDict = {}
 
 dataDict["8TeV"] = [
-"SingleMuRun2012Av1",
-"SingleMuRun2012Bv1",
-"SingleMuRun2012Cv1",
-"SingleMuRun2012Cv2"
+    "SingleMuRun2012Av1",
+    "SingleMuRun2012Av1Recover",
+    "SingleMuRun2012Bv1",
+    "SingleMuRun2012Cv1",
+    "SingleMuRun2012Cv2",
+    "SingleMuRun2012D"
 ]
 
 dataDict["7TeV"] = [

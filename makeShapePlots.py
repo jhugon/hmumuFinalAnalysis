@@ -186,6 +186,35 @@ class ShapePlotter:
       ratioPlot.SetPointError(i,0.,0.,ratioErrUp,ratioErrDown)
     return ratioPlot
 
+  def getAdrian1Errors(self,hist,curve):
+    def findI(graph,x):
+      xList = []
+      X = root.Double()
+      Y = root.Double()
+      for i in range(graph.GetN()):
+        graph.GetPoint(i,X,Y)
+        xList.append(abs(float(X)-float(x)))
+      bestI = min(range(len(xList)), key=lambda i: xList[i])
+      if xList[bestI]>1.0:
+        return -1
+      return bestI
+    ratioPlot = root.TGraph()
+    histX = root.Double()
+    histY = root.Double()
+    curveX = root.Double()
+    curveY = root.Double()
+    for i in range(hist.GetN()):
+      hist.GetPoint(i,histX,histY)
+      curveI = findI(curve,histX)
+      if curveI < 0:
+        continue
+      curve.GetPoint(curveI,curveX,curveY)
+      ratio = 0.0
+      if  histY != 0.0:
+        ratio = (histY-curveY)/histY
+      ratioPlot.SetPoint(i,histX,ratio)
+    return ratioPlot
+
   def makeTGraphs(self,pdf,data,observable):
     avgWeight = 1.0
     isRealData = (data.GetTitle() == "Real Observed Data")
@@ -381,6 +410,7 @@ class ShapePlotter:
       self.histList.append(pullHist)
 
       getHistFromGraph(data,dataHist)
+      binWidth = (dataHist.GetXaxis().GetXmax()-dataHist.GetXaxis().GetXmin())/dataHist.GetXaxis().GetNbins()
 
       maxVal = getMaxYVal(self,data)
       maxVal = max(getMaxYVal(self,model),maxVal)
@@ -416,7 +446,7 @@ class ShapePlotter:
       # Main Pad
       pad1.cd();
       dataHist.Draw("")
-      dataHist.GetYaxis().SetTitle("Events/Bin")
+      dataHist.GetYaxis().SetTitle(("Events/{0:."+str(0)+"f} GeV").format(binWidth))
       dataHist.GetYaxis().SetTitleSize(gStyle.GetTitleSize("Y")*canvasToPad1FontScalingFactor)
       dataHist.GetYaxis().SetLabelSize(gStyle.GetLabelSize("Y")*canvasToPad1FontScalingFactor)
       dataHist.GetYaxis().SetTitleOffset(0.9*gStyle.GetTitleOffset("Y"))
@@ -436,15 +466,33 @@ class ShapePlotter:
       # Pulls Pad
       pad2.cd()
 
-      ratioGraph = self.getRatioGraph(data,model)
-      self.pullsList.append(ratioGraph)
       doRatio = True
+      adrian1Errors = True
+      ratioGraph = None
+      if adrian1Errors:
+        ratioGraph = self.getAdrian1Errors(data,model)
+      else:
+        ratioGraph = self.getRatioGraph(data,model)
+      self.pullsList.append(ratioGraph)
       if doRatio:
         pulls =  ratioGraph
       getHistFromGraph(pulls,pullHist)
-      pullHist.SetLineStyle(1)
-      pullHist.SetLineColor(1)
-      pullHist.SetMarkerColor(1)
+      if adrian1Errors:
+         pullHist.GetYaxis().SetTitle("#frac{"+dataLabel+"-Fit}{"+dataLabel+"}")
+         pullHist.GetYaxis().SetRangeUser(-1.5,1.5)
+         pullHist.SetLineColor(root.kBlue)
+         pullHist.SetLineStyle(1)
+         pullHist.SetLineWidth(2)
+         pullHist.SetFillColor(856)
+         pullHist.SetFillStyle(1001)
+      else:
+        pullHist.SetLineStyle(1)
+        pullHist.SetLineColor(1)
+        pullHist.SetMarkerColor(1)
+        pullHist.GetYaxis().SetTitle("#frac{"+dataLabel+"-Fit}{#sigma_{"+dataLabel+"}}")
+        if doRatio:
+          pullHist.GetYaxis().SetTitle("#frac{"+dataLabel+"}{Fit}")
+          pullHist.GetYaxis().SetRangeUser(0,2)
       pullHist.SetTitle("")
       pullHist.GetXaxis().SetRangeUser(*drawXLimits)
       pullHist.GetXaxis().SetTitle("m_{#mu#mu} [GeV]")
@@ -452,10 +500,6 @@ class ShapePlotter:
       pullHist.GetYaxis().SetNdivisions(5)
       pullHist.GetXaxis().SetTitleSize(0.055*pad1ToPad2FontScalingFactor)
       pullHist.GetXaxis().SetLabelSize(0.050*pad1ToPad2FontScalingFactor)
-      pullHist.GetYaxis().SetTitle("#frac{"+dataLabel+"-Fit}{#sigma_{"+dataLabel+"}}")
-      if doRatio:
-        pullHist.GetYaxis().SetTitle("#frac{"+dataLabel+"}{Fit}")
-        pullHist.GetYaxis().SetRangeUser(0,2)
       pullHist.GetYaxis().SetTitleSize(0.045*pad1ToPad2FontScalingFactor)
       pullHist.GetYaxis().SetLabelSize(0.045*pad1ToPad2FontScalingFactor)
       pullHist.GetYaxis().CenterTitle(1)
@@ -464,14 +508,18 @@ class ShapePlotter:
 
       pullHist.GetXaxis().SetLabelSize(gStyle.GetLabelSize("X")*canvasToPad2FontScalingFactor)
 
-      pullHist.Draw("")
-      if doRatio:
+      if adrian1Errors:
+        pullHist.Draw("hist")
+      elif doRatio:
+        pullHist.Draw("")
         modelRatio = root.TGraphAsymmErrors()
         modelOne = root.TGraphAsymmErrors()
         makeRatioModelPlots(model,modelRatio,modelOne)
         modelRatio.Draw("3")
         modelOne.Draw("l")
         pullHist.Draw("same")
+      else:
+        pullHist.Draw("")
 
 
       ## Pretty Stuff

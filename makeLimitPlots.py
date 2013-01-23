@@ -369,8 +369,7 @@ if __name__ == "__main__":
   if args.bdtCut:
     ylimits=[1.,30.0]
 
-  #lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":lumiDict["8TeV"]}
-  lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":19.4}
+  lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":lumiDict["8TeV"]}
   
   for period in ["7TeV","8TeV","14TeV"]:
     fnToGlob = dirName+"*_"+period+"_*.txt.out"

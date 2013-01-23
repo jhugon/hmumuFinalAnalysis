@@ -889,13 +889,12 @@ if __name__ == "__main__":
   print "Started makeCards.py"
   root.gROOT.SetBatch(True)
 
-  directory = "input/"
+  directory = "input/freezeSample/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
-  analyses = analysesInc + analysesVBF
+  analyses = analysesInc #+ analysesVBF
   categoriesInc = ["BB","BO","BE","OO","OE","EE"]
   categoriesVBF = ["BB","NotBB"]
   tmpList = []
@@ -910,17 +909,12 @@ if __name__ == "__main__":
   #analyses += tmpList
   combinations = []
   combinationsLong = []
+  """
   combinations.append((
         ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
   ))
   combinations.append((
-        ["VBFBDTCut"+x for x in categoriesVBF],"VBFBDTCutCat"
-  ))
-  combinations.append((
         ["IncPresel"+x for x in categoriesInc],"IncPreselCat"
-  ))
-  combinations.append((
-        ["VBFPresel"+x for x in categoriesVBF],"VBFPreselCat"
   ))
   combinations.append((
         ["IncBDTCut","VBFBDTCut"],"BDTCut"
@@ -928,31 +922,29 @@ if __name__ == "__main__":
   combinations.append((
         ["IncPresel","VBFPresel"],"Presel"
   ))
-#  combinations.append((
-#        ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
-#  ))
   combinations.append((
-        ["VBFBDTCut"+x for x in categoriesVBF]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
+        ["VBFPresel"]+["IncPresel"+x for x in categoriesInc],"PreselCat"
   ))
+  combinations.append((
+        ["VBFBDTCut"]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
+  ))
+
 #  combinationsLong.append((
 #        ["IncBDTCut","VBFBDTCut"],"BDTCut"
 #  ))
 #  combinationsLong.append((
-#        ["VBFBDTCut"+x for x in categoriesVBF]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
+#        ["VBFBDTCut"]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
 #  ))
 #  combinationsLong.append((
-#        ["VBFPresel"+x for x in categoriesVBF]+["IncPresel"+x for x in categoriesInc],"PreselCat"
+#        ["VBFPresel"]+["IncPresel"+x for x in categoriesInc],"PreselCat"
 #  ))
-  combinations.append((
-        ["VBFBDTCut"]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCatIncOnly"
-  ))
 
   combinationsBDTCut = []
+  #combinationsBDTCut.append((
+  #  ["IncPresel"],"IncBDTCut",0.025,-0.7,-0.25,"BDTHistMuonOnlyVMass"
+  #))
   combinationsBDTCut.append((
-    ["IncPresel"],"IncBDTCut",0.025,-0.7,-0.25,"BDTHistMuonOnlyVMass"
-  ))
-  combinationsBDTCut.append((
-    ["VBFPresel"],"VBFBDTCut",0.025,-0.3,0.1,"BDTHistVBFVMass"
+    ["VBFPresel"],"VBFBDTCut",0.05,-0.3,0.1,"BDTHistVBFVMass"
   ))
   #combinationsBDTCut.append((
   #  ["IncPresel"+x for x in categoriesInc],"IncBDTCutCat",0.025,-0.7,-0.35,"BDTHistMuonOnlyVMass"
@@ -960,16 +952,19 @@ if __name__ == "__main__":
   #combinationsBDTCut.append((
   #  ["VBFPresel"+x for x in categoriesVBF],"VBFBDTCutCat",0.025,-0.2,0.0,"BDTHistVBFVMass"
   #))
+  """
 
   histPostFix="/mDiMu"
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar"]
   dataDict = {}
   dataDict["8TeV"] = [
-#    "SingleMuRun2012Av1",
-#    "SingleMuRun2012Bv1",
-#    "SingleMuRun2012Cv1",
-#    "SingleMuRun2012Cv2"
+    "SingleMuRun2012Av1",
+    "SingleMuRun2012Av1Recover",
+    "SingleMuRun2012Bv1",
+    "SingleMuRun2012Cv1",
+    "SingleMuRun2012Cv2",
+    "SingleMuRun2012D",
   ]
   dataDict["7TeV"] = [
     "SingleMuRun2011Av1",
@@ -980,7 +975,6 @@ if __name__ == "__main__":
   lumiListLong = [20,30,50,100,500,1000,5000]
   lumiList = [lumiDict["8TeV"],20,25,30]
   lumiList = [lumiDict["8TeV"]]
-  lumiList = [19.4]
   #lumiListLong = lumiList
 
   MassRebin = 1 # 4 Bins per GeV originally
@@ -1124,7 +1118,7 @@ for i in *.txt; do
     [[ -e "$i" ]] || continue
 echo "Running on "$i
 bsub -o /dev/null lxbatch.sh $i
-#bsub -q 1nh lxbatch.sh $i
+#bsub -q 1nh -o /dev/null lxbatch.sh $i
 done
 """
   runFile.write(batchString)

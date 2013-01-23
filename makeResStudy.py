@@ -14,6 +14,7 @@ root.gStyle.SetOptStat(0)
 from makeCards import makePDFSig, SIGNALFIT
 
 urLegendPos = [0.65,0.67,0.9,0.9]
+plotPDFLegendPos =  [0.60,0.5,0.93,0.9]
 minMass = 110.
 maxMass = 160.
 vminMass = 60.
@@ -44,7 +45,7 @@ class ResStudy:
     categories = ["BB","BO","BE","OO","OE","EE"]
     if re.search(r"VBF",fileName) or re.search(r"vbf",fileName) :
       prefix = "VBFPresel"
-      categories = ["BB","NotBB"]
+      categories = [""]
     self.categories = categories
     if True:
       tmpCounts, tmpRes, tmpQuants, hists = getData(f,categories,prefix)
@@ -58,6 +59,7 @@ class ResStudy:
     self.resList = resList
     self.quantList = quantList
     self.categoriesList = categoriesList
+    self.prefix = prefix
 
     # New Code
     self.workspace = root.RooWorkspace("w")
@@ -298,7 +300,11 @@ class ResStudy:
     frame = self.mMuMu.frame(rooPlotRange)
     frame.SetTitle("")
     frame.SetYTitle("Signal MC Events")
-    leg = root.TLegend(*urLegendPos)
+    leg = root.TLegend(*plotPDFLegendPos)
+    print self.prefix
+    if self.prefix == "VBFPresel":
+        print "n justin silly"
+        leg = root.TLegend(0.6,0.8,0.93,0.9)
     leg.SetFillColor(0)
     leg.SetLineColor(0)
     for i in self.categories:
@@ -310,7 +316,10 @@ class ResStudy:
         rooRange = root.RooFit.Range("all")
         tmpCurve.plotOn(frame,rooLCol,rooName,rooRange)
         tmpCurveH = frame.getCurve(rooNameStr)
-        leg.AddEntry(tmpCurveH,i,"l")
+        if self.prefix == "VBFPresel":
+          leg.AddEntry(tmpCurveH,"VBF, #sigma = {0:.1f} GeV".format(self.resList[0][i]),"l")
+        else:
+          leg.AddEntry(tmpCurveH,i+", #sigma = {0:.1f} GeV".format(self.resList[0][i]),"l")
         curves.append(tmpCurve)
         iColor += 1
     frame.Draw()
@@ -332,8 +341,8 @@ if __name__ == "__main__":
   titles = []
   #infiles.append("input/ggHmumu125_8TeV.root")
   #infiles.append("input/vbfHmumu125_8TeV.root")
-  infiles.append("input/muscle/ggHmumu125_8TeV.root")
-  infiles.append("input/muscle/vbfHmumu125_8TeV.root")
+  infiles.append("input/ggHmumu125_8TeV.root")
+  infiles.append("input/vbfHmumu125_8TeV.root")
   #infiles.append("input/smearing/ggHmumu125_8TeV.root")
   #infiles.append("input/smearing/vbfHmumu125_8TeV.root")
   #infiles.append("input/rochester/ggHmumu125_8TeV.root")
