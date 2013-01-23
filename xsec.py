@@ -3,6 +3,7 @@ import ROOT as root
 
 lumiDict={}
 lumiDict["8TeV"] = 12.034 #2012ABC
+#lumiDict["8TeV"] = 19.39 #2012AARecovBCD
 lumiDict["7TeV"] = 5.05 #2011AB
 
 #LUMI=0.807 #2012A

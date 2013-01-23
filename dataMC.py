@@ -6,7 +6,7 @@ import ROOT as root
 import os
 import sys
 
-dataDir = "input/"
+dataDir = "input/110to150/"
 outDir = "output/"
 
 RUNPERIOD="8TeV"
@@ -18,9 +18,8 @@ ylimitsRatio = [0.5,1.5]
 
 #anotateText = "80 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"
 #anotateText = "110 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"
-#anotateText = "110 GeV < m_{#mu#mu} < 150 GeV"
-anotateText = "80 GeV < m_{#mu#mu} < 160 GeV"
-#anotateText = "110 GeV < m_{#mu#mu} < 160 GeV"
+anotateText = "110 GeV < m_{#mu#mu} < 150 GeV"
+#anotateText = "80 GeV < m_{#mu#mu} < 160 GeV"
 #anotateText = "VBF Preselection"
 
 urLegendPos = [0.70,0.67,0.9,0.9]
@@ -94,7 +93,7 @@ histNames["relIsoMu2"] = {"xlabel":"Sub-Leading Muon Relative PF Isolation","xli
 #histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.55,0.30],"rebin":2,'vertLines':{"8TeV":-0.04,"7TeV":-0.03}}
 
 histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Non-VBF Category)","xlimits":[-0.8,0.0],"rebin":2,"ylimits":[1e-2,1e8],'vertLines':{"8TeV":-0.55,"7TeV":-0.48}}
-histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.55,0.30],"rebin":2,"ylimits":[1e-2,5e8],'vertLines':{"8TeV":-0.04,"7TeV":-0.03}}
+histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.55,0.30],"rebin":2,"ylimits":[1e-2,5e4],'vertLines':{"8TeV":-0.04,"7TeV":-0.03}}
 
 """
 histNames["puJetIDSimpleDiscJet1"] = {"xlabel":"PU Jet ID Simple Discriminator--Leading Jet","xlimits":[-1,1],"rebin":2,"leg":ulLegendPos,"ylimits":[0.1,500.]}
@@ -363,6 +362,8 @@ for histName in bkgDatasetList[0].hists:
   saveName = saveName.replace("[","")
   saveName = saveName.replace("]","")
   saveName = saveName.replace("/","_")
+  if integralPlot:
+    saveName += "_IntPlot"
   saveAs(canvas,outDir+saveName+"_"+RUNPERIOD)
 
   match = re.match(r"(.*)_ptDiMu",saveName)
