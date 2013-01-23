@@ -589,9 +589,9 @@ class DataMCStack:
     self.normchi2 = dataHist.Chi2Test(self.mcSumHist,"UW CHI2/NDF")
     self.chi2Prob = dataHist.Chi2Test(self.mcSumHist,"UW")
     self.KSProb = dataHist.KolmogorovTest(self.mcSumHist)
-    if self.chi2Prob < 1e-10:
+    if self.chi2Prob < 1e-20:
         self.chi2Prob = 0.0
-    if self.KSProb < 1e-10:
+    if self.KSProb < 1e-20:
         self.KSProb = 0.0
 
     # Make Pull Hist
