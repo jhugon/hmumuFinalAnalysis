@@ -10,7 +10,7 @@ import random
 dataDir = "input/"
 outDir = "output/"
 
-RUNPERIOD="8TeV"
+RUNPERIOD="7TeV"
 LUMI=lumiDict[RUNPERIOD]
 
 LOGY=True
@@ -18,13 +18,6 @@ integralPlot=False
 ylimitsRatio = [0.5,1.5]
 
 mRange = [120.0,130.0]
-
-#anotateText = "80 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"
-#anotateText = "110 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"
-#anotateText = "110 GeV < m_{#mu#mu} < 150 GeV"
-anotateText = "80 GeV < m_{#mu#mu} < 160 GeV"
-#anotateText = "110 GeV < m_{#mu#mu} < 160 GeV"
-#anotateText = "VBF Preselection"
 
 urLegendPos = [0.70,0.67,0.9,0.9]
 ulLegendPos = [0.20,0.67,0.4,0.9]
@@ -86,7 +79,6 @@ def drawLatex():
     tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.78,"#sqrt{s} = "+RUNPERIOD)
 
     tlatex.SetTextAlign(32)
-    #tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,anotateText)
     tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,"")
 
 class Dataset:

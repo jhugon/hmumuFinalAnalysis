@@ -892,7 +892,7 @@ if __name__ == "__main__":
   directory = "input/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  periods = ["8TeV"]
+  periods = ["7TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
@@ -949,17 +949,17 @@ if __name__ == "__main__":
 
   combinationsBDTCut = []
   combinationsBDTCut.append((
-    ["IncPresel"],"IncBDTCut",0.025,-0.7,-0.35,"BDTHistMuonOnlyVMass"
+    ["IncPresel"],"IncBDTCut",0.025,-0.7,-0.25,"BDTHistMuonOnlyVMass"
   ))
   combinationsBDTCut.append((
     ["VBFPresel"],"VBFBDTCut",0.025,-0.3,0.1,"BDTHistVBFVMass"
   ))
-  combinationsBDTCut.append((
-    ["IncPresel"+x for x in categoriesInc],"IncBDTCutCat",0.025,-0.7,-0.35,"BDTHistMuonOnlyVMass"
-  ))
-  combinationsBDTCut.append((
-    ["VBFPresel"+x for x in categoriesVBF],"VBFBDTCutCat",0.025,-0.2,0.0,"BDTHistVBFVMass"
-  ))
+  #combinationsBDTCut.append((
+  #  ["IncPresel"+x for x in categoriesInc],"IncBDTCutCat",0.025,-0.7,-0.35,"BDTHistMuonOnlyVMass"
+  #))
+  #combinationsBDTCut.append((
+  #  ["VBFPresel"+x for x in categoriesVBF],"VBFBDTCutCat",0.025,-0.2,0.0,"BDTHistVBFVMass"
+  #))
 
   histPostFix="/mDiMu"
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
