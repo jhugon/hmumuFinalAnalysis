@@ -384,9 +384,9 @@ class ShapePlotter:
 
       maxVal = getMaxYVal(self,data)
       maxVal = max(getMaxYVal(self,model),maxVal)
-      dataLabel = "FullSim Data"
+      dataLabel = "FullSim MC"
       if rooDataTitle == "Toy Data":
-        dataLabel = "Toy Data"
+        dataLabel = "Toy MC"
       elif rooDataTitle == "Real Observed Data":
         dataLabel = "Data"
 

@@ -31,7 +31,7 @@ NPROCS = 2
 BAKUNC = 0.1
 
 BAKUNCON = True
-SIGUNCON = False
+SIGUNCON = True
 
 SIGGAUS = True
 
@@ -427,7 +427,7 @@ class Analysis:
           hist.Rebin(*rb)
         for key in self.sigErrHistsMap:
           for hist in self.sigErrHistsMap[key]:
-            hist.Rebin2D(*rb)
+            hist.Rebin(*rb)
     elif len(rb) == 0:
       pass
     else:
@@ -892,7 +892,7 @@ if __name__ == "__main__":
   directory = "input/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  periods = ["7TeV"]
+  periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
