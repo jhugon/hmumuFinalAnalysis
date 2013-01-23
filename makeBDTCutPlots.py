@@ -79,7 +79,7 @@ def drawLatex():
     #tlatex.SetTextSize(0.05)
     tlatex.SetTextSize(0.04)
     tlatex.SetTextAlign(12)
-    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
+    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
     tlatex.SetTextAlign(32)
     tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.88,"{0:.0f} GeV < m_{{#mu#mu}} < {1:.0f} GeV".format(*mRange))
     tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.83,"L={0:.1f} fb^{{-1}}".format(LUMI))

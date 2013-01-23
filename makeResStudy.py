@@ -285,7 +285,7 @@ class ResStudy:
       tlatex.SetTextFont(root.gStyle.GetLabelFont())
       tlatex.SetTextSize(0.05)
       tlatex.SetTextAlign(12)
-      tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
+      tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
       tlatex.SetTextAlign(32)
       tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
       saveAs(self.canvas,saveNameBase)
@@ -320,7 +320,7 @@ class ResStudy:
     tlatex.SetTextFont(root.gStyle.GetLabelFont())
     tlatex.SetTextSize(0.05)
     tlatex.SetTextAlign(12)
-    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
+    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
     tlatex.SetTextAlign(32)
     tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
 

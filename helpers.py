@@ -9,6 +9,10 @@ import array
 import sys
 import matplotlib.pyplot as mpl
 
+#PRELIMINARYSTRING="CMS Internal"
+PRELIMINARYSTRING="CMS Preliminary"
+#PRELIMINARYSTRING="CMS"
+
 def fit2DResHist(hist,color):
   histName = hist.GetName()
   hist.FitSlicesY()
@@ -760,7 +764,7 @@ class DataMCStack:
     pad2.RedrawAxis() # Updates Axis Lines
   
     canvas.cd()
-    self.tlatex.DrawLatex(0.33,0.96,"CMS Internal")
+    self.tlatex.DrawLatex(0.33,0.96,PRELIMINARYSTRING)
     self.tlatex.DrawLatex(0.75,0.96,"#sqrt{{s}}={0}, L={1:.1f} fb^{{-1}}".format(energyStr,lumi))
 
 class CompareTwoHists:
@@ -1044,7 +1048,7 @@ class CompareTwoHistsAndData:
     pad2.GetFrame().DrawClone()
   
     canvas.cd()
-    self.tlatex.DrawLatex(0.33,0.96,"CMS Internal")
+    self.tlatex.DrawLatex(0.33,0.96,PRELIMINARYSTRING)
     self.tlatex.DrawLatex(0.75,0.96,"#sqrt{{s}}={0}, L={1:.1f} fb^{{-1}}".format(energyStr,lumi))
 
 def makeBootstrapHist(hist,outHist,entries=None):

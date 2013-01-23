@@ -272,7 +272,7 @@ class RelativePlot:
     #tlatex.SetTextSize(0.05)
     tlatex.SetTextSize(0.04)
     tlatex.SetTextAlign(12)
-    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
+    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
     tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.88,caption2)
     tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.82,caption3)
 
