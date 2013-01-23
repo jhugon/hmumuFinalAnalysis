@@ -35,9 +35,20 @@ histNames = {}
 histNames["BDTHistMuonOnlyVMass"] = {"xlabel":"BDT Cut (Non-VBF Category)","xlimits":[-0.8,0.0],
                                         'ylimits':[1e-6,10.0],
                                         'ylimitsSqrt':[1e-3,10],
-                                'vertLines':{"8TeV":-0.55,"7TeV":-0.48 },
+                                'vertLines':{"8TeV":-0.55,"7TeV":-0.42 },
                                         "rebin":1}
 histNames["BDTHistVBFVMass"] = {"xlabel":"BDT Cut (VBF Category)","xlimits":[-0.5,0.3],
+                                        'ylimits':[1e-6,100.0],
+                                        'ylimitsSqrt':[1e-2,1.0],
+                                'vertLines':{"8TeV":-0.04,"7TeV":-0.03},
+                                        "rebin":1}
+#7TeV
+histNames["BDTHistMuonOnlyVMass"] = {"xlabel":"BDT Cut (Non-VBF Category)","xlimits":[-0.55,0.2],
+                                        'ylimits':[1e-6,10.0],
+                                        'ylimitsSqrt':[1e-3,10],
+                                'vertLines':{"8TeV":-0.55,"7TeV":-0.42 },
+                                        "rebin":1}
+histNames["BDTHistVBFVMass"] = {"xlabel":"BDT Cut (VBF Category)","xlimits":[-0.3,0.4],
                                         'ylimits':[1e-6,100.0],
                                         'ylimitsSqrt':[1e-2,1.0],
                                 'vertLines':{"8TeV":-0.04,"7TeV":-0.03},

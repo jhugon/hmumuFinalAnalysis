@@ -13,7 +13,7 @@ RUNPERIOD="7TeV"
 LUMI=lumiDict[RUNPERIOD]
 
 LOGY=True
-integralPlot=True
+integralPlot=False
 ylimitsRatio = [0.5,1.5]
 
 #anotateText = "80 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"
@@ -92,8 +92,12 @@ histNames["relIsoMu2"] = {"xlabel":"Sub-Leading Muon Relative PF Isolation","xli
 #histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Non-VBF Category)","xlimits":[-0.8,0.0],"rebin":2,'vertLines':{"8TeV":-0.55,"7TeV":-0.48}}
 #histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.55,0.30],"rebin":2,'vertLines':{"8TeV":-0.04,"7TeV":-0.03}}
 
-histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Non-VBF Category)","xlimits":[-0.8,0.0],"rebin":2,"ylimits":[1e-2,1e8],'vertLines':{"8TeV":-0.55,"7TeV":-0.48}}
+histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Non-VBF Category)","xlimits":[-0.8,0.0],"rebin":2,"ylimits":[1e-2,1e8],'vertLines':{"8TeV":-0.55,"7TeV":-0.42}}
 histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.55,0.30],"rebin":2,"ylimits":[1e-2,5e4],'vertLines':{"8TeV":-0.04,"7TeV":-0.03}}
+
+# 7TeV
+histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Non-VBF Category)","xlimits":[-0.55,0.2],"rebin":2,"ylimits":[1e-2,1e8],'vertLines':{"8TeV":-0.55,"7TeV":-0.42}}
+histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.3,0.4],"rebin":2,"ylimits":[1e-2,5e2],'vertLines':{"8TeV":-0.04,"7TeV":-0.03}}
 
 """
 histNames["puJetIDSimpleDiscJet1"] = {"xlabel":"PU Jet ID Simple Discriminator--Leading Jet","xlimits":[-1,1],"rebin":2,"leg":ulLegendPos,"ylimits":[0.1,500.]}
