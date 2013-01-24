@@ -731,7 +731,8 @@ class DataCardMaker:
     rootDebugString = ""
 
     for channel in self.channels:
-        print (channel.workspace.data("data_obs").GetTitle())
+        print(channel.workspace.data("data_obs").GetTitle())
+        rootDebugString += "#"+channel.workspace.data("data_obs").GetTitle()+"\n"
         channel.workspace.Write()
 
     outRootFile.Close()
@@ -927,17 +928,17 @@ if __name__ == "__main__":
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
   categoriesInc = ["BB","BO","BE","OO","OE","EE"]
-  categoriesVBF = ["BB","NotBB"]
+  categoriesVBF = []
   tmpList = []
   for a in analysesInc:
     for c in categoriesInc:
         tmpList.append(a+c)
-  #analyses += tmpList
+  analyses += tmpList
   tmpList = []
   for a in analysesVBF:
     for c in categoriesVBF:
         tmpList.append(a+c)
-  #analyses += tmpList
+  analyses += tmpList
   combinations = []
   combinationsLong = []
   combinations.append((

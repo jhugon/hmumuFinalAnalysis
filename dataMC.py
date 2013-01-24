@@ -12,7 +12,7 @@ outDir = "output/"
 RUNPERIOD="8TeV"
 LUMI=lumiDict[RUNPERIOD]
 
-LOGY=True
+LOGY=False
 integralPlot=False
 adrian1Errors = True
 allHiggsTogether = True
@@ -41,6 +41,7 @@ histDirs = ["VBFPreselDiMuPtL20/","IncPreselDiMuPtL20/"]
 histDirs = ["VBFPresel/","IncPresel/"]
 histDirs = ["IncPresel/"]
 histDirs = ["IncBDTCutBB/","VBFBDTCut/"]
+histDirs = ["VBFBDTCut/"]
 
 root.gErrorIgnoreLevel = root.kWarning
 
@@ -106,7 +107,8 @@ elif RUNPERIOD=="8TeV":
     histNames["ptmiss"] = {"xlabel":"p_{T}^{Miss}","xlimits":[0,200],"leg":stdLegendPos,"ylimits":[0.1,1e3]}
     histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.4,0.25],"rebin":2,"ylimits":[1e-1,5e3],'vertLines':{"8TeV":-0.04,"7TeV":-0.03}}
   else:
-    histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[110.0,149.99],"rebin":2,'ylimits':[0.1,5e4]}
+    #histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[110.0,149.99],"rebin":2,'ylimits':[0.1,5e4]}
+    histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV]","xlimits":[110.0,149.99],"rebin":5,'ylimits':[0.0,20.]}
     anotateText = ""
 else:
   print "Using Other Settings"

@@ -11,8 +11,7 @@ rm -f statsCards/*
 rm -f statsInput/*
 rm -f statsOutput/*
 
-#nice ./makeCards.py
-nice ./makeCards.py --toyData
+nice ./makeCards.py
 echo "Removing files in lxplus:$REMOTEDIR"
 ssh lxplus "cd /tmp/jhugon/; rm -rf $REMOTEDIR/*;echo \"Contents of dir: \`ls $REMOTEDIR \`\""
 echo "Copying input files to lxplus..."
@@ -27,4 +26,4 @@ scp lxplus:$REMOTEDIR/*.mu statsInput/.
 
 nice ./makeShapePlots.py
 nice ./makeLimitPlots.py
-nice ./makeSigMuPlots.py
+#nice ./makeSigMuPlots.py

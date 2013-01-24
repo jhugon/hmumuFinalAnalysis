@@ -310,7 +310,7 @@ class ComparePlot:
     ax1.set_yticks(xPos+0.25)
     ax1.set_yticklabels(tuple(xLabels),size="small")
     ax1.set_xlabel(ylabel)
-    ax1.set_xlim([0,25])
+    ax1.set_xlim([0,50])
     bars = ax1.barh(xPos,medians, 0.5, xerr=[low2sigs,high2sigs],ecolor="k")
     self.bars = bars
     xPosObs = [x+0.25 for x in xPos]
@@ -426,7 +426,7 @@ if __name__ == "__main__":
     #veto = ["Cat","Presel"]
     #veto = ["Cat","Comb","Presel"]
     #veto = ["Comb","Presel"]
-    #veto = ["Presel"]
+    veto = ["Presel"]
 
     mustBe = r"(.+)_(.+)_[.\d]+.txt.out"
     #mustBe = r"(.+Cat)_(.+)_[.\d]+.txt.out"
