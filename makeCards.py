@@ -578,7 +578,7 @@ class Analysis:
       self.effSigList.append(eff)
 
     self.countsSigTotal = self.xsecSigTotal*lumi
-    self.countsBakTotal = self.xsecBakTotal*lumi
+    #self.countsBakTotal = self.xsecBakTotal*lumi
     self.countsSigList = [x*lumi for x in self.xsecSigList]
     self.countsBakList = [x*lumi for x in self.xsecBakList]
 
