@@ -14,6 +14,7 @@ import datetime
 import sys
 import os.path
 import copy
+import shutil
 import multiprocessing
 import time
 myThread = multiprocessing.Process
@@ -28,7 +29,8 @@ PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 
 NPROCS = 2
 
-BAKUNC = 0.1
+#Scaling Parameter for Bak norm uncertainty
+BAKUNC = 1.0
 
 BAKUNCON = True
 SIGUNCON = False
@@ -129,7 +131,6 @@ def makePDFBak(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     mMuMuZ = root.RooRealVar("mMuMu","mMuMu",88.0,94.0)
     voitMmumuZ = root.RooVoigtian("bak_voitMmumuZ","voitMmumuZ",mMuMuZ,voitmZ,voitWidth,voitSig)
     mMuMuZRooDataHist = root.RooDataHist("bak_TemplateZ","bak_TemplateZ",root.RooArgList(mMuMuZ),hist)
-    mMuMuZRooDataHist.Print()
 
     voitMmumuZ.fitTo(mMuMuZRooDataHist,root.RooFit.SumW2Error(False),PRINTLEVEL)
     voitmZ.setConstant(True)
@@ -154,8 +155,6 @@ def makePDFBak(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     fr = pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
     chi2 = pdfMmumu.createChi2(mMuMuRooDataHist)
-
-    ## Error time
 
     rooParamList = [voitmZ,voitSig,expParam,mixParam]
     paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
@@ -821,6 +820,8 @@ class DataCardMaker:
         proc2FormatList.append(iProc)
 
         expNum = channel.getBakCountsTotal()
+        expNum = channel.getDataTotal()
+        print("Using Data as Norm for Bak!!!! ******")
         decimals = ".4f"
         if expNum>1000.0:
           decimals = ".4e"
@@ -873,6 +874,27 @@ class DataCardMaker:
       formatString += "\n"
       #print formatString
       #print formatList
+      outfile.write(formatString.format(*formatList))
+
+    # Bak norm uncertainty
+    if True:
+      formatString = "{0:<8} {1:^4} "
+      formatList = ["bakNorm","lnN"]
+      iParam = 2
+      for channel in self.channels:
+          for sigName in self.sigNames:
+            formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+            value = "-"
+            formatList.append(value)
+            iParam += 1
+          formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+".3f} "
+          value = sqrt(channel.getBakCountsTotal())/channel.getBakCountsTotal()*BAKUNC
+          if value < 0.01:
+            value = 0.01
+          value += 1.0
+          formatList.append(value)
+          iParam += 1
+      formatString += "\n"
       outfile.write(formatString.format(*formatList))
 
     # Parameter Uncertainties
@@ -958,10 +980,10 @@ if __name__ == "__main__":
   combinations.append((
         ["VBFPresel"]+["IncPresel"+x for x in categoriesInc],"PreselCat"
   ))
+  """
   combinations.append((
         ["VBFBDTCut"]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))
-  """
 
 #  combinationsLong.append((
 #        ["IncBDTCut","VBFBDTCut"],"BDTCut"
@@ -1324,3 +1346,5 @@ done
 """
   runFile.write(batchString)
   runFile.close()
+  shutil.copy("diffNuisances.py",outDir+"diffNuisances.py")
+  shutil.copy("mlfitNormsToText.py",outDir+"mlfitNormsToText.py")
