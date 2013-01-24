@@ -939,6 +939,7 @@ if __name__ == "__main__":
     for c in categoriesVBF:
         tmpList.append(a+c)
   analyses += tmpList
+  analyses = ["IncBDTCut"]
   combinations = []
   combinationsLong = []
   combinations.append((
@@ -947,6 +948,7 @@ if __name__ == "__main__":
   combinations.append((
         ["IncPresel"+x for x in categoriesInc],"IncPreselCat"
   ))
+  """
   combinations.append((
         ["IncBDTCut","VBFBDTCut"],"BDTCut"
   ))
@@ -959,6 +961,7 @@ if __name__ == "__main__":
   combinations.append((
         ["VBFBDTCut"]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))
+  """
 
 #  combinationsLong.append((
 #        ["IncBDTCut","VBFBDTCut"],"BDTCut"
@@ -986,6 +989,7 @@ if __name__ == "__main__":
 
   histPostFix="/mDiMu"
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
+  signalNames=["ggHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar"]
   dataDict = {}
   dataDict["8TeV"] = [
