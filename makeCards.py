@@ -923,11 +923,13 @@ if __name__ == "__main__":
   directory = "input/freezeSample/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
+  preiods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
   categoriesInc = ["BB","BO","BE","OO","OE","EE"]
   categoriesVBF = ["BB","NotBB"]
+  analysis = ["IncPresel"]
   tmpList = []
   for a in analysesInc:
     for c in categoriesInc:
@@ -938,7 +940,6 @@ if __name__ == "__main__":
     for c in categoriesVBF:
         tmpList.append(a+c)
   #analyses += tmpList
-  analyses = []
   combinations = []
   combinationsLong = []
   """
@@ -957,10 +958,10 @@ if __name__ == "__main__":
   combinations.append((
         ["VBFPresel"]+["IncPresel"+x for x in categoriesInc],"PreselCat"
   ))
-  """
   combinations.append((
         ["VBFBDTCut"]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))
+  """
 
 #  combinationsLong.append((
 #        ["IncBDTCut","VBFBDTCut"],"BDTCut"
