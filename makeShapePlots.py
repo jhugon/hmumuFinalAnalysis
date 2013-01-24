@@ -47,7 +47,7 @@ def getGraphIntegral(graph):
   return result
 
 class ShapePlotter:
-  def __init__(self,filename,outDir,titleMap,rebin=1,doSignalScaling=True,xlimits=[]):
+  def __init__(self,filename,outDir,titleMap,rebin=1,doSignalScaling=True,xlimits=[],normRange=[]):
     self.histList = []
     self.padList = []
     self.pullsList = []
@@ -56,6 +56,7 @@ class ShapePlotter:
     self.titleMap = titleMap
     self.filename = filename
     self.xlimits = xlimits
+    self.normRange = normRange
     self.textFileName = os.path.splitext(filename)[0]+".txt"
     self.processNameMap, self.params = getattr(self,"readCard")(self.textFileName)
     self.colors = [root.kRed-9, root.kGreen-9, root.kBlue-9, root.kMagenta-9, root.kCyan-9]
@@ -80,6 +81,9 @@ class ShapePlotter:
       channelName = channelKey.GetName()
       channelWS = channelKey.ReadObj()
       mMuMu = channelWS.var("mMuMu")
+      mMuMu.setRange("makeShapePlotRange",self.xlimits[0],self.xlimits[1])
+      mMuMu.setRange("makeShapeNormRange",self.normRange[0],self.normRange[1])
+      mMuMu.setRange("makeShapeSignalRange",110.,140.)
       bakPDF = channelWS.pdf("bak")
       data_obs = channelWS.data("data_obs")
       rooDataTitle = data_obs.GetTitle()
@@ -108,7 +112,7 @@ class ShapePlotter:
                                                             root.RooArgList(mMuMu),tmpHist)
         pdf = channelWS.pdf(processName)
         dataGraph, pdfGraph, pullsGraph,chi2 = getattr(self,"makeTGraphs")(pdf,template,mMuMu)
-        #pullsDistribution = getattr(self,"draw")(channelName,dataGraph,pdfGraph,pullsGraph,chi2,rooDataTitle)
+        pullsDistribution = getattr(self,"draw")(channelName,dataGraph,pdfGraph,pullsGraph,chi2,rooDataTitle)
         saveName=outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName+"_"+processName
         saveName = re.sub(r"([\d]+)\.[\d]+",r"\1",saveName)
         saveAs(self.canvas,saveName)
@@ -268,11 +272,12 @@ class ShapePlotter:
     itr = pdfParams.createIterator()
     curveNomName = pdf.GetName()+"_CurveNom"
     curveDataName = data.GetName()+"_Curve"
-    rng = root.RooFit.Range(*self.xlimits)
+    rng = root.RooFit.Range("makeShapePlotRange")
+    normRange = root.RooFit.NormRange("makeShapeNormRange")
     if "Hmumu125" in data.GetName():
-      rng = root.RooFit.Range(110.,140.)
+      rng = root.RooFit.Range("makeShapeSignalRange")
     data.plotOn(frame,root.RooFit.Name(curveDataName))
-    pdf.plotOn(frame,root.RooFit.Name(curveNomName),rng)
+    pdf.plotOn(frame,root.RooFit.Name(curveNomName),rng,normRange)
     pulls = frame.pullHist(curveDataName,curveNomName)
     chi2 = frame.chiSquare()
     curveNames = []
@@ -285,11 +290,11 @@ class ShapePlotter:
         err = float(err)
         tmpName = pdf.GetName()+"_Curve{0}p".format(iParam)
         param.setVal(nominal+err)
-        pdf.plotOn(frame,root.RooFit.Name(tmpName),rng)
+        pdf.plotOn(frame,root.RooFit.Name(tmpName),rng,normRange)
         curveNames.append(tmpName)
         tmpName = pdf.GetName()+"_Curve{0}m".format(iParam)
         param.setVal(nominal-err)
-        pdf.plotOn(frame,root.RooFit.Name(tmpName),rng)
+        pdf.plotOn(frame,root.RooFit.Name(tmpName),rng,normRange)
         curveNames.append(tmpName)
     varUp = []
     varDown = []
@@ -364,10 +369,7 @@ class ShapePlotter:
     self.canvas.Clear()
     self.canvas.cd()
 
-    print
-    print(channelName)
     binWidth = (pulls.GetXaxis().GetXmax()-pulls.GetXaxis().GetXmin())/pulls.GetXaxis().GetNbins()
-    print binWidth
 
     dataLabel = "FullSim MC"
     if rooDataTitle == "Toy Data":
@@ -375,12 +377,8 @@ class ShapePlotter:
     elif rooDataTitle == "Real Observed Data":
       dataLabel = "Data"
 
-    print dataLabel
-
     xtitle = "({0}-Fit)/#sigma_{{{0}}}".format(dataLabel)
     ytitle = "Events/{0:.1f}".format(binWidth)
-    print xtitle
-    print ytitle
     pulls.GetXaxis().SetTitle(xtitle)
     pulls.GetYaxis().SetTitle(ytitle)
     pulls.Draw()
@@ -391,13 +389,13 @@ class ShapePlotter:
     fitResult = pulls.Fit(fitFunc,"LEMSQ")
     chi2 = fitFunc.GetChisquare()
     ndf = fitFunc.GetNDF()
-    print("chi2: {0:.2g}/{1}".format(chi2,ndf))
-    nParams =  fitFunc.GetNumberFreeParameters()
-    for i in range(nParams):
-        parName = fitFunc.GetParName(i)
-        val = fitFunc.GetParameter(i)
-        err = fitFunc.GetParError(i)
-        print("name: {}, value: {}, error: {}".format(parName,val,err))
+    #print("chi2: {0:.2g}/{1}".format(chi2,ndf))
+    #nParams =  fitFunc.GetNumberFreeParameters()
+    #for i in range(nParams):
+    #    parName = fitFunc.GetParName(i)
+    #    val = fitFunc.GetParameter(i)
+    #    err = fitFunc.GetParError(i)
+    #    print("name: {}, value: {}, error: {}".format(parName,val,err))
 
     mean = fitFunc.GetParameter(1)
     meanErr = fitFunc.GetParError(1)
@@ -717,13 +715,14 @@ if __name__ == "__main__":
   dataDir = "statsCards/"
   outDir = "shapes/"
 
-  plotRange= [110,160]
+  plotRange= [80.,160]
   #plotRange= []
+  normRange = [80.,160]
 
   rebin=2
 
   shapePlotterList = []
   #for fn in glob.glob(dataDir+"*20.root")+glob.glob(dataDir+"*5.05.root"):
   for fn in glob.glob(dataDir+"*.root"):
-    s = ShapePlotter(fn,outDir,titleMap,rebin,xlimits=plotRange)
+    s = ShapePlotter(fn,outDir,titleMap,rebin,xlimits=plotRange,normRange=normRange)
     shapePlotterList.append(s)
