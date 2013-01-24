@@ -31,11 +31,14 @@ NPROCS = 2
 BAKUNC = 0.1
 
 BAKUNCON = True
-SIGUNCON = True
+SIGUNCON = False
 
 SIGGAUS = True
 
 SIGNALFIT = [110.,140.]
+
+if args.bdtCut:
+  SIGUNCON = False
 
 from xsec import *
 
@@ -408,33 +411,43 @@ class Analysis:
     if type(rb) != list:
       print("Error: Analysis.rebin: argument must be a list!!  Exiting.")
       sys.exit(1)
-    if len(rb) == 2 and False:
-        for hist in self.sigHistsRaw:
-          hist.Rebin2D(*rb)
-        for hist in self.bakHistsRaw:
-          hist.Rebin2D(*rb)
-        for hist in self.datHists:
-          hist.Rebin2D(*rb)
-        for key in self.sigErrHistsMap:
-          for hist in self.sigErrHistsMap[key]:
+    try:
+      if len(rb) == 2 and False:
+          for hist in self.sigHistsRaw:
             hist.Rebin2D(*rb)
-    elif len(rb) == 1 and True:
-        for hist in self.sigHistsRaw:
-          hist.Rebin(*rb)
-        for hist in self.bakHistsRaw:
-          hist.Rebin(*rb)
-        for hist in self.datHists:
-          hist.Rebin(*rb)
-        for key in self.sigErrHistsMap:
-          for hist in self.sigErrHistsMap[key]:
+          for hist in self.bakHistsRaw:
+            hist.Rebin2D(*rb)
+          for hist in self.datHists:
+            hist.Rebin2D(*rb)
+          for key in self.sigErrHistsMap:
+            for hist in self.sigErrHistsMap[key]:
+              hist.Rebin2D(*rb)
+      elif len(rb) == 1 and True:
+          for hist in self.sigHistsRaw:
             hist.Rebin(*rb)
-    elif len(rb) == 0:
-      pass
-    else:
-      print("Error: Analysis.rebin: argument must be len 0, 1, or 2 list!!  Exiting.")
-      print("  Must also be same length as dimension of hist, if not 0.")
+          for hist in self.bakHistsRaw:
+            hist.Rebin(*rb)
+          for hist in self.datHists:
+            hist.Rebin(*rb)
+          for key in self.sigErrHistsMap:
+            for hist in self.sigErrHistsMap[key]:
+              hist.Rebin(*rb)
+      elif len(rb) == 0:
+        pass
+      else:
+        print("Error: Analysis.rebin: argument must be len 0, 1, or 2 list!!  Exiting.")
+        print("  Must also be same length as dimension of hist, if not 0.")
+        sys.exit(1)
+    except Exception as e:
+      print("Error: Analysis threw exception while rebinning data: {0}".format(e))
+      print("  Analysis Name: {0}, directory: {1}, Rebin: {2}".format(analysis,directory,rb))
+      print("  hist name: {0}".format(histNameBase+analysis+histNameSuffix))
+      if bdtCut != None:
+        print("  bdtCut hist name: {0}".format(histNameBase+analysis+"/mDiMu"))
+      print("  signals: {0}".format(signalNames))
+      print("  backgrounds: {0}".format(backgroundNames))
+      print("  data: {0}".format(dataNames))
       sys.exit(1)
-
     effMap = {}
     xsecMap = {}
     lowBin = 0
@@ -892,6 +905,7 @@ if __name__ == "__main__":
   directory = "input/freezeSample/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
+  periods = ["7TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc #+ analysesVBF
@@ -909,7 +923,6 @@ if __name__ == "__main__":
   #analyses += tmpList
   combinations = []
   combinationsLong = []
-  """
   combinations.append((
         ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
   ))
@@ -952,7 +965,6 @@ if __name__ == "__main__":
   #combinationsBDTCut.append((
   #  ["VBFPresel"+x for x in categoriesVBF],"VBFBDTCutCat",0.025,-0.2,0.0,"BDTHistVBFVMass"
   #))
-  """
 
   histPostFix="/mDiMu"
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]

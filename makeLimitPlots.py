@@ -368,6 +368,7 @@ if __name__ == "__main__":
   ylimits=[0.1,100.0]
   if args.bdtCut:
     ylimits=[1.,30.0]
+    ylimits=[1.,70.0]
 
   lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":lumiDict["8TeV"]}
   
