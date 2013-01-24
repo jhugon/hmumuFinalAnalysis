@@ -91,8 +91,11 @@ class ShapePlotter:
 
       #Data Time
       dataGraph, bakPDFGraph, pullsGraph,chi2 = getattr(self,"makeTGraphs")(bakPDF,data_obs,mMuMu)
-      getattr(self,"draw")(channelName,dataGraph,bakPDFGraph,pullsGraph,chi2,rooDataTitle)
+      pullsDistribution = getattr(self,"draw")(channelName,dataGraph,bakPDFGraph,pullsGraph,chi2,rooDataTitle)
       saveAs(self.canvas,outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName)
+
+      getattr(self,"drawPulls")(channelName,pullsDistribution,rooDataTitle)
+      saveAs(self.canvas,outDir+"pulls_"+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName)
 
       #Templates Time
       for processName in self.processNameMap[channelName]:
@@ -105,7 +108,7 @@ class ShapePlotter:
                                                             root.RooArgList(mMuMu),tmpHist)
         pdf = channelWS.pdf(processName)
         dataGraph, pdfGraph, pullsGraph,chi2 = getattr(self,"makeTGraphs")(pdf,template,mMuMu)
-        getattr(self,"draw")(channelName,dataGraph,pdfGraph,pullsGraph,chi2,rooDataTitle)
+        #pullsDistribution = getattr(self,"draw")(channelName,dataGraph,pdfGraph,pullsGraph,chi2,rooDataTitle)
         saveName=outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName+"_"+processName
         saveName = re.sub(r"([\d]+)\.[\d]+",r"\1",saveName)
         saveAs(self.canvas,saveName)
@@ -213,6 +216,39 @@ class ShapePlotter:
       if  histY != 0.0:
         ratio = (histY-curveY)/histY
       ratioPlot.SetPoint(i,histX,ratio)
+    return ratioPlot
+
+  def makePullDistribution(self,hist,curve):
+    def findI(graph,x):
+      xList = []
+      X = root.Double()
+      Y = root.Double()
+      for i in range(graph.GetN()):
+        graph.GetPoint(i,X,Y)
+        xList.append(abs(float(X)-float(x)))
+      bestI = min(range(len(xList)), key=lambda i: xList[i])
+      if xList[bestI]>1.0:
+        return -1
+      return bestI
+    ratioPlot = root.TH1F(hist.GetName()+"_pullDist","",50,-5.0,5.0)
+    ratioPlot.Sumw2()
+    ratioPlot.SetLineColor(1)
+    ratioPlot.SetMarkerColor(1)
+    histX = root.Double()
+    histY = root.Double()
+    curveX = root.Double()
+    curveY = root.Double()
+    for i in range(hist.GetN()):
+      histYErrUp = hist.GetErrorYhigh(i)
+      histYErrDown = hist.GetErrorYlow(i)
+      assert(histYErrDown==histYErrUp)
+      hist.GetPoint(i,histX,histY)
+      curveI = findI(curve,histX)
+      curve.GetPoint(curveI,curveX,curveY)
+      ratio = 0.0
+      if  histY != 0.0:
+        ratio = (histY-curveY)/histYErrUp
+      ratioPlot.Fill(ratio)
     return ratioPlot
 
   def makeTGraphs(self,pdf,data,observable):
@@ -323,6 +359,65 @@ class ShapePlotter:
     modelGraph.SetFillColor(root.kCyan)
     modelGraph.SetFillStyle(1)
     return dataGraph, modelGraph, pullsGraph, chi2
+
+  def drawPulls(self,channelName,pulls,rooDataTitle):
+    self.canvas.Clear()
+    self.canvas.cd()
+
+    print
+    print(channelName)
+    binWidth = (pulls.GetXaxis().GetXmax()-pulls.GetXaxis().GetXmin())/pulls.GetXaxis().GetNbins()
+    print binWidth
+
+    dataLabel = "FullSim MC"
+    if rooDataTitle == "Toy Data":
+      dataLabel = "Toy MC"
+    elif rooDataTitle == "Real Observed Data":
+      dataLabel = "Data"
+
+    print dataLabel
+
+    xtitle = "({0}-Fit)/#sigma_{{{0}}}".format(dataLabel)
+    ytitle = "Events/{0:.1f}".format(binWidth)
+    print xtitle
+    print ytitle
+    pulls.GetXaxis().SetTitle(xtitle)
+    pulls.GetYaxis().SetTitle(ytitle)
+    pulls.Draw()
+
+    fitFunc = root.TF1(pulls.GetName()+"_fitFunc","gaus",
+                                pulls.GetXaxis().GetXmin(),pulls.GetXaxis().GetXmax())
+    fitFunc.SetLineColor(root.kBlue)
+    fitResult = pulls.Fit(fitFunc,"LEMSQ")
+    chi2 = fitFunc.GetChisquare()
+    ndf = fitFunc.GetNDF()
+    print("chi2: {0:.2g}/{1}".format(chi2,ndf))
+    nParams =  fitFunc.GetNumberFreeParameters()
+    for i in range(nParams):
+        parName = fitFunc.GetParName(i)
+        val = fitFunc.GetParameter(i)
+        err = fitFunc.GetParError(i)
+        print("name: {}, value: {}, error: {}".format(parName,val,err))
+
+    mean = fitFunc.GetParameter(1)
+    meanErr = fitFunc.GetParError(1)
+    sigma = fitFunc.GetParameter(2)
+    sigmaErr = fitFunc.GetParError(2)
+
+    tlatex = root.TLatex()
+    tlatex.SetNDC()
+    tlatex.SetTextFont(root.gStyle.GetLabelFont())
+    tlatex.SetTextSize(root.gStyle.GetLabelSize())
+    tlatex.SetTextAlign(12)
+    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+    tlatex.SetTextAlign(32)
+    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.titleMap[channelName])
+    tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.875,"#sqrt{s}="+self.energyStr)
+    tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.825,self.lumiStr)
+    tlatex.SetTextAlign(12)
+    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.875,"#chi^{{2}}/NDF = {0:.2g}".format(float(chi2)/ndf))
+    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.825,"#mu = {0:.2f} #pm {1:.2f}".format(mean,meanErr))
+    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.775,"#sigma = {0:.2f} #pm {1:.2f}".format(sigma,sigmaErr))
 
   def draw(self,channelName,data,model,pulls,chi2,rooDataTitle):
       drawXLimits = self.xlimits
@@ -477,6 +572,7 @@ class ShapePlotter:
       if doRatio:
         pulls =  ratioGraph
       getHistFromGraph(pulls,pullHist)
+      pullDistribution = self.makePullDistribution(data,model)
       if adrian1Errors:
          pullHist.GetYaxis().SetTitle("#frac{"+dataLabel+"-Fit}{"+dataLabel+"}")
          pullHist.GetYaxis().SetRangeUser(-1.5,1.5)
@@ -564,6 +660,8 @@ class ShapePlotter:
       self.padList.extend([pad1,pad2])
       self.pullsList.append(pulls)
       self.legList.append(leg)
+
+      return pullDistribution 
 
 titleMap = {
   "AllCat":"All Categories Comb.",
