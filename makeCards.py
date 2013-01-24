@@ -472,7 +472,7 @@ class Analysis:
     highBin = self.sigHistsRaw[0].GetNbinsX()+1
     #massBounds = [controlRegionLow[0],controlRegionHigh[1]]
     #massBounds = [controlRegionVeryLow[0],controlRegionHigh[1]]
-    massBounds = [controlRegionVeryLow[0],controlRegionHigh[1]]
+    massBounds = [controlRegionLow[0],controlRegionHigh[1]]
     self.massBounds = massBounds
 
     self.xsecBakTotal = 0.0
@@ -923,13 +923,11 @@ if __name__ == "__main__":
   directory = "input/freezeSample/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  preiods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
   categoriesInc = ["BB","BO","BE","OO","OE","EE"]
   categoriesVBF = ["BB","NotBB"]
-  analysis = ["IncPresel"]
   tmpList = []
   for a in analysesInc:
     for c in categoriesInc:
@@ -942,7 +940,6 @@ if __name__ == "__main__":
   #analyses += tmpList
   combinations = []
   combinationsLong = []
-  """
   combinations.append((
         ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
   ))
@@ -961,7 +958,6 @@ if __name__ == "__main__":
   combinations.append((
         ["VBFBDTCut"]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))
-  """
 
 #  combinationsLong.append((
 #        ["IncBDTCut","VBFBDTCut"],"BDTCut"
