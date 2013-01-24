@@ -87,9 +87,22 @@ class ShapePlotter:
       bakPDF = channelWS.pdf("bak")
       data_obs = channelWS.data("data_obs")
       rooDataTitle = data_obs.GetTitle()
-      if rebin != 1:
+      tmpRebin = rebin
+      if "VBF" in channelName:
+        if "BDT" in channelName:
+          if self.energyStr == "7TeV":
+            tmpRebin *= 10
+          else:
+            tmpRebin *= 5
+        else:
+          tmpRebin *= 2
+      elif "OE" in channelName:
+          tmpRebin *= 2
+      elif "EE" in channelName:
+          tmpRebin *= 2
+      if tmpRebin != 1:
         tmpHist = data_obs.createHistogram("mMuMu")
-        tmpHist.Rebin(rebin)
+        tmpHist.Rebin(tmpRebin)
         data_obs =  root.RooDataHist(data_obs.GetName(),data_obs.GetTitle(),
                                                             root.RooArgList(mMuMu),tmpHist)
 
@@ -715,9 +728,9 @@ if __name__ == "__main__":
   dataDir = "statsCards/"
   outDir = "shapes/"
 
-  plotRange= [80.,160]
+  plotRange= [110.,160]
   #plotRange= []
-  normRange = [80.,160]
+  normRange = [110.,160]
 
   rebin=2
 

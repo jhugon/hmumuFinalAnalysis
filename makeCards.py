@@ -123,12 +123,30 @@ def makePDFBak(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     mixParam = root.RooRealVar(channelName+"_mixParam","mixParam",0,1)
 
     pdfMmumu = root.RooAddPdf("bak","bak",root.RooArgList(voitMmumu,expMmumu),root.RooArgList(mixParam))
-    
-    mMuMuRooDataHist = root.RooDataHist("bak_Template","bak_Template",root.RooArgList(mMuMu),hist)
 
-    voitMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("z"),root.RooFit.SumW2Error(False),PRINTLEVEL)
+    # Just For Z-Peak Part
+
+    mMuMuZ = root.RooRealVar("mMuMu","mMuMu",88.0,94.0)
+    voitMmumuZ = root.RooVoigtian("bak_voitMmumuZ","voitMmumuZ",mMuMuZ,voitmZ,voitWidth,voitSig)
+    mMuMuZRooDataHist = root.RooDataHist("bak_TemplateZ","bak_TemplateZ",root.RooArgList(mMuMuZ),hist)
+    mMuMuZRooDataHist.Print()
+
+    voitMmumuZ.fitTo(mMuMuZRooDataHist,root.RooFit.SumW2Error(False),PRINTLEVEL)
     voitmZ.setConstant(True)
     voitSig.setConstant(True)
+
+#    ## Debug Time
+#    frameZ = mMuMuZ.frame()
+#    frameZ.SetName("bak_PlotZ")
+#    mMuMuZRooDataHist.plotOn(frameZ)
+#    voitMmumuZ.plotOn(frameZ)
+#    canvas = root.TCanvas()
+#    frameZ.Draw()
+#    saveAs(canvas,"debug_bakZ")
+
+    # Back to everywhere else
+
+    mMuMuRooDataHist = root.RooDataHist("bak_Template","bak_Template",root.RooArgList(mMuMu),hist)
 
     expMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("high"),root.RooFit.SumW2Error(False),PRINTLEVEL)
     expParam.setConstant(True)
@@ -155,7 +173,7 @@ def makePDFBak(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
 #    frame.SetName("bak_Plot")
 #    mMuMuRooDataHist.plotOn(frame)
 #    pdfMmumu.plotOn(frame)
-#    canvas = root.TCanvas()
+##    canvas = root.TCanvas()
 #    frame.Draw()
 #    saveAs(canvas,"debug_bak")
 
@@ -337,11 +355,11 @@ class Analysis:
     wImport = getattr(self.workspace,"import")
 
     maxMass = controlRegionHigh[1]
-    minMass = controlRegionVeryLow[0]
+    minMass = controlRegionLow[0]
     mMuMu = root.RooRealVar("mMuMu","mMuMu",minMass,maxMass)
     minMass = controlRegionLow[0]
-    mMuMu.setRange("z",88,94)
-    mMuMu.setRange("verylow",controlRegionVeryLow[0],controlRegionVeryLow[1])
+    #mMuMu.setRange("z",88,94)
+    #mMuMu.setRange("verylow",controlRegionVeryLow[0],controlRegionVeryLow[1])
     mMuMu.setRange("low",controlRegionLow[0],controlRegionLow[1])
     mMuMu.setRange("high",controlRegionHigh[0],controlRegionHigh[1])
     mMuMu.setRange("signal",controlRegionLow[1],controlRegionHigh[0])
@@ -908,7 +926,7 @@ if __name__ == "__main__":
   periods = ["7TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
-  analyses = analysesInc #+ analysesVBF
+  analyses = analysesInc + analysesVBF
   categoriesInc = ["BB","BO","BE","OO","OE","EE"]
   categoriesVBF = ["BB","NotBB"]
   tmpList = []
@@ -921,8 +939,10 @@ if __name__ == "__main__":
     for c in categoriesVBF:
         tmpList.append(a+c)
   #analyses += tmpList
+  analyses = []
   combinations = []
   combinationsLong = []
+  """
   combinations.append((
         ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
   ))
@@ -938,6 +958,7 @@ if __name__ == "__main__":
   combinations.append((
         ["VBFPresel"]+["IncPresel"+x for x in categoriesInc],"PreselCat"
   ))
+  """
   combinations.append((
         ["VBFBDTCut"]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))
