@@ -163,6 +163,16 @@ def makePDFBak(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     workspaceImportFn(mMuMuRooDataHist)
     workspaceImportFn(fr)
 
+    #Norm Time
+    wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
+    signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
+    nSideband =  mMuMuRooDataHist.sumEntries("mMuMu > 130. || mMuMu < 120.")
+    nData =  mMuMuRooDataHist.sumEntries()
+    bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
+    print("Gets Bak Norm Assuming Signal region is: 120,130 GeV, off by: {0:%}".format((bakNormTup[0]*bakNormTup[1] - nData)/nData))
+    #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
+    #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
+
     #mMuMuRooDataHist2 = mMuMuRooDataHist.reduce(root.RooFit.CutRange("low,signal,high"))
     #mMuMuRooDataHist2.SetName("bak_TemplateNoVeryLow")
     #workspaceImportFn(mMuMuRooDataHist2)
@@ -176,7 +186,7 @@ def makePDFBak(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
 #    frame.Draw()
 #    saveAs(canvas,"debug_bak")
 
-    return paramList
+    return paramList, bakNormTup
 
 def makePDFSigCBPlusGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName):
 
@@ -513,10 +523,11 @@ class Analysis:
     if histToUseForBak is None:
         histToUseForBak = self.bakHistTotal
 
-    self.params.extend(makePDFBak(analysis,histToUseForBak,
-                                mMuMu, minMass,maxMass,wImport
-                                 )
-                       )
+    tmpBakParams, self.bakNormTup = makePDFBak(analysis,histToUseForBak,
+                                        mMuMu, minMass,maxMass,wImport
+                                       )
+    self.params.extend(tmpBakParams)
+    self.countsBakTotal = self.bakNormTup[0]*self.bakNormTup[1]
 
     self.sigParamListList = []
     for name, hist in zip(signalNames,self.sigHistsRaw):
@@ -820,8 +831,6 @@ class DataCardMaker:
         proc2FormatList.append(iProc)
 
         expNum = channel.getBakCountsTotal()
-        expNum = channel.getDataTotal()
-        print("Using Data as Norm for Bak!!!! ******")
         decimals = ".4f"
         if expNum>1000.0:
           decimals = ".4e"
@@ -877,21 +886,23 @@ class DataCardMaker:
       outfile.write(formatString.format(*formatList))
 
     # Bak norm uncertainty
-    if True:
-      formatString = "{0:<8} {1:^4} "
-      formatList = ["bakNorm","lnN"]
-      iParam = 2
+    for channel1,channel1Name in zip(self.channels,self.channelNames):
+      tmpTup = channel1.bakNormTup
+      formatString = "{0:<8} {1:^3} {2:.0f}"
+      formatList = ["bkN"+channel1Name,"gmN",tmpTup[0]]
+      iParam = 3
       for channel in self.channels:
           for sigName in self.sigNames:
             formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
             value = "-"
             formatList.append(value)
             iParam += 1
-          formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+".3f} "
-          value = sqrt(channel.getBakCountsTotal())/channel.getBakCountsTotal()*BAKUNC
-          if value < 0.01:
-            value = 0.01
-          value += 1.0
+          value = '-'
+          tmpString = "{"+str(iParam)+":^"+str(self.largestChannelName)+"}"
+          if channel == channel1:
+            value = tmpTup[1]
+            tmpString = "{"+str(iParam)+":^"+str(self.largestChannelName)+".2f}"
+          formatString += tmpString
           formatList.append(value)
           iParam += 1
       formatString += "\n"
@@ -961,12 +972,13 @@ if __name__ == "__main__":
     for c in categoriesVBF:
         tmpList.append(a+c)
   analyses += tmpList
-  analyses = ["IncBDTCut"]
+  analyses = ["IncBDTCut","VBFBDTCut"]
   combinations = []
   combinationsLong = []
   combinations.append((
         ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
   ))
+  """
   combinations.append((
         ["IncPresel"+x for x in categoriesInc],"IncPreselCat"
   ))
@@ -974,6 +986,7 @@ if __name__ == "__main__":
   combinations.append((
         ["IncBDTCut","VBFBDTCut"],"BDTCut"
   ))
+  """
   combinations.append((
         ["IncPresel","VBFPresel"],"Presel"
   ))
@@ -1011,7 +1024,6 @@ if __name__ == "__main__":
 
   histPostFix="/mDiMu"
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
-  signalNames=["ggHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar"]
   dataDict = {}
   dataDict["8TeV"] = [
