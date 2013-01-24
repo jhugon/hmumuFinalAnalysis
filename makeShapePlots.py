@@ -69,8 +69,8 @@ class ShapePlotter:
     self.energyStr = ""
     tmpMatch = re.search(r"([\w]*)_(.+)_([.0-9]+)\.root",filename)
     if tmpMatch:
-      self.lumi = int(float(tmpMatch.group(3)))
-      self.lumiStr = "L = {0} fb^{{-1}}".format(self.lumi)
+      self.lumi = float(tmpMatch.group(3))
+      self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(self.lumi)
       self.energyStr = tmpMatch.group(2)
 
     self.data = {}
@@ -93,7 +93,7 @@ class ShapePlotter:
           if self.energyStr == "7TeV":
             tmpRebin *= 10
           else:
-            tmpRebin *= 5
+            tmpRebin *= 10
         else:
           tmpRebin *= 2
       elif "OE" in channelName:
@@ -109,10 +109,14 @@ class ShapePlotter:
       #Data Time
       dataGraph, bakPDFGraph, pullsGraph,chi2 = getattr(self,"makeTGraphs")(bakPDF,data_obs,mMuMu)
       pullsDistribution = getattr(self,"draw")(channelName,dataGraph,bakPDFGraph,pullsGraph,chi2,rooDataTitle)
-      saveAs(self.canvas,outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName)
+      saveName = outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName
+      saveName = re.sub(r"([\d]+)\.[\d]+",r"\1",saveName)
+      saveAs(self.canvas,saveName)
 
       getattr(self,"drawPulls")(channelName,pullsDistribution,rooDataTitle)
-      saveAs(self.canvas,outDir+"pulls_"+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName)
+      saveName = outDir+"pulls_"+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName
+      saveName = re.sub(r"([\d]+)\.[\d]+",r"\1",saveName)
+      saveAs(self.canvas,saveName)
 
       #Templates Time
       for processName in self.processNameMap[channelName]:

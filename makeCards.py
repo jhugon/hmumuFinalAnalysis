@@ -923,7 +923,6 @@ if __name__ == "__main__":
   directory = "input/freezeSample/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  periods = ["7TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
