@@ -27,7 +27,7 @@ root.gErrorIgnoreLevel = root.kWarning
 root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.ERROR)
 PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 
-NPROCS = 2
+NPROCS = 1
 
 #Scaling Parameter for Bak norm uncertainty
 BAKUNC = 1.0
@@ -694,12 +694,19 @@ class DataCardMaker:
     channels = []
     self.is2D = False
 
-    lumi *= 1000.0
-
-    for analysis in analysisNames:
-      tmp = Analysis(directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,histNameBase=histNameBase,rebin=rebin,histNameSuffix=histNameSuffix,toyData=toyData,sigInject=sigInject,bdtCut=bdtCut,energyStr=energyStr)
-      channels.append(tmp)
-    self.channels = channels
+    if type(energyStr) == list:
+      for analysis in analysisNames:
+        for es,sn,bn,dn,lu in zip(energyStr,signalNames,backgroundNames,dataNames,lumi):
+          lu *= 1000.0
+          tmp = Analysis(directory,sn,bn,dn,analysis,lu,controlRegionVeryLow,controlRegionLow,controlRegionHigh,histNameBase=histNameBase,rebin=rebin,histNameSuffix=histNameSuffix,toyData=toyData,sigInject=sigInject,bdtCut=bdtCut,energyStr=es)
+          channels.append(tmp)
+      self.channels = channels
+    else:
+      lumi *= 1000.0
+      for analysis in analysisNames:
+        tmp = Analysis(directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,histNameBase=histNameBase,rebin=rebin,histNameSuffix=histNameSuffix,toyData=toyData,sigInject=sigInject,bdtCut=bdtCut,energyStr=energyStr)
+        channels.append(tmp)
+      self.channels = channels
 
     self.channelNames = [i.workspaceName for i in channels]
 
@@ -724,8 +731,6 @@ class DataCardMaker:
     if self.largestChannelName < 8:
         self.largestChannelName = 8
     self.largestChannelName += 2
-    self.sigNames = signalNames
-    self.bakNames = backgroundNames
 
     if self.channelNames.count("")>0:
       i = self.channelNames.index("")
@@ -803,7 +808,7 @@ class DataCardMaker:
         ## Signal Time
 
         iProc = -len(channel.sigNames)+1
-        for sigName in self.sigNames:
+        for sigName in channel.sigNames:
           binFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
           binFormatList.append(channelName)
   
@@ -861,7 +866,7 @@ class DataCardMaker:
       formatList = [nu,"lnN"]
       iParam = 2
       for channel,channelName in zip(self.channels,self.channelNames):
-          for sigName in self.sigNames:
+          for sigName in channel.sigNames:
             formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
             value = "-"
             if thisNu.has_key(sigName):
@@ -896,7 +901,7 @@ class DataCardMaker:
       formatList = ["bkN"+channel1Name,"gmN",tmpTup[0]]
       iParam = 3
       for channel in self.channels:
-          for sigName in self.sigNames:
+          for sigName in channel.sigNames:
             formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
             value = "-"
             formatList.append(value)
@@ -976,11 +981,8 @@ if __name__ == "__main__":
     for c in categoriesVBF:
         tmpList.append(a+c)
   analyses += tmpList
-  analyses = ["IncBDTCut","VBFBDTCut"]
-  analyses = []
   combinations = []
   combinationsLong = []
-  """
   combinations.append((
         ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
   ))
@@ -996,7 +998,6 @@ if __name__ == "__main__":
   combinations.append((
         ["VBFPresel"]+["IncPresel"+x for x in categoriesInc],"PreselCat"
   ))
-  """
   combinations.append((
         ["VBFBDTCut"]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))
@@ -1056,7 +1057,6 @@ if __name__ == "__main__":
   shape=True
   toyData=args.toyData
 
-
   threads = []
   if not args.bdtCut:
     print("Simple Analyses to run:")
@@ -1103,6 +1103,47 @@ if __name__ == "__main__":
          )
         if p == "7TeV":
           break
+
+    # 2011 + 2012 combination
+    if len(periods)>1:
+        filenameLumi = str(sum([float(lumiDict[p]) for p in periods]))
+        filenamePeriod = ""
+        for p in periods:
+          filenamePeriod += re.sub("TeV","P",p)
+        filenamePeriod = filenamePeriod.rstrip("P")
+        filenamePeriod += "TeV"
+        for ana in analyses:
+          tmp = ThreadedCardMaker(
+            #__init__ args:
+            directory,[ana],
+            [appendPeriod(signalNames,p) for p in periods],
+            [appendPeriod(backgroundNames,p) for p in periods],
+            [dataDict[p] for p in periods],
+            rebin=[MassRebin],
+            controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
+            controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
+            energyStr=periods,
+            #write args:
+            outfilename=outDir+ana+"_"+filenamePeriod+"_"+filenameLumi+".txt",lumi=[float(lumiDict[p]) for p in periods]
+            )
+          threads.append(tmp)
+        for comb in combinations:
+         threads.append(
+          ThreadedCardMaker(
+            #__init__ args:
+            directory,
+            comb[0],
+            [appendPeriod(signalNames,p) for p in periods],
+            [appendPeriod(backgroundNames,p) for p in periods],
+            [dataDict[p] for p in periods],
+            rebin=[MassRebin],
+            controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
+            controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
+            energyStr=periods,
+            #write args:
+            outfilename=outDir+comb[1]+"_"+filenamePeriod+"_"+filenameLumi+".txt",lumi=[float(lumiDict[p]) for p in periods]
+          )
+         )
   
     for i in lumiListLong:
       p = "14TeV"

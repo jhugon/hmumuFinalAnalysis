@@ -370,9 +370,9 @@ if __name__ == "__main__":
     ylimits=[1.,30.0]
     ylimits=[1.,70.0]
 
-  lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":lumiDict["8TeV"]}
+  lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":lumiDict["8TeV"],"7P8TeV":lumiDict["8TeV"]+lumiDict["7TeV"]}
   
-  for period in ["7TeV","8TeV","14TeV"]:
+  for period in ["7TeV","8TeV","14TeV","7P8TeV"]:
     fnToGlob = dirName+"*_"+period+"_*.txt.out"
     allfiles = glob.glob(fnToGlob)
     
@@ -434,13 +434,19 @@ if __name__ == "__main__":
     desiredLumiStr=str(lumisToUse[period])
     fnGlobStr = dirName+"*_"+energyStr+"_"+desiredLumiStr+".txt.out"
     compareData = getData(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
+    energyStrWrite = None
+    if energyStr == "7P8TeV":
+      energyStrWrite = "7 & 8 TeV"
+    else:
+      energyStrWrite = energyStr.replace("TeV"," TeV")
     #print compareData
     if len(compareData)==0:
         print("No Data to Compare for {0}!!".format(period))
         continue
+    lumiStrWrite = "{0:.1f}".format(float(desiredLumiStr))
     comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=True)
-    comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+desiredLumiStr+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
-    comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStr,horizontalalignment="right",size="x-large")
+    comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+lumiStrWrite+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
+    comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStrWrite,horizontalalignment="right",size="x-large")
     comparePlot.fig.text(0.9,0.13,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
     comparePlot.save(outDir+"compareObs"+"_"+energyStr)
     
