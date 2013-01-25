@@ -124,7 +124,8 @@ class TableMaker:
     for channelKey in self.f.GetListOfKeys():
       if channelKey.GetClassName() != "RooWorkspace":
         continue
-      channelName = channelKey.GetName()
+      channelNameOrig = channelKey.GetName()
+      channelName = re.sub("[\d.]+TeV","",channelNameOrig)
       dataDict[channelName] = {}
       dataDict2[channelName] = {}
       channelWS = channelKey.ReadObj()
@@ -262,7 +263,7 @@ class TableMaker:
       outString += errNamesString.format(*errList)
 
     outString = r"\begin{tabular}{|l|c|c|c|c|} \hline"+"\n" + outString + r"\end{tabular}"+"\n"
-    outString += r"\\ "+self.lumiStr+", "+self.energyStr
+    #outString += r"\\ "+self.lumiStr+", "+self.energyStr
     outString = outString.replace(r"%",r"\%")
     print
     print outString
@@ -327,7 +328,7 @@ class TableMaker:
 
     
     outString = r"\begin{tabular}{|l|"+'c|'*len(maxErrNameLengthList)+"} \hline"+"\n" + outString + r"\end{tabular}"+"\n"
-    outString += r"\\ "+self.lumiStr+", "+self.energyStr
+    #outString += r"\\ "+self.lumiStr+", "+self.energyStr
     outString = outString.replace(r"%",r"\%")
     print
     print outString
@@ -341,15 +342,15 @@ if __name__ == "__main__":
  vbfFileName = "input/vbfHmumu125_8TeV.root"
  dataDir = "statsCards/"
  #filenames = ["statsCards/BDTCut_8TeV_20.root"]
- #filenames = ["statsCards/BDTCutCat_8TeV_20.root"]
- filenames = glob.glob(dataDir+"*.root")
+ filenames = ["statsCards/BDTCutCat_8TeV_19.39.root","statsCards/BDTCutCat_7TeV_5.05.root"]
+ #filenames = glob.glob(dataDir+"*.root")
 
  for fn in filenames:
     tm = TableMaker(fn,"sillyTables",channelNameMap,sampleNameMap,errNameMap)
     print("===========================")
     print(fn)
     print
-    #tm.printBakPredict()
-    tm.printBakErrors()
+    tm.printBakPredict()
+    #tm.printBakErrors()
 
 
