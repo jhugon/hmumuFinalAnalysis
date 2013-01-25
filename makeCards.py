@@ -347,7 +347,7 @@ makePDFSig = makePDFSigCBPlusGaus
 ###################################################################################
 
 class Analysis:
-  def __init__(self,directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,histNameBase="mDiMu",rebin=[],histNameSuffix="",toyData=False,sigInject=0.0,bdtCut=None):
+  def __init__(self,directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,histNameBase="mDiMu",rebin=[],histNameSuffix="",toyData=False,sigInject=0.0,bdtCut=None,energyStr="8TeV"):
     getCutHist = getattr(self,"getCutHist")
 
     self.sigNames = signalNames
@@ -360,7 +360,8 @@ class Analysis:
     self.params = []
     self.debug = ""
 
-    self.workspace = root.RooWorkspace(analysis)
+    self.workspace = root.RooWorkspace(analysis+energyStr)
+    self.workspaceName = analysis+energyStr
     wImport = getattr(self.workspace,"import")
 
     maxMass = controlRegionHigh[1]
@@ -523,7 +524,7 @@ class Analysis:
     if histToUseForBak is None:
         histToUseForBak = self.bakHistTotal
 
-    tmpBakParams, self.bakNormTup = makePDFBak(analysis,histToUseForBak,
+    tmpBakParams, self.bakNormTup = makePDFBak(analysis+energyStr,histToUseForBak,
                                         mMuMu, minMass,maxMass,wImport
                                        )
     self.params.extend(tmpBakParams)
@@ -531,7 +532,7 @@ class Analysis:
 
     self.sigParamListList = []
     for name, hist in zip(signalNames,self.sigHistsRaw):
-        sigParams, sigDebug = makePDFSig(name,hist,mMuMu,minMass,maxMass,wImport,analysis)
+        sigParams, sigDebug = makePDFSig(name,hist,mMuMu,minMass,maxMass,wImport,analysis+energyStr)
         self.sigParamListList.append(sigParams)
         self.debug += sigDebug
     if SIGUNCON:
@@ -542,7 +543,9 @@ class Analysis:
         for errName in self.sigErrHistsMap:
           nameNew = name+"_"+errName
           hist = self.sigErrHistsMap[errName][iSignal]
-          sigParams, sigDebug = makePDFSig(nameNew,hist,mMuMu,minMass,maxMass,None,analysis)
+          sigParams, sigDebug = makePDFSig(nameNew,hist,mMuMu,minMass,maxMass,None,
+                                                            analysis+energyStr,
+                                                              )
           self.debug += sigDebug
           for curErr, nominal, i in zip(sigParams,paramsNoErr,range(len(sigParams))):
                 val = curErr.nominal
@@ -563,7 +566,7 @@ class Analysis:
             self.params.append(j)
       # To Make sure nothing got messed up!
       for name, hist in zip(signalNames,self.sigHistsRaw):
-        sigParams, sigDebug = makePDFSig(name,hist,mMuMu,minMass,maxMass,None,analysis)
+        sigParams, sigDebug = makePDFSig(name,hist,mMuMu,minMass,maxMass,None,analysis+energyStr)
 
     self.xsecSigTotal = 0.0
     self.xsecSigList = []
@@ -683,21 +686,22 @@ class Analysis:
 ###################################################################################
 
 class DataCardMaker:
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,dataNames,outfilename,lumi,nuisanceMap=None,histNameBase="",controlRegionLow=[110.,115],controlRegionHigh=[135,150],controlRegionVeryLow=[80.,110.],rebin=[],histNameSuffix="",sigInject=0.0,toyData=False,bdtCut=None):
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,dataNames,outfilename,lumi,nuisanceMap=None,histNameBase="",controlRegionLow=[110.,115],controlRegionHigh=[135,150],controlRegionVeryLow=[80.,110.],rebin=[],histNameSuffix="",sigInject=0.0,toyData=False,bdtCut=None,energyStr="8TeV"):
 
     ########################
     ## Setup
 
     channels = []
-    self.channelNames = copy.deepcopy(analysisNames)
     self.is2D = False
 
     lumi *= 1000.0
 
     for analysis in analysisNames:
-      tmp = Analysis(directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,histNameBase=histNameBase,rebin=rebin,histNameSuffix=histNameSuffix,toyData=toyData,sigInject=sigInject,bdtCut=bdtCut)
+      tmp = Analysis(directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,histNameBase=histNameBase,rebin=rebin,histNameSuffix=histNameSuffix,toyData=toyData,sigInject=sigInject,bdtCut=bdtCut,energyStr=energyStr)
       channels.append(tmp)
     self.channels = channels
+
+    self.channelNames = [i.workspaceName for i in channels]
 
     if nuisanceMap == None:
       self.nuisance = {}
@@ -973,20 +977,19 @@ if __name__ == "__main__":
         tmpList.append(a+c)
   analyses += tmpList
   analyses = ["IncBDTCut","VBFBDTCut"]
+  analyses = []
   combinations = []
   combinationsLong = []
+  """
   combinations.append((
         ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
   ))
-  """
   combinations.append((
         ["IncPresel"+x for x in categoriesInc],"IncPreselCat"
   ))
-  """
   combinations.append((
         ["IncBDTCut","VBFBDTCut"],"BDTCut"
   ))
-  """
   combinations.append((
         ["IncPresel","VBFPresel"],"Presel"
   ))
@@ -1078,6 +1081,7 @@ if __name__ == "__main__":
             rebin=[MassRebin],
             controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
             controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
+            energyStr=p,
             #write args:
             outfilename=outDir+ana+"_"+p+"_"+str(i)+".txt",lumi=i
             )
@@ -1092,6 +1096,7 @@ if __name__ == "__main__":
             rebin=[MassRebin],
             controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
             controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
+            energyStr=p,
             #write args:
             outfilename=outDir+comb[1]+"_"+p+"_"+str(i)+".txt",lumi=i
           )
@@ -1111,6 +1116,7 @@ if __name__ == "__main__":
             rebin=[MassRebin],
             controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix=histPostFix,
             controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
+            energyStr=p,
             #write args:
             outfilename=outDir+comb[1]+"_"+p+"_"+str(i)+".txt",lumi=i
           )
@@ -1139,6 +1145,7 @@ if __name__ == "__main__":
                rebin=[MassRebin],
                controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix="/"+comb[5],
                controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
+               energyStr=p,
                #write args:
                outfilename=outDir+comb[1]+str(i)+"_"+p+"_"+str(bdtCutVal)+".txt",lumi=i,
                bdtCut=bdtCutVal

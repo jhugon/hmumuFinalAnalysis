@@ -78,7 +78,8 @@ class ShapePlotter:
     for channelKey in self.f.GetListOfKeys():
       if channelKey.GetClassName() != "RooWorkspace":
         continue
-      channelName = channelKey.GetName()
+      channelNameOrig = channelKey.GetName()
+      channelName = re.sub("[\d]+TeV","",channelNameOrig)
       channelWS = channelKey.ReadObj()
       mMuMu = channelWS.var("mMuMu")
       mMuMu.setRange("makeShapePlotRange",self.xlimits[0],self.xlimits[1])
@@ -119,7 +120,7 @@ class ShapePlotter:
       saveAs(self.canvas,saveName)
 
       #Templates Time
-      for processName in self.processNameMap[channelName]:
+      for processName in self.processNameMap[channelNameOrig]:
         template = channelWS.data(processName+"_Template")
         rooDataTitle = template.GetTitle()
         if rebin != 1:
