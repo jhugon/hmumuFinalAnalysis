@@ -534,7 +534,7 @@ def makeWeightHist(f1,canvas,leg):
   leg.Draw("same")
 
 class DataMCStack:
-  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",doRatio=True,ylimits=[],ylimitsRatio=[],adrian1Errors=True):
+  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",doRatio=True,ylimits=[],ylimitsRatio=[],adrian1Errors=True,doMCErrors=False):
     nBinsX = dataHist.GetNbinsX()
     self.nBinsX = nBinsX
     self.dataHist = dataHist
@@ -583,6 +583,12 @@ class DataMCStack:
 
     if showOverflow:
         showHistOverflow(dataHist)
+
+    self.mcSumHist.SetFillColor(root.kGray+3)
+    self.mcSumHist.SetFillStyle(3013)
+    self.mcSumHist.SetMarkerSize(0)
+    if doMCErrors and drawStack:
+        self.mcSumHist.SetLineStyle(0)
 
     self.nMCEvents = self.mcSumHist.Integral(0,self.mcSumHist.GetNbinsX()+1)
     self.nDataEvents = dataHist.Integral(0,dataHist.GetNbinsX()+1)
@@ -696,6 +702,8 @@ class DataMCStack:
         self.stack.SetMaximum(ylimits[1])
         self.stack.SetMinimum(ylimits[0])
       self.stack.Draw("hist")
+      if doMCErrors:
+        self.mcSumHist.Draw("e2same")
       pad1.Update()
     else:
       self.mcSumHist.SetFillColor(856)
