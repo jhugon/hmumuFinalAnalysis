@@ -350,7 +350,7 @@ if __name__ == "__main__":
     print("===========================")
     print(fn)
     print
-    tm.printBakPredict()
-    #tm.printBakErrors()
+    #tm.printBakPredict()
+    tm.printBakErrors()
 
 

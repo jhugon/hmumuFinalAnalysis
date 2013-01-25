@@ -92,9 +92,9 @@ class ShapePlotter:
       if "VBF" in channelName:
         if "BDT" in channelName:
           if self.energyStr == "7TeV":
-            tmpRebin *= 10
+            tmpRebin *= 5
           else:
-            tmpRebin *= 10
+            tmpRebin *= 5
         else:
           tmpRebin *= 2
       elif "OE" in channelName:
@@ -387,7 +387,7 @@ class ShapePlotter:
     self.canvas.Clear()
     self.canvas.cd()
 
-    binWidth = (pulls.GetXaxis().GetXmax()-pulls.GetXaxis().GetXmin())/pulls.GetXaxis().GetNbins()
+    binWidth = getBinWidthStr(pulls)
 
     dataLabel = "FullSim MC"
     if rooDataTitle == "Toy Data":
@@ -396,7 +396,7 @@ class ShapePlotter:
       dataLabel = "Data"
 
     xtitle = "({0}-Fit)/#sigma_{{{0}}}".format(dataLabel)
-    ytitle = "Events/{0:.1f}".format(binWidth)
+    ytitle = "Events/{0}".format(binWidth)
     pulls.GetXaxis().SetTitle(xtitle)
     pulls.GetYaxis().SetTitle(ytitle)
     pulls.Draw()
@@ -521,7 +521,7 @@ class ShapePlotter:
       self.histList.append(pullHist)
 
       getHistFromGraph(data,dataHist)
-      binWidth = (dataHist.GetXaxis().GetXmax()-dataHist.GetXaxis().GetXmin())/dataHist.GetXaxis().GetNbins()
+      binWidth = getBinWidthStr(dataHist)
 
       maxVal = getMaxYVal(self,data)
       maxVal = max(getMaxYVal(self,model),maxVal)
@@ -557,12 +557,12 @@ class ShapePlotter:
       # Main Pad
       pad1.cd();
       dataHist.Draw("")
-      dataHist.GetYaxis().SetTitle(("Events/{0:."+str(0)+"f} GeV").format(binWidth))
+      dataHist.GetYaxis().SetTitle(("Events/{0} GeV/c^{{2}}").format(binWidth))
       dataHist.GetYaxis().SetTitleSize(gStyle.GetTitleSize("Y")*canvasToPad1FontScalingFactor)
       dataHist.GetYaxis().SetLabelSize(gStyle.GetLabelSize("Y")*canvasToPad1FontScalingFactor)
       dataHist.GetYaxis().SetTitleOffset(0.9*gStyle.GetTitleOffset("Y"))
       dataHist.GetXaxis().SetLabelOffset(0.70)
-      dataHist.GetXaxis().SetTitle("m_{#mu#mu} [GeV]")
+      dataHist.GetXaxis().SetTitle("m_{#mu#mu} [GeV/c^{2}]")
       #dataHist.GetXaxis().SetRangeUser(*drawXLimits)
       if maxVal != None:
         dataHist.GetYaxis().SetRangeUser(0.0,maxVal*1.05)
@@ -608,7 +608,7 @@ class ShapePlotter:
           pullHist.GetYaxis().SetRangeUser(0,2)
       pullHist.SetTitle("")
       pullHist.GetXaxis().SetRangeUser(*drawXLimits)
-      pullHist.GetXaxis().SetTitle("m_{#mu#mu} [GeV]")
+      pullHist.GetXaxis().SetTitle("m_{#mu#mu} [GeV/c^{2}]")
       pullHist.GetXaxis().CenterTitle(1)
       pullHist.GetYaxis().SetNdivisions(5)
       pullHist.GetXaxis().SetTitleSize(0.055*pad1ToPad2FontScalingFactor)
@@ -745,7 +745,8 @@ if __name__ == "__main__":
 
   shapePlotterList = []
   #for fn in glob.glob(dataDir+"*20.root")+glob.glob(dataDir+"*5.05.root"):
-  for fn in glob.glob(dataDir+"*.root"):
+  #for fn in glob.glob(dataDir+"*.root"):
+  for fn in glob.glob(dataDir+"BDTCutCat*.root"):
     if re.search("P[\d.]+TeV",fn):
         continue
     s = ShapePlotter(fn,outDir,titleMap,rebin,xlimits=plotRange,normRange=normRange)

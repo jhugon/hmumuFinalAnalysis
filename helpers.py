@@ -534,7 +534,7 @@ def makeWeightHist(f1,canvas,leg):
   leg.Draw("same")
 
 class DataMCStack:
-  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="Events", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",doRatio=True,ylimits=[],ylimitsRatio=[],adrian1Errors=True):
+  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",doRatio=True,ylimits=[],ylimitsRatio=[],adrian1Errors=True):
     nBinsX = dataHist.GetNbinsX()
     self.nBinsX = nBinsX
     self.dataHist = dataHist
@@ -544,6 +544,8 @@ class DataMCStack:
     self.tlatex.SetTextFont(root.gStyle.GetLabelFont())
     self.tlatex.SetTextSize(0.05)
     self.tlatex.SetTextAlign(22)
+    if ytitle=="":
+      ytitle="Events/{0}".format(getBinWidthStr(dataHist))
     for mcHist in mcHistList:
       #print("nBinsX data: %i, mc: %i" % (nBinsX,mcHist.GetNbinsX()))
       assert(nBinsX == mcHist.GetNbinsX())
@@ -1463,7 +1465,7 @@ def saveAs(canvas,name):
   canvas.SaveAs(name+".png")
   canvas.SaveAs(name+".pdf")
   canvas.SaveAs(name+".eps")
-  #canvas.SaveAs(name+".root")
+  canvas.SaveAs(name+".root")
 
 def setLegPos(leg,legPos):
   leg.SetX1NDC(legPos[0])
@@ -1506,3 +1508,11 @@ if __name__ == "__main__":
 
   silly = raw_input("Press Enter to continue")
 
+def getBinWidthStr(hist):
+    binWidth = (hist.GetXaxis().GetXmax()-hist.GetXaxis().GetXmin())/hist.GetXaxis().GetNbins()
+    binWidthPrec = "0"
+    if binWidth % 1 > 0.0:
+      binWidthPrec = "1"
+      if binWidth*10 % 1 > 0.0:
+        binWidthPrec = "2"
+    return ("{0:."+binWidthPrec+"f}").format(binWidth)
