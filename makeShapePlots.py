@@ -568,6 +568,7 @@ class ShapePlotter:
       modelLine = root.TGraph()
       copyGraphNoErrs(model,modelLine)
       model.Draw("3")
+      model.SetFillStyle(1001)
       modelLine.Draw("l")
       dataHist.Draw("same")
       pad1.Update()
@@ -666,11 +667,14 @@ class ShapePlotter:
       tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
       tlatex.SetTextAlign(32)
       tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.titleMap[channelName])
-      if not isSignalMC:
-      #  tlatex.DrawLatex(legPos[0]-0.01,0.875,self.lumiStr)
-        tlatex.DrawLatex(legPos[0]-0.01,0.80,self.lumiStr)
-      #tlatex.DrawLatex(legPos[0]-0.01,0.82,"#sqrt{s}="+self.energyStr)
-      tlatex.DrawLatex(legPos[0]-0.01,0.875,"#sqrt{s}="+self.energyStr)
+      if isSignalMC:
+        tlatex.SetTextAlign(12)
+        #tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.80,self.lumiStr)
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.875,"#sqrt{s}="+self.energyStr)
+      else:
+        tlatex.SetTextAlign(32)
+        tlatex.DrawLatex(legPos[0]-0.01,0.820,self.lumiStr)
+        tlatex.DrawLatex(legPos[0]-0.01,0.875,"#sqrt{s}="+self.energyStr)
 
       self.padList.extend([pad1,pad2])
       self.pullsList.append(pulls)
