@@ -285,7 +285,7 @@ class RelativePlot:
     canvas.RedrawAxis()
 
 class ComparePlot:
-  def __init__(self,data,ylabel="Expected 95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},showObs=False):
+  def __init__(self,data,ylabel="Expected 95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},showObs=False,xlimits=[]):
     fig = mpl.figure()
     self.fig = fig
     ax1 = fig.add_subplot(111)
@@ -310,7 +310,8 @@ class ComparePlot:
     ax1.set_yticks(xPos+0.25)
     ax1.set_yticklabels(tuple(xLabels),size="small")
     ax1.set_xlabel(ylabel)
-    ax1.set_xlim([0,25])
+    if len(xlimits)==2:
+      ax1.set_xlim(*xlimits)
     bars = ax1.barh(xPos,medians, 0.5, xerr=[low2sigs,high2sigs],ecolor="k")
     self.bars = bars
     xPosObs = [x+0.25 for x in xPos]
@@ -427,6 +428,7 @@ if __name__ == "__main__":
     #veto = ["Cat","Comb","Presel"]
     #veto = ["Comb","Presel"]
     veto = ["Presel"]
+    veto = ["Presel","BB","BO","BE","OO","OE","EE"]
 
     mustBe = r"(.+)_(.+)_[.\d]+.txt.out"
     #mustBe = r"(.+Cat)_(.+)_[.\d]+.txt.out"
@@ -435,6 +437,9 @@ if __name__ == "__main__":
     fnGlobStr = dirName+"*_"+energyStr+"_"+desiredLumiStr+".txt.out"
     compareData = getData(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
     energyStrWrite = None
+    compareXlims = [0.,25.]
+    if energyStr == "7TeV":
+      compareXlims = [0.,65.]
     if energyStr == "7P8TeV":
       energyStrWrite = "7 & 8 TeV"
     else:
@@ -444,13 +449,14 @@ if __name__ == "__main__":
         print("No Data to Compare for {0}!!".format(period))
         continue
     lumiStrWrite = "{0:.1f}".format(float(desiredLumiStr))
-    comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=True)
+    comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=True,xlimits=compareXlims)
     comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+lumiStrWrite+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
     comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStrWrite,horizontalalignment="right",size="x-large")
-    comparePlot.fig.text(0.9,0.13,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
+    #comparePlot.fig.text(0.9,0.13,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
+    comparePlot.fig.text(0.9,0.425,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
     comparePlot.save(outDir+"compareObs"+"_"+energyStr)
     
-    #comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=False)
+    #comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=False,xlimits=compareXlims)
     #comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+desiredLumiStr+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
     #comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStr,horizontalalignment="right",size="x-large")
     #comparePlot.fig.text(0.9,0.50,"Calculated from MC",horizontalalignment="right",size="x-large")
