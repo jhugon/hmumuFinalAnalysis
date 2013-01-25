@@ -318,34 +318,54 @@ class ComparePlot:
     # Now for the 1sigma error bars
     self.oneSig = ax1.errorbar(medians,xPosObs,xerr=[low1sigs,high1sigs],color="g",linestyle="None")
     if showObs:
-      self.obs = ax1.plot(obs,xPosObs,marker="|",color="r",markersize=10,linestyle="None")
+      #self.obs = ax1.plot(obs,xPosObs,marker="|",color="r",markersize=42,linestyle="None",markeredgewidth=2)
+      self.obs = ax1.plot(obs,xPosObs,marker="o",color="r",markersize=10,linestyle="None",markeredgecolor='r')
     writeInValues = getattr(self,"writeInValues")
     writeInValues(bars,high2sigs)
+    if showObs:
+      writeInValues(bars,high2sigs,obs=obs)
   def save(self,saveName):
     self.fig.savefig(saveName+".png")
     self.fig.savefig(saveName+".pdf")
-  def writeInValues(self,rects,high2sigs):
+  def writeInValues(self,rects,high2sigs,obs=None):
     axisWidth = self.ax1.get_xlim()[1]-self.ax1.get_xlim()[0]
+    sizelen = len(rects)
+    if obs != None:
+      sizelen -=5
     size="medium"
-    if len(rects)<5:
+    if sizelen<5:
       size="large"
-    elif len(rects)>12:
+    elif sizelen>12:
       size="xx-small"
-    elif len(rects)>9:
+    elif sizelen>9:
       size="x-small"
     maxWidth = axisWidth
-    for rect,sigUp in zip(rects,high2sigs):
+    for rect,sigUp,i in zip(rects,high2sigs,range(len(rects))):
       width = rect.get_width()
       if (width/maxWidth < 0.1): # The bars aren't wide enough to print the ranking inside
         xloc = width + sigUp + maxWidth*0.01 # Shift the text to the right side of the right edge
         clr = 'black' # Black against white background
         align = 'left'
+        if obs != None:
+          clr = 'red' # Black against white background
+          align = 'right'
+          xloc += maxWidth*0.04
       else:
         xloc = width - maxWidth*0.01 # Shift the text to the left side of the right edge
         clr = 'white' # White on magenta
         align = 'right'
+        if obs != None:
+          clr = 'red' # Black against white background
+          align = 'left'
+          xloc += maxWidth*0.04
       yloc = rect.get_y()+rect.get_height()/2.0 
       valueStr = "{0:.1f}".format(width)
+      if obs != None:
+        valueStr = "{0:.1f}".format(obs[i])
+        if i == len(rects)-1:
+          yloc -= 0.15
+        else:
+          yloc += 0.15
       self.ax1.text(xloc, yloc, valueStr, horizontalalignment=align,
             verticalalignment='center', color=clr, weight='bold',size=size)
 
@@ -494,12 +514,12 @@ if __name__ == "__main__":
         print("No Data to Compare for {0}!!".format(period))
         continue
     lumiStrWrite = "{0:.1f}".format(float(desiredLumiStr))
-    #comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=True,xlimits=compareXlims)
-    #comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+lumiStrWrite+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
-    #comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStrWrite,horizontalalignment="right",size="x-large")
-    ##comparePlot.fig.text(0.9,0.13,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
-    #comparePlot.fig.text(0.9,0.425,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
-    #comparePlot.save(outDir+"compareObs"+"_"+energyStr)
+    comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=True,xlimits=compareXlims)
+    comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+lumiStrWrite+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
+    comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStrWrite,horizontalalignment="right",size="x-large")
+    #comparePlot.fig.text(0.9,0.13,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
+    comparePlot.fig.text(0.9,0.425,"Red: Observed Limit",horizontalalignment="right",size="large",color="r")
+    comparePlot.save(outDir+"compareObs"+"_"+energyStr)
     
     #comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=False,xlimits=compareXlims)
     #comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+desiredLumiStr+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
@@ -507,9 +527,9 @@ if __name__ == "__main__":
     #comparePlot.fig.text(0.9,0.50,"Calculated from MC",horizontalalignment="right",size="x-large")
     #comparePlot.save(outDir+"compare"+"_"+energyStr)
 
-    comparePlot = ComparePlotTable(compareData,titleMap=comparisonMap,xlimits=compareXlims)
-    comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+lumiStrWrite+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
-    comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStrWrite,horizontalalignment="right",size="x-large")
+    #comparePlot = ComparePlotTable(compareData,titleMap=comparisonMap,xlimits=compareXlims)
+    #comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+lumiStrWrite+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
+    #comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStrWrite,horizontalalignment="right",size="x-large")
     #comparePlot.fig.text(0.9,0.13,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
-    comparePlot.fig.text(0.9,0.425,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
-    comparePlot.save(outDir+"compareObs"+"_"+energyStr)
+    #comparePlot.fig.text(0.9,0.425,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
+    #comparePlot.save(outDir+"compareObs"+"_"+energyStr)
