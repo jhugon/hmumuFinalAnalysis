@@ -371,24 +371,39 @@ class ComparePlot:
 
 class ComparePlotTable:
   def __init__(self,data,ylabel="Expected 95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},xlimits=[]):
+    self.maxX = 2.15
+    mpl.rcParams["lines.linewidth"]= 3.0
+    mpl.rcParams["axes.linewidth"]= 3.0
+    mpl.rcParams["patch.linewidth"]= 3.0
+    mpl.rcParams["xtick.major.width"]= 3.0
+    mpl.rcParams["xtick.minor.width"]= 3.0
+    mpl.rcParams["ytick.major.width"]= 3.0
+    mpl.rcParams["ytick.minor.width"]= 3.0
+    #mpl.rcParams["font.weight"]= 700
+    #mpl.rcParams["mathtext.fontset"]= 'custom'
+    #mpl.rcParams["mathtext.default"]= 'bf'
+    self.data = data
     fig = mpl.figure(figsize=(16,8))
     self.fig = fig
     ax1 = fig.add_subplot(111)
     self.ax1 = ax1
     ax1bounds = ax1.get_position().bounds
     ax1bounds = list(ax1bounds)
-    self.plotxLimit = 0.6
+    self.plotxLimit = 0.5
     ax1bounds[2] *= self.plotxLimit
     ax1.set_position(ax1bounds)
 
     data.sort(key=lambda x: x[0].lower())
 
     obs = [float(point[1]) for point in data]
+    self.obs = obs
     medians = [float(point[4]) for point in data]
     high1sigs = [float(point[5])-float(point[4]) for point in data]
     low1sigs = [float(point[4])-float(point[3]) for point in data]
     high2sigs = [float(point[6])-float(point[4]) for point in data]
     low2sigs = [float(point[4])-float(point[2]) for point in data]
+    maxDataPoint = max([float(point[6]) for point in data])
+    xmax = maxDataPoint*1.1
 
     xPos = numpy.arange(len(medians))
     self.xPos = xPos
@@ -399,17 +414,65 @@ class ComparePlotTable:
     ax1.set_yticks(xPos+0.25)
     ax1.set_yticklabels(tuple(xLabels),size="small")
     ax1.set_xlabel(ylabel)
-    if len(xlimits)==2:
-      ax1.set_xlim(*xlimits)
+    ax1.set_xlim(0.0,xmax)
+    ax1.set_ylim(-0.25,len(xLabels)-0.25)
     bars = ax1.barh(xPos,medians, 0.5, xerr=[low2sigs,high2sigs],ecolor="k")
     self.bars = bars
     xPosObs = [x+0.25 for x in xPos]
     # Now for the 1sigma error bars
     self.oneSig = ax1.errorbar(medians,xPosObs,xerr=[low1sigs,high1sigs],color="g",linestyle="None")
-    self.obs = ax1.plot(obs,xPosObs,marker="o",color="r",markersize=25,linestyle="None")
+    #self.obsPoints = ax1.plot(obs,xPosObs,marker="o",color="r",markersize=10,linestyle="None",markeredgecolor='r')
+    self.obsPoints = ax1.plot(obs,xPosObs,marker="o",color="r",markersize=15,linestyle="None",markeredgecolor='r')
+    getattr(self,'writeTable')()
+    ax1.text(0.9,1.0/len(data),"Circle: Observed Limit",
+                    va="center",ha='right',size=25.,color='r',
+                    transform=ax1.transAxes)
   def writeTable(self):
-    for i in self.xPos:
-      self.fig.text(self.plotxLimit,1.0/len(self.xPos)*i,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
+    dispToFig = self.fig.transFigure.inverted()
+    axToDisp = self.ax1.transAxes
+    hLineList = []
+    nHLines = len(self.data)
+    maxX = self.maxX
+    for i in range(nHLines+1):
+      yCord = float(i)/nHLines
+      l = mpl.Line2D([1,maxX],[yCord,yCord],color='k')
+      self.ax1.add_artist(l)
+      l.set_transform(self.ax1.transAxes)
+      l.set_clip_on(False)
+      hLineList.append(l)
+    vLineList = []
+    nVLines = 6
+    for i in range(nVLines):
+      xCord = float(i+1)/nVLines*(maxX-1.0) +1.0
+      l = mpl.Line2D([xCord,xCord],[0,1],color='k')
+      self.ax1.add_artist(l)
+      l.set_transform(self.ax1.transAxes)
+      l.set_clip_on(False)
+      vLineList.append(l)
+    reversedData = reversed(self.data)
+    for i in range(nHLines):
+      yCord = float(i+0.5)/nHLines
+      for j in range(nVLines):
+        xCord = float(j+0.5)/nVLines*(maxX-1.0) +1.0
+        s = "{0:.1f}".format(float(self.data[i][j+1]))
+        color = 'k'
+        if j == 0:
+            color = 'r'
+        self.ax1.text(xCord,yCord,s,va="center",ha='center',size=25.,
+            transform=axToDisp,
+            color=color)
+    colLabels = ["Observed",r"$-2\sigma$",r"$-\sigma$","Median",r"$+\sigma$",r"$+2\sigma$"]
+    for i in range(nVLines):
+      xCord = float(i+0.5)/nVLines*(maxX-1.0) +1.0
+      yCord = 1.01
+      color = 'k'
+      if i == 0:
+          color = 'r'
+      self.ax1.text(xCord,yCord,colLabels[i],va="bottom",ha='center',size=15.,
+            transform=axToDisp,
+            color=color)
+        
+
   def save(self,saveName):
     self.fig.savefig(saveName+".png")
     self.fig.savefig(saveName+".pdf")
@@ -524,9 +587,9 @@ if __name__ == "__main__":
     comparePlot.save(outDir+"compareObs"+"_"+energyStr)
     """
     
-    #comparePlot = ComparePlotTable(compareData,titleMap=comparisonMap,xlimits=compareXlims)
-    #comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+lumiStrWrite+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
-    #comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStrWrite,horizontalalignment="right",size="x-large")
-    #comparePlot.fig.text(0.9,0.13,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
-    #comparePlot.fig.text(0.9,0.425,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
-    #comparePlot.save(outDir+"compareObs"+"_"+energyStr)
+    comparePlot = ComparePlotTable(compareData,titleMap=comparisonMap,xlimits=compareXlims)
+    #comparePlot.ax1.text(0.0,1.01,"$\sqrt{s}=$"+energyStrWrite+", $\mathcal{L}="+lumiStrWrite+"$ fb$^{-1}$",ha="left",va="baseline",size="x-large",transform=comparePlot.ax1.transAxes)
+    comparePlot.ax1.text(1.0,-0.01,"$\sqrt{s}=$"+energyStrWrite,ha="left",va="top",size="x-large",transform=comparePlot.ax1.transAxes)
+    comparePlot.ax1.text(comparePlot.maxX,-0.01,"$\mathcal{L}="+lumiStrWrite+"$ fb$^{-1}$",ha="right",va="top",size="x-large",transform=comparePlot.ax1.transAxes)
+    comparePlot.ax1.text(0.0,1.01,PRELIMINARYSTRING,ha="left",va="baseline",size="x-large",transform=comparePlot.ax1.transAxes)
+    comparePlot.save(outDir+"compareObs"+"_"+energyStr)
