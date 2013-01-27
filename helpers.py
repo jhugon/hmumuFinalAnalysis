@@ -3,6 +3,7 @@ import ROOT as root
 from ROOT import gStyle as gStyle
 #from ROOT import RooRealVar, RooGaussian, RooArgList, RooDataHist
 import re
+import csv
 from math import sqrt
 import numpy
 import array
@@ -1468,6 +1469,25 @@ def sqrtTH1(hist):
     if n < 0.0:
       n = 0.0
     hist.SetBinContent(i,sqrt(n))
+
+def readCSVXS(filename):
+  f = open(filename)
+  rd = csv.reader(f)
+  result = {}
+  for row in rd:
+    if len(row) == 0:
+        continue
+    if len(row[0]) == 0:
+        continue
+    if re.search(r"[^\d.\s]",row[0]):
+        continue
+    mass = float(row[0])
+    prec = "0"
+    if mass % 1 > 0:
+        prec = '1'
+    result[("{0:."+prec+"f}").format(mass)] = [float(i) for i in row[1:]]
+  f.close()
+  return result
 
 def saveAs(canvas,name):
   canvas.SaveAs(name+".png")

@@ -1,5 +1,6 @@
 import re
 import ROOT as root
+import helpers
 
 lumiDict={}
 lumiDict["8TeV"] = 19.39 #2012AARecovBCD
@@ -15,13 +16,19 @@ lumiDict["7TeV"] = 5.05 #2011AB
 #LUMI=2.739 #2011B
 
 scaleHiggsBy = 1.0
-scaleHiggsBy = 10.0
+#scaleHiggsBy = 10.0
+
+brDict = helpers.readCSVXS("etc/br.csv")
+ggHDict8 = helpers.readCSVXS("etc/ggH_8TeV.csv")
+vbfHDict8 = helpers.readCSVXS("etc/vbfH_8TeV.csv")
+wHDict8 = helpers.readCSVXS("etc/wH_8TeV.csv")
+zHDict8 = helpers.readCSVXS("etc/zH_8TeV.csv")
 
 xsec = {}
-xsec["ggHmumu125_8TeV"] = 4.294e-3 * scaleHiggsBy
-xsec["vbfHmumu125_8TeV"] = 3.347e-4 * scaleHiggsBy
-xsec["zHmumu125_8TeV"] = 8.675e-5 * scaleHiggsBy
-xsec["wHmumu125_8TeV"] = 1.533e-4 * scaleHiggsBy
+xsec["ggHmumu125_8TeV"] = ggHDict8['125'][0]*brDict['125'][0] * scaleHiggsBy
+xsec["vbfHmumu125_8TeV"] = vbfHDict8['125'][0]*brDict['125'][0] * scaleHiggsBy
+xsec["wHmumu125_8TeV"] = wHDict8['125'][0]*brDict['125'][0] * scaleHiggsBy
+xsec["zHmumu125_8TeV"] = zHDict8['125'][0]*brDict['125'][0] * scaleHiggsBy
 
 xsec["DYJetsToLL_8TeV"] = 3503.71   ## madgraph
 xsec["DY2JetsToLL_8TeV"] = 181.   ## madgraph

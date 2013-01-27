@@ -514,19 +514,16 @@ if __name__ == "__main__":
         print("No Data to Compare for {0}!!".format(period))
         continue
     lumiStrWrite = "{0:.1f}".format(float(desiredLumiStr))
+
+    """
     comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=True,xlimits=compareXlims)
     comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+lumiStrWrite+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
     comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStrWrite,horizontalalignment="right",size="x-large")
     #comparePlot.fig.text(0.9,0.13,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
     comparePlot.fig.text(0.9,0.425,"Red: Observed Limit",horizontalalignment="right",size="large",color="r")
     comparePlot.save(outDir+"compareObs"+"_"+energyStr)
+    """
     
-    #comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=False,xlimits=compareXlims)
-    #comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+desiredLumiStr+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
-    #comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStr,horizontalalignment="right",size="x-large")
-    #comparePlot.fig.text(0.9,0.50,"Calculated from MC",horizontalalignment="right",size="x-large")
-    #comparePlot.save(outDir+"compare"+"_"+energyStr)
-
     #comparePlot = ComparePlotTable(compareData,titleMap=comparisonMap,xlimits=compareXlims)
     #comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+lumiStrWrite+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
     #comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStrWrite,horizontalalignment="right",size="x-large")
