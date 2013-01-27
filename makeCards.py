@@ -1406,5 +1406,5 @@ done
 """
   runFile.write(batchString)
   runFile.close()
-  shutil.copy("nuisanceDiff.py",outDir+"diffNuisances.py")
-  shutil.copy("fitNormsToText_mlfit.py",outDir+"mlfitNormsToText.py")
+  shutil.copy("etc/nuisanceDiff.py",outDir+"diffNuisances.py")
+  shutil.copy("etc/fitNormsToText_mlfit.py",outDir+"fitNormsToText_mlfit.py")

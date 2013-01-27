@@ -24,6 +24,11 @@ vbfHDict8 = helpers.readCSVXS("etc/vbfH_8TeV.csv")
 wHDict8 = helpers.readCSVXS("etc/wH_8TeV.csv")
 zHDict8 = helpers.readCSVXS("etc/zH_8TeV.csv")
 
+ggHDict7 = helpers.readCSVXS("etc/ggH_7TeV.csv")
+vbfHDict7 = helpers.readCSVXS("etc/vbfH_7TeV.csv")
+wHDict7 = helpers.readCSVXS("etc/wH_7TeV.csv")
+zHDict7 = helpers.readCSVXS("etc/zH_7TeV.csv")
+
 xsec = {}
 xsec["ggHmumu125_8TeV"] = ggHDict8['125'][0]*brDict['125'][0] * scaleHiggsBy
 xsec["vbfHmumu125_8TeV"] = vbfHDict8['125'][0]*brDict['125'][0] * scaleHiggsBy
@@ -44,10 +49,10 @@ xsec["ZZ_8TeV"] =  17.654
 xsec["WJetsToLNu_8TeV"] = 36257.2
 xsec["QCD_8TeV"] =  1.346e5
 
-xsec["ggHmumu125_7TeV"] = 3.37e-3 * scaleHiggsBy
-xsec["vbfHmumu125_7TeV"] = 2.65e-4 * scaleHiggsBy
-xsec["zHmumu125_7TeV"] = 6.948e-5 * scaleHiggsBy
-xsec["wHmumu125_7TeV"] = 1.26e-4 * scaleHiggsBy
+xsec["ggHmumu125_7TeV"] = ggHDict7['125'][0]*brDict['125'][0] * scaleHiggsBy
+xsec["vbfHmumu125_7TeV"] = vbfHDict7['125'][0]*brDict['125'][0] * scaleHiggsBy
+xsec["wHmumu125_7TeV"] = wHDict7['125'][0]*brDict['125'][0] * scaleHiggsBy
+xsec["zHmumu125_7TeV"] = zHDict7['125'][0]*brDict['125'][0] * scaleHiggsBy
 
 xsec["DYJetsToLL_7TeV"] = 3048.   ## madgraph
 xsec["ttbar_7TeV"] = 157.5   ## madgraph
