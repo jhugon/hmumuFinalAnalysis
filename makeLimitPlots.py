@@ -370,8 +370,12 @@ class ComparePlot:
             verticalalignment='center', color=clr, weight='bold',size=size)
 
 class ComparePlotTable:
-  def __init__(self,data,ylabel="Expected 95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},xlimits=[],brazil=True,obsCircles=True):
-    self.maxX = 2.15
+  def __init__(self,data,ylabel="Expected 95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},xlimits=[],brazil=True,obsCircles=True,vertLine1=True):
+    fig = mpl.figure(figsize=(16,8))
+    self.axRightBound = 0.5
+    self.axLeftBound = 0.127
+    self.tabRightBound = 0.05
+    self.obsColWidth = 0.1
     self.linewidth = 2.5
     mpl.rcParams["lines.linewidth"] = self.linewidth
     mpl.rcParams["axes.linewidth"] = self.linewidth
@@ -384,15 +388,22 @@ class ComparePlotTable:
     #mpl.rcParams["mathtext.fontset"]= 'custom'
     #mpl.rcParams["mathtext.default"]= 'bf'
     self.data = data
-    fig = mpl.figure(figsize=(16,8))
     self.fig = fig
     ax1 = fig.add_subplot(111)
     self.ax1 = ax1
     ax1bounds = ax1.get_position().bounds
     ax1bounds = list(ax1bounds)
-    self.plotxLimit = 0.5
-    ax1bounds[2] *= self.plotxLimit
+    ax1bounds[0] = self.axLeftBound
+    ax1bounds[2] = self.axRightBound -self.axLeftBound
     ax1.set_position(ax1bounds)
+    self.maxX = ax1.transAxes.inverted().transform(
+            fig.transFigure.transform((1.0-self.tabRightBound,0.))
+            )[0]
+    self.obsColWidthAx = ax1.transAxes.inverted().transform(
+            fig.transFigure.transform((self.obsColWidth,0.))
+            )[0] - ax1.transAxes.inverted().transform(
+            fig.transFigure.transform((0.0,0.))
+            )[0]
 
     data.sort(key=lambda x: x[0].lower())
 
@@ -418,7 +429,7 @@ class ComparePlotTable:
     xLabels = [titleMap[s] if titleMap.has_key(s) else s for s in xLabels]
 
     ax1.set_yticks(xPos+0.25)
-    ax1.set_yticklabels(tuple(xLabels),size="small")
+    ax1.set_yticklabels(tuple(xLabels),size="medium")
     ax1.set_xlabel(ylabel)
     ax1.set_xlim(0.0,xmax)
     ax1.set_ylim(-0.25,len(xLabels)-0.25)
@@ -439,6 +450,8 @@ class ComparePlotTable:
                     va="center",ha='right',size=25.,color='r',
                     transform=ax1.transAxes)
     getattr(self,'writeTable')()
+    if vertLine1:
+      ax1.axvline(1.0,color='k',ls='--')
   def writeObsCircles(self):
     self.obsPoints = self.ax1.plot(self.obs,self.xPosObs,marker="o",color="r",markersize=15,linestyle="None",markeredgecolor='r')
   def writeObsLines(self):
