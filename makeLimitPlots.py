@@ -370,15 +370,16 @@ class ComparePlot:
             verticalalignment='center', color=clr, weight='bold',size=size)
 
 class ComparePlotTable:
-  def __init__(self,data,ylabel="Expected 95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},xlimits=[]):
+  def __init__(self,data,ylabel="Expected 95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},xlimits=[],brazil=True,obsCircles=True):
     self.maxX = 2.15
-    mpl.rcParams["lines.linewidth"]= 3.0
-    mpl.rcParams["axes.linewidth"]= 3.0
-    mpl.rcParams["patch.linewidth"]= 3.0
-    mpl.rcParams["xtick.major.width"]= 3.0
-    mpl.rcParams["xtick.minor.width"]= 3.0
-    mpl.rcParams["ytick.major.width"]= 3.0
-    mpl.rcParams["ytick.minor.width"]= 3.0
+    self.linewidth = 2.5
+    mpl.rcParams["lines.linewidth"] = self.linewidth
+    mpl.rcParams["axes.linewidth"] = self.linewidth
+    mpl.rcParams["patch.linewidth"] = self.linewidth
+    mpl.rcParams["xtick.major.width"] = self.linewidth
+    mpl.rcParams["xtick.minor.width"] = self.linewidth
+    mpl.rcParams["ytick.major.width"] = self.linewidth
+    mpl.rcParams["ytick.minor.width"] = self.linewidth
     #mpl.rcParams["font.weight"]= 700
     #mpl.rcParams["mathtext.fontset"]= 'custom'
     #mpl.rcParams["mathtext.default"]= 'bf'
@@ -396,12 +397,17 @@ class ComparePlotTable:
     data.sort(key=lambda x: x[0].lower())
 
     obs = [float(point[1]) for point in data]
-    self.obs = obs
     medians = [float(point[4]) for point in data]
     high1sigs = [float(point[5])-float(point[4]) for point in data]
     low1sigs = [float(point[4])-float(point[3]) for point in data]
     high2sigs = [float(point[6])-float(point[4]) for point in data]
     low2sigs = [float(point[4])-float(point[2]) for point in data]
+    self.obs = obs
+    self.medians = medians
+    self.high1sigs = high1sigs
+    self.high2sigs = high2sigs
+    self.low1sigs = low1sigs
+    self.low2sigs = low2sigs
     maxDataPoint = max([float(point[6]) for point in data])
     xmax = maxDataPoint*1.1
 
@@ -416,17 +422,27 @@ class ComparePlotTable:
     ax1.set_xlabel(ylabel)
     ax1.set_xlim(0.0,xmax)
     ax1.set_ylim(-0.25,len(xLabels)-0.25)
-    bars = ax1.barh(xPos,medians, 0.5, xerr=[low2sigs,high2sigs],ecolor="k")
-    self.bars = bars
     xPosObs = [x+0.25 for x in xPos]
-    # Now for the 1sigma error bars
-    self.oneSig = ax1.errorbar(medians,xPosObs,xerr=[low1sigs,high1sigs],color="g",linestyle="None")
-    #self.obsPoints = ax1.plot(obs,xPosObs,marker="o",color="r",markersize=10,linestyle="None",markeredgecolor='r')
-    self.obsPoints = ax1.plot(obs,xPosObs,marker="o",color="r",markersize=15,linestyle="None",markeredgecolor='r')
-    getattr(self,'writeTable')()
-    ax1.text(0.9,1.0/len(data),"Circle: Observed Limit",
+    self.xPosObs = xPosObs
+    if brazil:
+      getattr(self,'writeBrazil')()
+    else:
+      getattr(self,'writeBars')()
+    if obsCircles:
+      getattr(self,'writeObsCircles')()
+      ax1.text(0.9,1.0/len(data),"Circle: Observed Limit",
                     va="center",ha='right',size=25.,color='r',
                     transform=ax1.transAxes)
+    else:
+      getattr(self,'writeObsLines')()
+      ax1.text(0.9,1.0/len(data),"Red Lines: Observed Limit",
+                    va="center",ha='right',size=25.,color='r',
+                    transform=ax1.transAxes)
+    getattr(self,'writeTable')()
+  def writeObsCircles(self):
+    self.obsPoints = self.ax1.plot(self.obs,self.xPosObs,marker="o",color="r",markersize=15,linestyle="None",markeredgecolor='r')
+  def writeObsLines(self):
+    self.obsPoints = self.ax1.plot(self.obs,self.xPosObs,marker="|",color="r",markersize=49,markeredgewidth=4.,linestyle="None")
   def writeTable(self):
     dispToFig = self.fig.transFigure.inverted()
     axToDisp = self.ax1.transAxes
@@ -471,7 +487,43 @@ class ComparePlotTable:
       self.ax1.text(xCord,yCord,colLabels[i],va="bottom",ha='center',size=15.,
             transform=axToDisp,
             color=color)
-        
+  def writeBars(self):
+    self.bars = self.ax1.barh(self.xPos,self.medians, 0.5, 
+                xerr=[self.low2sigs,self.high2sigs],ecolor="k")
+    # Now for the 1sigma error bars
+    self.oneSig = self.ax1.errorbar(self.medians,self.xPosObs,
+        xerr=[self.low1sigs,self.high1sigs],color="g",linestyle="None")
+  def writeBrazil(self):
+    """
+    obs = [float(point[1]) for point in data]
+    medians = [float(point[4]) for point in data]
+    high1sigs = [float(point[5])-float(point[4]) for point in data]
+    low1sigs = [float(point[4])-float(point[3]) for point in data]
+    high2sigs = [float(point[6])-float(point[4]) for point in data]
+    low2sigs = [float(point[4])-float(point[2]) for point in data]
+    """
+    medianLines = []
+    boxes1 = []
+    boxes2 = []
+    barHeight = 0.5
+    for point,yLow in zip(self.data,range(len(self.data))):
+      xMedian = float(point[4])
+      xHigh1Sig = float(point[5])
+      xHigh2Sig = float(point[6])
+      xLow1Sig = float(point[3])
+      xLow2Sig = float(point[2])
+
+      box2Sig = mpl.Rectangle([xLow2Sig,yLow],xHigh2Sig-xLow2Sig,barHeight,color='#FFFF00')
+      self.ax1.add_artist(box2Sig)
+      boxes1.append(box2Sig)
+
+      box1Sig = mpl.Rectangle([xLow1Sig,yLow],xHigh1Sig-xLow1Sig,barHeight,color='#00FF00')
+      self.ax1.add_artist(box1Sig)
+      boxes1.append(box1Sig)
+
+      l = mpl.Line2D([xMedian,xMedian],[yLow,yLow+barHeight],color='k',lw=3.)
+      self.ax1.add_artist(l)
+      medianLines.append(l)
 
   def save(self,saveName):
     self.fig.savefig(saveName+".png")
