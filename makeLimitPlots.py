@@ -10,6 +10,7 @@ from helpers import *
 import ROOT as root
 import glob
 import re
+import os.path
 
 import matplotlib.pyplot as mpl
 import numpy
@@ -370,12 +371,14 @@ class ComparePlot:
             verticalalignment='center', color=clr, weight='bold',size=size)
 
 class ComparePlotTable:
-  def __init__(self,data,ylabel="Expected 95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},xlimits=[],brazil=True,obsCircles=True,vertLine1=True):
+  def __init__(self,data,ylabel="Expected 95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},xlimits=[],brazil=True,obsCircles=True,vertLine1=True,anotation1='',anotation2=''):
+    #data.sort(key=lambda x: x[0].lower())
+    data.sort(key=lambda x: float(x[4]))
     fig = mpl.figure(figsize=(16,8))
     self.axRightBound = 0.5
     self.axLeftBound = 0.127
     self.tabRightBound = 0.05
-    self.obsColWidth = 0.1
+    self.obsColWidth = 0.25
     self.linewidth = 2.5
     mpl.rcParams["lines.linewidth"] = self.linewidth
     mpl.rcParams["axes.linewidth"] = self.linewidth
@@ -404,8 +407,6 @@ class ComparePlotTable:
             )[0] - ax1.transAxes.inverted().transform(
             fig.transFigure.transform((0.0,0.))
             )[0]
-
-    data.sort(key=lambda x: x[0].lower())
 
     obs = [float(point[1]) for point in data]
     medians = [float(point[4]) for point in data]
@@ -441,8 +442,13 @@ class ComparePlotTable:
       getattr(self,'writeBars')()
     if obsCircles:
       getattr(self,'writeObsCircles')()
-      ax1.text(0.9,1.0/len(data),"Circle: Observed Limit",
+      if len(data)>2:
+        ax1.text(0.9,1.0/len(data),"Circle: Observed Limit",
                     va="center",ha='right',size=25.,color='r',
+                    transform=ax1.transAxes)
+      else:
+        ax1.text(0.9,1.0/len(data)-0.01,"Circle: Observed Limit",
+                    va="top",ha='right',size=25.,color='r',
                     transform=ax1.transAxes)
     else:
       getattr(self,'writeObsLines')()
@@ -452,6 +458,28 @@ class ComparePlotTable:
     getattr(self,'writeTable')()
     if vertLine1:
       ax1.axvline(1.0,color='k',ls='--')
+    ax1.text(0.0,1.01,PRELIMINARYSTRING,ha="left",va="baseline",size="x-large",transform=ax1.transAxes)
+    if len(data)>3:
+      ax1.text(0.5,2.0/len(data),anotation2,
+                    va="center",ha='center',size=25.,color='k',
+                    transform=ax1.transAxes)
+      ax1.text(0.5,3.0/len(data),anotation1,
+                    va="center",ha='center',size=25.,color='k',
+                    transform=ax1.transAxes)
+    elif len(data)>2:
+      ax1.text(0.5,2.0/len(data)-0.01,anotation2,
+                    va="top",ha='center',size=25.,color='k',
+                    transform=ax1.transAxes)
+      ax1.text(0.5,2.0/len(data)+0.01,anotation1,
+                    va="bottom",ha='center',size=25.,color='k',
+                    transform=ax1.transAxes)
+    else:
+      strToWrite=anotation1+', '+anotation2
+      if anotation1=='' or anotation2=='':
+        strToWrite=anotation1+anotation2
+      ax1.text(0.5,1.0/len(data)+0.01,strToWrite,
+                    va="bottom",ha='center',size=25.,color='k',
+                    transform=ax1.transAxes)
   def writeObsCircles(self):
     self.obsPoints = self.ax1.plot(self.obs,self.xPosObs,marker="o",color="r",markersize=15,linestyle="None",markeredgecolor='r')
   def writeObsLines(self):
@@ -470,9 +498,16 @@ class ComparePlotTable:
       l.set_clip_on(False)
       hLineList.append(l)
     vLineList = []
+    vlineXCords = []
+    columnXCords = []
     nVLines = 6
-    for i in range(nVLines):
-      xCord = float(i+1)/nVLines*(maxX-1.0) +1.0
+    vlineXCords.append(1.0+self.obsColWidth)
+    columnXCords.append(1.0+self.obsColWidth/2.0)
+    columnWidth = (maxX-1.0 -self.obsColWidth)/(nVLines-1)
+    for i in range(nVLines-1):
+      vlineXCords.append(1.0+self.obsColWidth+(i+1.0)*columnWidth)
+      columnXCords.append(1.0+self.obsColWidth+(i+0.5)*columnWidth)
+    for xCord in vlineXCords:
       l = mpl.Line2D([xCord,xCord],[0,1],color='k')
       self.ax1.add_artist(l)
       l.set_transform(self.ax1.transAxes)
@@ -481,8 +516,7 @@ class ComparePlotTable:
     reversedData = reversed(self.data)
     for i in range(nHLines):
       yCord = float(i+0.5)/nHLines
-      for j in range(nVLines):
-        xCord = float(j+0.5)/nVLines*(maxX-1.0) +1.0
+      for xCord,j in zip(columnXCords,range(nVLines)):
         s = "{0:.1f}".format(float(self.data[i][j+1]))
         color = 'k'
         if j == 0:
@@ -491,13 +525,10 @@ class ComparePlotTable:
             transform=axToDisp,
             color=color)
     colLabels = ["Observed",r"$-2\sigma$",r"$-\sigma$","Median",r"$+\sigma$",r"$+2\sigma$"]
-    for i in range(nVLines):
-      xCord = float(i+0.5)/nVLines*(maxX-1.0) +1.0
+    colLabelColors = ['r','k','k','k','k','k']
+    for xCord,lab,color in zip(columnXCords,colLabels,colLabelColors):
       yCord = 1.01
-      color = 'k'
-      if i == 0:
-          color = 'r'
-      self.ax1.text(xCord,yCord,colLabels[i],va="bottom",ha='center',size=15.,
+      self.ax1.text(xCord,yCord,lab,va="bottom",ha='center',size=20.,
             transform=axToDisp,
             color=color)
   def writeBars(self):
@@ -507,14 +538,6 @@ class ComparePlotTable:
     self.oneSig = self.ax1.errorbar(self.medians,self.xPosObs,
         xerr=[self.low1sigs,self.high1sigs],color="g",linestyle="None")
   def writeBrazil(self):
-    """
-    obs = [float(point[1]) for point in data]
-    medians = [float(point[4]) for point in data]
-    high1sigs = [float(point[5])-float(point[4]) for point in data]
-    low1sigs = [float(point[4])-float(point[3]) for point in data]
-    high2sigs = [float(point[6])-float(point[4]) for point in data]
-    low2sigs = [float(point[4])-float(point[2]) for point in data]
-    """
     medianLines = []
     boxes1 = []
     boxes2 = []
@@ -630,9 +653,6 @@ if __name__ == "__main__":
     fnGlobStr = dirName+"*_"+energyStr+"_"+desiredLumiStr+".txt.out"
     compareData = getData(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
     energyStrWrite = None
-    compareXlims = [0.,25.]
-    if energyStr == "7TeV":
-      compareXlims = [0.,65.]
     if energyStr == "7P8TeV":
       energyStrWrite = "7 & 8 TeV"
     else:
@@ -643,18 +663,51 @@ if __name__ == "__main__":
         continue
     lumiStrWrite = "{0:.1f}".format(float(desiredLumiStr))
 
-    """
-    comparePlot = ComparePlot(compareData,titleMap=comparisonMap,showObs=True,xlimits=compareXlims)
-    comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+lumiStrWrite+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
-    comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStrWrite,horizontalalignment="right",size="x-large")
-    #comparePlot.fig.text(0.9,0.13,"Red Lines: Observed Limit",horizontalalignment="right",size="medium",color="r")
-    comparePlot.fig.text(0.9,0.425,"Red: Observed Limit",horizontalalignment="right",size="large",color="r")
-    comparePlot.save(outDir+"compareObs"+"_"+energyStr)
-    """
+    anotation1 = "$\sqrt{s}$ = "+energyStrWrite
+    anotation2 = "$\mathcal{L}$ = "+lumiStrWrite+" fb$^{-1}$"
+    if energyStr == "7P8TeV":
+      anotation1 = "$\sqrt{s}$ = 7 TeV, $\mathcal{L}$ = "
+      anotation2 = "$\sqrt{s}$ = 8 TeV, $\mathcal{L}$ = "
+      anotation1 += "{0:.1f}".format(lumiDict["7TeV"])
+      anotation2 += "{0:.1f}".format(lumiDict["8TeV"])
+      anotation1 += " fb$^{-1}$"
+      anotation2 += " fb$^{-1}$"
+
+    ## Inclusive Categories
     
-    comparePlot = ComparePlotTable(compareData,titleMap=comparisonMap,xlimits=compareXlims)
-    #comparePlot.ax1.text(0.0,1.01,"$\sqrt{s}=$"+energyStrWrite+", $\mathcal{L}="+lumiStrWrite+"$ fb$^{-1}$",ha="left",va="baseline",size="x-large",transform=comparePlot.ax1.transAxes)
-    comparePlot.ax1.text(1.0,-0.01,"$\sqrt{s}=$"+energyStrWrite,ha="left",va="top",size="x-large",transform=comparePlot.ax1.transAxes)
-    comparePlot.ax1.text(comparePlot.maxX,-0.01,"$\mathcal{L}="+lumiStrWrite+"$ fb$^{-1}$",ha="right",va="top",size="x-large",transform=comparePlot.ax1.transAxes)
-    comparePlot.ax1.text(0.0,1.01,PRELIMINARYSTRING,ha="left",va="baseline",size="x-large",transform=comparePlot.ax1.transAxes)
-    comparePlot.save(outDir+"compareObs"+"_"+energyStr)
+    veto = ["VBF","Presel"]
+    mustBe="(IncBDTCut.*)_(.+)_[.\d]+.txt.out"
+    tmpMap = { 
+  "IncBDTCutCat":"Non-VBF\n Category\n Combination",
+  "IncBDTCut":"Non-VBF \nNo Categories",
+  "IncBDTCutBB":"Non-VBF BB",
+  "IncBDTCutBO":"Non-VBF BO",
+  "IncBDTCutBE":"Non-VBF BE",
+  "IncBDTCutOO":"Non-VBF OO",
+  "IncBDTCutOE":"Non-VBF OE",
+  "IncBDTCutEE":"Non-VBF EE",
+        }
+    compareData = getData(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
+    comparePlot = ComparePlotTable(compareData,titleMap=tmpMap,vertLine1=False,anotation1=anotation1,anotation2=anotation2)
+    comparePlot.save(outDir+"compareIncCats"+"_"+energyStr)
+
+    ## VBF v. Inclusive Categories
+    
+    veto = ["Presel","EE",'BB',"BO","BE","OE","OO"]
+    mustBe="(.*BDTCut.*)_(.+)_[.\d]+.txt.out"
+    veto2 = ["BDTCut","IncBDTCut"]
+    tmpMap = { 
+        "VBFBDTCut":'VBF',
+        "IncBDTCutCat":'Non-VBF',
+        "BDTCutCat":'VBF & Non-VBF \n Combination',
+        }
+    compareData = getData(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
+    veto3 = []
+    for i in range(len(compareData)):
+        for j in veto2:
+          if os.path.split(compareData[i][0])[1] == j:
+            veto3.append(i)
+    for i in reversed(veto3):
+        compareData.pop(i)
+    comparePlot = ComparePlotTable(compareData,titleMap=tmpMap,vertLine1=False,anotation1=anotation1,anotation2=anotation2)
+    comparePlot.save(outDir+"compareFinal"+"_"+energyStr)
