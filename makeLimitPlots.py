@@ -286,7 +286,7 @@ class RelativePlot:
     canvas.RedrawAxis()
 
 class ComparePlot:
-  def __init__(self,data,ylabel="Expected 95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},showObs=False,xlimits=[]):
+  def __init__(self,data,ylabel="95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},showObs=False,xlimits=[]):
     fig = mpl.figure()
     self.fig = fig
     ax1 = fig.add_subplot(111)
@@ -375,7 +375,7 @@ class ComparePlotTable:
     #data.sort(key=lambda x: x[0].lower())
     data.sort(key=lambda x: float(x[4]))
     fig = mpl.figure(figsize=(16,8))
-    self.axRightBound = 0.5
+    self.axRightBound = 0.60
     self.axLeftBound = 0.127
     self.tabRightBound = 0.05
     self.obsColWidth = 0.25
@@ -428,9 +428,9 @@ class ComparePlotTable:
     xLabels = [point[0] for point in data]
     xLabels = [re.sub(r".*/","",s) for s in xLabels]
     xLabels = [titleMap[s] if titleMap.has_key(s) else s for s in xLabels]
+    self.xLabels = xLabels
 
     ax1.set_yticks(xPos+0.25)
-    ax1.set_yticklabels(tuple(xLabels),size="medium")
     ax1.set_xlabel(ylabel)
     ax1.set_xlim(0.0,xmax)
     ax1.set_ylim(-0.25,len(xLabels)-0.25)
@@ -442,48 +442,30 @@ class ComparePlotTable:
       getattr(self,'writeBars')()
     if obsCircles:
       getattr(self,'writeObsCircles')()
-      if len(data)>2:
-        ax1.text(0.9,1.0/len(data),"Circle: Observed Limit",
-                    va="center",ha='right',size=25.,color='r',
-                    transform=ax1.transAxes)
-      else:
-        ax1.text(0.9,1.0/len(data)-0.01,"Circle: Observed Limit",
-                    va="top",ha='right',size=25.,color='r',
-                    transform=ax1.transAxes)
-    else:
-      getattr(self,'writeObsLines')()
-      ax1.text(0.9,1.0/len(data),"Red Lines: Observed Limit",
-                    va="center",ha='right',size=25.,color='r',
-                    transform=ax1.transAxes)
+    getattr(self,'writeLegend')()
     getattr(self,'writeTable')()
     if vertLine1:
       ax1.axvline(1.0,color='k',ls='--')
     ax1.text(0.0,1.01,PRELIMINARYSTRING,ha="left",va="baseline",size="x-large",transform=ax1.transAxes)
-    if len(data)>3:
-      ax1.text(0.5,2.0/len(data),anotation2,
-                    va="center",ha='center',size=25.,color='k',
+    ax1.text(0.5,0.99,anotation1,
+                    va="top",ha='center',size=20.,color='k',
                     transform=ax1.transAxes)
-      ax1.text(0.5,3.0/len(data),anotation1,
-                    va="center",ha='center',size=25.,color='k',
-                    transform=ax1.transAxes)
-    elif len(data)>2:
-      ax1.text(0.5,2.0/len(data)-0.01,anotation2,
-                    va="top",ha='center',size=25.,color='k',
-                    transform=ax1.transAxes)
-      ax1.text(0.5,2.0/len(data)+0.01,anotation1,
-                    va="bottom",ha='center',size=25.,color='k',
-                    transform=ax1.transAxes)
-    else:
-      strToWrite=anotation1+', '+anotation2
-      if anotation1=='' or anotation2=='':
-        strToWrite=anotation1+anotation2
-      ax1.text(0.5,1.0/len(data)+0.01,strToWrite,
-                    va="bottom",ha='center',size=25.,color='k',
-                    transform=ax1.transAxes)
+    #ax1.set_yticklabels(tuple(xLabels),size="medium")
+    ax1.set_yticklabels(tuple(['' for i in xLabels]))
+    getattr(self,'writeTickLabels')()
   def writeObsCircles(self):
     self.obsPoints = self.ax1.plot(self.obs,self.xPosObs,marker="o",color="r",markersize=15,linestyle="None",markeredgecolor='r')
   def writeObsLines(self):
     self.obsPoints = self.ax1.plot(self.obs,self.xPosObs,marker="|",color="r",markersize=49,markeredgewidth=4.,linestyle="None")
+  def writeLegend(self):
+    ymax = 0.15
+    xmin = 0.76
+    self.ax1.plot([xmin],[ymax],marker='o',color='r',markersize=10,linestyle="None",markeredgecolor='r',transform=self.ax1.transAxes)
+    self.ax1.plot([xmin],[ymax/2.],marker='|',color='k',markersize=30,markeredgewidth=self.linewidth,linestyle="None",transform=self.ax1.transAxes)
+    self.ax1.text(xmin+0.02,ymax,'Observed',ha='left',va='center',size=20,transform=self.ax1.transAxes,
+                                                color='r')
+    self.ax1.text(xmin+0.02,ymax/2.,'Expected',ha='left',va='center',size=20,transform=self.ax1.transAxes)
+    
   def writeTable(self):
     dispToFig = self.fig.transFigure.inverted()
     axToDisp = self.ax1.transAxes
@@ -500,13 +482,11 @@ class ComparePlotTable:
     vLineList = []
     vlineXCords = []
     columnXCords = []
-    nVLines = 6
-    vlineXCords.append(1.0+self.obsColWidth)
-    columnXCords.append(1.0+self.obsColWidth/2.0)
-    columnWidth = (maxX-1.0 -self.obsColWidth)/(nVLines-1)
-    for i in range(nVLines-1):
-      vlineXCords.append(1.0+self.obsColWidth+(i+1.0)*columnWidth)
-      columnXCords.append(1.0+self.obsColWidth+(i+0.5)*columnWidth)
+    nVLines = 4
+    columnWidth = (maxX-1.0)/(nVLines)
+    for i in range(nVLines):
+      vlineXCords.append(1.0+(i+1.0)*columnWidth)
+      columnXCords.append(1.0+(i+0.5)*columnWidth)
     for xCord in vlineXCords:
       l = mpl.Line2D([xCord,xCord],[0,1],color='k')
       self.ax1.add_artist(l)
@@ -516,19 +496,27 @@ class ComparePlotTable:
     reversedData = reversed(self.data)
     for i in range(nHLines):
       yCord = float(i+0.5)/nHLines
+      median = float(self.data[i][4])
       for xCord,j in zip(columnXCords,range(nVLines)):
-        s = "{0:.1f}".format(float(self.data[i][j+1]))
+        s = None
         color = 'k'
         if j == 0:
-            color = 'r'
+          color = 'r'
+          s = "{0:.1f}".format(float(self.data[i][j+1]))
+        elif j == 1:
+          s = "{0:.1f}".format(median)
+        elif j == 2:
+          s = "+{0:.1f}\n-{1:.1f}".format(float(self.data[i][5])-median,median-float(self.data[i][3]))
+        elif j == 3:
+          s = "+{0:.1f}\n-{1:.1f}".format(float(self.data[i][6])-median,median-float(self.data[i][2]))
         self.ax1.text(xCord,yCord,s,va="center",ha='center',size=25.,
             transform=axToDisp,
             color=color)
-    colLabels = ["Observed",r"$-2\sigma$",r"$-\sigma$","Median",r"$+\sigma$",r"$+2\sigma$"]
+    colLabels = ["Observed","Expected",r"$1\sigma$",r"$2\sigma$"]
     colLabelColors = ['r','k','k','k','k','k']
     for xCord,lab,color in zip(columnXCords,colLabels,colLabelColors):
       yCord = 1.01
-      self.ax1.text(xCord,yCord,lab,va="bottom",ha='center',size=20.,
+      self.ax1.text(xCord,yCord,lab,va="baseline",ha='center',size=20.,
             transform=axToDisp,
             color=color)
   def writeBars(self):
@@ -560,6 +548,20 @@ class ComparePlotTable:
       l = mpl.Line2D([xMedian,xMedian],[yLow,yLow+barHeight],color='k',lw=3.)
       self.ax1.add_artist(l)
       medianLines.append(l)
+  def writeTickLabels(self):
+    #self.axLeftBound = 0.127
+    for lab,i in zip(self.xLabels,range(len(self.xLabels))):
+        yInFig = self.fig.transFigure.inverted().transform(
+            self.ax1.transData.transform((1.0,i+0.25))
+            )[1]
+        size = 20.
+        ha = 'right'
+        xPos = self.axLeftBound-0.01
+        if len(lab)> 10:
+          size = 18.
+          ha = 'center'
+          xPos = self.axLeftBound/2.0
+        self.fig.text(xPos,yInFig,lab,va='center',ha=ha,size=size)
 
   def save(self,saveName):
     self.fig.savefig(saveName+".png")
@@ -664,14 +666,16 @@ if __name__ == "__main__":
     lumiStrWrite = "{0:.1f}".format(float(desiredLumiStr))
 
     anotation1 = "$\sqrt{s}$ = "+energyStrWrite
-    anotation2 = "$\mathcal{L}$ = "+lumiStrWrite+" fb$^{-1}$"
+    anotation1 += ", $\mathcal{L}$ = "+lumiStrWrite+" fb$^{-1}$"
     if energyStr == "7P8TeV":
       anotation1 = "$\sqrt{s}$ = 7 TeV, $\mathcal{L}$ = "
-      anotation2 = "$\sqrt{s}$ = 8 TeV, $\mathcal{L}$ = "
       anotation1 += "{0:.1f}".format(lumiDict["7TeV"])
-      anotation2 += "{0:.1f}".format(lumiDict["8TeV"])
       anotation1 += " fb$^{-1}$"
-      anotation2 += " fb$^{-1}$"
+      anotation1 += " & "
+      anotation1 += "$\sqrt{s}$ = 8 TeV, $\mathcal{L}$ = "
+      anotation1 += "{0:.1f}".format(lumiDict["8TeV"])
+      anotation1 += " fb$^{-1}$"
+    anotation2 = ''
 
     ## Inclusive Categories
     
