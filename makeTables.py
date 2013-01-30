@@ -234,7 +234,7 @@ class TableMaker:
   def printBakPredict(self):
     dataDict = self.dataDict
     titleMap = self.titleMap
-    outString = r"Category & $N_{Data}$ & $N_{Predicted}$ & Background Error \\ \hline \hline"+'\n'
+    outString = r"Category & $N_{Data} \pm \sqrt{N_{Data}}$ & $N_{Predicted}$ $\pm$ Shape Error \\ \hline \hline"+'\n'
     maxChannelNameLength = max([len(i) for i in dataDict])
     numberLength = 8
     channels = dataDict.keys()
@@ -248,21 +248,21 @@ class TableMaker:
       errNamesString += "{"+str(iErrName)+":<"+str(maxChannelNameLength)+"} & "
       iErrName +=1
       errList.append(dataDict[channelName]["nData"])
+      errList.append(sqrt(dataDict[channelName]["nData"]))
+      errNamesString += "{"+str(iErrName)+":<"+str(numberLength)+".0f} $\pm$ "
+      iErrName +=1
       errNamesString += "{"+str(iErrName)+":<"+str(numberLength)+".0f} & "
       iErrName +=1
       errList.append(dataDict[channelName]["nBak"])
-      errNamesString += "{"+str(iErrName)+":<"+str(numberLength)+".1f} & "
+      errNamesString += "{"+str(iErrName)+":<"+str(numberLength)+".1f} $\pm$ "
       iErrName +=1
-      errList.append(dataDict[channelName]["bakUpErr"])
-      errNamesString += "+{"+str(iErrName)+":<"+str(numberLength)+".2%} "
-      iErrName +=1
-      errList.append(dataDict[channelName]["bakDownErr"])
-      errNamesString += "-{"+str(iErrName)+":<"+str(numberLength)+".2%} "
+      errList.append(dataDict[channelName]["nBak"]*max(dataDict[channelName]["bakUpErr"],dataDict[channelName]["bakDownErr"]))
+      errNamesString += "{"+str(iErrName)+":<"+str(numberLength)+".1f} "
       iErrName +=1
       errNamesString += r"\\ \hline"+"\n"
       outString += errNamesString.format(*errList)
 
-    outString = r"\begin{tabular}{|l|c|c|c|c|} \hline"+"\n" + outString + r"\end{tabular}"+"\n"
+    outString = r"\begin{tabular}{|l|c|c|} \hline"+"\n" + outString + r"\end{tabular}"+"\n"
     #outString += r"\\ "+self.lumiStr+", "+self.energyStr
     outString = outString.replace(r"%",r"\%")
     print
@@ -350,7 +350,7 @@ if __name__ == "__main__":
     print("===========================")
     print(fn)
     print
-    #tm.printBakPredict()
-    tm.printBakErrors()
+    tm.printBakPredict()
+    #tm.printBakErrors()
 
 
