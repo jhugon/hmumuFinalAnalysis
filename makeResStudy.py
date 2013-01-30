@@ -7,6 +7,8 @@ import glob
 import numpy
 import matplotlib.pyplot as mpl
 
+mpl.rcParams['font.size'] = 30.0
+
 root.gErrorIgnoreLevel = root.kWarning
 root.gROOT.SetBatch(True)
 root.gStyle.SetOptStat(0)
@@ -172,7 +174,8 @@ class ResStudy:
       else:
         pass
       ax.pie([countsMap[i] for i in categories],labels=tuple(categories),
-            shadow=False,autopct="%1.0f%%")
+            shadow=False,autopct="%1.0f%%"
+            )
       if "VBF" in title or "vbf" in title:
         ax.set_title(r"VBF $H \rightarrow \mu\mu$ Fractions")
       else:

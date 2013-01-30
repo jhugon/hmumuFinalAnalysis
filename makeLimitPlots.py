@@ -371,12 +371,12 @@ class ComparePlot:
             verticalalignment='center', color=clr, weight='bold',size=size)
 
 class ComparePlotTable:
-  def __init__(self,data,ylabel="Expected 95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},xlimits=[],brazil=True,obsCircles=True,vertLine1=True,anotation1='',anotation2=''):
+  def __init__(self,data,ylabel="95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},xlimits=[],brazil=True,obsCircles=True,vertLine1=True,anotation1='',anotation2=''):
     #data.sort(key=lambda x: x[0].lower())
     data.sort(key=lambda x: float(x[4]))
     fig = mpl.figure(figsize=(16,8))
     self.axRightBound = 0.60
-    self.axLeftBound = 0.127
+    self.axLeftBound = 0.132
     self.tabRightBound = 0.05
     self.obsColWidth = 0.25
     self.linewidth = 2.5
@@ -387,6 +387,12 @@ class ComparePlotTable:
     mpl.rcParams["xtick.minor.width"] = self.linewidth
     mpl.rcParams["ytick.major.width"] = self.linewidth
     mpl.rcParams["ytick.minor.width"] = self.linewidth
+    mpl.rcParams['font.size'] = 22.0
+    self.legendFontSize = 24.0
+    self.tickLabelFontSize = 20.0
+    self.legXMin = 0.74
+    self.legYMax = 0.2
+    self.legYMin = 0.13
     #mpl.rcParams["font.weight"]= 700
     #mpl.rcParams["mathtext.fontset"]= 'custom'
     #mpl.rcParams["mathtext.default"]= 'bf'
@@ -447,7 +453,18 @@ class ComparePlotTable:
     if vertLine1:
       ax1.axvline(1.0,color='k',ls='--')
     ax1.text(0.0,1.01,PRELIMINARYSTRING,ha="left",va="baseline",size="x-large",transform=ax1.transAxes)
-    ax1.text(0.5,0.99,anotation1,
+
+    ax1.text(0.99,0.03,anotation2,ha="right",va="baseline",size=24,transform=ax1.transAxes)
+    if len(medians)>3:
+      anotation1 =  anotation1.replace("&",'')
+      anotation1 =  anotation1.replace("and",'')
+      anotation1 =  anotation1.replace("And",'')
+      ax1.text(1.0,self.legYMax+0.05,anotation1,
+                    va="baseline",ha='right',size=26.,color='k',
+                    transform=ax1.transAxes)
+    else:
+      anotation1 =  anotation1.replace("\n",'')
+      ax1.text(0.5,0.99,anotation1,
                     va="top",ha='center',size=20.,color='k',
                     transform=ax1.transAxes)
     #ax1.set_yticklabels(tuple(xLabels),size="medium")
@@ -458,13 +475,14 @@ class ComparePlotTable:
   def writeObsLines(self):
     self.obsPoints = self.ax1.plot(self.obs,self.xPosObs,marker="|",color="r",markersize=49,markeredgewidth=4.,linestyle="None")
   def writeLegend(self):
-    ymax = 0.15
-    xmin = 0.76
+    ymax = self.legYMax
+    ymin = self.legYMin
+    xmin = self.legXMin
     self.ax1.plot([xmin],[ymax],marker='o',color='r',markersize=10,linestyle="None",markeredgecolor='r',transform=self.ax1.transAxes)
-    self.ax1.plot([xmin],[ymax/2.],marker='|',color='k',markersize=30,markeredgewidth=self.linewidth,linestyle="None",transform=self.ax1.transAxes)
-    self.ax1.text(xmin+0.02,ymax,'Observed',ha='left',va='center',size=20,transform=self.ax1.transAxes,
+    self.ax1.plot([xmin],[(ymax-ymax)/2.+ymin],marker='|',color='k',markersize=30,markeredgewidth=self.linewidth,linestyle="None",transform=self.ax1.transAxes)
+    self.ax1.text(xmin+0.02,ymax,'Observed',ha='left',va='center',size=self.legendFontSize,transform=self.ax1.transAxes,
                                                 color='r')
-    self.ax1.text(xmin+0.02,ymax/2.,'Expected',ha='left',va='center',size=20,transform=self.ax1.transAxes)
+    self.ax1.text(xmin+0.02,(ymax-ymax)/2.+ymin,'Expected',ha='left',va='center',size=self.legendFontSize,transform=self.ax1.transAxes)
     
   def writeTable(self):
     dispToFig = self.fig.transFigure.inverted()
@@ -554,11 +572,11 @@ class ComparePlotTable:
         yInFig = self.fig.transFigure.inverted().transform(
             self.ax1.transData.transform((1.0,i+0.25))
             )[1]
-        size = 20.
+        size = self.tickLabelFontSize
         ha = 'right'
         xPos = self.axLeftBound-0.01
         if len(lab)> 10:
-          size = 18.
+          size *= 0.95
           ha = 'center'
           xPos = self.axLeftBound/2.0
         self.fig.text(xPos,yInFig,lab,va='center',ha=ha,size=size)
@@ -671,11 +689,11 @@ if __name__ == "__main__":
       anotation1 = "$\sqrt{s}$ = 7 TeV, $\mathcal{L}$ = "
       anotation1 += "{0:.1f}".format(lumiDict["7TeV"])
       anotation1 += " fb$^{-1}$"
-      anotation1 += " & "
+      anotation1 += " &\n "
       anotation1 += "$\sqrt{s}$ = 8 TeV, $\mathcal{L}$ = "
       anotation1 += "{0:.1f}".format(lumiDict["8TeV"])
       anotation1 += " fb$^{-1}$"
-    anotation2 = ''
+    anotation2 = '$m_H=125$ GeV/$c^2$'
 
     ## Inclusive Categories
     
