@@ -64,7 +64,7 @@ pdfMmumu = root.RooAddPdf("pdf","pdf",gaus1,gaus2,mix)
 
 #####################################################################
 
-f = root.TFile("input/muscle/ggHmumu125_8TeV.root")
+f = root.TFile("input/freezeSample/ggHmumu125_7TeV.root")
 #f = root.TFile("input/ttbar.root")
 
 #mDiMu = f.Get("mDiMu")
