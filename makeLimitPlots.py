@@ -126,7 +126,9 @@ comparisonMap = {
   "IncPreselEE":"!VBF Presel. EE",
   "IncPreselNotBB":"!VBF Presel. !BB",
   "VBFPreselBB":"VBF Presel. BB",
-  "VBFPreselNotBB":"VBF Presel. !BB"
+  "VBFPreselNotBB":"VBF Presel. !BB",
+
+  "BDTCutCatVBFBDTOnly":'Comb. VBFBDT IncPreRes',
 }
 
 #######################################
@@ -371,7 +373,8 @@ class ComparePlot:
             verticalalignment='center', color=clr, weight='bold',size=size)
 
 class ComparePlotTable:
-  def __init__(self,data,ylabel="95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},xlimits=[],brazil=True,obsCircles=True,vertLine1=True,anotation1='',anotation2=''):
+  def __init__(self,data,ylabel="95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},xlimits=[],brazil=True,obsCircles=True,vertLine1=True,toHighlight=[],anotation1='',anotation2=''):
+    self.toHighlight = toHighlight
     #data.sort(key=lambda x: x[0].lower())
     data.sort(key=lambda x: float(x[4]))
     fig = mpl.figure(figsize=(16,8))
@@ -442,20 +445,21 @@ class ComparePlotTable:
     ax1.set_ylim(-0.25,len(xLabels)-0.25)
     xPosObs = [x+0.25 for x in xPos]
     self.xPosObs = xPosObs
+    getattr(self,'highlight')()
     if brazil:
       getattr(self,'writeBrazil')()
     else:
       getattr(self,'writeBars')()
     if obsCircles:
       getattr(self,'writeObsCircles')()
-    getattr(self,'writeLegend')()
     getattr(self,'writeTable')()
+    getattr(self,'writeLegend')()
     if vertLine1:
       ax1.axvline(1.0,color='k',ls='--')
     ax1.text(0.0,1.01,PRELIMINARYSTRING,ha="left",va="baseline",size="x-large",transform=ax1.transAxes)
 
     ax1.text(0.99,0.03,anotation2,ha="right",va="baseline",size=24,transform=ax1.transAxes)
-    if len(medians)>3:
+    if len(medians)>5:
       anotation1 =  anotation1.replace("&",'')
       anotation1 =  anotation1.replace("and",'')
       anotation1 =  anotation1.replace("And",'')
@@ -580,6 +584,18 @@ class ComparePlotTable:
           ha = 'center'
           xPos = self.axLeftBound/2.0
         self.fig.text(xPos,yInFig,lab,va='center',ha=ha,size=size)
+  def highlight(self):
+    nCats = len(self.data)
+    boxes = []
+    axTrans = self.ax1.transAxes
+    color = 'lightSkyBlue'
+    color = 'PowderBlue'
+    color = 'lightBlue'
+    for i in range(len(self.data)):
+      if os.path.split(self.data[i][0])[1] in self.toHighlight:
+        tmpBox =  mpl.Rectangle([0.0,i/float(nCats)],self.maxX,1./nCats,fill=True,fc=color,ec=color,transform=axTrans,clip_on=False)
+        self.ax1.add_artist(tmpBox)
+        boxes.append(tmpBox)
 
   def save(self,saveName):
     self.fig.savefig(saveName+".png")
@@ -697,17 +713,17 @@ if __name__ == "__main__":
 
     ## Inclusive Categories
     
-    veto = ["VBF","Presel"]
-    mustBe="(IncBDTCut.*)_(.+)_[.\d]+.txt.out"
+    veto = ["VBF","IncBDT"]
+    mustBe="(IncPresel.*)_(.+)_[.\d]+.txt.out"
     tmpMap = { 
-  "IncBDTCutCat":"Non-VBF\n Category\n Combination",
-  "IncBDTCut":"Non-VBF \nNo Categories",
-  "IncBDTCutBB":"Non-VBF BB",
-  "IncBDTCutBO":"Non-VBF BO",
-  "IncBDTCutBE":"Non-VBF BE",
-  "IncBDTCutOO":"Non-VBF OO",
-  "IncBDTCutOE":"Non-VBF OE",
-  "IncBDTCutEE":"Non-VBF EE",
+  "IncPreselCat":"Non-VBF\n Category\n Combination",
+  "IncPresel":"Non-VBF \nNo Categories",
+  "IncPreselBB":"Non-VBF BB",
+  "IncPreselBO":"Non-VBF BO",
+  "IncPreselBE":"Non-VBF BE",
+  "IncPreselOO":"Non-VBF OO",
+  "IncPreselOE":"Non-VBF OE",
+  "IncPreselEE":"Non-VBF EE",
         }
     compareData = getData(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
     comparePlot = ComparePlotTable(compareData,titleMap=tmpMap,vertLine1=False,anotation1=anotation1,anotation2=anotation2)
@@ -715,13 +731,16 @@ if __name__ == "__main__":
 
     ## VBF v. Inclusive Categories
     
-    veto = ["Presel","EE",'BB',"BO","BE","OE","OO"]
-    mustBe="(.*BDTCut.*)_(.+)_[.\d]+.txt.out"
-    veto2 = ["BDTCut","IncBDTCut"]
+    veto = ["EE",'BB',"BO","BE","OE","OO"]
+    mustBe="(.*)_(.+)_[.\d]+.txt.out"
+    veto2 = ["BDTCut","IncBDTCut","BDTCutCat"]
+    veto2 = ["BDTCut","IncPresel","Presel","PreselCat","VBFPresel","IncBDTCut"]
     tmpMap = { 
-        "VBFBDTCut":'VBF',
-        "IncBDTCutCat":'Non-VBF',
-        "BDTCutCat":'VBF & Non-VBF \n Combination',
+        "VBFBDTCut":'VBF (BDT)',
+        "IncPreselCat":'Non-VBF \nNo Cut',
+        "IncBDTCutCat":'Non-VBF BDT',
+        "BDTCutCat":'VBF(BDT) &\n Non-VBF(BDT) \n Combination',
+        "BDTCutCatVBFBDTOnly":'VBF(BDT) &\n Non-VBF\n(No Cut) \n Combination',
         }
     compareData = getData(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
     veto3 = []
@@ -733,3 +752,27 @@ if __name__ == "__main__":
         compareData.pop(i)
     comparePlot = ComparePlotTable(compareData,titleMap=tmpMap,vertLine1=False,anotation1=anotation1,anotation2=anotation2)
     comparePlot.save(outDir+"compareFinal"+"_"+energyStr)
+
+    ## All Categories
+
+    mustBe = r"(.+)_(.+)_[.\d]+.txt.out"
+    veto = ["EE",'BB',"BO","BE","OE","OO"]
+    compareData = getData(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
+    comparePlot = ComparePlotTable(compareData,titleMap={},vertLine1=False,anotation1=anotation1,anotation2=anotation2)
+    comparePlot.save(outDir+"all"+"_"+energyStr)
+
+    ## Inc BDT v. Presel
+
+    mustBe = r"(Inc.+Cat)_(.+)_[.\d]+.txt.out"
+    veto = ["EE",'BB',"BO","BE","OE","OO"]
+    veto2 = ["BDTCut"]
+    compareData = getData(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
+    veto3 = []
+    for i in range(len(compareData)):
+        for j in veto2:
+          if os.path.split(compareData[i][0])[1] == j:
+            veto3.append(i)
+    for i in reversed(veto3):
+        compareData.pop(i)
+    comparePlot = ComparePlotTable(compareData,titleMap={},vertLine1=False,anotation1=anotation1,anotation2=anotation2)
+    comparePlot.save(outDir+"IncBDTVPresel"+"_"+energyStr)

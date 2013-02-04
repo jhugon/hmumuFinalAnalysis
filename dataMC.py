@@ -6,10 +6,10 @@ import ROOT as root
 import os
 import sys
 
-dataDir = "input/freezeSample110to150/"
+dataDir = "input/preApproveSample/"
 outDir = "output/"
 
-RUNPERIOD="8TeV"
+RUNPERIOD="7TeV"
 LUMI=lumiDict[RUNPERIOD]
 
 LOGY=True
@@ -39,8 +39,9 @@ histDirs = ["NotBlindWindow/"]
 histDirs = ["VBFPreselDiMuPtL20/","IncPreselDiMuPtL20/"]
 histDirs = ["VBFPresel/","IncPresel/"]
 histDirs = ["IncPresel/"]
-histDirs = ["IncBDTCutBB/","VBFBDTCut/"]
-histDirs = ["VBFBDTCut/"]
+#histDirs = ["IncBDTCutBB/","VBFBDTCut/"]
+#histDirs = ["VBFBDTCut/"]
+histDirs = ["IncPreselPtG10/"]
 
 root.gErrorIgnoreLevel = root.kWarning
 
@@ -78,9 +79,10 @@ if RUNPERIOD=="7TeV":
     histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.3,0.4],"rebin":2,"ylimits":[1e-2,5e2],'vertLines':{"8TeV":-0.04,"7TeV":-0.03}}
     histNames["ptmiss"] = {"xlabel":"p_{T}^{Miss} [GeV/c]","xlimits":[0,200],"leg":stdLegendPos,'ylimits':[0.1,1e2]}
   else:
-    anotateText = ""
+    anotateText = "p_{T}(#mu#mu)>10 GeV"
     histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":2,'ylimits':[0.1,5e5]}
-    histNames["nVtx"] = {"xlabel":"N_{vtx}","xlimits":[0,25],"leg":stdLegendPos,'ylimits':[0.1,3e3]}
+    #anotateText = ""
+    #histNames["nVtx"] = {"xlabel":"N_{vtx}","xlimits":[0,25],"leg":stdLegendPos,'ylimits':[0.1,3e3]}
 elif RUNPERIOD=="8TeV":
   print "Using 8TeV Settings"
   if len(histDirs) == 1 and histDirs[0] == "IncPresel/":
@@ -107,12 +109,13 @@ elif RUNPERIOD=="8TeV":
     histNames["ptmiss"] = {"xlabel":"p_{T}^{Miss} [GeV/c]","xlimits":[0,200],"leg":stdLegendPos,"ylimits":[0.1,1e3]}
     histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.4,0.25],"rebin":2,"ylimits":[1e-1,5e3],'vertLines':{"8TeV":-0.04,"7TeV":-0.03}}
   else:
-    histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":2,'ylimits':[0.1,5e4]}
+    #histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":2,'ylimits':[0.1,5e4]}
     #anotateText = "Non-VBF BDT Cut BB"
     #histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":2,'ylimits':[0.1,6e4]}
-    anotateText = "VBF BDT Cut"
-    histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":5,'ylimits':[0.1,6e2]}
+    #histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":5,'ylimits':[0.1,6e2]}
     #histNames["nVtx"] = {"xlabel":"N_{vtx}","xlimits":[0,40],"leg":stdLegendPos,'ylimits':[0.0,8e3]}
+    anotateText = "p_{T}(#mu#mu)>10 GeV"
+    histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":2,'ylimits':[1.,2e6]}
 else:
   print "Using Other Settings"
   histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":2}

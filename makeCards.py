@@ -1001,6 +1001,9 @@ if __name__ == "__main__":
   combinations.append((
         ["VBFBDTCut"]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))
+  combinations.append((
+        ["VBFBDTCut"]+["IncPresel"+x for x in categoriesInc],"BDTCutCatVBFBDTOnly"
+  ))
 
 #  combinationsLong.append((
 #        ["IncBDTCut","VBFBDTCut"],"BDTCut"
