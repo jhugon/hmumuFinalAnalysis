@@ -3,6 +3,7 @@
 import argparse
 parser = argparse.ArgumentParser(description="Makes Limit Plots from output text from combine tool.")
 parser.add_argument("--bdtCut", help="Makes plots v. BDT Cut Instead of Luminosity",action="store_true",default=False)
+parser.add_argument("-m","--higgsMass", help="Makes plots v. Higgs Mass",action="store_true",default=False)
 args = parser.parse_args()
 
 
@@ -70,7 +71,15 @@ titleMap = {
   "VBFPreselBB":"VBF Preselection BB",
   "VBFPreselNotBB":"VBF Preselection !BB",
 
-  "IncPtCut":"Non-VBF"
+  "IncPtCut":"Non-VBF",
+
+  "IncPreselPtG10BB":"Non-VBF BB",
+  "IncPreselPtG10BO":"Non-VBF BO",
+  "IncPreselPtG10BE":"Non-VBF BE",
+  "IncPreselPtG10OO":"Non-VBF OO",
+  "IncPreselPtG10OE":"Non-VBF OE",
+  "IncPreselPtG10EE":"Non-VBF EE",
+  "IncPreselPtG10":"Non-VBF",
 }
 
 comparisonMap = {
@@ -211,6 +220,7 @@ class RelativePlot:
     obsGraph = root.TGraph()
     obsGraph.SetLineColor(1)
     obsGraph.SetLineStyle(1)
+    obsGraph.SetLineWidth(3)
     self.expGraph = expGraph
     self.oneSigGraph = oneSigGraph
     self.twoSigGraph = twoSigGraph
@@ -613,7 +623,7 @@ if __name__ == "__main__":
   root.gROOT.SetBatch(True)
   setStyle()
   canvas = root.TCanvas()
-  if not args.bdtCut:
+  if (not args.bdtCut) and (not args.higgsMass):
     canvas.SetLogx(1)
     canvas.SetLogy(1)
   
@@ -661,10 +671,17 @@ if __name__ == "__main__":
             ylimits = [0.,16.]
           elif energyStr == "7TeV":
             ylimits = [0.,32.]
+      elif args.higgsMass:
+        if energyStr == "8TeV":
+            ylimits = [0.,15.]
+        elif energyStr == "7TeV":
+            ylimits = [0.,40.]
+        xlabel="m_{H} [GeV/c^{2}]"
+        caption3 = "L = {0:.1f} fb^{{-1}}".format(float(lumisToUse[energyStr]))
       #elif period == "14TeV":
       #  title = "Standard Model H#rightarrow#mu#mu"
       title = titleMap[plotName]
-      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStr,xlabel=xlabel,caption3=caption3)
+      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStr,xlabel=xlabel,caption3=caption3,showObs=args.higgsMass)
       saveAs(canvas,outDir+plotName+"_"+energyStr)
 
     if args.bdtCut:

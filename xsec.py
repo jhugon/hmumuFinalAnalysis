@@ -98,6 +98,12 @@ xsec["DYJetsToLL_14TeV"] = 6131.
 xsec["ttbar_14TeV"] =   964.6 #LHC Higgs XS WG: European Strat Group
 
 nEventsMap = {}
+
+nEventsMap["ggHmumu123_8TeV"] = 9998
+nEventsMap["ggHmumu127_8TeV"] = 9999
+nEventsMap["vbfHmumu123_8TeV"] = 9988
+nEventsMap["vbfHmumu127_8TeV"] = 9988
+
 nEventsMap["ggHmumu125_8TeV"] = 9998
 nEventsMap["vbfHmumu125_8TeV"] = 9990
 nEventsMap["zHmumu125_8TeV"] = 10000

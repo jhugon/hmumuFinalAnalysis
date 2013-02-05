@@ -5,6 +5,7 @@ parser = argparse.ArgumentParser(description="Makes cards for use in the CMS Com
 parser.add_argument("--signalInject", help="Inject Signal with Strength into data_obs",type=float,default=0.0)
 parser.add_argument("--toyData", help="Make Toy Data from PDFs for data_obs",action="store_true",default=False)
 parser.add_argument("--bdtCut", help="Creates Cards with different BDT Cuts",action="store_true",default=False)
+parser.add_argument("-m","--higgsMass", help="Use This Higgs Mass",type=float,default=-1.0)
 args = parser.parse_args()
 
 import math
@@ -17,6 +18,7 @@ import copy
 import shutil
 import multiprocessing
 import time
+import string
 myThread = multiprocessing.Process
 
 from ROOT import gSystem
@@ -166,10 +168,13 @@ def makePDFBak(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     #Norm Time
     wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
     signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
-    nSideband =  mMuMuRooDataHist.sumEntries("mMuMu > 130. || mMuMu < 120.")
+    getSidebandString = "mMuMu > 130. || mMuMu < 120."
+    if args.higgsMass> 0.0:
+      getSidebandString = "mMuMu > {0:.1f} || mMuMu < {1:.1f}".format(args.higgsMass-5,args.higgsMass+5)
+    nSideband =  mMuMuRooDataHist.sumEntries(getSidebandString)
     nData =  mMuMuRooDataHist.sumEntries()
     bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
-    print("Gets Bak Norm Assuming Signal region is: 120,130 GeV, off by: {0:%}".format((bakNormTup[0]*bakNormTup[1] - nData)/nData))
+    print("Gets Bak Norm Assuming Signal region is: {0} GeV, off by: {1:%}".format(getSidebandString,(bakNormTup[0]*bakNormTup[1] - nData)/nData))
     #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
     #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
 
@@ -188,18 +193,76 @@ def makePDFBak(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
 
     return paramList, bakNormTup
 
-def makePDFSigCBPlusGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName):
+def makePDFSigCBConvGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName,forceMean=-1.):
+
+    debug = ""
+    debug += "### makePDFSigCBConvGaus: "+channelName+": "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
+
+    mean = root.RooRealVar(channelName+"_"+name+"_Mean",channelName+"_"+name+"_Mean",125.,100.,150.)
+    width = root.RooRealVar(channelName+"_"+name+"_Width",channelName+"_"+name+"_Width",5.0,0.1,5.0)
+    width2 = root.RooRealVar(channelName+"_"+name+"_Width2",channelName+"_"+name+"_Width2",5.0,0.1,5.0)
+    alpha = root.RooRealVar(channelName+"_"+name+"_Alpha",channelName+"_"+name+"_Alpha",1.0,0.1,10.0)
+    n = root.RooRealVar(channelName+"_"+name+"_n",channelName+"_"+name+"_n",1.0,0.1,10.0)
+    cb = root.RooCBShape(name+"_CB",name+"_CB",mMuMu,mean,width,alpha,n)
+    gaus = root.RooGaussian(name+"_Gaus",name+"_Gaus",mMuMu,mean,width2)
+    mMuMu.setBins(10000,"cache")
+    #pdfMmumu = root.RooFFTConvPdf(name,name,mMuMu,cb,gaus)
+    pdfMmumu = root.RooFFTConvPdf(name,name,mMuMu,gaus,cb)
+    
+    mMuMuRooDataHist = root.RooDataHist(name+"_Template",channelName+"_"+name+"_Template",root.RooArgList(mMuMu),hist)
+
+    fr = pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True),root.RooFit.Range("signalfit"))
+    fr.SetName(name+"_fitResult")
+
+    #mean.setVal(125.)
+    #width.setVal(2.)
+    #alpha.setVal(1.4)
+    #n.setVal(2.2)
+
+    if forceMean > 0.0:
+        mean.setVal(forceMean)
+
+    ## Error time
+
+    rooParamList = [mean,width,width2,alpha,n]
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+    for i in rooParamList:
+       i.setConstant(True)
+
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(mMuMuRooDataHist)
+      workspaceImportFn(fr)
+
+    ## Debug Time
+    frame = mMuMu.frame()
+    frame.SetName(name+"_Plot")
+    mMuMuRooDataHist.plotOn(frame)
+    pdfMmumu.plotOn(frame)
+    canvas = root.TCanvas()
+    frame.Draw()
+    canvas.SaveAs("debug_"+name+".png")
+
+    for i in rooParamList:
+      debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+
+    return paramList, debug
+
+
+def makePDFSigCBPlusGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName,forceMean=-1.):
 
     debug = ""
     debug += "### makePDFSigCBPlusGaus: "+channelName+": "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
 
     mean = root.RooRealVar(channelName+"_"+name+"_Mean",channelName+"_"+name+"_Mean",125.,100.,150.)
-    width = root.RooRealVar(channelName+"_"+name+"_Width",channelName+"_"+name+"_Width",5.0,0.5,20.0)
-    width2 = root.RooRealVar(channelName+"_"+name+"_Width2",channelName+"_"+name+"_Width2",5.0,0.1,20.0)
-    alpha = root.RooRealVar(channelName+"_"+name+"_Alpha",channelName+"_"+name+"_Alpha",1.0,0.1,10.0)
-    n = root.RooRealVar(channelName+"_"+name+"_n",channelName+"_"+name+"_n",1.0,0.1,10.0)
+    width = root.RooRealVar(channelName+"_"+name+"_Width",channelName+"_"+name+"_Width",1.,0.5,5.0)
+    width2 = root.RooRealVar(channelName+"_"+name+"_Width2",channelName+"_"+name+"_Width2",2.0,1.5,5.0)
+    alpha = root.RooRealVar(channelName+"_"+name+"_Alpha",channelName+"_"+name+"_Alpha",1.0,0.5,2.0)
+    n = root.RooRealVar(channelName+"_"+name+"_n",channelName+"_"+name+"_n",1.5,0.9,5.0)
     mix = root.RooRealVar(channelName+"_"+name+"_mix",channelName+"_"+name+"_mix",0.5,0.0,1.0)
+    #mix = root.RooRealVar(channelName+"_"+name+"_mix",channelName+"_"+name+"_mix",0.33)
     cb = root.RooCBShape(name+"_CB",name+"_CB",mMuMu,mean,width,alpha,n)
     gaus = root.RooGaussian(name+"_Gaus",name+"_Gaus",mMuMu,mean,width2)
     pdfMmumu = root.RooAddPdf(name,name,cb,gaus,mix)
@@ -214,6 +277,9 @@ def makePDFSigCBPlusGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,chann
     #alpha.setVal(1.4)
     #n.setVal(2.2)
 
+    if forceMean > 0.0:
+        mean.setVal(forceMean)
+
     ## Error time
 
     rooParamList = [mean,width,width2,alpha,n,mix]
@@ -226,21 +292,21 @@ def makePDFSigCBPlusGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,chann
       workspaceImportFn(mMuMuRooDataHist)
       workspaceImportFn(fr)
 
-#    ## Debug Time
-#    frame = mMuMu.frame()
-#    frame.SetName(name+"_Plot")
-#    mMuMuRooDataHist.plotOn(frame)
-#    pdfMmumu.plotOn(frame)
-#    canvas = root.TCanvas()
-#    frame.Draw()
-#    saveAs(canvas,"debug_"+name)
+    ## Debug Time
+    frame = mMuMu.frame()
+    frame.SetName(name+"_Plot")
+    mMuMuRooDataHist.plotOn(frame)
+    pdfMmumu.plotOn(frame)
+    canvas = root.TCanvas()
+    frame.Draw()
+    canvas.SaveAs("debug_"+name+".png")
 
     for i in rooParamList:
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
 
     return paramList, debug
 
-def makePDFSigCB(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName):
+def makePDFSigCB(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName,forceMean=-1.):
 
     debug = ""
     debug += "### makePDFSigCB: "+channelName+": "+name+"\n"
@@ -263,6 +329,9 @@ def makePDFSigCB(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName):
     #alpha.setVal(1.4)
     #n.setVal(2.2)
 
+    if forceMean > 0.0:
+        mean.setVal(forceMean)
+
     ## Error time
 
     rooParamList = [mean,width,alpha,n]
@@ -276,21 +345,21 @@ def makePDFSigCB(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName):
       workspaceImportFn(fr)
 
 
-#    ## Debug Time
-#    frame = mMuMu.frame()
-#    frame.SetName(name+"_Plot")
-#    mMuMuRooDataHist.plotOn(frame)
-#    pdfMmumu.plotOn(frame)
-#    canvas = root.TCanvas()
-#    frame.Draw()
-#    saveAs(canvas,"debug_"+name)
+    ## Debug Time
+    frame = mMuMu.frame()
+    frame.SetName(name+"_Plot")
+    mMuMuRooDataHist.plotOn(frame)
+    pdfMmumu.plotOn(frame)
+    canvas = root.TCanvas()
+    frame.Draw()
+    canvas.SaveAs("debug_"+name+".png")
 
     for i in rooParamList:
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
 
     return paramList, debug
 
-def makePDFSigGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName):
+def makePDFSigGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName,forceMean=-1.):
 
     debug = ""
     debug += "### makePDFSigGaus: "+channelName+": "+name+"\n"
@@ -316,6 +385,9 @@ def makePDFSigGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName
     #hist.Print()
     #print hist.GetNbinsX()
 
+    if forceMean > 0.0:
+        mean.setVal(forceMean)
+
     ## Error time
 
     rooParamList = [mean,width]
@@ -329,13 +401,14 @@ def makePDFSigGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName
       workspaceImportFn(fr)
 
     ### Debug Time
-    #frame = mMuMu.frame()
-    #frame.SetName(name+"_Plot")
-    #mMuMuRooDataHist.plotOn(frame)
-    #pdfMmumu.plotOn(frame)
-    #canvas = root.TCanvas()
-    #frame.Draw()
-    #saveAs(canvas,"debug_"+name)
+    frame = mMuMu.frame()
+    frame.SetName(name+"_Plot")
+    mMuMuRooDataHist.plotOn(frame)
+    pdfMmumu.plotOn(frame)
+    canvas = root.TCanvas()
+    frame.Draw()
+    saveAs(canvas,"debug_"+name)
+    canvas.SaveAs("debug_"+name+".png")
 
     for i in rooParamList:
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
@@ -350,6 +423,8 @@ class Analysis:
   def __init__(self,directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,histNameBase="mDiMu",rebin=[],histNameSuffix="",toyData=False,sigInject=0.0,bdtCut=None,energyStr="8TeV"):
     getCutHist = getattr(self,"getCutHist")
 
+    higgsPeakMean = args.higgsMass - 0.3
+
     self.sigNames = signalNames
     self.bakNames = backgroundNames
     self.datNames = dataNames
@@ -359,6 +434,8 @@ class Analysis:
     self.analysis = analysis
     self.params = []
     self.debug = ""
+    self.debug += "#Nominal Higgs Mass: "+str(args.higgsMass) +"\n"
+    self.debug += "#Peak Centered at: "+str(higgsPeakMean) +"\n"
 
     self.workspace = root.RooWorkspace(analysis+energyStr)
     self.workspaceName = analysis+energyStr
@@ -532,7 +609,7 @@ class Analysis:
 
     self.sigParamListList = []
     for name, hist in zip(signalNames,self.sigHistsRaw):
-        sigParams, sigDebug = makePDFSig(name,hist,mMuMu,minMass,maxMass,wImport,analysis+energyStr)
+        sigParams, sigDebug = makePDFSig(name,hist,mMuMu,minMass,maxMass,wImport,analysis+energyStr,forceMean=higgsPeakMean)
         self.sigParamListList.append(sigParams)
         self.debug += sigDebug
     if SIGUNCON:
@@ -545,6 +622,7 @@ class Analysis:
           hist = self.sigErrHistsMap[errName][iSignal]
           sigParams, sigDebug = makePDFSig(nameNew,hist,mMuMu,minMass,maxMass,None,
                                                             analysis+energyStr,
+                                                            forceMean=higgsPeakMean
                                                               )
           self.debug += sigDebug
           for curErr, nominal, i in zip(sigParams,paramsNoErr,range(len(sigParams))):
@@ -576,6 +654,13 @@ class Analysis:
       counts = getIntegralAll(h,boundaries=massBounds)
       eff = counts/nEventsMap[name]*efficiencyMap[getPeriod(name)]
       xs = eff*xsec[name]
+      if args.higgsMass > 0.0:
+        prec = "0"
+        if args.higgsMass % 1 > 0.0:
+          prec = "1"
+        higgsMassString =("{0:."+prec+"f}").format(args.higgsMass)
+        tmpName = name.replace("125",higgsMassString)
+        xs = eff*xsec[tmpName]
       self.xsecSigTotal += xs
       self.xsecSigList.append(xs)
       self.effSigList.append(eff)
@@ -961,6 +1046,7 @@ if __name__ == "__main__":
   directory = "input/preApproveSample/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
+  periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
@@ -976,24 +1062,25 @@ if __name__ == "__main__":
     for c in categoriesVBF:
         tmpList.append(a+c)
   analyses += tmpList
-  analyses = ["IncPresel","IncPreselPtG10","VBFBDTCut"]
+  analyses = ["IncPreselPtG10","VBFBDTCut","IncPreselPtG10BB"]
+  analyses = ["IncPreselPtG10BB"]
   #analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
   combinations = []
   combinationsLong = []
+  """
   combinations.append((
         ["IncPreselPtG10"+x for x in categoriesInc],"IncPreselCat"
   ))
-  """
   combinations.append((
         ["VBFPresel"]+["IncPreselPtG10"],"BDTCutVBFBDTOnly"
   ))
   combinations.append((
         ["VBFBDTCut"]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))
-  """
   combinations.append((
         ["VBFBDTCut"]+["IncPreselPtG10"+x for x in categoriesInc],"BDTCutCatVBFBDTOnly"
   ))
+  """
 
 #  combinationsLong.append((
 #        ["IncBDTCut","VBFBDTCut"],"BDTCut"
@@ -1049,6 +1136,9 @@ if __name__ == "__main__":
   controlRegionVeryLow=[60,110]
   controlRegionLow=[110,120]
   controlRegionHigh=[130,160]
+  if args.higgsMass > 0.0:
+    controlRegionLow=[110,args.higgsMass-5.0]
+    controlRegionHigh=[args.higgsMass+5.0,160]
 
   shape=True
   toyData=args.toyData
@@ -1069,6 +1159,9 @@ if __name__ == "__main__":
       for i in lumiList:
         if p == "7TeV":
           i = lumiDict[p]
+        name = i
+        if args.higgsMass > 0.0:
+          name = args.higgsMass
         for ana in analyses:
           tmp = ThreadedCardMaker(
             #__init__ args:
@@ -1079,7 +1172,7 @@ if __name__ == "__main__":
             controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
             energyStr=p,
             #write args:
-            outfilename=outDir+ana+"_"+p+"_"+str(i)+".txt",lumi=i
+            outfilename=outDir+ana+"_"+p+"_"+str(name)+".txt",lumi=i
             )
           threads.append(tmp)
         for comb in combinations:
@@ -1094,7 +1187,7 @@ if __name__ == "__main__":
             controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
             energyStr=p,
             #write args:
-            outfilename=outDir+comb[1]+"_"+p+"_"+str(i)+".txt",lumi=i
+            outfilename=outDir+comb[1]+"_"+p+"_"+str(name)+".txt",lumi=i
           )
          )
         if p == "7TeV":
@@ -1103,6 +1196,8 @@ if __name__ == "__main__":
     # 2011 + 2012 combination
     if len(periods)>1:
         filenameLumi = str(sum([float(lumiDict[p]) for p in periods]))
+        if args.higgsMass > 0.0:
+          filenameLumi = args.higgsMass
         filenamePeriod = ""
         for p in periods:
           filenamePeriod += re.sub("TeV","P",p)
@@ -1271,12 +1366,12 @@ combine -M ProfileLikelihood -d $FILENAME --signif >& $FILENAME.sig
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
-echo "executing combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig"
-
-combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 >& $FILENAME.expsig
-#combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig
-rm -f roostats*
-rm -f higgsCombineTest*.root
+#echo "executing combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig"
+#
+#combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 >& $FILENAME.expsig
+##combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig
+#rm -f roostats*
+#rm -f higgsCombineTest*.root
 
 echo "executing combine -M MaxLikelihoodFit $FILENAME >& $FILENAME.mu"
 
@@ -1284,11 +1379,10 @@ combine -M MaxLikelihoodFit $FILENAME >& $FILENAME.mu
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
-
 cp $FILENAME.out ..
 cp $FILENAME.mu ..
 cp $FILENAME.sig ..
-cp $FILENAME.expsig ..
+#cp $FILENAME.expsig ..
 
 echo "done"
 date
@@ -1326,7 +1420,8 @@ cp $FILENAME.out ..
 echo "done"
 date
 """
-  runFile.write(simpleBatchString)
+  #runFile.write(simpleBatchString)
+  runFile.write(batchString)
   runFile.close()
 
   runFile = open(outDir+"notlxbatch.sh","w")

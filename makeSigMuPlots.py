@@ -3,6 +3,7 @@
 import argparse
 parser = argparse.ArgumentParser(description="Makes cards for use in the CMS Combine tool.")
 parser.add_argument("--signalInject", help="Inject Signal with Strength into data_obs",type=float,default=0.0)
+parser.add_argument("-m","--higgsMass", help="Makes plots v. Higgs Mass",action="store_true",default=False)
 args = parser.parse_args()
 
 from helpers import *
@@ -67,7 +68,15 @@ titleMap = {
   "IncPreselEE":"Non-VBF Preselection EE",
   "IncPreselNotBB":"Non-VBF Preselection !BB",
   "VBFPreselBB":"VBF Preselection BB",
-  "VBFPreselNotBB":"VBF Preselection !BB"
+  "VBFPreselNotBB":"VBF Preselection !BB",
+
+  "IncPreselPtG10BB":"Non-VBF BB",
+  "IncPreselPtG10BO":"Non-VBF BO",
+  "IncPreselPtG10BE":"Non-VBF BE",
+  "IncPreselPtG10OO":"Non-VBF OO",
+  "IncPreselPtG10OE":"Non-VBF OE",
+  "IncPreselPtG10EE":"Non-VBF EE",
+  "IncPreselPtG10":"Non-VBF",
 }
 
 comparisonMap = {
@@ -153,7 +162,7 @@ def getDataSig(fileString,matchString=r"_([-\d.]+)\.txt",dontMatchStrings=[],doS
     tmpF = open(fname)
     match = re.search(matchString+r"\.sig",fname)
     obs = -10.0
-    exp = -10.0
+    exp = -20.0
     xNum = -10.0
     if match:
       xNum = match.group(1)
@@ -266,6 +275,8 @@ class RelativePlot:
         #thisPoint = [xNum,obs,exp]
         value = float(point[2])
         obs = float(point[1])
+        if value == -20.0:
+            value = obs
       errGraph.SetPoint(iPoint,xNum,value)
       obsGraph.SetPoint(iPoint,xNum,obs)
       if doMuExtraPlot:
@@ -458,7 +469,7 @@ if __name__ == "__main__":
     legend.SetFillColor(0)
     legend.SetLineColor(0)
     
-    for ytitle,fnPref in zip(["Expected Significance","Error on #sigma_{Measured}/#sigma_{SM}","Toy #sigma_{Measured}/#sigma_{SM}"],["sig","mu","muToy"]):
+    for ytitle,fnPref in zip(["Significance","Error on #sigma_{Measured}/#sigma_{SM}","#sigma_{Measured}/#sigma_{SM}"],["sig","mu","muToy"]):
       for plotName in plots:
         data = None
         doMuExtraPlot=False
@@ -473,13 +484,17 @@ if __name__ == "__main__":
           data = getDataMu(dirName+plotName+"_"+energyStr+"_*.txt*")
         if fnPref == "muToy":
           doMuExtraPlot = True
-          caption3 = "Signal Injected {0:.1f}#times SM".format(args.signalInject)
+          if args.signalInject>0.0:
+            caption3 = "Signal Injected {0:.1f}#times SM".format(args.signalInject)
         #print("{0} {1} v. Lumi: {2}".format(period,fnPref, data))
         if len(data)<=1:
           continue
-        title = titleMap[plotName]
         title = "Standard Model H#rightarrow#mu#mu"
-        incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,caption3=caption3,ylabel=ytitle,energyStr=energyStr,doMuExtraPlot=doMuExtraPlot,showObs=showObs)
+        xlabel="Integrated Luminosity [fb^{-1}]"
+        if args.higgsMass:
+          title = titleMap[plotName]
+          xlabel="m_{H} [GeV/c^{2}]"
+        incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,caption3=caption3,ylabel=ytitle,energyStr=energyStr,doMuExtraPlot=doMuExtraPlot,showObs=showObs,xlabel=xlabel)
         saveAs(canvas,outDir+fnPref+plotName+"_"+energyStr)
     
     ## Compare all types of limits
