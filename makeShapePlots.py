@@ -96,10 +96,12 @@ class ShapePlotter:
           else:
             tmpRebin *= 5
         else:
-          tmpRebin *= 2
+          tmpRebin *= 5
       elif "OE" in channelName:
-          tmpRebin *= 2
+          tmpRebin *= 4
       elif "EE" in channelName:
+          tmpRebin *= 4
+      else:
           tmpRebin *= 2
       if tmpRebin != 1:
         tmpHist = data_obs.createHistogram("mMuMu")
@@ -730,7 +732,15 @@ titleMap = {
   "IncPreselEE":"Non-VBF Preselection EE",
   "IncPreselNotBB":"Non-VBF Preselection !BB",
   "VBFPreselBB":"VBF Preselection BB",
-  "VBFPreselNotBB":"VBF Preselection !BB"
+  "VBFPreselNotBB":"VBF Preselection !BB",
+
+  "IncPreselPtG10BB":"Non-VBF BB",
+  "IncPreselPtG10BO":"Non-VBF BO",
+  "IncPreselPtG10BE":"Non-VBF BE",
+  "IncPreselPtG10OO":"Non-VBF OO",
+  "IncPreselPtG10OE":"Non-VBF OE",
+  "IncPreselPtG10EE":"Non-VBF EE",
+  "IncPreselPtG10NotBB":"Non-VBF !BB"
 }
         
 if __name__ == "__main__":
@@ -741,7 +751,7 @@ if __name__ == "__main__":
   #plotRange= []
   normRange = [110.,160]
 
-  rebin=2
+  rebin=1
 
   shapePlotterList = []
   #for fn in glob.glob(dataDir+"*20.root")+glob.glob(dataDir+"*5.05.root"):

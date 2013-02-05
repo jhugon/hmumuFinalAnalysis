@@ -9,7 +9,7 @@ import sys
 dataDir = "input/preApproveSample/"
 outDir = "output/"
 
-RUNPERIOD="7TeV"
+RUNPERIOD="8TeV"
 LUMI=lumiDict[RUNPERIOD]
 
 LOGY=True
@@ -41,7 +41,7 @@ histDirs = ["VBFPresel/","IncPresel/"]
 histDirs = ["IncPresel/"]
 #histDirs = ["IncBDTCutBB/","VBFBDTCut/"]
 #histDirs = ["VBFBDTCut/"]
-histDirs = ["IncPreselPtG10/"]
+histDirs = ["IncPreselPtG10BB/"]
 
 root.gErrorIgnoreLevel = root.kWarning
 
@@ -109,13 +109,11 @@ elif RUNPERIOD=="8TeV":
     histNames["ptmiss"] = {"xlabel":"p_{T}^{Miss} [GeV/c]","xlimits":[0,200],"leg":stdLegendPos,"ylimits":[0.1,1e3]}
     histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.4,0.25],"rebin":2,"ylimits":[1e-1,5e3],'vertLines':{"8TeV":-0.04,"7TeV":-0.03}}
   else:
-    #histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":2,'ylimits':[0.1,5e4]}
-    #anotateText = "Non-VBF BDT Cut BB"
+    histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":2,'ylimits':[0.1,1e5]}
+    anotateText = "Non-VBF, BB, p_{T}(#mu#mu)>10 GeV"
     #histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":2,'ylimits':[0.1,6e4]}
     #histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":5,'ylimits':[0.1,6e2]}
     #histNames["nVtx"] = {"xlabel":"N_{vtx}","xlimits":[0,40],"leg":stdLegendPos,'ylimits':[0.0,8e3]}
-    anotateText = "p_{T}(#mu#mu)>10 GeV"
-    histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":2,'ylimits':[1.,2e6]}
 else:
   print "Using Other Settings"
   histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":2}
@@ -438,8 +436,8 @@ for histName in bkgDatasetList[0].hists:
       tlatex.SetTextAlign(32)
       tlatex.DrawLatex(legLeftPos-0.02,0.8,"Higgs #times {0:.0f}".format(scaleHiggsBy))
 
-    #tlatex.SetTextSize(0.03)
-    tlatex.SetTextSize(0.05)
+    tlatex.SetTextSize(0.03)
+    tlatex.SetTextSize(0.04)
     tlatex.SetTextAlign(33)
     tlatex.DrawLatex(legLeftPos-0.02,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
 

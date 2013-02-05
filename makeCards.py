@@ -588,7 +588,6 @@ class Analysis:
     if toyData:
       bakPDF = self.workspace.pdf("bak")
       sigPDFList = [self.workspace.pdf(i) for i in signalNames]
-      self.dataCountsTotal = int(self.countsBakTotal)
       toyDataset = bakPDF.generate(root.RooArgSet(mMuMu),self.dataCountsTotal)
       if sigInject>0.0:
         for name,counts in zip(signalNames,self.countsSigList):
@@ -598,19 +597,19 @@ class Analysis:
           tmpSigPDF = self.workspace.pdf(name)
           tmpSigDataset = tmpSigPDF.generate(root.RooArgSet(mMuMu),counts)
           toyDataset.append(tmpSigDataset)
-          self.dataCountsTotal += counts
       toyDataHist = toyDataset.binnedClone("data_obs","Toy Data")
+      self.dataCountsTotal = int(toyDataHist.sumEntries())
       wImport(toyDataHist)
     elif self.dataCountsTotal is None:
-      self.dataCountsTotal = int(self.countsBakTotal)
       bakData = self.workspace.data("bak_Template")
       obsData = bakData.Clone("data_obs")
+      self.dataCountsTotal = int(obsData.sumEntries())
       obsData.SetTitle("MC Full-Sim Data")
       wImport(obsData)
       self.bakHistTotal.SetName("data_obs_"+analysis)
-      degubf = root.TFile("debug.root","recreate")
-      self.bakHistTotal.Write()
-      degubf.Close()
+      #degubf = root.TFile("debug.root","recreate")
+      #self.bakHistTotal.Write()
+      #degubf.Close()
     else:
       realDataHist = root.RooDataHist("data_obs","Real Observed Data",root.RooArgList(mMuMu),self.datHistTotal)
       wImport(realDataHist)
@@ -963,7 +962,7 @@ if __name__ == "__main__":
   print "Started makeCards.py"
   root.gROOT.SetBatch(True)
 
-  directory = "input/freezeSample/"
+  directory = "input/preApproveSample/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
@@ -981,28 +980,21 @@ if __name__ == "__main__":
     for c in categoriesVBF:
         tmpList.append(a+c)
   analyses += tmpList
+  analyses = ["IncPresel","IncPreselPtG10","VBFBDTCut"]
+  analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
   combinations = []
   combinationsLong = []
   combinations.append((
-        ["IncBDTCut"+x for x in categoriesInc],"IncBDTCutCat"
+        ["IncPreselPtG10"+x for x in categoriesInc],"IncPreselCat"
   ))
   combinations.append((
-        ["IncPresel"+x for x in categoriesInc],"IncPreselCat"
-  ))
-  combinations.append((
-        ["IncBDTCut","VBFBDTCut"],"BDTCut"
-  ))
-  combinations.append((
-        ["IncPresel","VBFPresel"],"Presel"
-  ))
-  combinations.append((
-        ["VBFPresel"]+["IncPresel"+x for x in categoriesInc],"PreselCat"
+        ["VBFPresel"]+["IncPreselPtG10"],"BDTCutVBFBDTOnly"
   ))
   combinations.append((
         ["VBFBDTCut"]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))
   combinations.append((
-        ["VBFBDTCut"]+["IncPresel"+x for x in categoriesInc],"BDTCutCatVBFBDTOnly"
+        ["VBFBDTCut"]+["IncPreselPtG10"+x for x in categoriesInc],"BDTCutCatVBFBDTOnly"
   ))
 
 #  combinationsLong.append((
@@ -1020,8 +1012,11 @@ if __name__ == "__main__":
   #  ["IncPresel"],"IncBDTCut",0.025,-0.7,-0.25,"BDTHistMuonOnlyVMass"
   #))
   combinationsBDTCut.append((
-    ["VBFPresel"],"VBFBDTCut",0.05,-0.3,0.1,"BDTHistVBFVMass"
+    ["IncPresel"],"IncPtCut",1.0,0.0,20.0,"ptVmDiMu"
   ))
+  #combinationsBDTCut.append((
+  #  ["VBFPresel"],"VBFBDTCut",0.05,-0.3,0.1,"BDTHistVBFVMass"
+  #))
   #combinationsBDTCut.append((
   #  ["IncPresel"+x for x in categoriesInc],"IncBDTCutCat",0.025,-0.7,-0.35,"BDTHistMuonOnlyVMass"
   #))
@@ -1185,7 +1180,7 @@ if __name__ == "__main__":
                #__init__ args:
                directory,
                comb[0],
-               appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
+               appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),[],
                rebin=[MassRebin],
                controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix="/"+comb[5],
                controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,
@@ -1300,7 +1295,40 @@ cp $FILENAME.expsig ..
 echo "done"
 date
 """
-  runFile.write(batchString)
+  simpleBatchString = \
+"""#!/bin/bash
+echo "Sourcing cmsset_default.sh"
+cd /afs/cern.ch/cms/sw
+source cmsset_default.sh
+export SCRAM_ARCH=slc5_amd64_gcc462
+echo "SCRAM_ARCH is $SCRAM_ARCH"
+cd $LS_SUBCWD
+echo "In Directory: "
+pwd
+eval `scramv1 runtime -sh`
+echo "cmsenv success!"
+date
+
+TXTSUFFIX=".txt"
+FILENAME=$1
+DIRNAME="Dir"$1"Dir"
+ROOTFILENAME=${1%$TXTSUFFIX}.root
+
+mkdir $DIRNAME
+cp $FILENAME $DIRNAME/
+cp $ROOTFILENAME $DIRNAME/
+cd $DIRNAME
+
+echo "executing combine -M Asymptotic $FILENAME >& $FILENAME.out"
+
+combine -M Asymptotic $FILENAME >& $FILENAME.out
+
+cp $FILENAME.out ..
+
+echo "done"
+date
+"""
+  runFile.write(simpleBatchString)
   runFile.close()
 
   runFile = open(outDir+"notlxbatch.sh","w")

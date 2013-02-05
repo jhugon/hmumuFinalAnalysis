@@ -236,12 +236,12 @@ nuisanceMap["br_Hmm"] = {
 nuisanceMap["xs_ggH"] = {
   "ggHmumu125_14TeV": 0.10,
   "ggHmumu125_8TeV": 0.147,
-  "ggHmumu125_7TeV": 0.147
+  "ggHmumu125_7TeV": 0.149
 }
 nuisanceMap["xs_vbfH"] = {
   "vbfHmumu125_14TeV": 0.019,
   "vbfHmumu125_8TeV": 0.03,
-  "vbfHmumu125_7TeV": 0.024
+  "vbfHmumu125_7TeV": 0.028
 }
 nuisanceMap["xs_wH"] = {
   "wHmumu125_14TeV": 0.038,

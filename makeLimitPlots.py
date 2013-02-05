@@ -68,7 +68,9 @@ titleMap = {
   "IncPreselEE":"Non-VBF Preselection EE",
   "IncPreselNotBB":"Non-VBF Preselection !BB",
   "VBFPreselBB":"VBF Preselection BB",
-  "VBFPreselNotBB":"VBF Preselection !BB"
+  "VBFPreselNotBB":"VBF Preselection !BB",
+
+  "IncPtCut":"Non-VBF"
 }
 
 comparisonMap = {
@@ -619,9 +621,6 @@ if __name__ == "__main__":
   #print mpl.rcParams["backend"]
 
   ylimits=[0.1,100.0]
-  if args.bdtCut:
-    ylimits=[1.,30.0]
-    ylimits=[1.,70.0]
 
   lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":lumiDict["8TeV"],"7P8TeV":lumiDict["8TeV"]+lumiDict["7TeV"]}
   
@@ -656,6 +655,12 @@ if __name__ == "__main__":
         assert(match)
         caption3 = "L = {0:.1f} fb^{{-1}}".format(float(match.group(2)))
         plotName = match.group(1)
+        if plotName == "IncPtCut":
+          xlabel="p_{T}(#mu#mu) Cut [GeV/c]"
+          if energyStr == "8TeV":
+            ylimits = [0.,16.]
+          elif energyStr == "7TeV":
+            ylimits = [0.,32.]
       #elif period == "14TeV":
       #  title = "Standard Model H#rightarrow#mu#mu"
       title = titleMap[plotName]
@@ -731,16 +736,13 @@ if __name__ == "__main__":
 
     ## VBF v. Inclusive Categories
     
-    veto = ["EE",'BB',"BO","BE","OE","OO"]
+    veto = ["EE",'BB',"BO","BE","OE","OO","BDTCutVBF"]
     mustBe="(.*)_(.+)_[.\d]+.txt.out"
-    veto2 = ["BDTCut","IncBDTCut","BDTCutCat"]
-    veto2 = ["BDTCut","IncPresel","Presel","PreselCat","VBFPresel","IncBDTCut"]
+    veto2 = ["BDTCut","IncPresel","Presel","PreselCat","VBFPresel","IncPreselPtG10","BDTCutCat"]
     tmpMap = { 
-        "VBFBDTCut":'VBF (BDT)',
-        "IncPreselCat":'Non-VBF \nNo Cut',
-        "IncBDTCutCat":'Non-VBF BDT',
-        "BDTCutCat":'VBF(BDT) &\n Non-VBF(BDT) \n Combination',
-        "BDTCutCatVBFBDTOnly":'VBF(BDT) &\n Non-VBF\n(No Cut) \n Combination',
+        "VBFBDTCut":'VBF',
+        "IncPreselCat":'Non-VBF',
+        "BDTCutCatVBFBDTOnly":'VBF & Non-VBF\nCombination',
         }
     compareData = getData(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
     veto3 = []
