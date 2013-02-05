@@ -49,7 +49,7 @@ titleMap = {
   "VBFBDTCutCat":"VBF BDT Resolution Categories",
 
   "PreselCat":"Res. Cat. Preselection Combination",
-  "IncPreselCat":"Non-VBF Resolution Cat. Preselection",
+  "IncPreselCat":"Non-VBF",
   "VBFPreselCat":"VBF Cat. Resolution Preselection",
 
   "IncBDTCutBB":"Non-VBF BDT BB",
@@ -80,6 +80,7 @@ titleMap = {
   "IncPreselPtG10OE":"Non-VBF OE",
   "IncPreselPtG10EE":"Non-VBF EE",
   "IncPreselPtG10":"Non-VBF",
+  "BDTCutCatVBFBDTOnly": "VBF & Non-VBF Combination"
 }
 
 comparisonMap = {
@@ -673,7 +674,7 @@ if __name__ == "__main__":
             ylimits = [0.,32.]
       elif args.higgsMass:
         if energyStr == "8TeV":
-            ylimits = [0.,15.]
+            ylimits = [0.,25.]
         elif energyStr == "7TeV":
             ylimits = [0.,40.]
         xlabel="m_{H} [GeV/c^{2}]"

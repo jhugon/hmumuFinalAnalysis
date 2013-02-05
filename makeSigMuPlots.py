@@ -48,7 +48,7 @@ titleMap = {
   "VBFBDTCutCat":"VBF BDT Resolution Categories",
 
   "PreselCat":"Res. Cat. Preselection Combination",
-  "IncPreselCat":"Non-VBF Resolution Cat. Preselection",
+  "IncPreselCat":"Non-VBF",
   "VBFPreselCat":"VBF Cat. Resolution Preselection",
 
   "IncBDTCutBB":"Non-VBF BDT BB",
@@ -77,6 +77,7 @@ titleMap = {
   "IncPreselPtG10OE":"Non-VBF OE",
   "IncPreselPtG10EE":"Non-VBF EE",
   "IncPreselPtG10":"Non-VBF",
+  "BDTCutCatVBFBDTOnly": "VBF & Non-VBF Combination"
 }
 
 comparisonMap = {
@@ -439,7 +440,8 @@ if __name__ == "__main__":
   root.gROOT.SetBatch(True)
   setStyle()
   canvas = root.TCanvas()
-  canvas.SetLogx(1)
+  if not args.higgsMass:
+    canvas.SetLogx(1)
   canvas.SetLogy(0)
   
   mpl.rcParams["font.family"] = "sans-serif"
@@ -470,6 +472,8 @@ if __name__ == "__main__":
     legend.SetLineColor(0)
     
     for ytitle,fnPref in zip(["Significance","Error on #sigma_{Measured}/#sigma_{SM}","#sigma_{Measured}/#sigma_{SM}"],["sig","mu","muToy"]):
+      if args.higgsMass and fnPref == "mu":
+        continue
       for plotName in plots:
         data = None
         doMuExtraPlot=False

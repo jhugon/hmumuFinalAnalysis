@@ -170,11 +170,12 @@ def makePDFBak(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
     getSidebandString = "mMuMu > 130. || mMuMu < 120."
     if args.higgsMass> 0.0:
-      getSidebandString = "mMuMu > {0:.1f} || mMuMu < {1:.1f}".format(args.higgsMass-5,args.higgsMass+5)
+      getSidebandString = "mMuMu > {0:.1f} || mMuMu < {1:.1f}".format(args.higgsMass+5,args.higgsMass-5)
     nSideband =  mMuMuRooDataHist.sumEntries(getSidebandString)
     nData =  mMuMuRooDataHist.sumEntries()
     bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
     print("Gets Bak Norm Assuming Signal region is: {0} GeV, off by: {1:%}".format(getSidebandString,(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+    mMuMu.Print()
     #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
     #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
 
@@ -451,6 +452,11 @@ class Analysis:
     mMuMu.setRange("high",controlRegionHigh[0],controlRegionHigh[1])
     mMuMu.setRange("signal",controlRegionLow[1],controlRegionHigh[0])
     mMuMu.setRange("signalfit",SIGNALFIT[0],SIGNALFIT[1])
+
+    print("{} {} {}".format("low",controlRegionLow[0],controlRegionLow[1]))
+    print("{} {} {}".format("high",controlRegionHigh[0],controlRegionHigh[1]))
+    print("{} {} {}".format("signal",controlRegionLow[1],controlRegionHigh[0]))
+    print("{} {} {}".format("signalfit",SIGNALFIT[0],SIGNALFIT[1]))
 
     self.sigFiles = []
     self.sigHistsRaw = []
@@ -1063,24 +1069,25 @@ if __name__ == "__main__":
         tmpList.append(a+c)
   analyses += tmpList
   analyses = ["IncPreselPtG10","VBFBDTCut","IncPreselPtG10BB"]
-  analyses = ["IncPreselPtG10BB"]
+  #analyses = ["IncPreselPtG10BB"]
+  analyses = ["VBFBDTCut","IncPreselPtG10BB"]
   #analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
   combinations = []
   combinationsLong = []
-  """
   combinations.append((
         ["IncPreselPtG10"+x for x in categoriesInc],"IncPreselCat"
   ))
+  """
   combinations.append((
         ["VBFPresel"]+["IncPreselPtG10"],"BDTCutVBFBDTOnly"
   ))
   combinations.append((
         ["VBFBDTCut"]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))
+  """
   combinations.append((
         ["VBFBDTCut"]+["IncPreselPtG10"+x for x in categoriesInc],"BDTCutCatVBFBDTOnly"
   ))
-  """
 
 #  combinationsLong.append((
 #        ["IncBDTCut","VBFBDTCut"],"BDTCut"
