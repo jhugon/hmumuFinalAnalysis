@@ -719,16 +719,15 @@ if __name__ == "__main__":
     ## Inclusive Categories
     
     veto = ["VBF","IncBDT"]
-    mustBe="(IncPresel.*)_(.+)_[.\d]+.txt.out"
+    mustBe="(IncPreselPt.*)_(.+)_[.\d]+.txt.out"
     tmpMap = { 
-  "IncPreselCat":"Non-VBF\n Category\n Combination",
-  "IncPresel":"Non-VBF \nNo Categories",
-  "IncPreselBB":"Non-VBF BB",
-  "IncPreselBO":"Non-VBF BO",
-  "IncPreselBE":"Non-VBF BE",
-  "IncPreselOO":"Non-VBF OO",
-  "IncPreselOE":"Non-VBF OE",
-  "IncPreselEE":"Non-VBF EE",
+  "IncPreselPtG10BB":"Non-VBF BB",
+  "IncPreselPtG10BO":"Non-VBF BO",
+  "IncPreselPtG10BE":"Non-VBF BE",
+  "IncPreselPtG10OO":"Non-VBF OO",
+  "IncPreselPtG10OE":"Non-VBF OE",
+  "IncPreselPtG10EE":"Non-VBF EE",
+  "IncPreselPtG10":"Non-VBF No Cat.",
         }
     compareData = getData(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
     comparePlot = ComparePlotTable(compareData,titleMap=tmpMap,vertLine1=False,anotation1=anotation1,anotation2=anotation2)

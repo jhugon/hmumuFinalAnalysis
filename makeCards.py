@@ -709,10 +709,7 @@ class DataCardMaker:
 
     self.channelNames = [i.workspaceName for i in channels]
 
-    if nuisanceMap == None:
-      self.nuisance = {}
-    else:
-      self.nuisance = nuisanceMap
+    self.nuisance = nuisanceMap
     nuisance = self.nuisance
 
 
@@ -859,33 +856,32 @@ class DataCardMaker:
     outfile.write("# Uncertainties:\n")
 
     # lnN Uncertainties
-    for nu in nuisance:
-      thisNu = nuisance[nu]
+    for nu in nuisance.keys():
       formatString = "{0:<8} {1:^4} "
       formatList = [nu,"lnN"]
       iParam = 2
       for channel,channelName in zip(self.channels,self.channelNames):
           for sigName in channel.sigNames:
             formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-            value = "-"
-            if thisNu.has_key(sigName):
-              value = thisNu[sigName]+1.0
+            value = nuisance(nu,sigName)
+            if value == None:
+              value = "-"
             formatList.append(value)
             iParam += 1
           if True:
               bakName="bak"
               formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-              value = "-"
-              if thisNu.has_key(bakName):
-                value = thisNu[bakName]+1.0
+              value = nuisance(nu,bakName)
+              if value == None:
+                value = "-"
               formatList.append(value)
               iParam += 1
           else:
             for bakName in self.bakNames:
               formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-              value = "-"
-              if thisNu.has_key(bakName):
-                value = thisNu[bakName]+1.0
+              value = nuisance(nu,bakName)
+              if value == None:
+                value = "-"
               formatList.append(value)
               iParam += 1
       formatString += "\n"
@@ -981,18 +977,20 @@ if __name__ == "__main__":
         tmpList.append(a+c)
   analyses += tmpList
   analyses = ["IncPresel","IncPreselPtG10","VBFBDTCut"]
-  analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
+  #analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
   combinations = []
   combinationsLong = []
   combinations.append((
         ["IncPreselPtG10"+x for x in categoriesInc],"IncPreselCat"
   ))
+  """
   combinations.append((
         ["VBFPresel"]+["IncPreselPtG10"],"BDTCutVBFBDTOnly"
   ))
   combinations.append((
         ["VBFBDTCut"]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))
+  """
   combinations.append((
         ["VBFBDTCut"]+["IncPreselPtG10"+x for x in categoriesInc],"BDTCutCatVBFBDTOnly"
   ))

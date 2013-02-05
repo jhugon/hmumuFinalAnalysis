@@ -29,12 +29,45 @@ vbfHDict7 = helpers.readCSVXS("etc/vbfH_7TeV.csv")
 wHDict7 = helpers.readCSVXS("etc/wH_7TeV.csv")
 zHDict7 = helpers.readCSVXS("etc/zH_7TeV.csv")
 
-xsec = {}
-xsec["ggHmumu125_8TeV"] = ggHDict8['125'][0]*brDict['125'][0] * scaleHiggsBy
-xsec["vbfHmumu125_8TeV"] = vbfHDict8['125'][0]*brDict['125'][0] * scaleHiggsBy
-xsec["wHmumu125_8TeV"] = wHDict8['125'][0]*brDict['125'][0] * scaleHiggsBy
-xsec["zHmumu125_8TeV"] = zHDict8['125'][0]*brDict['125'][0] * scaleHiggsBy
+class CrossSections():
+  def __init__(self):
+    self.data = {}
+    self.br = helpers.readCSVXS("etc/br.csv")
+    self.vbf = {}
+    self.gg = {}
+    self.wh = {}
+    self.zh = {}
+    for e in ["8TeV","7TeV"]:
+      self.vbf[e] = helpers.readCSVXS("etc/vbfH_"+e+".csv")
+      self.gg[e] = helpers.readCSVXS("etc/ggH_"+e+".csv")
+      self.wh[e] = helpers.readCSVXS("etc/wH_"+e+".csv")
+      self.zh[e] = helpers.readCSVXS("etc/zH_"+e+".csv")
+  def keys(self):
+    return self.data.keys()
+  def __setitem__(self,key,value):
+    self.data[key] = value
+  def __getitem__(self,key):
+    match = re.match(r"([a-z]+)Hmumu([\d.]+)_([\d]+TeV)",key)
+    if match:
+      prodMode = match.group(1)
+      mass = match.group(2)
+      energy = match.group(3)
+      result = -1.
+      if prodMode == "vbf":
+        result = self.vbf[energy][mass]
+      elif prodMode == "gg":
+        result = self.gg[energy][mass]
+      elif prodMode == "w":
+        result = self.wh[energy][mass]
+      elif prodMode == "z":
+        result = self.zh[energy][mass]
+      else:
+        raise Exception("Higgs Production mode not recognized for: {0}".format(key))
+      return result*self.br[mass]
+    else:
+      return self.data[key]
 
+xsec = CrossSections()
 xsec["DYJetsToLL_8TeV"] = 3503.71   ## madgraph
 xsec["DY2JetsToLL_8TeV"] = 181.   ## madgraph
 xsec["DY3JetsToLL_8TeV"] = 51.1   ## madgraph
@@ -49,11 +82,6 @@ xsec["ZZ_8TeV"] =  17.654
 xsec["WJetsToLNu_8TeV"] = 36257.2
 xsec["QCD_8TeV"] =  1.346e5
 
-xsec["ggHmumu125_7TeV"] = ggHDict7['125'][0]*brDict['125'][0] * scaleHiggsBy
-xsec["vbfHmumu125_7TeV"] = vbfHDict7['125'][0]*brDict['125'][0] * scaleHiggsBy
-xsec["wHmumu125_7TeV"] = wHDict7['125'][0]*brDict['125'][0] * scaleHiggsBy
-xsec["zHmumu125_7TeV"] = zHDict7['125'][0]*brDict['125'][0] * scaleHiggsBy
-
 xsec["DYJetsToLL_7TeV"] = 3048.   ## madgraph
 xsec["ttbar_7TeV"] = 157.5   ## madgraph
 
@@ -66,11 +94,6 @@ xsec["WJetsToLNu_7TeV"] = 27770.
 xsec["QCD_7TeV"] =  84679.
 
 #LHC Higgs XS WG: European Strat Group
-xsec["ggHmumu125_14TeV"] = 50.35*2.2e-4 * scaleHiggsBy
-xsec["vbfHmumu125_14TeV"] = 4.172*2.2e-4 * scaleHiggsBy
-xsec["zHmumu125_14TeV"] = 0.883*2.2e-4 * scaleHiggsBy
-xsec["wHmumu125_14TeV"] = 1.504*2.2e-4 * scaleHiggsBy
-
 xsec["DYJetsToLL_14TeV"] = 6131.
 xsec["ttbar_14TeV"] =   964.6 #LHC Higgs XS WG: European Strat Group
 
@@ -198,90 +221,83 @@ mcPlotScaleFactorMap["7TeV"] = 1.0 #IncPresel
 mcPlotScaleFactorMap["8TeV"] = 1.03 #IncPresel
 mcPlotScaleFactorMap["14TeV"] = 1.0
 
-nuisanceMap = {}
-nuisanceMap["lumi"] = {
-  "vbfHmumu125_8TeV":0.044,
-  "ggHmumu125_8TeV":0.044,
-  "wHmumu125_8TeV":0.044,
-  "zHmumu125_8TeV":0.044,
+class NuisanceMap:
+  def __init__(self):
+    self.data = {}
+    self.br = helpers.readCSVXS("etc/br.csv")
+    self.vbf = {}
+    self.gg = {}
+    self.wh = {}
+    self.zh = {}
+    for e in ["8TeV","7TeV"]:
+      self.vbf[e] = helpers.readCSVXS("etc/vbfH_"+e+".csv")
+      self.gg[e] = helpers.readCSVXS("etc/ggH_"+e+".csv")
+      self.wh[e] = helpers.readCSVXS("etc/wH_"+e+".csv")
+      self.zh[e] = helpers.readCSVXS("etc/zH_"+e+".csv")
+    self.lumi = {
+        "14TeV" : 1.044,
+        "8TeV" : 1.044,
+        "7TeV" : 1.022,
+        }
+    self.PDF = {
+      "gg": 1.014,
+      "vbf": None,
+      "w": None,
+      "z": None,
+      }
+    self.JES = {
+      "gg": 1.01,
+      "vbf": 1.05,
+      "w": None,
+      "z": None,
+      }
+    self.JER = {
+      "gg": 1.03,
+      "vbf": 1.045,
+      "w": None,
+      "z": None,
+      }
+    self._keys = ["xs_ggH","xs_vbfH","xs_wH","xs_zH","br_Hmm","lumi","PDF","JES","JER"]
+  def keys(self):
+    return self.data.keys() + self._keys
+  def __setitem__(self,key,value):
+    self.data[key] = value
+  def __call__(self,nu,ds):
+    if nu in self.data:
+      if ds in self.data[nu]:
+        return self.data[nu][ds]
+    match = re.match(r"([a-z]+)Hmumu([\d.]+)_([\d]+TeV)",ds)
+    if re.match(r"^xs_.*",nu) and match:
+      prodMode = match.group(1)
+      mass = match.group(2)
+      energy = match.group(3)
+      result = None
+      if prodMode not in nu:
+        return None
+      if prodMode == "vbf":
+        result = self.vbf[energy].lnN[mass]
+      elif prodMode == "gg":
+        result = self.gg[energy].lnN[mass]
+      elif prodMode == "w":
+        result = self.wh[energy].lnN[mass]
+      elif prodMode == "z":
+        result = self.zh[energy].lnN[mass]
+      else:
+        raise Exception("Higgs Production mode not recognized for: {0}".format(ds))
+      return result
+    if nu == "br_Hmm" and match:
+      return self.br.lnN[match.group(2)]
+    if nu == "lumi" and match:
+      return self.lumi[match.group(3)]
+    if nu == "PDF" and match:
+      return self.PDF[match.group(1)]
+    if nu == "JES" and match:
+      return self.JES[match.group(1)]
+    if nu == "JER" and match:
+      return self.JER[match.group(1)]
+    return None
 
-  "vbfHmumu125_7TeV":0.022,
-  "ggHmumu125_7TeV":0.022,
-  "wHmumu125_7TeV":0.022,
-  "zHmumu125_7TeV":0.022,
-
-  "vbfHmumu125_14TeV":0.044,
-  "ggHmumu125_14TeV":0.044,
-  "wHmumu125_14TeV":0.044,
-  "zHmumu125_14TeV":0.044
-}
-
-nuisanceMap["br_Hmm"] = {
-  "vbfHmumu125_8TeV":0.06,
-  "ggHmumu125_8TeV":0.06,
-  "wHmumu125_8TeV":0.06,
-  "zHmumu125_8TeV":0.06,
-
-  "vbfHmumu125_7TeV":0.06,
-  "ggHmumu125_7TeV":0.06,
-  "wHmumu125_7TeV":0.06,
-  "zHmumu125_7TeV":0.06,
-
-  "vbfHmumu125_14TeV":0.06,
-  "ggHmumu125_14TeV":0.06,
-  "wHmumu125_14TeV":0.06,
-  "zHmumu125_14TeV":0.06,
-}
-
-nuisanceMap["xs_ggH"] = {
-  "ggHmumu125_14TeV": 0.10,
-  "ggHmumu125_8TeV": 0.147,
-  "ggHmumu125_7TeV": 0.149
-}
-nuisanceMap["xs_vbfH"] = {
-  "vbfHmumu125_14TeV": 0.019,
-  "vbfHmumu125_8TeV": 0.03,
-  "vbfHmumu125_7TeV": 0.028
-}
-nuisanceMap["xs_wH"] = {
-  "wHmumu125_14TeV": 0.038,
-  "wHmumu125_8TeV": 0.041,
-  "wHmumu125_7TeV": 0.043
-}
-nuisanceMap["xs_zH"] = {
-  "zHmumu125_14TeV": 0.046,
-  "zHmumu125_8TeV": 0.051,
-  "zHmumu125_7TeV": 0.051
-}
-
-nuisanceMap["PDF"] = {
-  "ggHmumu125_8TeV":0.014,
-  "ggHmumu125_7TeV":0.014,
-  "ggHmumu125_14TeV":0.014,
-}
-
-nuisanceMap["JES"] = {
-  "vbfHmumu125_8TeV":0.05,
-  "ggHmumu125_8TeV":0.01,
-
-  "vbfHmumu125_7TeV":0.05,
-  "ggHmumu125_7TeV":0.01,
-
-  "vbfHmumu125_14TeV":0.05,
-  "ggHmumu125_14TeV":0.01,
-}
-
-nuisanceMap["JER"] = {
-  "vbfHmumu125_8TeV":0.045,
-  "ggHmumu125_8TeV":0.03,
-
-  "vbfHmumu125_7TeV":0.045,
-  "ggHmumu125_7TeV":0.03,
-
-  "vbfHmumu125_14TeV":0.045,
-  "ggHmumu125_14TeV":0.03,
-}
-
+nuisanceMap = NuisanceMap()
 
 def getLegendEntry(ds):
   return legendEntries[re.sub(r"_.*","",ds)]

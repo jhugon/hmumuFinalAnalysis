@@ -1470,6 +1470,21 @@ def sqrtTH1(hist):
       n = 0.0
     hist.SetBinContent(i,sqrt(n))
 
+class CrossSecsErrs:
+  def __init__(self,csvDict):
+    self.data = csvDict
+    self.err = {}
+    self.errUp = {}
+    self.errDown = {}
+    self.lnN = {}
+    for key in self.data:
+      self.errUp[key] = self.data[key][1]/100.
+      self.errDown[key] = self.data[key][2]/100.
+      self.err[key] = max(abs(self.data[key][1]),abs(self.data[key][2]))/100.
+      self.lnN[key] = self.err[key] + 1.0
+  def __getitem__(self,key):
+    return self.data[key][0]
+
 def readCSVXS(filename):
   f = open(filename)
   rd = csv.reader(f)
@@ -1487,7 +1502,7 @@ def readCSVXS(filename):
         prec = '1'
     result[("{0:."+prec+"f}").format(mass)] = [float(i) for i in row[1:]]
   f.close()
-  return result
+  return CrossSecsErrs(result)
 
 def saveAs(canvas,name):
   canvas.SaveAs(name+".png")
