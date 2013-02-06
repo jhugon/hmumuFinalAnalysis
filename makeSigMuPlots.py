@@ -3,6 +3,7 @@
 import argparse
 parser = argparse.ArgumentParser(description="Makes cards for use in the CMS Combine tool.")
 parser.add_argument("--signalInject", help="Inject Signal with Strength into data_obs",type=float,default=0.0)
+parser.add_argument("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
 parser.add_argument("-m","--higgsMass", help="Makes plots v. Higgs Mass",action="store_true",default=False)
 args = parser.parse_args()
 
@@ -483,6 +484,7 @@ if __name__ == "__main__":
           data = getDataSig(dirName+plotName+"_"+energyStr+"_*.txt*")
           if args.signalInject>0.0:
             caption3 = "Signal Injected {0:.1f}#timesSM".format(args.signalInject)
+            caption3 += " m_{H} = "+"{0:.1f}".format(args.signalInjectMass)+" GeV/c^{2}"
             showObs=True
         else:
           data = getDataMu(dirName+plotName+"_"+energyStr+"_*.txt*")
@@ -490,6 +492,7 @@ if __name__ == "__main__":
           doMuExtraPlot = True
           if args.signalInject>0.0:
             caption3 = "Signal Injected {0:.1f}#times SM".format(args.signalInject)
+            caption3 += " m_{H} = "+"{0:.1f}".format(args.signalInjectMass)+" GeV/c^{2}"
         #print("{0} {1} v. Lumi: {2}".format(period,fnPref, data))
         if len(data)<=1:
           continue

@@ -23,6 +23,8 @@ scp lxplus:$REMOTEDIR/*.out statsInput/.
 scp lxplus:$REMOTEDIR/*.sig statsInput/.
 scp lxplus:$REMOTEDIR/*.expsig statsInput/.
 scp lxplus:$REMOTEDIR/*.mu statsInput/.
+scp lxplus:$REMOTEDIR/*.txt.root statsInput/.
+scp lxplus:$REMOTEDIR/*.png statsInput/.
 
 #nice ./makeShapePlots.py
 nice ./makeLimitPlots.py --bdtCut

@@ -4,6 +4,8 @@ import argparse
 parser = argparse.ArgumentParser(description="Makes Limit Plots from output text from combine tool.")
 parser.add_argument("--bdtCut", help="Makes plots v. BDT Cut Instead of Luminosity",action="store_true",default=False)
 parser.add_argument("-m","--higgsMass", help="Makes plots v. Higgs Mass",action="store_true",default=False)
+parser.add_argument("--signalInject", help="Sets a caption saying that signal was injected with strength",type=float,default=0.0)
+parser.add_argument("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
 args = parser.parse_args()
 
 
@@ -650,7 +652,15 @@ if __name__ == "__main__":
         plots.add(match.group(1))
         energyStr = match.group(2)
   
-    caption2 = "#sqrt{s}="+energyStr
+    energyStrWrite = energyStr
+    if energyStr == "7P8TeV":
+      energyStrWrite = "7 & 8 TeV"
+    else:
+      energyStrWrite = energyStr.replace("TeV"," TeV")
+    if args.signalInject > 0.0:
+      energyStrWrite += "   Signal Injected: {0:.1f}#times SM".format(args.signalInject)
+      energyStrWrite += " m_{H} = "+"{0:.1f}".format(args.signalInjectMass)+" GeV/c^{2}"
+    caption2 = "#sqrt{s} = "+energyStrWrite
     legend = root.TLegend(0.58,0.70,0.9,0.9)
     legend.SetFillColor(0)
     legend.SetLineColor(0)
@@ -682,7 +692,7 @@ if __name__ == "__main__":
       #elif period == "14TeV":
       #  title = "Standard Model H#rightarrow#mu#mu"
       title = titleMap[plotName]
-      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStr,xlabel=xlabel,caption3=caption3,showObs=args.higgsMass)
+      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStrWrite,xlabel=xlabel,caption3=caption3,showObs=args.higgsMass)
       saveAs(canvas,outDir+plotName+"_"+energyStr)
 
     if args.bdtCut:

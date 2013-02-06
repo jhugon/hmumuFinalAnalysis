@@ -1504,6 +1504,20 @@ def readCSVXS(filename):
   f.close()
   return CrossSecsErrs(result)
 
+def getRooBinningFromTH1(hist):
+  nbins = hist.GetNbinsX()
+  xmax = hist.GetXaxis().GetXmax()
+  xmin = hist.GetXaxis().GetXmin()
+  print nbins,xmax,xmin
+  return root.RooFit.RooBinning(nbins,xmin,xmax)
+
+def getBinningFromTH1(hist,newName):
+  nbins = hist.GetNbinsX()
+  xmax = hist.GetXaxis().GetXmax()
+  xmin = hist.GetXaxis().GetXmin()
+  print nbins,xmax,xmin
+  return newName,newName,nbins,xmin,xmax
+
 def saveAs(canvas,name):
   canvas.SaveAs(name+".png")
   canvas.SaveAs(name+".pdf")
@@ -1515,6 +1529,15 @@ def setLegPos(leg,legPos):
   leg.SetX2NDC(legPos[2])
   leg.SetY1NDC(legPos[1])
   leg.SetY2NDC(legPos[3])
+
+def getBinWidthStr(hist):
+    binWidth = (hist.GetXaxis().GetXmax()-hist.GetXaxis().GetXmin())/hist.GetXaxis().GetNbins()
+    binWidthPrec = "0"
+    if binWidth % 1 > 0.0:
+      binWidthPrec = "1"
+      if binWidth*10 % 1 > 0.0:
+        binWidthPrec = "2"
+    return ("{0:."+binWidthPrec+"f}").format(binWidth)
 
 if __name__ == "__main__":
 
@@ -1551,11 +1574,3 @@ if __name__ == "__main__":
 
   silly = raw_input("Press Enter to continue")
 
-def getBinWidthStr(hist):
-    binWidth = (hist.GetXaxis().GetXmax()-hist.GetXaxis().GetXmin())/hist.GetXaxis().GetNbins()
-    binWidthPrec = "0"
-    if binWidth % 1 > 0.0:
-      binWidthPrec = "1"
-      if binWidth*10 % 1 > 0.0:
-        binWidthPrec = "2"
-    return ("{0:."+binWidthPrec+"f}").format(binWidth)
