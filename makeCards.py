@@ -707,6 +707,8 @@ class Analysis:
         xs = eff*xsec[tmpName]
       countsList.append(int(xs*self.lumi*sigStrength))
     for name, hist, counts in zip(self.sigNames,self.sigHistsRaw,countsList):
+      if counts == 0:
+        continue
       tmpName = name+"TmpSigInject"+str(random.randint(0,10000))
       sigParams, sigDebug, rooData = makePDFSig(tmpName,hist,mMuMu,sigMass-20,sigMass+20,wImport,tmpName,forceMean=sigMass-0.3,sigInject=counts)
       if dataHist.InheritsFrom("RooAbsData"):
