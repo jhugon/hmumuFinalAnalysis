@@ -61,6 +61,9 @@ class ShapePlotter:
     self.processNameMap, self.params = getattr(self,"readCard")(self.textFileName)
     self.colors = [root.kRed-9, root.kGreen-9, root.kBlue-9, root.kMagenta-9, root.kCyan-9]
     self.fillStyles = [3004,3005,3003,3006,3007]
+    #self.pullType = "adrian1"
+    #self.pullType = "ratio"
+    self.pullType = "pull"
 
     self.canvas = root.TCanvas()
 
@@ -239,6 +242,40 @@ class ShapePlotter:
       ratio = 0.0
       if  histY != 0.0:
         ratio = (histY-curveY)/histY
+      ratioPlot.SetPoint(i,histX,ratio)
+    return ratioPlot
+
+  def getPullErrors(self,hist,curve,doMCErr=False):
+    def findI(graph,x):
+      xList = []
+      X = root.Double()
+      Y = root.Double()
+      for i in range(graph.GetN()):
+        graph.GetPoint(i,X,Y)
+        xList.append(abs(float(X)-float(x)))
+      bestI = min(range(len(xList)), key=lambda i: xList[i])
+      if xList[bestI]>1.0:
+        return -1
+      return bestI
+    ratioPlot = root.TGraph()
+    histX = root.Double()
+    histY = root.Double()
+    curveX = root.Double()
+    curveY = root.Double()
+    for i in range(hist.GetN()):
+      hist.GetPoint(i,histX,histY)
+      curveI = findI(curve,histX)
+      if curveI < 0:
+        continue
+      curve.GetPoint(curveI,curveX,curveY)
+      ratio = 0.0
+      err = sqrt(histY)
+      errMC = sqrt(curveY)
+      if  histY != 0.0:
+        if doMCErr:
+          ratio = (histY-curveY)/errMC
+        else:
+          ratio = (histY-curveY)/err
       ratioPlot.SetPoint(i,histX,ratio)
     return ratioPlot
 
@@ -440,6 +477,7 @@ class ShapePlotter:
   def draw(self,channelName,data,model,pulls,chi2,rooDataTitle):
       drawXLimits = self.xlimits
       isSignalMC = False
+      pullType = self.pullType
       if "Hmumu125" in data.GetName():
         drawXLimits = [110.,140.]
       if "Hmumu" in data.GetName():
@@ -472,6 +510,25 @@ class ShapePlotter:
         outGraph.SetMarkerSize(graph.GetMarkerSize())
         self.modelLines.append(outGraph)
       def makeRatioModelPlots(graph,outRatio,outOne):
+        for i in range(graph.GetN()):
+          x = root.Double()
+          y = root.Double()
+          graph.GetPoint(i,x,y)
+          outOne.SetPoint(i,x,1.0)
+          outRatio.SetPoint(i,x,1.0)
+          if y == 0.0:
+            continue
+          errUp = graph.GetErrorYhigh(i)
+          errDown = graph.GetErrorYlow(i)
+          outRatio.SetPointError(i,0.,0.,errDown/float(y),errUp/float(y))
+        outOne.SetLineColor(graph.GetLineColor())
+        outOne.SetLineStyle(graph.GetLineStyle())
+        outOne.SetLineWidth(graph.GetLineWidth())
+        outRatio.SetFillColor(graph.GetFillColor())
+        outRatio.SetFillStyle(graph.GetFillStyle())
+        self.modelLines.append(outOne)
+        self.modelLines.append(outRatio)
+      def makePullPlots(graph,outRatio,outOne):
         for i in range(graph.GetN()):
           x = root.Double()
           y = root.Double()
@@ -580,34 +637,40 @@ class ShapePlotter:
       # Pulls Pad
       pad2.cd()
 
-      doRatio = True
-      adrian1Errors = True
       ratioGraph = None
-      if adrian1Errors:
+      if pullType == "adrian1":
         ratioGraph = self.getAdrian1Errors(data,model)
-      else:
+      elif pullType == "pullMC":
+        ratioGraph = self.getPullErrors(data,model,True)
+      elif pullType == "ratio":
         ratioGraph = self.getRatioGraph(data,model)
+      else :
+        ratioGraph = self.getPullErrors(data,model)
       self.pullsList.append(ratioGraph)
-      if doRatio:
-        pulls =  ratioGraph
+      pulls =  ratioGraph
       getHistFromGraph(pulls,pullHist)
       pullDistribution = self.makePullDistribution(data,model)
-      if adrian1Errors:
-         pullHist.GetYaxis().SetTitle("#frac{"+dataLabel+"-Fit}{"+dataLabel+"}")
-         pullHist.GetYaxis().SetRangeUser(-1.5,1.5)
-         pullHist.SetLineColor(root.kBlue)
-         pullHist.SetLineStyle(1)
-         pullHist.SetLineWidth(2)
-         pullHist.SetFillColor(856)
-         pullHist.SetFillStyle(1001)
+      if pullType != "ratio":
+        pullHist.SetLineColor(root.kBlue)
+        pullHist.SetLineStyle(1)
+        pullHist.SetLineWidth(2)
+        pullHist.SetFillColor(856)
+        pullHist.SetFillStyle(1001)
       else:
         pullHist.SetLineStyle(1)
         pullHist.SetLineColor(1)
         pullHist.SetMarkerColor(1)
+      if pullType == "adrian1":
+        pullHist.GetYaxis().SetTitle("#frac{"+dataLabel+"-Fit}{"+dataLabel+"}")
+        pullHist.GetYaxis().SetRangeUser(-1.5,1.5)
+      else:
         pullHist.GetYaxis().SetTitle("#frac{"+dataLabel+"-Fit}{#sigma_{"+dataLabel+"}}")
-        if doRatio:
+        pullHist.GetYaxis().SetRangeUser(-3,3)
+        if pullType=="ratio":
           pullHist.GetYaxis().SetTitle("#frac{"+dataLabel+"}{Fit}")
           pullHist.GetYaxis().SetRangeUser(0,2)
+        elif pullType == "pullMC":
+          pullHist.GetYaxis().SetTitle("#frac{"+dataLabel+"-Fit}{#sigma_{Fit}}")
       pullHist.SetTitle("")
       pullHist.GetXaxis().SetRangeUser(*drawXLimits)
       pullHist.GetXaxis().SetTitle("m_{#mu#mu} [GeV/c^{2}]")
@@ -623,9 +686,7 @@ class ShapePlotter:
 
       pullHist.GetXaxis().SetLabelSize(gStyle.GetLabelSize("X")*canvasToPad2FontScalingFactor)
 
-      if adrian1Errors:
-        pullHist.Draw("hist")
-      elif doRatio:
+      if pullType=="ratio":
         pullHist.Draw("")
         modelRatio = root.TGraphAsymmErrors()
         modelOne = root.TGraphAsymmErrors()
@@ -634,7 +695,7 @@ class ShapePlotter:
         modelOne.Draw("l")
         pullHist.Draw("same")
       else:
-        pullHist.Draw("")
+        pullHist.Draw("hist")
 
 
       ## Pretty Stuff
@@ -657,7 +718,7 @@ class ShapePlotter:
       leg.SetFillColor(0)
       leg.SetLineColor(0)
       leg.AddEntry(dataHist,dataLabel,"pe")
-      leg.AddEntry(model,"Model","lf")
+      leg.AddEntry(model,"Fit","lf")
       #leg.AddEntry(combinedSigErrorGraph,"SM Higgs #times {0:.1f}".format(self.limit),"lf")
       leg.Draw()
 

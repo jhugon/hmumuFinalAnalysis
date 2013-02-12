@@ -9,16 +9,19 @@ import sys
 dataDir = "input/preApproveSample/"
 outDir = "output/"
 
-RUNPERIOD="8TeV"
+RUNPERIOD="7TeV"
 LUMI=lumiDict[RUNPERIOD]
 
-LOGY=True
+LOGY=False
 integralPlot=False
-adrian1Errors = True
+#PULLTYPE="adrian1"
+PULLTYPE="pullMC"
 allHiggsTogether = True
-ylimitsRatio = [0.5,1.5]
-if adrian1Errors:
+ylimitsRatio = [-3,3]
+if PULLTYPE=="adrian1":
   ylimitsRatio = [-1.5,1.5]
+elif PULLTYPE=="ratio":
+  ylimitsRatio = [0.5,1.5]
 
 #anotateText = "80 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"
 #anotateText = "110 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"
@@ -41,7 +44,7 @@ histDirs = ["VBFPresel/","IncPresel/"]
 histDirs = ["IncPresel/"]
 #histDirs = ["IncBDTCutBB/","VBFBDTCut/"]
 #histDirs = ["VBFBDTCut/"]
-histDirs = ["IncPreselPtG10BB/"]
+histDirs = ["VBFPresel/"]
 
 root.gErrorIgnoreLevel = root.kWarning
 
@@ -386,7 +389,7 @@ for histName in bkgDatasetList[0].hists:
   ylimits = []
   if histNames[histBaseName].has_key("ylimits"):
      ylimits = histNames[histBaseName]["ylimits"]
-  stack = DataMCStack(bkgHistList, dataHist, canvas, xtitle,lumi=LUMI,logy=LOGY,xlimits=histNames[histBaseName]["xlimits"],signalsNoStack=sigHistList,integralPlot=integralPlot,energyStr=RUNPERIOD,ylimits=ylimits,ylimitsRatio=ylimitsRatio,adrian1Errors=adrian1Errors)
+  stack = DataMCStack(bkgHistList, dataHist, canvas, xtitle,lumi=LUMI,logy=LOGY,xlimits=histNames[histBaseName]["xlimits"],signalsNoStack=sigHistList,integralPlot=integralPlot,energyStr=RUNPERIOD,ylimits=ylimits,ylimitsRatio=ylimitsRatio,pullType=PULLTYPE)
 
   legLeftPos = stdLegendPos[0]
   legRightPos = stdLegendPos[2]
@@ -443,12 +446,11 @@ for histName in bkgDatasetList[0].hists:
 
   vertLine = None
   if histNames[histBaseName].has_key("vertLines"):
-    print("In vertLines for hist: {0}".format(histBaseName))
+    #print("In vertLines for hist: {0}".format(histBaseName))
     padX1 = stack.pad1.GetX1()
     padX2 = stack.pad1.GetX2()
     padY1 = stack.pad1.GetY1()
     padY2 = stack.pad1.GetY2()
-    print(padX1,padX2,padY1,padY2)
     stack.pad1.cd()
     vertLineX = histNames[histBaseName]["vertLines"][RUNPERIOD]
     vertLine = root.TLine()
@@ -458,9 +460,16 @@ for histName in bkgDatasetList[0].hists:
     pad1Height = stack.pad1.YtoPixel(stack.pad1.GetY1())
     #vertLine.DrawLineNDC(0.1,0.1,stack.pad1.XtoPixel(0.0)/pad1Width,0.9)
     #vertLine.DrawLine(0.1,0.1,-0.4,10.)
-    vertLine.DrawLine(vertLineX,stack.stack.GetMinimum(),vertLineX,stack.stack.GetMaximum()*2)
-    print(pad1Height)
-    print(pad1Width)
+    ybot = stack.stack.GetMinimum()
+    ytop = stack.stack.GetMaximum()
+    if LOGY:
+      ytop = stack.stack.GetMaximum()*2
+    if histNames[histBaseName].has_key("ylimits"):
+       ylimits = histNames[histBaseName]["ylimits"]
+       ybot = ylimits[0]
+       ytop = ylimits[1]
+    vertLine.DrawLine(vertLineX,ybot,vertLineX,ytop)
+    stack.pad1.RedrawAxis()
 
   if stack.mcSumHist.Integral() == 0:
     print("Warning: MC Sum Hist Was 0 for {0}, not saving image".format(histName))

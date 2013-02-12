@@ -535,7 +535,7 @@ def makeWeightHist(f1,canvas,leg):
   leg.Draw("same")
 
 class DataMCStack:
-  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",doRatio=True,ylimits=[],ylimitsRatio=[],adrian1Errors=True,doMCErrors=False):
+  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",ylimits=[],ylimitsRatio=[],pullType="",doMCErrors=False):
     nBinsX = dataHist.GetNbinsX()
     self.nBinsX = nBinsX
     self.dataHist = dataHist
@@ -614,22 +614,26 @@ class DataMCStack:
       nData = dataHist.GetBinContent(i)
       nMC = self.mcSumHist.GetBinContent(i)
       error = dataHist.GetBinError(i)
+      errorMC = self.mcSumHist.GetBinError(i)
       pull = 0.0
       ratio = 0.0
       ratioErr = 0.0
       self.oneGraph.SetPoint(iGraph,dataHist.GetXaxis().GetBinCenter(i),1.0)
       iGraph += 1
       if error != 0.0:
-        if adrian1Errors:
+        if pullType=="adrian1":
           pull = (nData -nMC)/nData
         else:
           pull = (nData -nMC)/error
+      if pullType=="pullMC":
+        if errorMC != 0.0:
+          pull = (nData -nMC)/errorMC
+        else:
+          pull = 0.0
       if nMC != 0.0:
         ratio = nData/nMC
         ratioErr = error/nMC
-      if adrian1Errors:
-        self.pullHist.SetBinContent(i,pull)
-      elif doRatio:
+      if pullType=="ratio":
         self.pullHist.SetBinContent(i,ratio)
         self.pullHist.SetBinError(i,ratioErr)
         #print("nData: {0:.2f} +/- {1:.2f}, nMC: {2:.2f}, ratio: {3:.2f} +/- {4:.2f}".format(nData,error,nMC,ratio,ratioErr))
@@ -698,10 +702,16 @@ class DataMCStack:
       self.stack.GetXaxis().SetNdivisions(nDivX)
       self.stack.SetMaximum(ymax*1.00)
       if logy:
-        self.stack.SetMinimum(1.00e-1)
-      if len(ylimits) == 2:
-        self.stack.SetMaximum(ylimits[1])
-        self.stack.SetMinimum(ylimits[0])
+        self.stack.SetMinimum(0.1)
+        if len(ylimits) == 2:
+          self.stack.SetMaximum(ylimits[1]*0.47)
+          self.stack.SetMinimum(ylimits[0])
+          if logy and ylimits[0]==0.0:
+            self.stack.SetMinimum(0.1)
+      else:
+        if len(ylimits) == 2:
+          self.stack.SetMaximum(ylimits[1]*0.95)
+          self.stack.SetMinimum(ylimits[0])
       self.stack.Draw("hist")
       if doMCErrors:
         self.mcSumHist.Draw("e2same")
@@ -743,13 +753,15 @@ class DataMCStack:
     self.pullHist.GetXaxis().SetNdivisions(nDivX)
     self.pullHist.GetXaxis().SetTitleSize(0.055*pad1ToPad2FontScalingFactor)
     self.pullHist.GetXaxis().SetLabelSize(0.050*pad1ToPad2FontScalingFactor)
-    if adrian1Errors:
+    self.pullHist.SetLineColor(root.kBlue)
+    self.pullHist.SetLineStyle(1)
+    self.pullHist.SetLineWidth(2)
+    if pullType=="adrian1":
       self.pullHist.GetYaxis().SetTitle("#frac{Data-MC}{Data}")
-      self.pullHist.SetLineColor(root.kBlue)
-      self.pullHist.SetLineStyle(1)
-      self.pullHist.SetLineWidth(2)
+    elif pullType=="pullMC":
+      self.pullHist.GetYaxis().SetTitle("#frac{Data-MC}{\sigma_{MC}}")
     else:
-      self.pullHist.GetYaxis().SetTitle("#frac{Data-MC}{Error}")
+      self.pullHist.GetYaxis().SetTitle("#frac{Data-MC}{\sigma_{Data}}")
     self.pullHist.GetYaxis().SetTitleSize(0.040*pad1ToPad2FontScalingFactor)
     self.pullHist.GetYaxis().SetLabelSize(0.040*pad1ToPad2FontScalingFactor)
     self.pullHist.GetYaxis().CenterTitle(1)
@@ -760,16 +772,14 @@ class DataMCStack:
     if len(ylimitsRatio) == 2:
       self.pullHist.GetYaxis().SetRangeUser(*ylimitsRatio)
 
-    if adrian1Errors:
-      self.pullHist.Draw("histo")
-    elif doRatio:
+    if pullType=="ratio":
       #pad2.SetGridy(1)
       self.pullHist.GetYaxis().SetTitle("#frac{Data}{MC}")
       self.pullHist.Draw("")
       self.oneGraph.Draw()
       self.pullHist.Draw("same")
     else:
-      self.pullHist.Draw("histo b")
+      self.pullHist.Draw("histo")
 
     if showCompatabilityTests:
       self.problatex = root.TLatex()
