@@ -58,7 +58,7 @@ class ShapePlotter:
     self.xlimits = xlimits
     self.normRange = normRange
     self.textFileName = os.path.splitext(filename)[0]+".txt"
-    self.processNameMap, self.params = getattr(self,"readCard")(self.textFileName)
+    self.processNameMap, self.params, self.normErrMap = getattr(self,"readCard")(self.textFileName)
     self.colors = [root.kRed-9, root.kGreen-9, root.kBlue-9, root.kMagenta-9, root.kCyan-9]
     self.fillStyles = [3004,3005,3003,3006,3007]
     #self.pullType = "adrian1"
@@ -147,6 +147,7 @@ class ShapePlotter:
     processList = []
     rateList = []
     paramMap = {}
+    normErrMap = {}
     for line in f:
       if re.search("^bin",line):
         if foundBin:
@@ -164,6 +165,10 @@ class ShapePlotter:
       if paramMatch:
         gs = paramMatch.groups()
         paramMap[gs[0]] = [gs[1],gs[2]]
+      normMatch = re.search(r"bkN([a-zA-Z0-9_]+)[\s]+gmN[\s]+([-.+eE0-9]+)[\s-]+([.0-9]+)[\s-]+",line)
+      if normMatch:
+        gs = normMatch.groups()
+        normErrMap[gs[0]] = 1.0/sqrt(float(gs[1]))
     binList = [x.replace(r" ","") for x in binList]
     processList = [x.replace(r" ","") for x in processList]
     result = {}
@@ -172,7 +177,7 @@ class ShapePlotter:
         result[i] = {}
     for b,p,r in zip(binList,processList,rateList):
       result[b][p] = r
-    return result, paramMap
+    return result, paramMap, normErrMap
 
   def getRatioGraph(self,hist,curve):
     def findI(graph,x):
@@ -353,6 +358,19 @@ class ShapePlotter:
         param.setVal(nominal-err)
         pdf.plotOn(frame,root.RooFit.Name(tmpName),rng,normRange)
         curveNames.append(tmpName)
+    # Norm uncertainty
+    normErr = None
+    if data.GetName() == "data_obs" or "bak" in data.GetName():
+      pdfParams = pdf.getParameters(data)
+      itr = pdfParams.createIterator()
+      param = itr.Next()
+      paramName = param.GetName()
+      match = re.match(r"([a-zA-Z0-9]+)_.*",paramName)
+      if match:
+        channelName = match.group(1)
+        normErr = self.normErrMap[channelName]
+      else:
+        print "Warning: norm uncertainty string match failed"
     varUp = []
     varDown = []
     for curveName in curveNames:
@@ -390,6 +408,9 @@ class ShapePlotter:
         errDown += (yErr-float(yNom))**2
       if badPoint:
         continue
+      if normErr != None:
+        errUp += (normErr*yNom)**2
+        errDown += (normErr*yNom)**2
       errUp = sqrt(errUp)
       errDown = sqrt(errDown)
       modelGraph.SetPoint(iPoint,xNom,yNom)
