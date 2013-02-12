@@ -6,22 +6,25 @@ import ROOT as root
 from helpers import *
 import matplotlib.pyplot as mpl
 import numpy
+import random
 import glob
 import os.path
 import re
 
 from xsec import *
 
+import makeCards
+
 root.gErrorIgnoreLevel = root.kWarning
 
 channelNameMap = {
   "AllCat":"All Cat. Comb.",
-  "IncCat":"!VBF Cat. Comb.",
+  "IncCat":"Non-VBF Cat. Comb.",
   "VBFCat":"VBF Cat. Comb.",
 
   "Presel":"Presel. Comb.",
-  "IncPresel":"!VBF Category",
-  "VBFPresel":"VBF Category",
+  "IncPresel":"Non-VBF Presel",
+  "VBFPresel":"VBF Presel",
 
   "Pt0to30":"$p_{T}^{\mu\mu} \in [0,30]$",
   "Pt30to50":"$p_{T}^{\mu\mu} \in [30,50]$",
@@ -35,49 +38,72 @@ channelNameMap = {
   "VBFVeryTight":"VBFVT",
 
   "BDTCut":"BDT Comb.",
-  "IncBDTCut":"!VBF BDT",
+  "IncBDTCut":"Non-VBF BDT",
   "VBFBDTCut":"VBF BDT",
 
   "BDTCutCat":"BDT Res. Comb.",
-  "IncBDTCutCat":"!VBF BDT Res.",
+  "IncBDTCutCat":"Non-VBF BDT Res.",
   "VBFBDTCutCat":"VBF BDT Res.",
 
   "PreselCat":"Presel. Res. Comb.",
-  "IncPreselCat":"!VBF Res. Presel.",
+  "IncPreselCat":"Non-VBF Res. Presel.",
   "VBFPreselCat":"VBF Res. Presel.",
 
-  "IncBDTCutBB":"!VBF BDT BB",
-  "IncBDTCutBO":"!VBF BDT BO",
-  "IncBDTCutBE":"!VBF BDT BE",
-  "IncBDTCutOO":"!VBF BDT OO",
-  "IncBDTCutOE":"!VBF BDT OE",
-  "IncBDTCutEE":"!VBF BDT EE",
-  "IncBDTCutNotBB":"!VBF BDT !BB",
+  "IncBDTCutBB":"Non-VBF BDT BB",
+  "IncBDTCutBO":"Non-VBF BDT BO",
+  "IncBDTCutBE":"Non-VBF BDT BE",
+  "IncBDTCutOO":"Non-VBF BDT OO",
+  "IncBDTCutOE":"Non-VBF BDT OE",
+  "IncBDTCutEE":"Non-VBF BDT EE",
+  "IncBDTCutNotBB":"Non-VBF BDT !BB",
   "VBFBDTCutBB":"VBF BDT BB",
-  "VBFBDTCutNotBB":"VBF BDT !BB",
-  "IncPreselBB":"!VBF Presel. BB",
-  "IncPreselBO":"!VBF Presel. BO",
-  "IncPreselBE":"!VBF Presel. BE",
-  "IncPreselOO":"!VBF Presel. OO",
-  "IncPreselOE":"!VBF Presel. OE",
-  "IncPreselEE":"!VBF Presel. EE",
-  "IncPreselNotBB":"!VBF Presel. !BB",
+  "VBFBDTCutNotBB":"VBF BDT Non-BB",
+  "IncPreselBB":"Non-VBF Presel. BB",
+  "IncPreselBO":"Non-VBF Presel. BO",
+  "IncPreselBE":"Non-VBF Presel. BE",
+  "IncPreselOO":"Non-VBF Presel. OO",
+  "IncPreselOE":"Non-VBF Presel. OE",
+  "IncPreselEE":"Non-VBF Presel. EE",
+  "IncPreselNotBB":"Non-VBF Presel. !BB",
   "VBFPreselBB":"VBF Presel. BB",
-  "VBFPreselNotBB":"VBF Presel. !BB"
+  "VBFPreselNotBB":"VBF Presel. Non-BB",
+
+  "IncPreselPtG10BB":"Non-VBF BB",
+  "IncPreselPtG10BO":"Non-VBF BO",
+  "IncPreselPtG10BE":"Non-VBF BE",
+  "IncPreselPtG10OO":"Non-VBF OO",
+  "IncPreselPtG10OE":"Non-VBF OE",
+  "IncPreselPtG10EE":"Non-VBF EE",
+  "IncPreselPtG10":"Non-VBF",
+  "BDTCutCatVBFBDTOnly": "VBF & Non-VBF Combination",
+  "all": "Inclusive"
 }
 
 sampleNameMap = {
   "data_obs":"Data",
-  "bak":"Background",
-  "bakWide":"Background in Sidebands",
+  "data":"Data",
+  "mcbak":"MC Background",
+  "bak":"Background Prediction",
+  "bakWide":"Data in Sidebands",
+  "bakCheat":"Back Pred (Norm Cheat)",
+  "bakErr":"Back Pred Diff",
   "sig":"Signal",
   "sob":"$S/B$",
   "sosqrtb":"$S/\sqrt{B}$",
   "sosqrtsb":"$S/\sqrt{S+B}$",
   "ggHmumu125_8TeV":r"$gg \rightarrow H$",
   "vbfHmumu125_8TeV":r"VBF H",
+  "wHmumu125_8TeV":r"WH",
+  "zHmumu125_8TeV":r"ZH",
   "ggHmumu125_7TeV":r"$gg \rightarrow H$",
-  "vbfHmumu125_7TeV":r"VBF H"
+  "vbfHmumu125_7TeV":r"VBF H",
+
+  "SingleMuRun2012Av1":"Run2012AReReco13Jul2012-v1",
+  "SingleMuRun2012Bv1":"Run2012BReReco13Jul2012-v1",
+  "SingleMuRun2012Cv1":"Run2012CReReco24Aug2012-v1",
+  "SingleMuRun2012Cv2":"Run2012C-PromptReco-v2",
+  "SingleMuRun2012D":"Run2012D-PromptReco-v1",
+  "SingleMuRun2012Av1Recover":"Run2012A-recover-06Aug2012-v1",
 }
 
 class Counts:
@@ -101,7 +127,7 @@ class Counts:
         energyStr = "7TeV"
       else:
         energyStr = fNameNoExt.split('_')[1]
-        if xsec.has_key(fNameNoExt) and nEventsMap.has_key(fNameNoExt):
+        if nEventsMap.has_key(fNameNoExt):
           scaleBy = xsec[fNameNoExt]/nEventsMap[fNameNoExt]*lumiDict[energyStr]*1000.
       fNameKey = fNameNoExt
       if not chopDir:
@@ -120,11 +146,58 @@ class Counts:
         if strToGet[0] == '/':
             strToGet = strToGet[1:]
         tmpHist = rf.Get(strToGet)
-        nEvents = getIntegralAll(tmpHist,massBoudaries)
+        try:
+          nEvents = getIntegralAll(tmpHist,massBoudaries)
+        except Exception, e:
+          print("Error trying to get: {0} {1}".format(f,strToGet))
+          raise e
         nEvents *= scaleBy
         if i == '':
           i = "all"
         data[fNameKey][i] = nEvents
+
+def getBakPrediction(filenames,categories,massBoundaries,cheat=False):
+  assert(len(massBoundaries)==4)
+  maxMass = massBoundaries[3]
+  minMass = massBoundaries[0]
+  mMuMu = root.RooRealVar("mMuMu","mMuMu",minMass,maxMass)
+  #mMuMu.setRange("z",88,94)
+  #mMuMu.setRange("verylow",controlRegionVeryLow[0],controlRegionVeryLow[1])
+  mMuMu.setRange("low",minMass,massBoundaries[1])
+  mMuMu.setRange("high",massBoundaries[2],maxMass)
+  mMuMu.setRange("signal",massBoundaries[1],massBoundaries[2])
+  data = {}
+  files = []
+  for f in filenames:
+    rf = root.TFile(f)
+    files.append(rf)
+  for i in categories:
+    sumHist = None
+    for rf in files:
+      strToGet = i + '/mDiMu'
+      strToGet = os.path.normpath(strToGet)
+      if strToGet[0] == '/':
+          strToGet = strToGet[1:]
+      tmpHist = rf.Get(strToGet)
+      if sumHist == None:
+        sumHist = tmpHist.Clone()
+      else:
+        sumHist.Add(tmpHist)
+    if i == '':
+      i = 'all'
+    tmpName = i+str(random.randint(0,10000))
+    class Stupid:
+      pass
+    histIntegral = getIntegralAll(sumHist,[minMass,maxMass])
+    tmpParams, bakNormTup = makeCards.makePDFBak(tmpName,sumHist,mMuMu,
+                                       minMass,maxMass,None)
+    print "integral, estimate for all: {}, {}".format(histIntegral,bakNormTup[0]*bakNormTup[1])
+    if cheat:
+      nBak = (1.0-1.0/bakNormTup[1])*histIntegral
+    else:
+      nBak = (1.0-1.0/bakNormTup[1])*bakNormTup[0]*bakNormTup[1]
+    data[i] = nBak
+  return data
 
 def compareDirs(dirNameDict,sigFileDict,bakFileNames,categories=["IncPresel","VBFPresel"],massBoundaries=[120,130]):
   data = {}
@@ -317,152 +390,221 @@ def cutFlow(sigFileNames,bakFileNames,channel,massBoundaries=[120.,130.]):
 
   return outString
 
-def inMassWindowTableMkr(sigFileNames,bakFileNames,channel,massBoundaries=[120.,130.]):
+def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,massBoundaries=[120.,130.],bakPredBounds=[110.,120.,130.,160.]):
   data = {}
   data["bak"] = {}
+  data["bakCheat"] = {}
+  data["bakErr"] = {}
+  data["mcbak"] = {}
   data["sig"] = {}
   data["sob"] = {}
   data["sosqrtb"] = {}
   data["sosqrtsb"] = {}
+  data["bakWide"] = {}
+  data["data"] = {}
 
   energyStr = ""
   lumi = ""
-  categories = [channel]
   sigCounts = Counts(sigFileNames,categories,massBoundaries)
   bakCounts = Counts(bakFileNames,categories,massBoundaries)
-  for sig in sigCounts.data:
-    data[sig] = {}
+  datCounts = Counts(datFileNames,categories,massBoundaries)
+  for key in sigCounts.data.keys()+datCounts.data.keys():
+    data[key] = {}
   for cat in categories:
+    if cat == '':
+        cat = "all"
     nBak = 0.0
     for bak in bakCounts.data:
       nBak += bakCounts.data[bak][cat]
-    data["bak"][cat] = nBak
+    data["mcbak"][cat] = nBak
     nSig = 0.0
     for sig in sigCounts.data:
       energyStr = sigCounts.data[sig]["misc"]["energyStr"]
       lumi = sigCounts.data[sig]["misc"]["lumi"]
       nSig += sigCounts.data[sig][cat]
       data[sig][cat] = sigCounts.data[sig][cat]
+    nDat = 0.0
+    for dat in datCounts.data:
+      nDat += datCounts.data[dat][cat]
+      data[dat][cat] = datCounts.data[dat][cat]
+    data["data"][cat] = nDat
+
     data["sig"][cat] = nSig
     data["sob"][cat] = float(nSig)/nBak
     data["sosqrtb"][cat] = float(nSig)/sqrt(float(nBak))
     data["sosqrtsb"][cat] = float(nSig)/sqrt(float(nBak+nSig))
 
-  countsWide = Counts(bakFileNames,categories,[110.,160.])
-  nBakWide = 0.0
-  for bak in bakCounts.data:
-    nBakWide += countsWide.data[bak][channel]
-  data["bakWide"] = {channel:nBakWide-data["bak"][channel]}
-  print nBakWide
+  data["bak"] = getBakPrediction(datFileNames,categories,bakPredBounds)
+  data["bakCheat"] = getBakPrediction(datFileNames,categories,bakPredBounds,cheat=True)
+  if categories.count('')==1:
+    allIndex = categories.index('')
+    categories[allIndex] = "all"
+#  countsWide = Counts(bakFileNames,categories,[110.,160.])
+#  for cat in categories:
+#    nBakWide = 0.0
+#    for bak in bakCounts.data:
+#      nBakWide += countsWide.data[bak][cat]
+#    data["bakWide"][cat] = nBakWide-data["bak"][cat]
+  for cat in categories:
+    data["bakErr"][cat] = (data["bak"][cat]-data["data"][cat])/data["data"][cat]
 
-  samples = ["ggHmumu125_8TeV","vbfHmumu125_8TeV","bak","bakWide"]
+  #samples = ["sig","bak","data"]
+  samples = sorted(datCounts.data.keys()) + ['data']
+  #samples = ["ggHmumu125_8TeV","vbfHmumu125_8TeV","wHmumu125_8TeV","zHmumu125_8TeV","sig"]
+  #samples += ["ggHmumu125_8TeV","vbfHmumu125_8TeV","wHmumu125_8TeV","zHmumu125_8TeV"]
+  #samples += ["bakCheat"]
+  #samples += ["bakErr"]
   ncols = len(samples)
 
-  outString = " &"
-  for i in samples:
-    outString += " "+sampleNameMap[i]+" &"
-  outString = outString.rstrip(r"&")
-  outString += r"\\ \hline" + '\n'
-
-  outString += "Events &"
-  for s in samples:
-    n = data[s][channel]
-    if s=="bak" or s=="sob" or s=="sosqrtb" or s=="sosqrtsb" or s=="bakWide" :
-       outString += " {0:.2e} &".format(n)
-       continue
-    outString += " {0:.2f} &".format(n)
-  outString = outString.rstrip(r"&")
-  outString += r"\\ \hline" + '\n'
-
-  outString = r"\begin{tabular}{|l|"+'c|'*ncols+"} \hline"+"\n" + outString + r"\end{tabular}"+"\n"
-  outString = outString.replace(r"%",r"\%")
-
-  outString = re.sub(r"([-\d.+]+)e([-+])0([\d])",r"\1e\2\3",outString)
-  outString = re.sub(r"([-\d.+]+)e[+]*([-\d]+)",r"$\1 \\times 10^{\2}$",outString)
-
-  lumi = "$\\mathcal{{L}}$ = {0:.0f} fb$^{{-1}}$".format(float(lumi))
-  energyStr = "$\\sqrt{s}$ = "+re.sub(r"TeV"," TeV",energyStr)
-  massStr = r"{0} GeV $< m_{{\mu\mu}} <$ {1} GeV".format(*massBoundaries)
-  outString += r"\\ "+massStr+", "+energyStr + ", "+lumi+"\n"
+  outString = ""
+  if True:
+    outString += " &"
+    for i in samples:
+      outString += " "+sampleNameMap[i]+" &"
+    outString = outString.rstrip(r"&")
+    outString += r"\\ \hline" + '\n'
+  
+    for cat in categories:
+      outString += channelNameMap[cat]+" &"
+      for s in samples:
+        n = data[s][cat]
+        if s=="sob" or s=="sosqrtb" or s=="sosqrtsb":
+           outString += " {0:.2e} &".format(n)
+        elif s=="bakErr":
+           outString += " {0:.2%} &".format(n)
+        elif s=="data_obs" or s=="data" or ("SingleMuRun" in s):
+          outString += " {0:.0f} &".format(n)
+        else:
+          outString += " {0:.2f} &".format(n)
+      outString = outString.rstrip(r"&")
+      outString += r"\\ \hline" + '\n'
+  
+    outString = r"\begin{tabular}{|l|"+'c|'*ncols+"} \hline"+"\n" + outString + r"\end{tabular}"+"\n"
+    outString = outString.replace(r"%",r"\%")
+  
+    outString = re.sub(r"([-\d.+]+)e([-+])0([\d])",r"\1e\2\3",outString)
+    outString = re.sub(r"([-\d.+]+)e[+]*([-\d]+)",r"$\1 \\times 10^{\2}$",outString)
+  
+    lumi = "$\\mathcal{{L}}$ = {0:.0f} fb$^{{-1}}$".format(float(lumi))
+    energyStr = "$\\sqrt{s}$ = "+re.sub(r"TeV"," TeV",energyStr)
+    massStr = r"{0} GeV $< m_{{\mu\mu}} <$ {1} GeV".format(*massBoundaries)
+    outString += r"\\ "+massStr+", "+energyStr + ", "+lumi+"\n"
+  if True:
+    firstLen = 4
+    for i in samples:
+      tmp = len(sampleNameMap[i])
+      if firstLen < tmp:
+        firstLen = tmp
+    firstLen = str(firstLen+1)
+    printString = ("{0:<"+firstLen+"} ").format("")
+    colWidths = []
+    for i in samples:
+      colLen = len(sampleNameMap[i])+3
+      if colLen < 6:
+        colLen = 6
+      colLen = str(colLen)
+      printString += ("{0:^"+colLen+"}").format(sampleNameMap[i])
+      colWidths.append(colLen)
+    printString += "\n"
+    for cat in categories:
+      printString += ("{0:<"+firstLen+"} ").format(channelNameMap[cat])
+      for s,colLen in zip(samples,colWidths):
+        n = data[s][cat]
+        if s=="sob" or s=="sosqrtb" or s=="sosqrtsb":
+           printString += ("{0:^"+colLen+".2e}").format(n)
+        elif s=="bakErr":
+           printString += ("{0:"+colLen+".2%}").format(n)
+        elif s=="data_obs" or s=="data" or ("SingleMu" in s):
+          printString += ("{0:^"+colLen+".0f}").format(n)
+        else:
+          printString += ("{0:^"+colLen+".2f}").format(n)
+      printString += '\n'
+    print(printString)
 
   return outString
 
       
 if __name__ == "__main__":
-  
-  """
-  filenames = glob.glob("input/vladEventCounts/*.root")
-  categories = ["VBFPresel"]
-  mBounds = [110.,160.]
-  c = Counts(filenames,categories,mBounds)
-
-  print("=============================\nFor Vladimir: ({0})".format(categories[0]))
-  fns = sorted(c.data.keys())
-  maxFNLength = str(max([len(i) for i in fns])+2)
-  for fn in fns:
-    n = c.data[fn][categories[0]]
-    toPrint = r"{0:<"+maxFNLength+r"} {1:<20.0f}"
-    print(toPrint.format(fn,n))
-  print("=============================")
-  """
-
-  ######################################################
-
-  filenames = glob.glob("input/trk*/gg*.root")
-  filenames += glob.glob("input/pf*/gg*.root")
-  categories = ["VBFPresel"]
-  #mBounds = [110.,160.]
-  mBounds = [120.,130.]
-
-  dirs = {
-    "input/trkLooseIso/":"Trk Loose Iso",
-    "input/trkTightIso/":"Trk Tight Iso",
-    "input/pfLooseIso/":"PF Loose Iso",
-    "input/pfTightIso/":"PF Tight Iso"
-  }
-  sigFileNames = {
-    "ggHmumu125_8TeV.root":"gg H",
-    "vbfHmumu125_8TeV.root":"VBF H"
-  }
-  bakFileNames = [
-    "SingleMuRun2012Av1.root",
-    "SingleMuRun2012Bv1.root",
-    "SingleMuRun2012Cv1.root",
-    "SingleMuRun2012Cv2.root"
-  ]
-
-  isoCountsTable = compareDirs(dirs,sigFileNames,bakFileNames,massBoundaries=mBounds)
-  isoTableFile = open("isoTable.tex",'w')
-  isoTableFile.write( r"""
-\documentclass[12pt,a4paper]{article}
-\usepackage{lscape}
-\begin{document}
-%\tiny
-\small
-\begin{center}
-
-"""
-  )
-  isoTableFile.write(isoCountsTable)
-  isoTableFile.write(     r"""
-
-\end{center}
-\end{document}
-"""
-  )
-  isoTableFile.close()
-
-
-  ######################################################
-  signames = ["ggHmumu125_8TeV.root","vbfHmumu125_8TeV.root"]
+  root.gROOT.SetBatch(True)
+#  
+#  filenames = glob.glob("input/vladEventCounts/*.root")
+#  categories = ["VBFPresel"]
+#  mBounds = [110.,160.]
+#  c = Counts(filenames,categories,mBounds)
+#
+#  print("=============================\nFor Vladimir: ({0})".format(categories[0]))
+#  fns = sorted(c.data.keys())
+#  maxFNLength = str(max([len(i) for i in fns])+2)
+#  for fn in fns:
+#    n = c.data[fn][categories[0]]
+#    toPrint = r"{0:<"+maxFNLength+r"} {1:<20.0f}"
+#    print(toPrint.format(fn,n))
+#  print("=============================")
+#
+#  ######################################################
+#
+#  filenames = glob.glob("input/trk*/gg*.root")
+#  filenames += glob.glob("input/pf*/gg*.root")
+#  categories = ["VBFPresel"]
+#  #mBounds = [110.,160.]
+#  mBounds = [120.,130.]
+#
+#  dirs = {
+#    "input/trkLooseIso/":"Trk Loose Iso",
+#    "input/trkTightIso/":"Trk Tight Iso",
+#    "input/pfLooseIso/":"PF Loose Iso",
+#    "input/pfTightIso/":"PF Tight Iso"
+#  }
+#  sigFileNames = {
+#    "ggHmumu125_8TeV.root":"gg H",
+#    "vbfHmumu125_8TeV.root":"VBF H"
+#  }
+#  bakFileNames = [
+#    "SingleMuRun2012Av1.root",
+#    "SingleMuRun2012Bv1.root",
+#    "SingleMuRun2012Cv1.root",
+#    "SingleMuRun2012Cv2.root"
+#  ]
+#
+#  isoCountsTable = compareDirs(dirs,sigFileNames,bakFileNames,massBoundaries=mBounds)
+#  isoTableFile = open("isoTable.tex",'w')
+#  isoTableFile.write( r"""
+#\documentclass[12pt,a4paper]{article}
+#\usepackage{lscape}
+#\begin{document}
+#%\tiny
+#\small
+#\begin{center}
+#
+#"""
+#  )
+#  isoTableFile.write(isoCountsTable)
+#  isoTableFile.write(     r"""
+#
+#\end{center}
+#\end{document}
+#"""
+#  )
+#  isoTableFile.close()
+#
+#
+#  ######################################################
+  signames = ["ggHmumu125_8TeV.root","vbfHmumu125_8TeV.root","wHmumu125_8TeV.root","zHmumu125_8TeV.root"]
   baknames = [
+    "DYJetsToLL_8TeV.root",
+    "ttbar_8TeV.root"
+  ]
+  datnames = [
     "SingleMuRun2012Av1.root",
+    "SingleMuRun2012Av1Recover.root",
     "SingleMuRun2012Bv1.root",
     "SingleMuRun2012Cv1.root",
-    "SingleMuRun2012Cv2.root"
+    "SingleMuRun2012Cv2.root",
+    "SingleMuRun2012D.root"
   ]
-  signames = ["input/notblind/"+i for i in signames]
-  baknames = ["input/notblind/"+i for i in baknames]
+  signames = ["input/preApproveSample/"+i for i in signames]
+  baknames = ["input/preApproveSample/"+i for i in baknames]
+  datnames = ["input/preApproveSample/"+i for i in datnames]
 
   cutTableFile = open("cutTable.tex",'w')
   cutTableFile.write( r"""
@@ -502,11 +644,9 @@ if __name__ == "__main__":
 
 """
   )
-  inMassWindowTable =  inMassWindowTableMkr(signames,baknames,"IncBDTCut")
-  inMassWindowTableFile.write(r" {\large Not-VBF BDT Cut} \\"+'\n')
-  inMassWindowTableFile.write(inMassWindowTable)
-  inMassWindowTable =  inMassWindowTableMkr(signames,baknames,"VBFBDTCut")
-  inMassWindowTableFile.write(r"\vspace {4em}\\ {\large VBF BDT Cut} \\"+'\n')
+  cats = ["","VBFPresel","IncPresel"]#+["IncPresel"+ i for i in ["BB","BO","BE","OO","OE","EE"]]
+  inMassWindowTable =  inMassWindowTableMkr(signames,baknames,datnames,cats)
+  #inMassWindowTableFile.write(r" {\large Not-VBF BDT Cut} \\"+'\n')
   inMassWindowTableFile.write(inMassWindowTable)
   inMassWindowTableFile.write(     r"""
 \end{center}

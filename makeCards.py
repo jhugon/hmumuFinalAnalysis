@@ -6,6 +6,7 @@ parser.add_argument("--signalInject", help="Inject Signal with Strength into dat
 parser.add_argument("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
 parser.add_argument("--toyData", help="Make Toy Data from PDFs for data_obs",action="store_true",default=False)
 parser.add_argument("--bdtCut", help="Creates Cards with different BDT Cuts",action="store_true",default=False)
+parser.add_argument("--gaussian", help="Use A Gaussian Signal Template with floating width",type=float,default=-1.0)
 parser.add_argument("-m","--higgsMass", help="Use This Higgs Mass",type=float,default=-1.0)
 args = parser.parse_args()
 
@@ -65,34 +66,6 @@ def vetoOutOfBoundsEvents(hist,boundaries=[]):
   for i in range(xbinHigh+1,hist.GetNbinsX()+2):
     hist.SetBinContent(i,0.0)
     hist.SetBinError(i,0.0)
-
-def getRooVars(directory,signalNames,histNameBase,analysis):
-    hist = None
-    is2D = False
-    for name in signalNames:
-      filename = directory+name+".root"
-      histName = histNameBase+analysis
-      #print("file name: {0}".format(filename))
-      #print("hist name: {0}".format(histName))
-      tmpF = root.TFile(filename)
-      hist = tmpF.Get(histName)
-      break
-    if hist.InheritsFrom("TH2"):
-      is2D = True
-
-    x = root.RooRealVar('mMuMu','mMuMu',
-                    hist.GetXaxis().GetXmin(),
-                    hist.GetXaxis().GetXmax()
-                    )
-    if is2D:
-      y = root.RooRealVar('mva','mva',
-                    hist.GetYaxis().GetXmin(),
-                    hist.GetYaxis().GetXmax()
-                    )
-    if is2D:
-      return [x,y]
-    else:
-      return [x]
 
 ###################################################################################
 
@@ -163,16 +136,16 @@ def makePDFBak(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     rooParamList = [voitmZ,voitSig,expParam,mixParam]
     paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
 
-    workspaceImportFn(pdfMmumu)
-    workspaceImportFn(mMuMuRooDataHist)
-    workspaceImportFn(fr)
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(mMuMuRooDataHist)
+      workspaceImportFn(fr)
 
     #Norm Time
     wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
     signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
-    getSidebandString = "mMuMu > 130. || mMuMu < 120."
-    if args.higgsMass> 0.0:
-      getSidebandString = "mMuMu > {0:.1f} || mMuMu < {1:.1f}".format(args.higgsMass+5,args.higgsMass-5)
+    signalRangeList = getRooVarRange(mMuMu,"signal")
+    getSidebandString = "mMuMu < {0} || mMuMu > {1}".format(*signalRangeList)
     nSideband =  mMuMuRooDataHist.sumEntries(getSidebandString)
     nData =  mMuMuRooDataHist.sumEntries()
     bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
@@ -183,16 +156,17 @@ def makePDFBak(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
 
     #mMuMuRooDataHist2 = mMuMuRooDataHist.reduce(root.RooFit.CutRange("low,signal,high"))
     #mMuMuRooDataHist2.SetName("bak_TemplateNoVeryLow")
-    #workspaceImportFn(mMuMuRooDataHist2)
+    #if workspaceImportFn != None:
+    #  workspaceImportFn(mMuMuRooDataHist2)
 
-    ## Debug Time
-    frame = mMuMu.frame()
-    frame.SetName("bak_Plot")
-    mMuMuRooDataHist.plotOn(frame)
-    pdfMmumu.plotOn(frame)
-    canvas = root.TCanvas()
-    frame.Draw()
-    canvas.SaveAs("debug_"+name+channelName+".png")
+#    ## Debug Time
+#    frame = mMuMu.frame()
+#    frame.SetName("bak_Plot")
+#    mMuMuRooDataHist.plotOn(frame)
+#    pdfMmumu.plotOn(frame)
+#    canvas = root.TCanvas()
+#    frame.Draw()
+#    canvas.SaveAs("debug_"+name+channelName+".png")
 
     return paramList, bakNormTup
 
@@ -313,14 +287,14 @@ def makePDFSigCB(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName,f
 
     return paramList, debug, sigInjectDataset
 
-def makePDFSigGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName,forceMean=-1.,sigInject=0):
+def makePDFSigGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName,forceMean=-1.,forceWidth=-1.,sigInject=0):
 
     debug = ""
     debug += "### makePDFSigGaus: "+channelName+": "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
 
     mean = root.RooRealVar(channelName+"_"+name+"_Mean",channelName+"_"+name+"_Mean",125.,100.,150.)
-    width = root.RooRealVar(channelName+"_"+name+"_Width",channelName+"_"+name+"_Width",5.0,0.5,20.0)
+    width = root.RooRealVar(channelName+"_"+name+"_Width",channelName+"_"+name+"_Width",5.0,0.1,20.0)
     pdfMmumu = root.RooGaussian(name,name,mMuMu,mean,width)
     
     mMuMuRooDataHist = root.RooDataHist(name+"_Template",channelName+"_"+name+"_Template",root.RooArgList(mMuMu),hist)
@@ -341,6 +315,8 @@ def makePDFSigGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName
 
     if forceMean > 0.0:
         mean.setVal(forceMean)
+    if forceWidth > 0.0:
+        width.setVal(forceWidth)
 
     ## Error time
 
@@ -422,9 +398,15 @@ class Analysis:
     self.sigHistsRaw = []
     for name in signalNames:
       tmpF = root.TFile(directory+name+".root")
-      tmpH = tmpF.Get(histNameBase+analysis+histNameSuffix)
+      tmpHLoc = histNameBase+analysis+histNameSuffix
+      if tmpHLoc[0] == '/':
+        tmpHLoc = tmpHLoc[1:]
+      tmpH = tmpF.Get(tmpHLoc)
       if bdtCut != None:
-        tmpH1 = tmpF.Get(histNameBase+analysis+"/mDiMu")
+        tmpH1Loc = histNameBase+analysis+"/mDiMu"
+        if tmpH1Loc[0] == '/':
+          tmpH1Loc = tmpH1Loc[1:]
+        tmpH1 = tmpF.Get(tmpH1Loc)
         tmpH1.Reset()
         tmpH = self.getCutHist(tmpH,tmpH1,bdtCut)
         tmpH = tmpH1
@@ -435,9 +417,15 @@ class Analysis:
     self.bakHistsRaw = []
     for name in backgroundNames:
       tmpF = root.TFile(directory+name+".root")
-      tmpH = tmpF.Get(histNameBase+analysis+histNameSuffix)
+      tmpHLoc = histNameBase+analysis+histNameSuffix
+      if tmpHLoc[0] == '/':
+        tmpHLoc = tmpHLoc[1:]
+      tmpH = tmpF.Get(tmpHLoc)
       if bdtCut != None:
-        tmpH1 = tmpF.Get(histNameBase+analysis+"/mDiMu")
+        tmpH1Loc = histNameBase+analysis+"/mDiMu"
+        if tmpH1Loc[0] == '/':
+          tmpH1Loc = tmpH1Loc[1:]
+        tmpH1 = tmpF.Get(tmpH1Loc)
         tmpH1.Reset()
         tmpH = self.getCutHist(tmpH,tmpH1,bdtCut)
         tmpH = tmpH1
@@ -448,9 +436,15 @@ class Analysis:
     self.datHists = []
     for name in dataNames:
       tmpF = root.TFile(directory+name+".root")
-      tmpH = tmpF.Get(histNameBase+analysis+histNameSuffix)
+      tmpHLoc = histNameBase+analysis+histNameSuffix
+      if tmpHLoc[0] == '/':
+        tmpHLoc = tmpHLoc[1:]
+      tmpH = tmpF.Get(tmpHLoc)
       if bdtCut != None:
-        tmpH1 = tmpF.Get(histNameBase+analysis+"/mDiMu")
+        tmpH1Loc = histNameBase+analysis+"/mDiMu"
+        if tmpH1Loc[0] == '/':
+          tmpH1Loc = tmpH1Loc[1:]
+        tmpH1 = tmpF.Get(tmpH1Loc)
         tmpH1.Reset()
         tmpH = self.getCutHist(tmpH,tmpH1,bdtCut)
         tmpH = tmpH1
@@ -462,15 +456,19 @@ class Analysis:
     if SIGUNCON:
       for f in self.sigFiles:
         name = histNameBase+analysis+"/mDiMu"
-        name = name.split("/")
-        tmpDirKey = f.GetKey(name[0]) #Will break in main dir
-        tmpDir = tmpDirKey.ReadObj()
+        tmpDir = None
+        if name[0] == '/':
+            tmpDir = f
+        else:
+          name = name.split("/")
+          tmpDirKey = f.GetKey(name[0]) #Will break in main dir
+          tmpDir = tmpDirKey.ReadObj()
         #tmpDir.Print()
         for key in tmpDir.GetListOfKeys():
-          matchUp = re.match(name[1]+".+Up",key.GetName())
-          matchDown = re.match(name[1]+".+Down",key.GetName())
+          matchUp = re.match('mDiMu'+".+Up",key.GetName())
+          matchDown = re.match('mDiMu'+".+Down",key.GetName())
           if matchUp or matchDown:
-            self.sigErrHistsMap[re.sub(name[1],"",key.GetName())] = []
+            self.sigErrHistsMap[re.sub('mDiMu',"",key.GetName())] = []
         break
       for f in self.sigFiles:
         for sysName in self.sigErrHistsMap:
@@ -577,11 +575,27 @@ class Analysis:
     self.countsBakTotal = self.bakNormTup[0]*self.bakNormTup[1]
 
     self.sigParamListList = []
-    for name, hist in zip(signalNames,self.sigHistsRaw):
+    if args.gaussian > 0.:
+      for name, hist in zip(signalNames,self.sigHistsRaw):
+        sigParams, sigDebug, tmpDS = makePDFSigGaus(name,hist,mMuMu,minMass,maxMass,wImport,analysis+energyStr,forceMean=higgsPeakMean,forceWidth=args.gaussian)
+        self.sigParamListList.append(sigParams)
+        self.debug += sigDebug
+    else:
+      for name, hist in zip(signalNames,self.sigHistsRaw):
         sigParams, sigDebug, tmpDS = makePDFSig(name,hist,mMuMu,minMass,maxMass,wImport,analysis+energyStr,forceMean=higgsPeakMean)
         self.sigParamListList.append(sigParams)
         self.debug += sigDebug
-    if SIGUNCON:
+        
+    if args.gaussian > 0.:
+      for i in self.sigParamListList:
+        for j in i:
+          if "Width" in j.name:
+            j.lowErr = max(j.nominal/2.0,0.75)
+            j.highErr = max(j.nominal/2.0,0.75)
+            print("Adding sig param to list:")
+            print j
+            #self.params.append(j)
+    elif SIGUNCON:
       for name, iSignal, paramsNoErr in zip(signalNames,
             range(len(signalNames)),self.sigParamListList):
         firstHist = True
@@ -1058,25 +1072,28 @@ if __name__ == "__main__":
     for c in categoriesVBF:
         tmpList.append(a+c)
   analyses += tmpList
-  analyses = ["IncPreselPtG10","VBFBDTCut","IncPreselPtG10BB"]
   #analyses = ["IncPreselPtG10BB"]
+  analyses = ["IncPreselPtG10BB"]
   #analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
   combinations = []
   combinationsLong = []
+  """
+  combinations.append((
+        ["IncPresel",""],"SillyTest"
+  ))
   combinations.append((
         ["IncPreselPtG10"+x for x in categoriesInc],"IncPreselCat"
   ))
-  """
   combinations.append((
         ["VBFPresel"]+["IncPreselPtG10"],"BDTCutVBFBDTOnly"
   ))
   combinations.append((
         ["VBFBDTCut"]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))
-  """
   combinations.append((
         ["VBFBDTCut"]+["IncPreselPtG10"+x for x in categoriesInc],"BDTCutCatVBFBDTOnly"
   ))
+  """
 
 #  combinationsLong.append((
 #        ["IncBDTCut","VBFBDTCut"],"BDTCut"
@@ -1107,6 +1124,7 @@ if __name__ == "__main__":
 
   histPostFix="/mDiMu"
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
+  signalNames=["ggHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar"]
   dataDict = {}
   dataDict["8TeV"] = [

@@ -135,12 +135,12 @@ nEventsMap["ZZ_7TeV"] = 3991045
 nEventsMap["WJetsToLNu_7TeV"] =  0.00000001
 nEventsMap["QCD_7TeV"] =  0.00000001
 
-nEventsMap["ggHmumu125_14TeV"] = nEventsMap["ggHmumu125_8TeV"]
-nEventsMap["vbfHmumu125_14TeV"] = nEventsMap["vbfHmumu125_8TeV"]
-nEventsMap["zHmumu125_14TeV"] = nEventsMap["zHmumu125_8TeV"]
-nEventsMap["wHmumu125_14TeV"] = nEventsMap["wHmumu125_8TeV"]
-nEventsMap["DYJetsToLL_14TeV"] = nEventsMap["DYJetsToLL_8TeV"]
-nEventsMap["ttbar_14TeV"] = nEventsMap["ttbar_8TeV"]
+#nEventsMap["ggHmumu125_14TeV"] = nEventsMap["ggHmumu125_8TeV"]
+#nEventsMap["vbfHmumu125_14TeV"] = nEventsMap["vbfHmumu125_8TeV"]
+#nEventsMap["zHmumu125_14TeV"] = nEventsMap["zHmumu125_8TeV"]
+#nEventsMap["wHmumu125_14TeV"] = nEventsMap["wHmumu125_8TeV"]
+#nEventsMap["DYJetsToLL_14TeV"] = nEventsMap["DYJetsToLL_8TeV"]
+#nEventsMap["ttbar_14TeV"] = nEventsMap["ttbar_8TeV"]
 
 backgroundList = [
 #"DYToMuMu",

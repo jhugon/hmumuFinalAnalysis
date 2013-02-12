@@ -684,7 +684,7 @@ if __name__ == "__main__":
             ylimits = [0.,32.]
       elif args.higgsMass:
         if energyStr == "8TeV":
-            ylimits = [0.,25.]
+            ylimits = [0.,15.]
         elif energyStr == "7TeV":
             ylimits = [0.,40.]
         xlabel="m_{H} [GeV/c^{2}]"

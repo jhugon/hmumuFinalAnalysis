@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SIGNALSTRENGTH=10.0
-SIGNALMASS=128
+SIGNALMASS=123
 
 REMOTEDIR=/afs/cern.ch/user/j/jhugon/work/private/stats/CMSSW_5_2_5/stats/
 if ! `ssh lxplus touch $REMOTEDIR/touchfile.txt`; then

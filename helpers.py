@@ -1518,6 +1518,12 @@ def getBinningFromTH1(hist,newName):
   print nbins,xmax,xmin
   return newName,newName,nbins,xmin,xmax
 
+def getRooVarRange(variable,name):
+  assert(variable.InheritsFrom("RooRealVar"))
+  assert(type(name)==str)
+  binning = variable.getBinning(name)
+  return binning.lowBound(), binning.highBound()
+
 def saveAs(canvas,name):
   canvas.SaveAs(name+".png")
   canvas.SaveAs(name+".pdf")
@@ -1541,36 +1547,4 @@ def getBinWidthStr(hist):
 
 if __name__ == "__main__":
 
-  x = numpy.arange(100)
-  y = 0.2*x*x*x+1.2*x*x+3.2*x+6.
-
-  theta = linearChi2(x,y,8,funcName="cheb")
-
-  for i in range(len(theta)):
-    print("Param {}: {:.2f}".format(i,theta[i]))
-
-  f = root.TFile("input/ggHmumu125_8TeV.root")
-  h1 = f.Get("BDTHistMuonOnly")
-  h2 = f.Get("BDTHistMuonOnlyVMass")
-  h2Col = hist2to1CollapseY(h2,[120.,130.])
-  h2Col.SetLineColor(root.kRed)
-  #h1.Draw()
-  #h2Col.Draw("same")
-  h2Col.Draw()
-
-  h1.Print()
-  h2.Print()
-  h2Col.Print()
-  print h1.GetNbinsX()
-  print h2.GetNbinsY()
-  print h2Col.GetNbinsX()
-  print h1.GetXaxis().GetXmax()
-  print h2.GetYaxis().GetXmax()
-  print h2Col.GetXaxis().GetXmax()
-  print h1.GetXaxis().GetXmin()
-  print h2.GetYaxis().GetXmin()
-  print h2Col.GetXaxis().GetXmin()
-  silly = raw_input("Press Enter to continue")
-
-  silly = raw_input("Press Enter to continue")
-
+  print("Running helpers.py")
