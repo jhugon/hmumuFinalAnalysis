@@ -758,8 +758,9 @@ if __name__ == "__main__":
   "IncPreselPtG10":"Non-VBF No Cat.",
         }
     compareData = getData(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
-    comparePlot = ComparePlotTable(compareData,titleMap=tmpMap,vertLine1=False,anotation1=anotation1,anotation2=anotation2)
-    comparePlot.save(outDir+"compareIncCats"+"_"+energyStr)
+    if len(compareData)>0:
+      comparePlot = ComparePlotTable(compareData,titleMap=tmpMap,vertLine1=False,anotation1=anotation1,anotation2=anotation2)
+      comparePlot.save(outDir+"compareIncCats"+"_"+energyStr)
 
     ## VBF v. Inclusive Categories
     
@@ -779,8 +780,9 @@ if __name__ == "__main__":
             veto3.append(i)
     for i in reversed(veto3):
         compareData.pop(i)
-    comparePlot = ComparePlotTable(compareData,titleMap=tmpMap,vertLine1=False,anotation1=anotation1,anotation2=anotation2)
-    comparePlot.save(outDir+"compareFinal"+"_"+energyStr)
+    if len(compareData)>0:
+      comparePlot = ComparePlotTable(compareData,titleMap=tmpMap,vertLine1=False,anotation1=anotation1,anotation2=anotation2)
+      comparePlot.save(outDir+"compareFinal"+"_"+energyStr)
 
     ## All Categories
 
@@ -803,5 +805,6 @@ if __name__ == "__main__":
             veto3.append(i)
     for i in reversed(veto3):
         compareData.pop(i)
-    comparePlot = ComparePlotTable(compareData,titleMap={},vertLine1=False,anotation1=anotation1,anotation2=anotation2)
-    comparePlot.save(outDir+"IncBDTVPresel"+"_"+energyStr)
+    if len(compareData)>0:
+      comparePlot = ComparePlotTable(compareData,titleMap={},vertLine1=False,anotation1=anotation1,anotation2=anotation2)
+      comparePlot.save(outDir+"IncBDTVPresel"+"_"+energyStr)

@@ -40,8 +40,6 @@ BAKUNC = 1.0
 BAKUNCON = True
 SIGUNCON = False
 
-SIGGAUS = True
-
 SIGNALFIT = [110.,140.]
 
 if args.bdtCut:
@@ -177,12 +175,11 @@ def makePDFSigCBPlusGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,chann
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
 
     mean = root.RooRealVar(channelName+"_"+name+"_Mean",channelName+"_"+name+"_Mean",125.,100.,150.)
-    width = root.RooRealVar(channelName+"_"+name+"_Width",channelName+"_"+name+"_Width",1.,0.5,5.0)
-    width2 = root.RooRealVar(channelName+"_"+name+"_Width2",channelName+"_"+name+"_Width2",2.0,1.5,5.0)
-    alpha = root.RooRealVar(channelName+"_"+name+"_Alpha",channelName+"_"+name+"_Alpha",1.0,0.5,2.0)
-    n = root.RooRealVar(channelName+"_"+name+"_n",channelName+"_"+name+"_n",1.5,0.9,5.0)
+    width = root.RooRealVar(channelName+"_"+name+"_Width",channelName+"_"+name+"_Width",5.0,0.5,20.0)
+    width2 = root.RooRealVar(channelName+"_"+name+"_Width2",channelName+"_"+name+"_Width2",5.0,0.1,20.0)
+    alpha = root.RooRealVar(channelName+"_"+name+"_Alpha",channelName+"_"+name+"_Alpha",1.0,0.1,10.0)
+    n = root.RooRealVar(channelName+"_"+name+"_n",channelName+"_"+name+"_n",1.0,0.1,10.0)
     mix = root.RooRealVar(channelName+"_"+name+"_mix",channelName+"_"+name+"_mix",0.5,0.0,1.0)
-    #mix = root.RooRealVar(channelName+"_"+name+"_mix",channelName+"_"+name+"_mix",0.33)
     cb = root.RooCBShape(name+"_CB",name+"_CB",mMuMu,mean,width,alpha,n)
     gaus = root.RooGaussian(name+"_Gaus",name+"_Gaus",mMuMu,mean,width2)
     pdfMmumu = root.RooAddPdf(name,name,cb,gaus,mix)
@@ -1056,7 +1053,6 @@ if __name__ == "__main__":
   directory = "input/preApproveSample/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
@@ -1073,27 +1069,24 @@ if __name__ == "__main__":
         tmpList.append(a+c)
   analyses += tmpList
   #analyses = ["IncPreselPtG10BB"]
-  analyses = ["IncPreselPtG10BB"]
+  analyses = ["VBFBDTCut"]
   #analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
   combinations = []
   combinationsLong = []
-  """
-  combinations.append((
-        ["IncPresel",""],"SillyTest"
-  ))
   combinations.append((
         ["IncPreselPtG10"+x for x in categoriesInc],"IncPreselCat"
   ))
+  """
   combinations.append((
         ["VBFPresel"]+["IncPreselPtG10"],"BDTCutVBFBDTOnly"
   ))
   combinations.append((
         ["VBFBDTCut"]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
   ))
+  """
   combinations.append((
         ["VBFBDTCut"]+["IncPreselPtG10"+x for x in categoriesInc],"BDTCutCatVBFBDTOnly"
   ))
-  """
 
 #  combinationsLong.append((
 #        ["IncBDTCut","VBFBDTCut"],"BDTCut"
@@ -1124,7 +1117,6 @@ if __name__ == "__main__":
 
   histPostFix="/mDiMu"
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
-  signalNames=["ggHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar"]
   dataDict = {}
   dataDict["8TeV"] = [
