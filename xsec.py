@@ -15,9 +15,6 @@ lumiDict["7TeV"] = 5.05 #2011AB
 #LUMI=2.311 #2011A
 #LUMI=2.739 #2011B
 
-scaleHiggsBy = 1.0
-#scaleHiggsBy = 10.0
-
 brDict = helpers.readCSVXS("etc/br.csv")
 ggHDict8 = helpers.readCSVXS("etc/ggH_8TeV.csv")
 vbfHDict8 = helpers.readCSVXS("etc/vbfH_8TeV.csv")

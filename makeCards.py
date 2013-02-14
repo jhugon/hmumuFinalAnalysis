@@ -47,9 +47,6 @@ if args.bdtCut:
 
 from xsec import *
 
-if scaleHiggsBy != 1.0:
-  print("Error: higgs xsec is scaled!!! Return to 1. Exiting.")
-  sys.exit(1)
 def vetoOutOfBoundsEvents(hist,boundaries=[]):
   xbinLow = None
   xbinHigh = None
@@ -147,7 +144,10 @@ def makePDFBak(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     nSideband =  mMuMuRooDataHist.sumEntries(getSidebandString)
     nData =  mMuMuRooDataHist.sumEntries()
     bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
-    print("Gets Bak Norm Assuming Signal region is: {0} GeV, off by: {1:%}".format(getSidebandString,(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+    if nData > 0:
+      print("Gets Bak Norm Assuming Signal region is: {0} GeV, off by: {1:%}".format(getSidebandString,(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+    else:
+      print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
     mMuMu.Print()
     #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
     #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
@@ -377,7 +377,6 @@ class Analysis:
     maxMass = controlRegionHigh[1]
     minMass = controlRegionLow[0]
     mMuMu = root.RooRealVar("mMuMu","mMuMu",minMass,maxMass)
-    minMass = controlRegionLow[0]
     #mMuMu.setRange("z",88,94)
     #mMuMu.setRange("verylow",controlRegionVeryLow[0],controlRegionVeryLow[1])
     mMuMu.setRange("low",controlRegionLow[0],controlRegionLow[1])
@@ -659,10 +658,18 @@ class Analysis:
       self.dataCountsTotal = int(toyDataHist.sumEntries())
       wImport(toyDataHist)
     elif self.dataCountsTotal is None:
-      bakData = self.workspace.data("bak_Template")
-      obsData = bakData.Clone("data_obs")
-      self.dataCountsTotal = int(obsData.sumEntries())
-      obsData.SetTitle("MC Full-Sim Data")
+      bakDataTH1 = self.bakHistTotal.Clone("bak_Template"+str(random.randint(0,10000)))
+      bakDataTH1 = shrinkTH1(bakDataTH1,minMass,maxMass)
+      for i in range(bakDataTH1.GetNbinsX()+2):
+        binCenter = bakDataTH1.GetXaxis().GetBinCenter(i)
+        contentInt = int("{0:.0f}".format(bakDataTH1.GetBinContent(i)))
+        bakDataTH1.SetBinContent(i,0.0)
+        bakDataTH1.SetBinError(i,0.0)
+        for j in range(contentInt):
+          bakDataTH1.Fill(binCenter)
+      self.dataCountsTotal = int(bakDataTH1.Integral())
+      obsData = root.RooDataHist("data_obs","MC Full-Sim Data",root.RooArgList(mMuMu),bakDataTH1)
+      print "counts: {} obsData: {}".format(self.dataCountsTotal,obsData.sumEntries())
       wImport(obsData)
       self.bakHistTotal.SetName("data_obs_"+analysis)
       #degubf = root.TFile("debug.root","recreate")
@@ -1068,17 +1075,19 @@ if __name__ == "__main__":
     for c in categoriesVBF:
         tmpList.append(a+c)
   analyses += tmpList
-  #analyses = ["IncPreselPtG10BB"]
-  analyses = ["VBFBDTCut","IncPreselPtG10"]
   analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
+  analyses = ["VBFBDTCut","IncPreselPtG10"]
+  analyses = []
   combinations = []
   combinationsLong = []
+  """
   combinations.append((
         ["IncPreselPtG10"+x for x in categoriesInc],"IncPreselCat"
   ))
   combinations.append((
         ["VBFPresel"]+["IncPreselPtG10"],"BDTCutVBFBDTOnly"
   ))
+  """
   combinations.append((
         ["VBFBDTCut"]+["IncPreselPtG10"+x for x in categoriesInc],"BDTCutCatVBFBDTOnly"
   ))
@@ -1097,12 +1106,12 @@ if __name__ == "__main__":
   #combinationsBDTCut.append((
   #  ["IncPresel"],"IncBDTCut",0.025,-0.7,-0.25,"BDTHistMuonOnlyVMass"
   #))
-  combinationsBDTCut.append((
-    ["IncPresel"],"IncPtCut",1.0,0.0,20.0,"ptVmDiMu"
-  ))
   #combinationsBDTCut.append((
-  #  ["VBFPresel"],"VBFBDTCut",0.05,-0.3,0.1,"BDTHistVBFVMass"
+  #  ["IncPresel"],"IncPtCut",1.0,0.0,20.0,"ptVmDiMu"
   #))
+  combinationsBDTCut.append((
+    ["VBFPresel"],"VBFBDTCut",0.01,-0.2,0.2,"BDTHistVBFVMass"
+  ))
   #combinationsBDTCut.append((
   #  ["IncPresel"+x for x in categoriesInc],"IncBDTCutCat",0.025,-0.7,-0.35,"BDTHistMuonOnlyVMass"
   #))

@@ -1280,16 +1280,18 @@ class PlotOfSlices:
       xBin += 1
     leg.Draw("same")
 
-def getIntegralHist(hist,setErrors=False):
+def getIntegralHist(hist,setErrors=True):
   result = hist.Clone(hist.GetName()+"_Integral")
   nBins = result.GetNbinsX()
   for i in range(nBins+1):
-    tmpSum = 0.0
+    sumw = 0.0
+    sumw2 = 0.0
     for j in range(i,nBins+2):
-      tmpSum += result.GetBinContent(j)
-    result.SetBinContent(i,tmpSum)
+      sumw += result.GetBinContent(j)
+      sumw2 += (result.GetBinError(j))**2
+    result.SetBinContent(i,sumw)
     if setErrors:
-        result.SetBinError(i,tmpSum**0.5)
+        result.SetBinError(i,sumw2**0.5)
   return result
 
 def hist2to1(hist):
@@ -1476,9 +1478,11 @@ def sqrtTH1(hist):
   nBins = hist.GetNbinsX()
   for i in range(nBins+2):
     n = hist.GetBinContent(i)
+    nErr = hist.GetBinError(i)
     if n < 0.0:
       n = 0.0
     hist.SetBinContent(i,sqrt(n))
+    hist.SetBinError(i,sqrt(nErr))
 
 class CrossSecsErrs:
   def __init__(self,csvDict):

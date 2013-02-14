@@ -278,6 +278,8 @@ class RelativePlot:
     twoSigGraph.GetYaxis().SetTitle(ylabel)
     if len(ylimits)==2:
         twoSigGraph.GetYaxis().SetRangeUser(*ylimits)
+    if len(xlimits)==2:
+        twoSigGraph.GetXaxis().SetRangeUser(*xlimits)
     oneSigGraph.Draw("3")
     expGraph.Draw("l")
     oneGraph.Draw("l")
@@ -666,11 +668,13 @@ if __name__ == "__main__":
     legend.SetLineColor(0)
     for plotName in plots:
       data = getData(dirName+plotName+"_"+energyStr+"_*.txt.out")
+      xlimits = []
       if len(data)<=1:
         continue
       xlabel="Integrated Luminosity [fb^{-1}]"
       caption3 = ""
       if args.bdtCut:
+        xlimits = [-0.4,0.25]
         xlabel="BDT Discriminant Cut"
         match = re.match(r"([^0-9.]*)([0-9.]*)",plotName)
         assert(match)
@@ -692,7 +696,7 @@ if __name__ == "__main__":
       #elif period == "14TeV":
       #  title = "Standard Model H#rightarrow#mu#mu"
       title = titleMap[plotName]
-      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStrWrite,xlabel=xlabel,caption3=caption3,showObs=args.higgsMass)
+      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStrWrite,xlabel=xlabel,caption3=caption3,showObs=args.higgsMass,xlimits=xlimits)
       saveAs(canvas,outDir+plotName+"_"+energyStr)
 
     if args.bdtCut:

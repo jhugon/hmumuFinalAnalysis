@@ -7,10 +7,10 @@ import os
 import sys
 import random
 
-dataDir = "input/freezeSample/"
+dataDir = "input/preApproveSample//"
 outDir = "output/"
 
-RUNPERIOD="8TeV"
+RUNPERIOD="7TeV"
 LUMI=lumiDict[RUNPERIOD]
 
 LOGY=True
@@ -26,34 +26,38 @@ lcLegendPos = [0.46,0.35,0.64,0.63]
 llLegendPos = [0.20,0.35,0.4,0.63]
 ccLegendPos = [0.46,0.47,0.64,0.7]
 stdLegendPos = urLegendPos
+drawStr = "hist"
+drawStr = "E1"
 
-histDirs = ["VBFPresel/","IncPresel/"]
+histDirs = ["VBFPresel/"]
 
 root.gErrorIgnoreLevel = root.kWarning
 
 histNames = {}
 if RUNPERIOD == "8TeV":
-  histNames["BDTHistMuonOnlyVMass"] = {"xlabel":"BDT Cut (Non-VBF Category)","xlimits":[-1.,0.1],
-                                        'ylimits':[1e-6,10.0],
-                                        'ylimitsSqrt':[1e-3,10],
-                                'vertLines':{"8TeV":-0.55,"7TeV":-0.42 },
-                                        "rebin":1}
-  histNames["BDTHistVBFVMass"] = {"xlabel":"BDT Cut (VBF Category)","xlimits":[-0.5,0.3],
-                                        'ylimits':[1e-6,100.0],
-                                        'ylimitsSqrt':[1e-2,1.0],
+  #histNames["BDTHistMuonOnlyVMass"] = {"xlabel":"BDT Cut (Non-VBF Category)","xlimits":[-1.,0.1],
+  #                                      'ylimits':[1e-6,10.0],
+  #                                      'ylimitsSqrt':[1e-3,10],
+  #                              'vertLines':{"8TeV":-0.55,"7TeV":-0.42 },
+  #                                      "rebin":1}
+  histNames["BDTHistVBFVMass"] = {"xlabel":"BDT Cut (VBF Category)","xlimits":[-0.4,0.25],
+                                        'ylimits':[1e-3,1.0],
+                                        'ylimitsSqrt':[1e-3,1.0],
+                                        'ylimitsSqr':[1e-5,1.0],
                                 'vertLines':{"8TeV":-0.04,"7TeV":-0.03},
-                                        "rebin":1}
+                                        "rebin":4}
 if RUNPERIOD == "7TeV":
-  histNames["BDTHistMuonOnlyVMass"] = {"xlabel":"BDT Cut (Non-VBF Category)","xlimits":[-0.55,0.2],
-                                        'ylimits':[1e-6,10.0],
-                                        'ylimitsSqrt':[1e-3,10],
-                                'vertLines':{"8TeV":-0.55,"7TeV":-0.42 },
-                                        "rebin":1}
-  histNames["BDTHistVBFVMass"] = {"xlabel":"BDT Cut (VBF Category)","xlimits":[-0.3,0.4],
+#  histNames["BDTHistMuonOnlyVMass"] = {"xlabel":"BDT Cut (Non-VBF Category)","xlimits":[-0.55,0.2],
+#                                        'ylimits':[1e-6,10.0],
+#                                        'ylimitsSqrt':[1e-3,10],
+#                                'vertLines':{"8TeV":-0.55,"7TeV":-0.42 },
+#                                        "rebin":1}
+  histNames["BDTHistVBFVMass"] = {"xlabel":"BDT Cut (VBF Category)","xlimits":[-0.4,0.25],
                                         'ylimits':[1e-6,100.0],
                                         'ylimitsSqrt':[1e-2,1.0],
+                                        'ylimitsSqr':[1e-5,1.0],
                                 'vertLines':{"8TeV":-0.04,"7TeV":-0.03},
-                                        "rebin":1}
+                                        "rebin":4}
 
 tlatex = root.TLatex()
 tlatex.SetNDC()
@@ -98,6 +102,7 @@ class Dataset:
     self.filename = filename
     self.legendEntry = legendEntry
     self.color = color
+    self.color = root.kBlue
     self.scaleFactor = scaleFactor
 
     self.rootFile = root.TFile(filename)
@@ -128,6 +133,7 @@ class Dataset:
       if histNames[name].has_key("rebin"):
         tmp.Rebin(histNames[name]["rebin"])
       tmp.SetLineColor(self.color)
+      tmp.SetFillColor(self.color)
       tmp.Scale(self.scaleFactor)
       self.hists[prefix+name] = tmp
 
@@ -160,7 +166,7 @@ for i in signalList:
       filename = dataDir+i+".root"
       if not os.path.exists(filename):
           continue
-      tmp = Dataset(filename,getLegendEntry(i),getColor(i),scaleFactors[i]/scaleHiggsBy,isSignal=True)
+      tmp = Dataset(filename,getLegendEntry(i),getColor(i),scaleFactors[i],isSignal=True)
       if tmp.isZombie():
         print ("Warning: file for dataset {0} is Zombie!!".format(i))
         continue
@@ -242,9 +248,19 @@ for histName in bkgDatasetList[0].hists:
   for i in sigHistList:
     sigIntHistList.append(getIntegralHist(i))
 
+  # Makes all together
+  sumSigIntHist = None
+  for i in sigIntHistList:
+    if sumSigIntHist == None:
+        sumSigIntHist = i.Clone("SigIntHistAll")
+    else:
+        sumSigIntHist.Add(i)
+  sigIntHistList = [sumSigIntHist]
+
   sobHistList = []
   for hist in sigIntHistList:
     hist2 = hist.Clone("sob_"+hist.GetName())
+    hist2.SetMarkerStyle(0)
     hist2.SetTitle('')
     hist2.GetXaxis().SetTitle(histNames[histName]['xlabel'])
     hist2.GetXaxis().SetRangeUser(*histNames[histName]['xlimits'])
@@ -256,14 +272,14 @@ for histName in bkgDatasetList[0].hists:
   drawn = False
   for sig in sobHistList:
     if drawn:
-      sig.Draw("hist same")
+      sig.Draw(drawStr+" same")
     else:
-      sig.Draw("hist")
+      sig.Draw(drawStr)
       drawn = True
 
   drawLatex()
   setLegPos(leg,(ulLegendPos))
-  leg.Draw()
+  #leg.Draw()
 
   vertLine = None
   if histNames[histName].has_key("vertLines"):
@@ -290,6 +306,7 @@ for histName in bkgDatasetList[0].hists:
     tmpBakHist.Add(hist2)
     sqrtTH1(tmpBakHist)
     hist2.Divide(tmpBakHist)
+    hist2.SetMarkerStyle(0)
     hist2.SetTitle('')
     hist2.GetXaxis().SetTitle(histNames[histName]['xlabel'])
     hist2.GetYaxis().SetTitle("S/#sqrt{S+B}")
@@ -300,14 +317,14 @@ for histName in bkgDatasetList[0].hists:
   drawn = False
   for sig in sosqrtbHistList:
     if drawn:
-      sig.Draw("hist same")
+      sig.Draw(drawStr+" same")
     else:
-      sig.Draw("hist")
+      sig.Draw(drawStr)
       drawn = True
 
   drawLatex()
   setLegPos(leg,(ulLegendPos))
-  leg.Draw()
+  #leg.Draw()
 
   vertLine = None
   if histNames[histName].has_key("vertLines"):
@@ -319,3 +336,55 @@ for histName in bkgDatasetList[0].hists:
 
   saveAs(canvas,outDir+"sosqrtb_"+saveName+"_"+RUNPERIOD)
 
+  # Square
+  squareHistList = []
+  sqrtsquareHistList = []
+  for hist in sigIntHistList:
+    hist2 = hist.Clone("ssqrob_"+hist.GetTitle())
+    tmpBakHist = bkgIntHist.Clone("tmpBakInt"+str(random.randint(0,1000)))
+    tmpBakHist.Add(hist2)
+    hist2.Multiply(hist2)
+    hist2.Divide(tmpBakHist)
+    hist2.SetMarkerStyle(0)
+    hist2.SetTitle('')
+    hist2.GetXaxis().SetTitle(histNames[histName]['xlabel'])
+    hist2.GetYaxis().SetTitle("#frac{S^{2}}{S+B}")
+    hist2.GetXaxis().SetRangeUser(*histNames[histName]['xlimits'])
+    hist2.GetYaxis().SetRangeUser(*histNames[histName]['ylimitsSqr'])
+    squareHistList.append(hist2)
+    sqrtsquareHist = hist2.Clone("sqrtsquare_"+hist.GetTitle())
+    sqrtTH1(sqrtsquareHist)
+    sqrtsquareHist.GetYaxis().SetTitle("#sqrt{#frac{S^{2}}{S+B}}")
+    sqrtsquareHist.GetYaxis().SetRangeUser(*histNames[histName]['ylimitsSqrt'])
+    sqrtsquareHistList.append(sqrtsquareHist)
+  
+  drawn = False
+  for sig in squareHistList:
+    if drawn:
+      sig.Draw(drawStr+" same")
+    else:
+      sig.Draw(drawStr)
+      drawn = True
+
+  drawLatex()
+  setLegPos(leg,(ulLegendPos))
+  #leg.Draw()
+
+  vertLine = None
+  if histNames[histName].has_key("vertLines"):
+    vertLineX = histNames[histName]["vertLines"][RUNPERIOD]
+    vertLine = root.TLine()
+    vertLine.SetLineColor(root.kRed+1)
+    vertLine.SetLineWidth(3)
+    vertLine.DrawLine(vertLineX,squareHistList[0].GetMinimum(),vertLineX,squareHistList[0].GetMaximum())
+
+  saveAs(canvas,outDir+"ssqrob_"+saveName+"_"+RUNPERIOD)
+
+  drawn = False
+  for sig in sqrtsquareHistList:
+    if drawn:
+      sig.Draw(drawStr+" same")
+    else:
+      sig.Draw(drawStr)
+      drawn = True
+  saveAs(canvas,outDir+"sqrtsquare_"+saveName+"_"+RUNPERIOD)

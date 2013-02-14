@@ -63,7 +63,7 @@ class ShapePlotter:
     self.fillStyles = [3004,3005,3003,3006,3007]
     #self.pullType = "adrian1"
     #self.pullType = "ratio"
-    self.pullType = "pull"
+    self.pullType = "pullMC"
 
     self.canvas = root.TCanvas()
 
@@ -100,10 +100,21 @@ class ShapePlotter:
             tmpRebin *= 5
         else:
           tmpRebin *= 5
+      elif "BO" in channelName:
+          tmpRebin *= 4
+      elif "BE" in channelName:
+          tmpRebin *= 5
+      elif "OO" in channelName:
+          tmpRebin *= 5
       elif "OE" in channelName:
-          tmpRebin *= 4
+          tmpRebin *= 5
       elif "EE" in channelName:
+          tmpRebin *= 5
+      elif "BB" in channelName:
+        if self.energyStr == "7TeV":
           tmpRebin *= 4
+        else:
+          tmpRebin *= 2
       else:
           tmpRebin *= 2
       if tmpRebin != 1:
