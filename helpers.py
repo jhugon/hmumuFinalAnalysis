@@ -535,7 +535,7 @@ def makeWeightHist(f1,canvas,leg):
   leg.Draw("same")
 
 class DataMCStack:
-  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",ylimits=[],ylimitsRatio=[],pullType="",doMCErrors=False):
+  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",ylimits=[],ylimitsRatio=[],pullType="",doMCErrors=False,showPullStats=False):
     nBinsX = dataHist.GetNbinsX()
     self.nBinsX = nBinsX
     self.dataHist = dataHist
@@ -604,6 +604,7 @@ class DataMCStack:
         self.KSProb = 0.0
 
     # Make Pull Hist
+    self.pullList = []
     self.pullHist = dataHist.Clone("pullHist"+dataHist.GetName())
     self.pullHist.Reset()
     self.oneGraph = root.TGraph()
@@ -640,6 +641,14 @@ class DataMCStack:
       else:
         self.pullHist.SetBinContent(i,pull)
         #print("nData: %f, nMC: %f, error: %f, pull: %f" % (nData,nMC,error,pull))
+      #pullDistribution
+      if pullType == "pullMC":
+        if errorMC != 0.0:
+          self.pullList.append((nData -nMC)/errorMC)
+      else:
+        if error != 0.0:
+          self.pullList.append((nData -nMC)/error)
+    #print getattr(self,"getPullDistributionParams")(self.pullList)
 
     #Find Maximum y-value
     if xlimits != []:
@@ -800,6 +809,28 @@ class DataMCStack:
     canvas.cd()
     self.tlatex.DrawLatex(0.33,0.96,PRELIMINARYSTRING)
     self.tlatex.DrawLatex(0.75,0.96,"#sqrt{{s}}={0}, L={1:.1f} fb^{{-1}}".format(energyStr,lumi))
+
+  def getPullDistributionParams(self,pullList):
+    pull = root.RooRealVar("pull","pull",-20,20)
+    mean = root.RooRealVar("mean","pull Mean",0.0,-20,20)
+    sigma = root.RooRealVar("sigma","pull sigma",1.0,0.01,20)
+    self.pullGaus = root.RooGaussian("pullGaus","pullGaus",pull,mean,sigma)
+    self.pullDS = root.RooDataSet("pullDS","pullDS",root.RooArgSet(pull))
+    for i in pullList:
+      pull.setVal(i)
+      self.pullDS.add(root.RooArgSet(pull))
+    self.pullFR = self.pullGaus.fitTo(self.pullDS,PRINTLEVEL)
+    self.pullMean = mean
+    self.pullSigma = sigma
+    meanStr = "<Pull> = {0:.2f} #pm {1:.2f}".format(mean.getVal(), mean.getError())
+    sigmaStr = "#sigma(Pull) = {0:.2f} #pm {1:.2f}".format(sigma.getVal(), sigma.getError())
+
+    frame = pull.frame(root.RooFit.Bins(20))
+    self.pullDS.plotOn(frame)
+    self.pullGaus.plotOn(frame)
+    frame.Draw()
+    self.canvas.SaveAs("pullDist"+self.dataHist.GetName()+".png")
+    return meanStr, sigmaStr
 
 class CompareTwoHists:
   def __init__(self, hist1,hist2, canvas, xtitle, ytitle="Events",nDivX=7,nDivPullY=5,xlimits=[],ylimits=[],pullHistRangeY=[0.0,2.0],isPreliminary=True,is7TeV=False,lumi=5.0):
