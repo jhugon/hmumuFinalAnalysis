@@ -491,6 +491,9 @@ class ComparePlotTable:
     #ax1.set_yticklabels(tuple(xLabels),size="medium")
     ax1.set_yticklabels(tuple(['' for i in xLabels]))
     getattr(self,'writeTickLabels')()
+    if args.signalInject > 0.0:
+      ax1.text(xmax/2.0,len(medians)-1.25, r"Signal Injected: {0:.1f}$\times$ SM".format(args.signalInject),
+                    va="center",ha='center',size=30.,color='r')
   def writeObsCircles(self):
     self.obsPoints = self.ax1.plot(self.obs,self.xPosObs,marker="o",color="r",markersize=15,linestyle="None",markeredgecolor='r')
   def writeObsLines(self):

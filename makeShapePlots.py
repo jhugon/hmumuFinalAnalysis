@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 
+
+import argparse
+parser = argparse.ArgumentParser(description="Makes Shape Diagnostic Plots from Datacards")
+parser.add_argument("--signalInject", help="Sets a caption saying that signal was injected with strength",type=float,default=0.0)
+parser.add_argument("--plotSignalStrength", help="Plots a signal bump with this strength",type=float,default=8.0)
+parser.add_argument("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
+args = parser.parse_args()
+
 from helpers import *
 from xsec import *
 import math
@@ -47,12 +55,16 @@ def getGraphIntegral(graph):
   return result
 
 class ShapePlotter:
-  def __init__(self,filename,outDir,titleMap,rebin=1,doSignalScaling=True,xlimits=[],normRange=[]):
+  def __init__(self,filename,outDir,titleMap,rebin=1,doSignalScaling=True,xlimits=[],normRange=[],signalInject=0.0,plotSignalStrength=8.0):
+    self.signalInject=signalInject
+    self.plotSignalStrength=plotSignalStrength
     self.histList = []
     self.padList = []
     self.pullsList = []
     self.legList = []
     self.modelLines = []
+    self.signalNormParamList = []
+    self.signalPlusBakGraphList = []
     self.titleMap = titleMap
     self.filename = filename
     self.xlimits = xlimits
@@ -86,7 +98,9 @@ class ShapePlotter:
       channelWS = channelKey.ReadObj()
       mMuMu = channelWS.var("mMuMu")
       mMuMu.setRange("makeShapePlotRange",self.xlimits[0],self.xlimits[1])
-      mMuMu.setRange("makeShapeNormRange",self.normRange[0],self.normRange[1])
+      mMuMu.setRange("makeShapeNormRange",self.normRange[0],self.normRange[3])
+      mMuMu.setRange("makeShapeNormRange1",self.normRange[0],self.normRange[1])
+      mMuMu.setRange("makeShapeNormRange2",self.normRange[2],self.normRange[3])
       mMuMu.setRange("makeShapeSignalRange",110.,140.)
       bakPDF = channelWS.pdf("bak")
       data_obs = channelWS.data("data_obs")
@@ -118,14 +132,21 @@ class ShapePlotter:
       else:
           tmpRebin *= 2
       if tmpRebin != 1:
+        realName = data_obs.GetName()
+        data_obs.SetName(realName+str(random.randint(0,1000)))
         tmpHist = data_obs.createHistogram("mMuMu")
         tmpHist.Rebin(tmpRebin)
-        data_obs =  root.RooDataHist(data_obs.GetName(),data_obs.GetTitle(),
+        data_obs =  root.RooDataHist(realName,data_obs.GetTitle(),
                                                             root.RooArgList(mMuMu),tmpHist)
-
       #Data Time
+
+      sigPlusBakPDFGraph = None
+      if plotSignalStrength>0.:
+        sigPlusBakPDFGraph = getattr(self,"makeSigPlusBakPDF")(channelWS,mMuMu,data_obs,
+                                                self.processNameMap[channelNameOrig],plotSignalStrength
+                                    )
       dataGraph, bakPDFGraph, pullsGraph,chi2 = getattr(self,"makeTGraphs")(bakPDF,data_obs,mMuMu)
-      pullsDistribution = getattr(self,"draw")(channelName,dataGraph,bakPDFGraph,pullsGraph,chi2,rooDataTitle)
+      pullsDistribution = getattr(self,"draw")(channelName,dataGraph,bakPDFGraph,pullsGraph,chi2,rooDataTitle,sigPlusBakPDFGraph)
       saveName = outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName
       saveName = re.sub(r"([\d]+)\.[\d]+",r"\1",saveName)
       saveAs(self.canvas,saveName)
@@ -287,11 +308,14 @@ class ShapePlotter:
       ratio = 0.0
       err = sqrt(histY)
       errMC = sqrt(curveY)
-      if  histY != 0.0:
-        if doMCErr:
-          ratio = (histY-curveY)/errMC
-        else:
-          ratio = (histY-curveY)/err
+      if doMCErr:
+        if  errMC == 0.0:
+          continue
+        ratio = (histY-curveY)/errMC
+      else:
+        if  err == 0.0:
+          continue
+        ratio = (histY-curveY)/err
       ratioPlot.SetPoint(i,histX,ratio)
     return ratioPlot
 
@@ -506,7 +530,7 @@ class ShapePlotter:
     tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.825,"#mu = {0:.2f} #pm {1:.2f}".format(mean,meanErr))
     tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.775,"#sigma = {0:.2f} #pm {1:.2f}".format(sigma,sigmaErr))
 
-  def draw(self,channelName,data,model,pulls,chi2,rooDataTitle):
+  def draw(self,channelName,data,model,pulls,chi2,rooDataTitle,sigPlusBakPDF=None):
       drawXLimits = self.xlimits
       isSignalMC = False
       pullType = self.pullType
@@ -651,7 +675,7 @@ class ShapePlotter:
       dataHist.GetYaxis().SetTitle(("Events/{0} GeV/c^{{2}}").format(binWidth))
       dataHist.GetYaxis().SetTitleSize(gStyle.GetTitleSize("Y")*canvasToPad1FontScalingFactor)
       dataHist.GetYaxis().SetLabelSize(gStyle.GetLabelSize("Y")*canvasToPad1FontScalingFactor)
-      dataHist.GetYaxis().SetTitleOffset(0.9*gStyle.GetTitleOffset("Y"))
+      dataHist.GetYaxis().SetTitleOffset(0.8*gStyle.GetTitleOffset("Y"))
       dataHist.GetXaxis().SetLabelOffset(0.70)
       dataHist.GetXaxis().SetTitle("m_{#mu#mu} [GeV/c^{2}]")
       #dataHist.GetXaxis().SetRangeUser(*drawXLimits)
@@ -661,6 +685,8 @@ class ShapePlotter:
       copyGraphNoErrs(model,modelLine)
       model.Draw("3")
       model.SetFillStyle(1001)
+      if sigPlusBakPDF != None:
+        sigPlusBakPDF.Draw("l")
       modelLine.Draw("l")
       dataHist.Draw("same")
       pad1.Update()
@@ -697,7 +723,7 @@ class ShapePlotter:
         pullHist.GetYaxis().SetRangeUser(-1.5,1.5)
       else:
         pullHist.GetYaxis().SetTitle("#frac{"+dataLabel+"-Fit}{#sigma_{"+dataLabel+"}}")
-        pullHist.GetYaxis().SetRangeUser(-3,3)
+        pullHist.GetYaxis().SetRangeUser(-5,5)
         if pullType=="ratio":
           pullHist.GetYaxis().SetTitle("#frac{"+dataLabel+"}{Fit}")
           pullHist.GetYaxis().SetRangeUser(0,2)
@@ -714,7 +740,7 @@ class ShapePlotter:
       pullHist.GetYaxis().SetLabelSize(0.045*pad1ToPad2FontScalingFactor)
       pullHist.GetYaxis().CenterTitle(1)
       pullHist.GetXaxis().SetTitleOffset(0.75*pullHist.GetXaxis().GetTitleOffset())
-      pullHist.GetYaxis().SetTitleOffset(0.70)
+      pullHist.GetYaxis().SetTitleOffset(0.65)
 
       pullHist.GetXaxis().SetLabelSize(gStyle.GetLabelSize("X")*canvasToPad2FontScalingFactor)
 
@@ -751,7 +777,8 @@ class ShapePlotter:
       leg.SetLineColor(0)
       leg.AddEntry(dataHist,dataLabel,"pe")
       leg.AddEntry(model,"Fit","lf")
-      #leg.AddEntry(combinedSigErrorGraph,"SM Higgs #times {0:.1f}".format(self.limit),"lf")
+      if self.plotSignalStrength>0.0:
+        leg.AddEntry(sigPlusBakPDF,"SM Higgs #times {0:.1f}".format(self.plotSignalStrength),"l")
       leg.Draw()
 
       tlatex = root.TLatex()
@@ -771,12 +798,76 @@ class ShapePlotter:
         tlatex.SetTextAlign(32)
         tlatex.DrawLatex(legPos[0]-0.01,0.820,self.lumiStr)
         tlatex.DrawLatex(legPos[0]-0.01,0.875,"#sqrt{s}="+self.energyStr)
+        if self.signalInject>0.0:
+          tlatex.SetTextColor(root.kRed)
+          tlatex.DrawLatex(legPos[0]-0.01,0.760,"{0:.0f} #times SM Signal Injection ".format(self.signalInject))
 
       self.padList.extend([pad1,pad2])
       self.pullsList.append(pulls)
       self.legList.append(leg)
 
       return pullDistribution 
+
+  def makeSigPlusBakPDF(self,workspace,mMuMu,data_obs,rateMap,r):
+    r = float(r)
+    bakPDF = workspace.pdf("bak")
+    bakN = rateMap['bak']
+    sigNames = []
+    for i in rateMap:
+      if i != "bak":
+        sigNames.append(i)
+    sigNames.sort()
+    signalPDFs = [workspace.pdf(i) for i in sigNames]
+    signalNs = [rateMap[i]*r for i in sigNames]
+    signalNTotal = sum(signalNs)
+    allNTotal = bakN+signalNTotal
+    signalNormParams = []
+    for sigName, sigN in zip(sigNames,signalNs):
+      signalNormParams.append(root.RooRealVar("normParam_"+sigName,"normParam_"+sigName,
+                                            float(sigN)/allNTotal
+                                            )
+                                )
+    addPDFList = signalPDFs+[bakPDF]
+    sigPlusBakPDF = root.RooAddPdf("sigPlusBakPDF","sigPlusBakPDF",
+                                            root.RooArgList(*addPDFList),
+                                            root.RooArgList(*signalNormParams))
+    self.signalNormParamList += signalNormParams
+
+    frame = None
+    if len(self.xlimits) == 2:
+      frame = mMuMu.frame(root.RooFit.Range(*self.xlimits))
+    else:
+      frame = mMuMu.frame()
+    curveNomName = sigPlusBakPDF.GetName()+"_CurveNomSigPBak"
+    curveDataName = data_obs.GetName()+"_CurveSigPBak"
+    rng = root.RooFit.Range("makeShapePlotRange")
+    normRange = root.RooFit.NormRange("makeShapeNormRange1,makeShapeNormRange2")
+    data_obs.plotOn(frame,root.RooFit.Name(curveDataName))
+    sigPlusBakPDF.plotOn(frame,root.RooFit.Name(curveNomName),rng,normRange)
+
+#    sigPlusBakPDF.plotOn(frame,root.RooFit.Components(bakPDF.GetName()),root.RooFit.LineColor(2))
+#    for i, pdf in zip(range(6,10),signalPDFs):
+#      sigPlusBakPDF.plotOn(frame,root.RooFit.Components(pdf.GetName()),root.RooFit.LineColor(i))
+#    self.canvas.cd()
+#    frame.Draw()
+#    self.canvas.SaveAs("debug_SigPlusBakPDFs"+str(random.randint(0,100))+".png")
+#    frame.Print()
+
+    curveNom = frame.findObject(curveNomName)
+    modelGraph = root.TGraph()
+    iPoint = 0
+    xNom = root.Double()
+    yNom = root.Double()
+    for i in range(curveNom.GetN()):
+      curveNom.GetPoint(i,xNom,yNom)
+      modelGraph.SetPoint(iPoint,xNom,yNom)
+      iPoint+=1
+    modelGraph.SetName(curveNom.GetName()+"_TGraph")
+    modelGraph.SetLineColor(root.kRed)
+    self.signalPlusBakGraphList.append(modelGraph)
+
+    return modelGraph
+
 
 titleMap = {
   "AllCat":"All Categories Comb.",
@@ -842,7 +933,7 @@ if __name__ == "__main__":
 
   plotRange= [110.,160]
   #plotRange= []
-  normRange = [110.,160]
+  normRange = [110.,120.,130.,160]
 
   rebin=1
 
@@ -852,5 +943,5 @@ if __name__ == "__main__":
   for fn in glob.glob(dataDir+"BDTCutCat*.root"):
     if re.search("P[\d.]+TeV",fn):
         continue
-    s = ShapePlotter(fn,outDir,titleMap,rebin,xlimits=plotRange,normRange=normRange)
+    s = ShapePlotter(fn,outDir,titleMap,rebin,xlimits=plotRange,normRange=normRange,signalInject=args.signalInject,plotSignalStrength=args.plotSignalStrength)
     shapePlotterList.append(s)

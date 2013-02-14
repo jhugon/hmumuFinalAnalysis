@@ -652,9 +652,9 @@ class Analysis:
     if toyData:
       bakPDF = self.workspace.pdf("bak")
       sigPDFList = [self.workspace.pdf(i) for i in signalNames]
-      toyDataset = bakPDF.generate(root.RooArgSet(mMuMu),self.dataCountsTotal)
+      toyDataset = bakPDF.generate(root.RooArgSet(mMuMu),int(self.dataCountsTotal))
+      doSigInject(toyDataset,sigInject,sigInjectMass)
       toyDataHist = toyDataset.binnedClone("data_obs","Toy Data")
-      doSigInject(toyDataHist,sigInject,sigInjectMass)
       self.dataCountsTotal = int(toyDataHist.sumEntries())
       wImport(toyDataHist)
     elif self.dataCountsTotal is None:
@@ -1077,17 +1077,14 @@ if __name__ == "__main__":
   analyses += tmpList
   analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
   analyses = ["VBFBDTCut","IncPreselPtG10"]
-  analyses = []
   combinations = []
   combinationsLong = []
-  """
   combinations.append((
         ["IncPreselPtG10"+x for x in categoriesInc],"IncPreselCat"
   ))
   combinations.append((
         ["VBFPresel"]+["IncPreselPtG10"],"BDTCutVBFBDTOnly"
   ))
-  """
   combinations.append((
         ["VBFBDTCut"]+["IncPreselPtG10"+x for x in categoriesInc],"BDTCutCatVBFBDTOnly"
   ))
@@ -1207,7 +1204,7 @@ if __name__ == "__main__":
     if len(periods)>1:
         filenameLumi = str(sum([float(lumiDict[p]) for p in periods]))
         if args.higgsMass > 0.0:
-          filenameLumi = args.higgsMass
+          filenameLumi = str(args.higgsMass)
         filenamePeriod = ""
         for p in periods:
           filenamePeriod += re.sub("TeV","P",p)
@@ -1376,12 +1373,12 @@ combine -M ProfileLikelihood -d $FILENAME --signif >& $FILENAME.sig
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
-#echo "executing combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig"
-#
-#combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 >& $FILENAME.expsig
+echo "executing combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig"
+
+combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 >& $FILENAME.expsig
 ##combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig
-#rm -f roostats*
-#rm -f higgsCombineTest*.root
+rm -f roostats*
+rm -f higgsCombineTest*.root
 
 echo "executing combine -M MaxLikelihoodFit --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
 

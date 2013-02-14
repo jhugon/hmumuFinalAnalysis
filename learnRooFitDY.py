@@ -69,7 +69,7 @@ mMuMuRooDataHist = root.RooDataHist("bak_Template","bak_Template",root.RooArgLis
 expMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("high"),root.RooFit.SumW2Error(False),PRINTLEVEL)
 expParam.setConstant(True)
 
-fr = pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+fr = pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True),root.RooFit.NormRange("low,high"))
 fr.SetName("bak"+"_fitResult")
 
 #####################################################################

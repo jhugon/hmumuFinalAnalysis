@@ -148,6 +148,8 @@ def getDataSig(fileString,matchString=r"_([-\d.]+)\.txt",dontMatchStrings=[],doS
       result = float(match.group(1))
     return result
 
+  print fileString
+  print matchString
   result = []
   fNames =  glob.glob(fileString)
   if doSort:
@@ -182,12 +184,14 @@ def getDataSig(fileString,matchString=r"_([-\d.]+)\.txt",dontMatchStrings=[],doS
     except Exception:
       print("Expected Limit Not Found: "+expFname)
     thisPoint = [xNum,obs,exp]
+    print thisPoint
     if thisPoint.count("-10.0")>0:
         continue
     if thisPoint.count(-10.0)>0:
         continue
     #print thisPoint
     result.append(thisPoint)
+  print result
   return result
 
 def getDataMu(fileString,matchString=r"_([-\d.]+)\.txt\.mu",dontMatchStrings=[],doSort=True):
@@ -450,7 +454,7 @@ if __name__ == "__main__":
 
   ylimits=[]
 
-  lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":20}
+  lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":lumiDict["8TeV"]}
   
   for period in ["7TeV","8TeV","14TeV"]:
     fnToGlob = dirName+"*_"+period+"_*.txt.out"
@@ -505,6 +509,7 @@ if __name__ == "__main__":
         saveAs(canvas,outDir+fnPref+plotName+"_"+energyStr)
     
     ## Compare all types of limits
+    print "Doing Compare..."
     if period == "14TeV":
         continue
     #veto = [r"CNC",r"PM","BB","BO","BE","OO","OE","EE","NotBB"]
@@ -529,6 +534,7 @@ if __name__ == "__main__":
         print("No Data to Compare for {0} {1}!!".format(period,fnPref))
         continue
       comparePlot = ComparePlot(datCase,titleMap=comparisonMap,showObs=False,ylabel=ytitle)
+      comparePlot.ax1.set_xlim(*[0,20])
       comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+desiredLumiStr+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
       comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStr,horizontalalignment="right",size="x-large")
       comparePlot.save(outDir+fnPref+"Compare"+"_"+energyStr)
