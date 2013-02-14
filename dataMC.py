@@ -14,13 +14,13 @@ LUMI=lumiDict[RUNPERIOD]
 
 scaleHiggsBy = 100.
 
-LOGY=False
+LOGY=True
 integralPlot=False
 MCErrors=True
 #PULLTYPE="adrian1"
 PULLTYPE="pullMC"
 allHiggsTogether = True
-ylimitsRatio = [-4,4]
+ylimitsRatio = [-5,5]
 if PULLTYPE=="adrian1":
   ylimitsRatio = [-1.5,1.5]
 elif PULLTYPE=="ratio":
@@ -199,6 +199,12 @@ for key in histNames:
     histNames[key]["units"] = " GeV/c"
   elif re.match("mDi.*",key):
     histNames[key]["units"] = " GeV/c^{2}"
+  if LOGY and histNames[key].has_key("ylimits"):
+    histNames[key]["ylimits"][1] *= 100
+    if key == "yDiMu" or key == "yDiJet" or key == "cosThetaStar":
+      histNames[key]["ylimits"][1] *= 10
+    elif RUNPERIOD == "7TeV" and key != "mDiMu":
+      histNames[key]["ylimits"][1] /= 10
 
 tlatex = root.TLatex()
 tlatex.SetNDC()
