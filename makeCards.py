@@ -41,6 +41,7 @@ BAKUNCON = True
 SIGUNCON = False
 
 FREEBAKPARAMS = False
+LIMITTOSIGNALREGION = False
 
 SIGNALFIT = [110.,140.]
 
@@ -111,15 +112,37 @@ def makePDFBakExpLog(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
       workspaceImportFn(fr)
 
     #Norm Time
-    wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
-    signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
-    signalRangeList = getRooVarRange(mMuMu,"signal")
-    getSidebandString = "mMuMu < {0} || mMuMu > {1}".format(*signalRangeList)
-    nSideband =  mMuMuRooDataHist.sumEntries(getSidebandString)
-    nData =  mMuMuRooDataHist.sumEntries()
-    bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
-    print("Gets Bak Norm Assuming Signal region is: {0} GeV, off by: {1:%}".format(getSidebandString,(bakNormTup[0]*bakNormTup[1] - nData)/nData))
-    mMuMu.Print()
+    bakNormTup = None
+    if LIMITTOSIGNALREGION:
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(mMuMu,"signal")
+      getSidebandString = "mMuMu < {0} || mMuMu > {1}".format(*signalRangeList)
+      getSignalString = "mMuMu > {0} && mMuMu < {1}".format(*signalRangeList)
+      nSideband =  mMuMuRooDataHist.sumEntries(getSidebandString)
+      nData =  mMuMuRooDataHist.sumEntries(getSignalString)
+      signalFraction = signalIntegral.getVal()/wholeIntegral.getVal()
+      bakNormTup = (nSideband,(signalFraction)/(1.0-signalFraction))
+      print("N_side: {0:.2f}, alpha: {1:.2f}".format(bakNormTup[0],bakNormTup[1]))
+      print("Signal Region: {0:.2f} Prediction: {1:.2f}".format(nData,bakNormTup[0]*bakNormTup[1]))
+      if nData > 0:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:%} true error: {2:%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+      else:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
+      mMuMu.Print()
+    else:
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(mMuMu,"signal")
+      getSidebandString = "mMuMu < {0} || mMuMu > {1}".format(*signalRangeList)
+      nSideband =  mMuMuRooDataHist.sumEntries(getSidebandString)
+      nData =  mMuMuRooDataHist.sumEntries()
+      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
+      if nData > 0:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+      else:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
+      mMuMu.Print()
     #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
     #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
 
@@ -168,16 +191,38 @@ def makePDFBakExpMOverSq(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
       workspaceImportFn(fr)
 
     #Norm Time
-    wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
-    signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
-    signalRangeList = getRooVarRange(mMuMu,"signal")
-    getSidebandString = "mMuMu < {0} || mMuMu > {1}".format(*signalRangeList)
-    nSideband =  mMuMuRooDataHist.sumEntries(getSidebandString)
-    nData =  mMuMuRooDataHist.sumEntries()
-    bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
-    print("Gets Bak Norm Assuming Signal region is: {0} GeV, off by: {1:%}".format(getSidebandString,(bakNormTup[0]*bakNormTup[1] - nData)/nData))
-    mMuMu.Print()
-    #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
+    bakNormTup = None
+    if LIMITTOSIGNALREGION:
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(mMuMu,"signal")
+      getSidebandString = "mMuMu < {0} || mMuMu > {1}".format(*signalRangeList)
+      getSignalString = "mMuMu > {0} && mMuMu < {1}".format(*signalRangeList)
+      nSideband =  mMuMuRooDataHist.sumEntries(getSidebandString)
+      nData =  mMuMuRooDataHist.sumEntries(getSignalString)
+      signalFraction = signalIntegral.getVal()/wholeIntegral.getVal()
+      bakNormTup = (nSideband,(signalFraction)/(1.0-signalFraction))
+      print("N_side: {0:.2f}, alpha: {1:.2f}".format(bakNormTup[0],bakNormTup[1]))
+      print("Signal Region: {0:.2f} Prediction: {1:.2f}".format(nData,bakNormTup[0]*bakNormTup[1]))
+      if nData > 0:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:%} true error: {2:%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+      else:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
+      mMuMu.Print()
+    else:
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(mMuMu,"signal")
+      getSidebandString = "mMuMu < {0} || mMuMu > {1}".format(*signalRangeList)
+      nSideband =  mMuMuRooDataHist.sumEntries(getSidebandString)
+      nData =  mMuMuRooDataHist.sumEntries()
+      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
+      if nData > 0:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+      else:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
+      mMuMu.Print()
+   #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
     #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
 
     #mMuMuRooDataHist2 = mMuMuRooDataHist.reduce(root.RooFit.CutRange("low,signal,high"))
@@ -223,15 +268,37 @@ def makePDFBakMOverSq(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
       workspaceImportFn(fr)
 
     #Norm Time
-    wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
-    signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
-    signalRangeList = getRooVarRange(mMuMu,"signal")
-    getSidebandString = "mMuMu < {0} || mMuMu > {1}".format(*signalRangeList)
-    nSideband =  mMuMuRooDataHist.sumEntries(getSidebandString)
-    nData =  mMuMuRooDataHist.sumEntries()
-    bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
-    print("Gets Bak Norm Assuming Signal region is: {0} GeV, off by: {1:%}".format(getSidebandString,(bakNormTup[0]*bakNormTup[1] - nData)/nData))
-    mMuMu.Print()
+    bakNormTup = None
+    if LIMITTOSIGNALREGION:
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(mMuMu,"signal")
+      getSidebandString = "mMuMu < {0} || mMuMu > {1}".format(*signalRangeList)
+      getSignalString = "mMuMu > {0} && mMuMu < {1}".format(*signalRangeList)
+      nSideband =  mMuMuRooDataHist.sumEntries(getSidebandString)
+      nData =  mMuMuRooDataHist.sumEntries(getSignalString)
+      signalFraction = signalIntegral.getVal()/wholeIntegral.getVal()
+      bakNormTup = (nSideband,(signalFraction)/(1.0-signalFraction))
+      print("N_side: {0:.2f}, alpha: {1:.2f}".format(bakNormTup[0],bakNormTup[1]))
+      print("Signal Region: {0:.2f} Prediction: {1:.2f}".format(nData,bakNormTup[0]*bakNormTup[1]))
+      if nData > 0:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:%} true error: {2:%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+      else:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
+      mMuMu.Print()
+    else:
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(mMuMu,"signal")
+      getSidebandString = "mMuMu < {0} || mMuMu > {1}".format(*signalRangeList)
+      nSideband =  mMuMuRooDataHist.sumEntries(getSidebandString)
+      nData =  mMuMuRooDataHist.sumEntries()
+      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
+      if nData > 0:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+      else:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
+      mMuMu.Print()
     #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
     #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
 
@@ -314,18 +381,37 @@ def makePDFBakOld(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
       workspaceImportFn(fr)
 
     #Norm Time
-    wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
-    signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
-    signalRangeList = getRooVarRange(mMuMu,"signal")
-    getSidebandString = "mMuMu < {0} || mMuMu > {1}".format(*signalRangeList)
-    nSideband =  mMuMuRooDataHist.sumEntries(getSidebandString)
-    nData =  mMuMuRooDataHist.sumEntries()
-    bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
-    if nData > 0:
-      print("Gets Bak Norm Assuming Signal region is: {0} GeV, off by: {1:%}".format(getSidebandString,(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+    bakNormTup = None
+    if LIMITTOSIGNALREGION:
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(mMuMu,"signal")
+      getSidebandString = "mMuMu < {0} || mMuMu > {1}".format(*signalRangeList)
+      getSignalString = "mMuMu > {0} && mMuMu < {1}".format(*signalRangeList)
+      nSideband =  mMuMuRooDataHist.sumEntries(getSidebandString)
+      nData =  mMuMuRooDataHist.sumEntries(getSignalString)
+      signalFraction = signalIntegral.getVal()/wholeIntegral.getVal()
+      bakNormTup = (nSideband,(signalFraction)/(1.0-signalFraction))
+      print("N_side: {0:.2f}, alpha: {1:.2f}".format(bakNormTup[0],bakNormTup[1]))
+      print("Signal Region: {0:.2f} Prediction: {1:.2f}".format(nData,bakNormTup[0]*bakNormTup[1]))
+      if nData > 0:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:%} true error: {2:%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+      else:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
+      mMuMu.Print()
     else:
-      print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
-    mMuMu.Print()
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(mMuMu,"signal")
+      getSidebandString = "mMuMu < {0} || mMuMu > {1}".format(*signalRangeList)
+      nSideband =  mMuMuRooDataHist.sumEntries(getSidebandString)
+      nData =  mMuMuRooDataHist.sumEntries()
+      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
+      if nData > 0:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+      else:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
+      mMuMu.Print()
     #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
     #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
 
@@ -334,14 +420,14 @@ def makePDFBakOld(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     #if workspaceImportFn != None:
     #  workspaceImportFn(mMuMuRooDataHist2)
 
-#    ## Debug Time
-#    frame = mMuMu.frame()
-#    frame.SetName("bak_Plot")
-#    mMuMuRooDataHist.plotOn(frame)
-#    pdfMmumu.plotOn(frame)
-#    canvas = root.TCanvas()
-#    frame.Draw()
-#    canvas.SaveAs("debug_"+name+channelName+".png")
+    ## Debug Time
+    frame = mMuMu.frame()
+    frame.SetName("bak_Plot")
+    mMuMuRooDataHist.plotOn(frame)
+    pdfMmumu.plotOn(frame)
+    canvas = root.TCanvas()
+    frame.Draw()
+    canvas.SaveAs("debug_"+name+channelName+".png")
 
     return paramList, bakNormTup
 
@@ -751,6 +837,22 @@ class Analysis:
     self.params.extend(tmpBakParams)
     self.countsBakTotal = self.bakNormTup[0]*self.bakNormTup[1]
 
+    if LIMITTOSIGNALREGION:
+      minMass = controlRegionLow[1]
+      maxMass = controlRegionHigh[0]
+      if self.dataCountsTotal == None:
+        self.bakHistTotal = shrinkTH1(self.bakHistTotal,minMass,maxMass)
+      else:
+        self.datHistTotal = shrinkTH1(self.datHistTotal,minMass,maxMass)
+        self.dataCountsTotal = getIntegralAll(self.datHistTotal)
+      mMuMu.setRange(minMass,maxMass)
+      for hist in self.sigHistsRaw:
+        vetoOutOfBoundsEvents(hist,[minMass,maxMass])
+      for iSignal in range(len(signalNames)):
+        for errName in self.sigErrHistsMap:
+          hist = self.sigErrHistsMap[errName][iSignal]
+          vetoOutOfBoundsEvents(hist,[minMass,maxMass])
+
     self.sigParamListList = []
     if args.gaussian > 0.:
       for name, hist in zip(signalNames,self.sigHistsRaw):
@@ -830,15 +932,7 @@ class Analysis:
     self.countsSigList = [x*lumi for x in self.xsecSigList]
     self.countsBakList = [x*lumi for x in self.xsecBakList]
 
-    if toyData:
-      bakPDF = self.workspace.pdf("bak")
-      sigPDFList = [self.workspace.pdf(i) for i in signalNames]
-      toyDataset = bakPDF.generate(root.RooArgSet(mMuMu),int(self.dataCountsTotal))
-      doSigInject(toyDataset,sigInject,sigInjectMass)
-      toyDataHist = toyDataset.binnedClone("data_obs","Toy Data")
-      self.dataCountsTotal = int(toyDataHist.sumEntries())
-      wImport(toyDataHist)
-    elif self.dataCountsTotal is None:
+    if self.dataCountsTotal is None:
       bakDataTH1 = self.bakHistTotal.Clone("bak_Template"+str(random.randint(0,10000)))
       bakDataTH1 = shrinkTH1(bakDataTH1,minMass,maxMass)
       for i in range(bakDataTH1.GetNbinsX()+2):
@@ -856,6 +950,14 @@ class Analysis:
       #degubf = root.TFile("debug.root","recreate")
       #self.bakHistTotal.Write()
       #degubf.Close()
+    elif toyData:
+      bakPDF = self.workspace.pdf("bak")
+      sigPDFList = [self.workspace.pdf(i) for i in signalNames]
+      toyDataset = bakPDF.generate(root.RooArgSet(mMuMu),int(self.dataCountsTotal))
+      doSigInject(toyDataset,sigInject,sigInjectMass)
+      toyDataHist = toyDataset.binnedClone("data_obs","Toy Data")
+      self.dataCountsTotal = int(toyDataHist.sumEntries())
+      wImport(toyDataHist)
     else:
       realDataHist = root.RooDataHist("data_obs","Real Observed Data",root.RooArgList(mMuMu),self.datHistTotal)
       wImport(realDataHist)
@@ -1270,7 +1372,7 @@ if __name__ == "__main__":
         tmpList.append(a+c)
   analyses += tmpList
   analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
-  analyses = ["VBFBDTCut"]#,"IncPreselPtG10"]
+  analyses = ["VBFBDTCut","IncPreselPtG10"]
   combinations = []
   combinationsLong = []
   combinations.append((
@@ -1688,8 +1790,8 @@ date
 echo "done"
 """
 
-#  runFile.write(batchString)
-  runFile.write(simpleBatchString)
+  runFile.write(batchString)
+#  runFile.write(simpleBatchString)
   runFile.close()
 
   runFile = open(outDir+"getStatus.sh","w")
