@@ -40,6 +40,8 @@ BAKUNC = 1.0
 BAKUNCON = True
 SIGUNCON = False
 
+FREEBAKPARAMS = False
+
 SIGNALFIT = [110.,140.]
 
 if args.bdtCut:
@@ -80,9 +82,180 @@ class Param:
     else:
         return "-{0:.5g}/+{1:.5g}".format(self.lowErr,self.highErr)
 
-def makePDFBak(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
+def makePDFBakExpLog(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     debug = ""
-    debug += "### makePDFBak: "+name+"\n"
+    debug += "### makePDFBakExpLog: "+name+"\n"
+
+    channelName = name
+
+    p1 = root.RooRealVar(channelName+"_p1","p1", 0.0, -1., 1.)
+    p2 = root.RooRealVar(channelName+"_p2","p2", 0.0, -1., 1.)
+    p3 = root.RooRealVar(channelName+"_p3","p3", 0.0, -1., 1.)
+    pdfMmumu = root.RooGenericPdf("bak","TMath::Exp(@0*@0*@1 + @0*@2 + @3*TMath::Log(@0) )",root.RooArgList(mMuMu,p1,p2,p3))
+
+    mMuMuRooDataHist = root.RooDataHist("bak_Template","bak_Template",root.RooArgList(mMuMu),hist)
+
+    fr = pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr.SetName("bak"+"_fitResult")
+    chi2 = pdfMmumu.createChi2(mMuMuRooDataHist)
+
+    rooParamList = [p1,p2,p3]
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+
+    for param in rooParamList:
+        param.setConstant(not FREEBAKPARAMS)
+
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(mMuMuRooDataHist)
+      workspaceImportFn(fr)
+
+    #Norm Time
+    wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
+    signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
+    signalRangeList = getRooVarRange(mMuMu,"signal")
+    getSidebandString = "mMuMu < {0} || mMuMu > {1}".format(*signalRangeList)
+    nSideband =  mMuMuRooDataHist.sumEntries(getSidebandString)
+    nData =  mMuMuRooDataHist.sumEntries()
+    bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
+    print("Gets Bak Norm Assuming Signal region is: {0} GeV, off by: {1:%}".format(getSidebandString,(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+    mMuMu.Print()
+    #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
+    #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
+
+    #mMuMuRooDataHist2 = mMuMuRooDataHist.reduce(root.RooFit.CutRange("low,signal,high"))
+    #mMuMuRooDataHist2.SetName("bak_TemplateNoVeryLow")
+    #if workspaceImportFn != None:
+    #  workspaceImportFn(mMuMuRooDataHist2)
+
+    ## Debug Time
+    frame = mMuMu.frame()
+    frame.SetName("bak_Plot")
+    mMuMuRooDataHist.plotOn(frame)
+    pdfMmumu.plotOn(frame)
+    canvas = root.TCanvas()
+    frame.Draw()
+    canvas.SaveAs("debug_"+name+channelName+".png")
+
+    return paramList, bakNormTup
+
+
+def makePDFBakExpMOverSq(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
+    debug = ""
+    debug += "### makePDFBakExpMOverSq: "+name+"\n"
+
+    channelName = name
+
+    InvPolMass = root.RooRealVar(channelName+"_InvPolMass","InvPolMass", 91., 70., 95.)
+    ExpMass = root.RooRealVar(channelName+"_ExpMass","ExpMass", 0.0, -1., 1.)
+    pdfMmumu = root.RooGenericPdf("bak","TMath::Exp(@0*@2)/(@0-@1)/(@0-@1)",root.RooArgList(mMuMu,InvPolMass,ExpMass))
+
+    mMuMuRooDataHist = root.RooDataHist("bak_Template","bak_Template",root.RooArgList(mMuMu),hist)
+
+    fr = pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr.SetName("bak"+"_fitResult")
+    chi2 = pdfMmumu.createChi2(mMuMuRooDataHist)
+
+    rooParamList = [InvPolMass,ExpMass]
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+
+    for param in rooParamList:
+        param.setConstant(not FREEBAKPARAMS)
+
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(mMuMuRooDataHist)
+      workspaceImportFn(fr)
+
+    #Norm Time
+    wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
+    signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
+    signalRangeList = getRooVarRange(mMuMu,"signal")
+    getSidebandString = "mMuMu < {0} || mMuMu > {1}".format(*signalRangeList)
+    nSideband =  mMuMuRooDataHist.sumEntries(getSidebandString)
+    nData =  mMuMuRooDataHist.sumEntries()
+    bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
+    print("Gets Bak Norm Assuming Signal region is: {0} GeV, off by: {1:%}".format(getSidebandString,(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+    mMuMu.Print()
+    #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
+    #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
+
+    #mMuMuRooDataHist2 = mMuMuRooDataHist.reduce(root.RooFit.CutRange("low,signal,high"))
+    #mMuMuRooDataHist2.SetName("bak_TemplateNoVeryLow")
+    #if workspaceImportFn != None:
+    #  workspaceImportFn(mMuMuRooDataHist2)
+
+    ## Debug Time
+    frame = mMuMu.frame()
+    frame.SetName("bak_Plot")
+    mMuMuRooDataHist.plotOn(frame)
+    pdfMmumu.plotOn(frame)
+    canvas = root.TCanvas()
+    frame.Draw()
+    canvas.SaveAs("debug_"+name+channelName+".png")
+
+    return paramList, bakNormTup
+
+def makePDFBakMOverSq(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
+    debug = ""
+    debug += "### makePDFBakMOverSq: "+name+"\n"
+
+    channelName = name
+
+    InvPolMass = root.RooRealVar(channelName+"_InvPolMass","InvPolMass", 91., 70., 95.)
+    pdfMmumu = root.RooGenericPdf("bak","@0/(@0-@1)/(@0-@1)",root.RooArgList(mMuMu,InvPolMass))
+
+    mMuMuRooDataHist = root.RooDataHist("bak_Template","bak_Template",root.RooArgList(mMuMu),hist)
+
+    fr = pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr.SetName("bak"+"_fitResult")
+    chi2 = pdfMmumu.createChi2(mMuMuRooDataHist)
+
+    rooParamList = [InvPolMass]
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+
+    for param in rooParamList:
+        param.setConstant(False)
+
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(mMuMuRooDataHist)
+      workspaceImportFn(fr)
+
+    #Norm Time
+    wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
+    signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
+    signalRangeList = getRooVarRange(mMuMu,"signal")
+    getSidebandString = "mMuMu < {0} || mMuMu > {1}".format(*signalRangeList)
+    nSideband =  mMuMuRooDataHist.sumEntries(getSidebandString)
+    nData =  mMuMuRooDataHist.sumEntries()
+    bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
+    print("Gets Bak Norm Assuming Signal region is: {0} GeV, off by: {1:%}".format(getSidebandString,(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+    mMuMu.Print()
+    #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
+    #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
+
+    #mMuMuRooDataHist2 = mMuMuRooDataHist.reduce(root.RooFit.CutRange("low,signal,high"))
+    #mMuMuRooDataHist2.SetName("bak_TemplateNoVeryLow")
+    #if workspaceImportFn != None:
+    #  workspaceImportFn(mMuMuRooDataHist2)
+
+    ## Debug Time
+    frame = mMuMu.frame()
+    frame.SetName("bak_Plot")
+    mMuMuRooDataHist.plotOn(frame)
+    pdfMmumu.plotOn(frame)
+    canvas = root.TCanvas()
+    frame.Draw()
+    canvas.SaveAs("debug_"+name+channelName+".png")
+
+    return paramList, bakNormTup
+
+
+
+def makePDFBakOld(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
+    debug = ""
+    debug += "### makePDFBakOld: "+name+"\n"
 
     channelName = name
 
@@ -130,6 +303,10 @@ def makePDFBak(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
 
     rooParamList = [voitmZ,voitSig,expParam,mixParam]
     paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+
+    if FREEBAKPARAMS:
+      for param in rooParamList:
+        param.setConstant(False)
 
     if workspaceImportFn != None:
       workspaceImportFn(pdfMmumu)
@@ -346,6 +523,10 @@ def makePDFSigGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName
     return paramList, debug, sigInjectDataset
 
 makePDFSig = makePDFSigCBPlusGaus
+makePDFBak = makePDFBakOld
+#makePDFBak = makePDFBakMOverSq
+#makePDFBak = makePDFBakExpMOverSq
+#makePDFBak = makePDFBakExpLog
 
 ###################################################################################
 
@@ -994,6 +1175,10 @@ class DataCardMaker:
       formatString = "{0:<8} {1:^3} {2:.0f}"
       formatList = ["bkN"+channel1Name,"gmN",tmpTup[0]]
       iParam = 3
+      if FREEBAKPARAMS:
+        formatString = "{0:<8} {1:^3}"
+        formatList = ["bkN"+channel1Name,"lnU"]
+        iParam = 2
       for channel in self.channels:
           for sigName in channel.sigNames:
             formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
@@ -1004,6 +1189,13 @@ class DataCardMaker:
           tmpString = "{"+str(iParam)+":^"+str(self.largestChannelName)+"}"
           if channel == channel1:
             value = tmpTup[1]
+            if FREEBAKPARAMS:
+              value = 1.0/sqrt(tmpTup[1]*tmpTup[0])
+              if value <= 0.01/20.:
+                  value = 0.01
+              else:
+                  value *= 20
+              value += 1.0
             tmpString = "{"+str(iParam)+":^"+str(self.largestChannelName)+".2f}"
           formatString += tmpString
           formatList.append(value)
@@ -1011,16 +1203,17 @@ class DataCardMaker:
       formatString += "\n"
       outfile.write(formatString.format(*formatList))
 
-    # Parameter Uncertainties
-    for channel,channelName in zip(self.channels,self.channelNames):
-      for nu in channel.params:
-        nuisanceName = nu.name
-        formatString = "{0:<25} {1:<6} {2:<10.5g} {3:<10}"
-        formatList = [nuisanceName,"param",nu.nominal,nu.getErrString()]
-        formatString += "\n"
-        #print formatString
-        #print formatList
-        outfile.write(formatString.format(*formatList))
+    if not FREEBAKPARAMS:
+      # Parameter Uncertainties
+      for channel,channelName in zip(self.channels,self.channelNames):
+        for nu in channel.params:
+          nuisanceName = nu.name
+          formatString = "{0:<25} {1:<6} {2:<10.5g} {3:<10}"
+          formatList = [nuisanceName,"param",nu.nominal,nu.getErrString()]
+          formatString += "\n"
+          #print formatString
+          #print formatList
+          outfile.write(formatString.format(*formatList))
 
     #Debugging
     outfile.write("#################################\n")
@@ -1060,6 +1253,7 @@ if __name__ == "__main__":
   directory = "input/preApproveSample/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
+  periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
@@ -1076,15 +1270,17 @@ if __name__ == "__main__":
         tmpList.append(a+c)
   analyses += tmpList
   analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
-  analyses = ["VBFBDTCut","IncPreselPtG10"]
+  analyses = ["VBFBDTCut"]#,"IncPreselPtG10"]
   combinations = []
   combinationsLong = []
   combinations.append((
         ["IncPreselPtG10"+x for x in categoriesInc],"IncPreselCat"
   ))
+  """
   combinations.append((
         ["VBFPresel"]+["IncPreselPtG10"],"BDTCutVBFBDTOnly"
   ))
+  """
   combinations.append((
         ["VBFBDTCut"]+["IncPreselPtG10"+x for x in categoriesInc],"BDTCutCatVBFBDTOnly"
   ))
@@ -1483,7 +1679,7 @@ for i in *.txt; do
 FILENAME=$i
 echo "executing combine -M Asymptotic $FILENAME >& $FILENAME.out"
 
-combine -M Asymptotic $FILENAME >& $FILENAME.out
+combine -M Asymptotic -v 2 $FILENAME >& $FILENAME.out
 rm -f roostats*
 rm -f higgsCombineTest*.root
 done

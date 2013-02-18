@@ -20,7 +20,7 @@ allHiggsTogether = True
 drawString="E"
 
 histDirs = ["IncPreselPtG10/"]
-histDirs = ["IncPresel/"]
+histDirs = ["VBFPresel/"]
 
 backgroundList = [
 "DYJetsToLL"#,

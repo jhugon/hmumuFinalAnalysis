@@ -163,10 +163,12 @@ class ShapePlotter:
       for processName in self.processNameMap[channelNameOrig]:
         template = channelWS.data(processName+"_Template")
         rooDataTitle = template.GetTitle()
-        if rebin != 1:
+        if tmpRebin != 1:
+            realName = template.GetName()
+            template.SetName(realName+str(random.randint(0,1000)))
             tmpHist = template.createHistogram("mMuMu")
-            tmpHist.Rebin(rebin)
-            template =  root.RooDataHist(template.GetName(),template.GetTitle(),
+            tmpHist.Rebin(tmpRebin)
+            template =  root.RooDataHist(realName,template.GetTitle(),
                                                             root.RooArgList(mMuMu),tmpHist)
         pdf = channelWS.pdf(processName)
         dataGraph, pdfGraph, pullsGraph,chi2 = getattr(self,"makeTGraphs")(pdf,template,mMuMu)
@@ -334,7 +336,7 @@ class ShapePlotter:
       if xList[bestI]>1.0:
         return -1
       return bestI
-    ratioPlot = root.TH1F(hist.GetName()+"_pullDist","",50,-5.0,5.0)
+    ratioPlot = root.TH1F(hist.GetName()+"_pullDist","",20,-5.0,5.0)
     ratioPlot.Sumw2()
     ratioPlot.SetLineColor(1)
     ratioPlot.SetMarkerColor(1)
