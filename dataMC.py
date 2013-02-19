@@ -9,12 +9,12 @@ import sys
 dataDir = "input/preApproveSample110to150/"
 outDir = "output/"
 
-RUNPERIOD="8TeV"
+RUNPERIOD="7TeV"
 LUMI=lumiDict[RUNPERIOD]
 
 scaleHiggsBy = 50.
 
-LOGY=False
+LOGY=True
 integralPlot=False
 MCErrors=True
 #PULLTYPE="adrian1"
@@ -43,11 +43,12 @@ stdLegendPos = urLegendPos
 #histDirs = ["","4GeVWindow/","PtDiMu100/","VBFPresel/","IncPresel/","NotBlindWindow/"]
 histDirs = ["NotBlindWindow/"]
 histDirs = ["VBFPreselDiMuPtL20/","IncPreselDiMuPtL20/"]
-histDirs = ["VBFPresel/","IncPresel/"]
-histDirs = ["IncPresel/"]
+#histDirs = ["VBFPresel/","IncPresel/"]
+histDirs = ["VBFPresel/"]
+#histDirs = ["IncPresel/"]
 #histDirs = ["IncBDTCutBB/","VBFBDTCut/"]
 #histDirs = ["VBFBDTCut/"]
-histDirs = ["VBFBDTCut/"]
+#histDirs = ["VBFBDTCut/"]
 
 root.gErrorIgnoreLevel = root.kWarning
 

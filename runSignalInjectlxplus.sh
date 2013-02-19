@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SIGNALSTRENGTH=30.0
+SIGNALSTRENGTH=1.0
 
 REMOTEDIR=/afs/cern.ch/user/j/jhugon/work/private/stats/CMSSW_5_2_5/stats/
 if ! `ssh lxplus touch $REMOTEDIR/touchfile.txt`; then
@@ -13,7 +13,7 @@ rm -f statsCards/*
 rm -f statsInput/*
 rm -f statsOutput/*
 
-nice ./makeCards.py --signalInject $SIGNALSTRENGTH --toyData
+nice ./makeCards.py --signalInject $SIGNALSTRENGTH #--toyData
 echo "Removing files in lxplus:$REMOTEDIR"
 ssh lxplus "cd /tmp/jhugon/; rm -rf $REMOTEDIR/*;echo \"Contents of dir: \`ls $REMOTEDIR \`\""
 echo "Copying input files to lxplus..."

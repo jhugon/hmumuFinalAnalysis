@@ -390,7 +390,8 @@ class ComparePlot:
             verticalalignment='center', color=clr, weight='bold',size=size)
 
 class ComparePlotTable:
-  def __init__(self,data,ylabel="95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},xlimits=[],brazil=True,obsCircles=True,vertLine1=True,toHighlight=[],anotation1='',anotation2=''):
+  def __init__(self,data,ylabel="95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},xlimits=[],brazil=True,obsCircles=True,vertLine1=True,toHighlight=[],anotation1='',anotation2='',showObs=True):
+    self.showObs = showObs
     self.toHighlight = toHighlight
     #data.sort(key=lambda x: x[0].lower())
     data.sort(key=lambda x: float(x[4]))
@@ -467,7 +468,7 @@ class ComparePlotTable:
       getattr(self,'writeBrazil')()
     else:
       getattr(self,'writeBars')()
-    if obsCircles:
+    if obsCircles and showObs:
       getattr(self,'writeObsCircles')()
     getattr(self,'writeTable')()
     getattr(self,'writeLegend')()
@@ -544,7 +545,10 @@ class ComparePlotTable:
         color = 'k'
         if j == 0:
           color = 'r'
-          s = "{0:.1f}".format(float(self.data[i][j+1]))
+          if self.showObs:
+            s = "{0:.1f}".format(float(self.data[i][j+1]))
+          else:
+            s = "{0}".format("XX")
         elif j == 1:
           s = "{0:.1f}".format(median)
         elif j == 2:

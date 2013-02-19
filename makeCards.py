@@ -40,7 +40,7 @@ BAKUNC = 1.0
 BAKUNCON = True
 SIGUNCON = False
 
-FREEBAKPARAMS = False
+FREEBAKPARAMS = True
 LIMITTOSIGNALREGION = False
 
 SIGNALFIT = [110.,140.]
@@ -327,6 +327,7 @@ def makePDFBakOld(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     channelName = name
 
     voitWidth = root.RooRealVar(channelName+"_voitWidth","voitWidth",2.4952)
+    voitWidth.setConstant(True)
     voitmZ = root.RooRealVar(channelName+"_voitmZ","voitmZ",85,95)
     voitSig = root.RooRealVar(channelName+"_voitSig","voitSig",0.0,30.0)
     voitMmumu = root.RooVoigtian("bak_voitMmumu","voitMmumu",mMuMu,voitmZ,voitWidth,voitSig)
@@ -374,6 +375,7 @@ def makePDFBakOld(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     if FREEBAKPARAMS:
       for param in rooParamList:
         param.setConstant(False)
+      voitWidth.setConstant(True)
 
     if workspaceImportFn != None:
       workspaceImportFn(pdfMmumu)
@@ -1305,17 +1307,17 @@ class DataCardMaker:
       formatString += "\n"
       outfile.write(formatString.format(*formatList))
 
-    if not FREEBAKPARAMS:
       # Parameter Uncertainties
       for channel,channelName in zip(self.channels,self.channelNames):
         for nu in channel.params:
-          nuisanceName = nu.name
-          formatString = "{0:<25} {1:<6} {2:<10.5g} {3:<10}"
-          formatList = [nuisanceName,"param",nu.nominal,nu.getErrString()]
-          formatString += "\n"
-          #print formatString
-          #print formatList
-          outfile.write(formatString.format(*formatList))
+          if (not FREEBAKPARAMS) or ("voit" in nu.name):
+            nuisanceName = nu.name
+            formatString = "{0:<25} {1:<6} {2:<10.5g} {3:<10}"
+            formatList = [nuisanceName,"param",nu.nominal,nu.getErrString()]
+            formatString += "\n"
+            #print formatString
+            #print formatList
+            outfile.write(formatString.format(*formatList))
 
     #Debugging
     outfile.write("#################################\n")
@@ -1371,8 +1373,8 @@ if __name__ == "__main__":
     for c in categoriesVBF:
         tmpList.append(a+c)
   analyses += tmpList
-  analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
-  analyses = ["VBFBDTCut","IncPreselPtG10"]
+  analyses = ["VBFBDTCut"]
+  #analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
   combinations = []
   combinationsLong = []
   combinations.append((
