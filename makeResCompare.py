@@ -68,7 +68,8 @@ class ResCompare:
     self.mMuMu = mMuMu
     for i in categories:
      for j in range(self.nFiles):
-       tmpParamList, tmpDebug = makePDFSig(i+str(j),self.histsCatDict[i][j],mMuMu,minMass,maxMass,wImport,i)
+       tmpParamList, tmpDebug, tmpSigInjectDS = makePDFSig(
+                        i+str(j),self.histsCatDict[i][j],mMuMu,minMass,maxMass,wImport,i)
        #print tmpDebug
 
     #self.workspace.Print()
@@ -259,14 +260,20 @@ if __name__ == "__main__":
 
   #categories = ["IncPresel","VBFPresel","IncBDTCut","VBFBDTCut"]
   #categories = ["IncPresel","VBFPresel"]
-  categories = ["IncPresel"]
+  categories = ["VBFBDTCut"]
+  #categories = ["IncPreselPtG10"]
 
   infiles = []
   titles = []
   #infiles.append("input/ggHmumu125_8TeV.root")
-  infiles.append("input/smear/ggHmumu125_8TeV.root")
-  infiles.append("input/roch/ggHmumu125_8TeV.root")
-  infiles.append("input/muscle/ggHmumu125_8TeV.root")
+  #infiles.append("input/smear/ggHmumu125_8TeV.root")
+  #infiles.append("input/roch/ggHmumu125_8TeV.root")
+  #infiles.append("input/muscle/ggHmumu125_8TeV.root")
+  #infiles.append("input/preApproveSample/ggHmumu125_8TeV.root")
+  #infiles.append("input/correctPtAssignment/ggHmumu125_8TeV.root")
+
+  infiles.append("input/preApproveSample/vbfHmumu125_8TeV.root")
+  infiles.append("input/correctPtAssignment/vbfHmumu125_8TeV.root")
 
 
   #infiles.append("input/vbfHmumu125_8TeV.root")
@@ -275,9 +282,11 @@ if __name__ == "__main__":
   #infiles.append("input/muscle/vbfHmumu125_8TeV.root")
 
   #titles.append("CMS FullSim")
-  titles.append("Uncorrected")
-  titles.append("Rochester")
-  titles.append("MuScle")
+  #titles.append("Uncorrected")
+  #titles.append("Rochester")
+  #titles.append("MuScle")
+  titles.append("Pre-Approved")
+  titles.append("Correct p_{T}")
 
   #infiles.append("input/vbfHmumu125_8TeV.root")
   #infiles.append("input/smearing/vbfHmumu125_8TeV.root")

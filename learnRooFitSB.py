@@ -81,7 +81,7 @@ fsig = root.TFile("input/preApproveSample/ggHmumu125_8TeV.root")
 mDiMuBak = fbak.Get("IncPreselPtG10BB/mDiMu")
 mDiMuSig = fsig.Get("IncPreselPtG10BB/mDiMu")
 #mDiMu = f.Get("VBFPresel/mDiMu")
-#mDiMu.Rebin(2)
+#mDiMuBak.Rebin(4)
 
 #####################################################################
 
@@ -105,7 +105,9 @@ pdfMmumu.plotOn(plotMmumu,root.RooFit.Components("epdfBak"),root.RooFit.LineColo
 
 plotMmumu.Draw()
 
-chi2ondf =  plotMmumu.chiSquare()
+chi2ondf =  plotMmumu.chiSquare(
+                pdfMmumu.getParameters(mMuMuRooDataHistBak).getSize()
+                )
 tlatex = root.TLatex()
 tlatex.SetNDC()
 tlatex.SetTextFont(root.gStyle.GetLabelFont())

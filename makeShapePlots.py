@@ -381,7 +381,9 @@ class ShapePlotter:
     data.plotOn(frame,root.RooFit.Name(curveDataName))
     pdf.plotOn(frame,root.RooFit.Name(curveNomName),rng,normRange)
     pulls = frame.pullHist(curveDataName,curveNomName)
-    chi2 = frame.chiSquare()
+    nparams = pdf.getParameters(data).getSize()
+    #nparams = 0
+    chi2 = frame.chiSquare(nparams)
     curveNames = []
     for iParam in range(pdfParams.getSize()):
       param = itr.Next()

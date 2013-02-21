@@ -40,7 +40,7 @@ BAKUNC = 1.0
 BAKUNCON = True
 SIGUNCON = False
 
-FREEBAKPARAMS = True
+FREEBAKPARAMS = False
 LIMITTOSIGNALREGION = False
 
 SIGNALFIT = [110.,140.]
@@ -86,6 +86,7 @@ class Param:
 def makePDFBakExpLog(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     debug = ""
     debug += "### makePDFBakExpLog: "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
 
     channelName = name
 
@@ -160,12 +161,17 @@ def makePDFBakExpLog(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     frame.Draw()
     canvas.SaveAs("debug_"+name+channelName+".png")
 
-    return paramList, bakNormTup
+    for i in rooParamList:
+      debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+    debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
+
+    return paramList, bakNormTup, debug
 
 
 def makePDFBakExpMOverSq(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     debug = ""
     debug += "### makePDFBakExpMOverSq: "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
 
     channelName = name
 
@@ -239,11 +245,16 @@ def makePDFBakExpMOverSq(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     frame.Draw()
     canvas.SaveAs("debug_"+name+channelName+".png")
 
-    return paramList, bakNormTup
+    for i in rooParamList:
+      debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+    debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
+
+    return paramList, bakNormTup, debug
 
 def makePDFBakMOverSq(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     debug = ""
     debug += "### makePDFBakMOverSq: "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
 
     channelName = name
 
@@ -316,13 +327,18 @@ def makePDFBakMOverSq(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     frame.Draw()
     canvas.SaveAs("debug_"+name+channelName+".png")
 
-    return paramList, bakNormTup
+    for i in rooParamList:
+      debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+    debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
+
+    return paramList, bakNormTup, debug
 
 
 
 def makePDFBakOld(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     debug = ""
     debug += "### makePDFBakOld: "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
 
     channelName = name
 
@@ -431,7 +447,11 @@ def makePDFBakOld(name,hist,mMuMu,minMass,maxMass,workspaceImportFn):
     frame.Draw()
     canvas.SaveAs("debug_"+name+channelName+".png")
 
-    return paramList, bakNormTup
+    for i in rooParamList:
+      debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+    debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
+
+    return paramList, bakNormTup, debug
 
 def makePDFSigCBPlusGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName,forceMean=-1.,sigInject=0):
 
@@ -833,11 +853,13 @@ class Analysis:
     else:
         self.dataCountsTotal += doSigInject(self.datHistTotal,sigInject,sigInjectMass)
 
-    tmpBakParams, self.bakNormTup = makePDFBak(analysis+energyStr,histToUseForBak,
+    tmpBakParams, self.bakNormTup, tmpDebug = makePDFBak(analysis+energyStr,histToUseForBak,
                                         mMuMu, minMass,maxMass,wImport
                                        )
     self.params.extend(tmpBakParams)
     self.countsBakTotal = self.bakNormTup[0]*self.bakNormTup[1]
+    self.debug += tmpDebug
+    
 
     if LIMITTOSIGNALREGION:
       minMass = controlRegionLow[1]
@@ -1131,7 +1153,7 @@ class DataCardMaker:
 
     for channel in self.channels:
         print(channel.workspace.data("data_obs").GetTitle())
-        rootDebugString += "#"+channel.workspace.data("data_obs").GetTitle()+"\n"
+        rootDebugString += "# "+channel.workspace.data("data_obs").GetTitle()+"\n"
         channel.workspace.Write()
 
     outRootFile.Close()
@@ -1325,7 +1347,9 @@ class DataCardMaker:
         outfile.write("#\n")
         outfile.write("#info: channel {0}: \n".format(channelName))
         outfile.write(channel.debug)
+    outfile.write("#\n#\n")
     outfile.write(rootDebugString)
+    outfile.write("# Signal Injected: {0:.1f} X SM, mH = {1:.1f}\n".format(sigInject,sigInjectMass))
     outfile.close()
 
 class ThreadedCardMaker(myThread):
@@ -1373,14 +1397,15 @@ if __name__ == "__main__":
     for c in categoriesVBF:
         tmpList.append(a+c)
   analyses += tmpList
-  analyses = ["VBFBDTCut"]
+  analyses = ["IncPreselPtG10BB"]
+  analyses = []
   #analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
   combinations = []
   combinationsLong = []
+  """
   combinations.append((
         ["IncPreselPtG10"+x for x in categoriesInc],"IncPreselCat"
   ))
-  """
   combinations.append((
         ["VBFPresel"]+["IncPreselPtG10"],"BDTCutVBFBDTOnly"
   ))
@@ -1843,3 +1868,4 @@ done
   runFile.close()
   shutil.copy("etc/nuisanceDiff.py",outDir+"diffNuisances.py")
   shutil.copy("etc/fitNormsToText_mlfit.py",outDir+"fitNormsToText_mlfit.py")
+  shutil.copy("etc/myNuisancePrinter.py",outDir+"myNuisancePrinter.py")

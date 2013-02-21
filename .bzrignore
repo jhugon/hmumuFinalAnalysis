@@ -13,3 +13,5 @@ diff.txt
 log
 *.pdf
 *.root
+*.eps
+*.png
