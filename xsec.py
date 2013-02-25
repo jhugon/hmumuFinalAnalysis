@@ -44,6 +44,7 @@ class CrossSections():
   def __setitem__(self,key,value):
     self.data[key] = value
   def __getitem__(self,key):
+    key = key.replace("ChangeEvents","")
     match = re.match(r"([a-z]+)Hmumu([\d.]+)_([\d]+TeV)",key)
     if match:
       prodMode = match.group(1)
@@ -101,8 +102,19 @@ nEventsMap["ggHmumu127_8TeV"] = 9999
 nEventsMap["vbfHmumu123_8TeV"] = 9988
 nEventsMap["vbfHmumu127_8TeV"] = 9988
 
-nEventsMap["ggHmumu125_8TeV"] = 9998
-nEventsMap["vbfHmumu125_8TeV"] = 9990
+#nEventsMap["ggHmumu125_8TeV"] = 9998
+#nEventsMap["vbfHmumu125_8TeV"] = 9990
+
+# For Different than changing sample
+#nEventsMap["ggHmumu125_8TeV"] = 9999
+#nEventsMap["vbfHmumu125_8TeV"] = 7992
+#nEventsMap["ggHmumu125ChangeEvents_8TeV"] = 9999
+#nEventsMap["vbfHmumu125ChangeEvents_8TeV"] = 7992
+
+# For different large check samples
+nEventsMap["ggHmumu125_8TeV"] = 49996
+nEventsMap["vbfHmumu125_8TeV"] = 37955
+
 nEventsMap["zHmumu125_8TeV"] = 10000
 nEventsMap["wHmumu125_8TeV"] = 10000
 nEventsMap["DYJetsToLL_8TeV"] = 30086987
@@ -153,8 +165,8 @@ backgroundList = [
 signalList = [
 "ggHmumu125",
 "vbfHmumu125",
-"wHmumu125",
-"zHmumu125"
+#"wHmumu125",
+#"zHmumu125"
 ]
 
 dataDict = {}
@@ -183,6 +195,8 @@ legendEntries["WJetsToLNu"] = "W\rightarrow\ell\nu+Jets"
 legendEntries["ttbar"] = "t#bar{t}"
 legendEntries["vbfHmumu125"] = "VBF H->#mu#mu"
 legendEntries["ggHmumu125"] = "ggH->#mu#mu"
+legendEntries["vbfHmumu125ChangeEvents"] = "New VBF H->#mu#mu"
+legendEntries["ggHmumu125ChangeEvents"] = "New ggH->#mu#mu"
 legendEntries["zHmumu125"] = "ZH, H->#mu#mu"
 legendEntries["wHmumu125"] = "WH, H->#mu#mu"
 legendEntries["ttbar"] = "t#bar{t}"
@@ -204,13 +218,18 @@ colors["DYToMuMu"] = root.kOrange
 colors["WJetsToLNu"] = root.kCyan
 colors["vbfHmumu125"] = root.kBlue
 colors["ggHmumu125"] = root.kRed
+colors["vbfHmumu125ChangeEvents"] = root.kBlue+3
+colors["ggHmumu125ChangeEvents"] = root.kRed+2
 colors["zHmumu125"] = root.kGreen+1
 colors["wHmumu125"] = root.kOrange+7
 colors["ttbar"] = root.kGreen-1
 colors["DYToTauTau"] = root.kOrange+3 #brown
+#colors["WW"] = root.kPink+9
+#colors["WZ"] = root.kPink+9
+#colors["ZZ"] = root.kPink+9
 colors["WW"] = root.kPink+9
-colors["WZ"] = root.kPink+9
-colors["ZZ"] = root.kPink+9
+colors["WZ"] = colors["WW"]
+colors["ZZ"] = colors["WW"]
 colors["QCD"] = root.kSpring+8
 
 efficiencyMap = {}

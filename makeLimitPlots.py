@@ -643,6 +643,7 @@ if __name__ == "__main__":
   #print mpl.rcParams["backend"]
 
   ylimits=[0.1,100.0]
+  ylimits=[0.1,40.0]
 
   lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":lumiDict["8TeV"],"7P8TeV":lumiDict["8TeV"]+lumiDict["7TeV"]}
   

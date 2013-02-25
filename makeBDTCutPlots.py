@@ -7,10 +7,10 @@ import os
 import sys
 import random
 
-dataDir = "input/preApproveSample//"
+dataDir = "input/separateSamplesTrainOnlyVBFLarge/"
 outDir = "output/"
 
-RUNPERIOD="7TeV"
+RUNPERIOD="8TeV"
 LUMI=lumiDict[RUNPERIOD]
 
 LOGY=True
@@ -40,11 +40,11 @@ if RUNPERIOD == "8TeV":
   #                                      'ylimitsSqrt':[1e-3,10],
   #                              'vertLines':{"8TeV":-0.55,"7TeV":-0.42 },
   #                                      "rebin":1}
-  histNames["BDTHistVBFVMass"] = {"xlabel":"BDT Cut (VBF Category)","xlimits":[-0.4,0.25],
-                                        'ylimits':[1e-3,1.0],
-                                        'ylimitsSqrt':[1e-3,1.0],
-                                        'ylimitsSqr':[1e-5,1.0],
-                                'vertLines':{"8TeV":-0.04,"7TeV":-0.03},
+  histNames["BDTHistVBFVMass"] = {"xlabel":"BDT Cut (VBF Category)","xlimits":[-0.4,0.10],
+                                        'ylimits':[1e-3,10.0],
+                                        'ylimitsSqrt':[1e-2,10.0],
+                                        'ylimitsSqr':[1e-3,10.0],
+                                'vertLines':{"8TeV":0.04},
                                         "rebin":4}
 if RUNPERIOD == "7TeV":
 #  histNames["BDTHistMuonOnlyVMass"] = {"xlabel":"BDT Cut (Non-VBF Category)","xlimits":[-0.55,0.2],

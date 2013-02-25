@@ -6,13 +6,13 @@ import ROOT as root
 import os
 import sys
 
-dataDir = "input/preApproveSample110to150/"
+dataDir = "input/separateSamplesTrainOnlyVBFLarge110to150/"
 outDir = "output/"
 
-RUNPERIOD="7TeV"
+RUNPERIOD="8TeV"
 LUMI=lumiDict[RUNPERIOD]
 
-scaleHiggsBy = 50.
+scaleHiggsBy = 10.
 
 LOGY=True
 integralPlot=False
@@ -46,7 +46,7 @@ histDirs = ["VBFPreselDiMuPtL20/","IncPreselDiMuPtL20/"]
 #histDirs = ["VBFPresel/","IncPresel/"]
 histDirs = ["VBFPresel/"]
 #histDirs = ["IncPresel/"]
-#histDirs = ["IncBDTCutBB/","VBFBDTCut/"]
+#histDirs = ["IncPreselPtG10BB/","VBFBDTCut/"]
 #histDirs = ["VBFBDTCut/"]
 #histDirs = ["VBFBDTCut/"]
 
@@ -126,9 +126,9 @@ elif RUNPERIOD=="8TeV":
     histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj}","xlimits":[3.0,7.5],"rebin":2,"ylimits":[0.1,300]}
     histNames["yDiJet"] = {"xlabel":"y_{jj}","xlimits":[-3.0,3.0],"rebin":4,"ylimits":[0.0,300]}
     histNames["ptmiss"] = {"xlabel":"p_{T}^{Miss} [GeV/c]","xlimits":[0,200],"leg":stdLegendPos,"rebin":2,"ylimits":[0.1,160]}
-    histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.4,0.25],"rebin":4,"ylimits":[0.,350],'vertLines':{"8TeV":-0.04,"7TeV":-0.03}}
+    histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.4,0.25],"rebin":4,"ylimits":[0.,350],'vertLines':{"8TeV":0.04,"7TeV":-0.03}}
   elif len(histDirs) == 1 and histDirs[0] == "VBFBDTCut/":
-    histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":8,"ylimits":[0.0,30]}
+    histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":5,"ylimits":[0.0,30]}
     histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV/c]","xlimits":[0.0,200.0],"rebin":25,"ylimits":[0.0,50]}
     histNames["yDiMu"] = {"xlabel":"y_{#mu#mu}","xlimits":[-2.2,2.2],"rebin":10,"ylimits":[0.0,60]}
     
@@ -140,8 +140,10 @@ elif RUNPERIOD=="8TeV":
     histNames["ptmiss"] = {"xlabel":"p_{T}^{Miss} [GeV/c]","xlimits":[0,200],"leg":stdLegendPos,"rebin":10,"ylimits":[0.1,100]}
     histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.4,0.25],"rebin":4,"ylimits":[0.,110],'vertLines':{"8TeV":-0.04,"7TeV":-0.03}}
   else:
-    histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":2,'ylimits':[0.1,1e5]}
-    anotateText = "Non-VBF, BB, p_{T}(#mu#mu)>10 GeV"
+    #histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":2,'ylimits':[0.1,1e4]}
+    #anotateText = "Non-VBF, BB, p_{T}(#mu#mu)>10 GeV"
+    histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":8,"ylimits":[0.0,100]}
+    anotateText = "VBF BDT Cut"
     #histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":2,'ylimits':[0.1,6e4]}
     #histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":5,'ylimits':[0.1,6e2]}
     #histNames["nVtx"] = {"xlabel":"N_{vtx}","xlimits":[0,40],"leg":stdLegendPos,'ylimits':[0.0,8e3]}
@@ -302,6 +304,7 @@ class Dataset:
           tmp = self.hists[key]
           if self.isSignal:
             tmp.SetLineColor(self.color)
+            tmp.SetLineWidth(3)
           elif self.isData:
             tmp.SetMarkerColor(self.color)
             tmp.SetLineColor(self.color)
@@ -348,7 +351,9 @@ for i in signalList:
       sigDatasetList.append(tmp)
 oldSigDatasetList = sigDatasetList
 if allHiggsTogether:
-  allHiggsDataset = Dataset("","H #rightarrow #mu#mu",root.kRed,1.0,isSignal=True)
+  #allHiggsDataset = Dataset("","H #rightarrow #mu#mu",root.kCyan-4,1.0,isSignal=True)
+  #allHiggsDataset = Dataset("","H #rightarrow #mu#mu",root.kGray,1.0,isSignal=True)
+  allHiggsDataset = Dataset("","H #rightarrow #mu#mu",1,1.0,isSignal=True)
   allHiggsDataset.eatOtherDatasets(sigDatasetList)
   sigDatasetList = [allHiggsDataset]
 
@@ -475,6 +480,7 @@ for histName in bkgDatasetList[0].hists:
 
     tlatex.SetTextSize(0.03)
     tlatex.SetTextSize(0.04)
+    #tlatex.SetTextSize(0.06)
     tlatex.SetTextAlign(33)
     tlatex.DrawLatex(legLeftPos-0.02,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
 

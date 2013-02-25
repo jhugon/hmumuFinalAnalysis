@@ -40,7 +40,7 @@ BAKUNC = 1.0
 BAKUNCON = True
 SIGUNCON = False
 
-FREEBAKPARAMS = False
+FREEBAKPARAMS = True
 LIMITTOSIGNALREGION = False
 
 SIGNALFIT = [110.,140.]
@@ -1378,7 +1378,7 @@ if __name__ == "__main__":
   print "Started makeCards.py"
   root.gROOT.SetBatch(True)
 
-  directory = "input/preApproveSample/"
+  directory = "input/separateSamplesTrainOnlyVBFLarge/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
   periods = ["8TeV"]
@@ -1398,7 +1398,7 @@ if __name__ == "__main__":
         tmpList.append(a+c)
   analyses += tmpList
   analyses = ["IncPreselPtG10BB"]
-  analyses = []
+  #analyses = ["VBFBDTCut"]
   #analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
   combinations = []
   combinationsLong = []
@@ -1432,7 +1432,7 @@ if __name__ == "__main__":
   #  ["IncPresel"],"IncPtCut",1.0,0.0,20.0,"ptVmDiMu"
   #))
   combinationsBDTCut.append((
-    ["VBFPresel"],"VBFBDTCut",0.01,-0.2,0.2,"BDTHistVBFVMass"
+    ["VBFPresel"],"VBFBDTCut",0.04,-0.2,0.2,"BDTHistVBFVMass"
   ))
   #combinationsBDTCut.append((
   #  ["IncPresel"+x for x in categoriesInc],"IncBDTCutCat",0.025,-0.7,-0.35,"BDTHistMuonOnlyVMass"
@@ -1443,15 +1443,16 @@ if __name__ == "__main__":
 
   histPostFix="/mDiMu"
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
+  signalNames=["ggHmumu125","vbfHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar"]
   dataDict = {}
   dataDict["8TeV"] = [
-    "SingleMuRun2012Av1",
-    "SingleMuRun2012Av1Recover",
-    "SingleMuRun2012Bv1",
-    "SingleMuRun2012Cv1",
-    "SingleMuRun2012Cv2",
-    "SingleMuRun2012D",
+#    "SingleMuRun2012Av1",
+#    "SingleMuRun2012Av1Recover",
+#    "SingleMuRun2012Bv1",
+#    "SingleMuRun2012Cv1",
+#    "SingleMuRun2012Cv2",
+#    "SingleMuRun2012D",
   ]
   dataDict["7TeV"] = [
     "SingleMuRun2011Av1",
