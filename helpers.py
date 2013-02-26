@@ -4,6 +4,7 @@ from ROOT import gStyle as gStyle
 #from ROOT import RooRealVar, RooGaussian, RooArgList, RooDataHist
 import re
 import csv
+import glob
 from math import sqrt
 import numpy
 import array
@@ -1590,6 +1591,63 @@ def getBinWidthStr(hist):
         binWidthPrec = "2"
     return ("{0:."+binWidthPrec+"f}").format(binWidth)
 
+class EfficiencyReader:
+  def __init__(self,fileDir="effDir/"):
+    self.data = {}
+    self.fileDir = fileDir
+    for ifn in glob.glob(fileDir+"*.txt"):
+      fmatch = re.match(r".*/Eff_(.+)Higgs([0-9.]+).txt",ifn)
+      if not fmatch:
+        print("Warning: EfficiencyReader: filename: {0} isn't recognized".format(ifn))
+        continue
+      prodMode = fmatch.group(1)
+      mass = fmatch.group(2)
+      if not self.data.has_key(prodMode):
+        self.data[prodMode] = {}
+      f = open(ifn)
+      for iline in f:
+        lmatch = re.match(r"([\w]+)[\s]+([\d.]+)[\s]+([\d.]+)",iline)
+        if not fmatch:
+          print("Warning: EfficiencyReader: text line isn't recognized: \n{0}\n in file: {1}".format(iline,ifn))
+          continue
+        category = lmatch.group(1)
+        efficiency = float(lmatch.group(2))
+        efficiencyError = float(lmatch.group(3))
+        if not self.data[prodMode].has_key(category):
+          self.data[prodMode][category] = {}
+        if not self.data[prodMode][category].has_key(mass):
+          self.data[prodMode][category][mass] = {}
+        self.data[prodMode][category][mass]['eff'] = efficiency
+        self.data[prodMode][category][mass]['effErr'] = efficiencyError
+        
+  def __getitem__(self,key):
+    return self.data[key]
+  def __call__(self,prodMode,category,mass):
+    eff = self.data[prodMode][category][mass]['eff']
+    err = self.data[prodMode][category][mass]['effErr']
+    return eff, err
+  def getEfficiency(self,prodMode,category,mass):
+    return self.data[prodMode][category][mass]['eff']
+  def getEfficiencyError(self,prodMode,category,mass):
+    return self.data[prodMode][category][mass]['effErr']
+  def __str__(self):
+    result = ""
+    for mode in self.data:
+      result += "{0}:\n".format(mode)
+      sortedCats = sorted(self.data[mode].keys())
+      for cat in sortedCats:
+        result += "  {0}:\n".format(cat)
+        for mass in self.data[mode][cat]:
+          eff = self.data[mode][cat][mass]['eff']
+          err = self.data[mode][cat][mass]['effErr']
+          result += "    {0:5}:  {1:8.2%}  +/-  {2:8.2%}\n".format(mass,eff,err)
+    return result
+  def __repr__(self):
+    return str(self)
+
 if __name__ == "__main__":
 
   print("Running helpers.py")
+  eff = EfficiencyReader()
+  print eff
+  

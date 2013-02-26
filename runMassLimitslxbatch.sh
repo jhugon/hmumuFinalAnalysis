@@ -11,8 +11,8 @@ rm -f statsCards/*
 rm -f statsInput/*
 rm -f statsOutput/*
 
-for i in "120" "121" "122" "123" "123.5" "124" "124.5" "125" "125.5" "126" "126.5" "127" "127.5" "128" "129" "130"; do
-#for i in "125" "125.5" "126"; do
+#for i in "120" "121" "122" "123" "123.5" "124" "124.5" "125" "125.5" "126" "126.5" "127" "127.5" "128" "129" "130"; do
+for i in "115" "120" "123" "125" "127" "130" "135"; do
   nice ./makeCards.py -m $i
 done
 echo "Removing files in lxplus:$REMOTEDIR"

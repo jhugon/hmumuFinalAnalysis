@@ -1379,6 +1379,7 @@ if __name__ == "__main__":
   root.gROOT.SetBatch(True)
 
   directory = "input/separateSamplesTrainOnlyVBFLarge/"
+  #directory = "input/preApproveSample/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
@@ -1398,7 +1399,7 @@ if __name__ == "__main__":
   analyses += tmpList
   #analyses = ["IncPreselPtG10BB"]
   analyses = ["VBFBDTCut"]
-  #analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
+  analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
   combinations = []
   combinationsLong = []
   combinations.append((
@@ -1443,7 +1444,7 @@ if __name__ == "__main__":
 
   histPostFix="/mDiMu"
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
-  signalNames=["ggHmumu125","vbfHmumu125"]
+  #signalNames=["ggHmumu125","vbfHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar"]
   dataDict = {}
   dataDict["8TeV"] = [
@@ -1693,9 +1694,9 @@ echo "executing combine -M Asymptotic $FILENAME >& $FILENAME.out"
 
 combine -M Asymptotic $FILENAME >& $FILENAME.out
 
-echo "executing combine -M ProfileLikelihood -d $FILENAME --signif >& $FILENAME.sig"
+echo "executing combine -M ProfileLikelihood -d $FILENAME --signif --usePLC >& $FILENAME.sig"
 
-combine -M ProfileLikelihood -d $FILENAME --signif >& $FILENAME.sig
+combine -M ProfileLikelihood -d $FILENAME --signif --usePLC >& $FILENAME.sig
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
@@ -1775,9 +1776,9 @@ combine -M Asymptotic $FILENAME >& $FILENAME.out
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
-echo "executing combine -M ProfileLikelihood -d $FILENAME --signif >& $FILENAME.sig"
+echo "executing combine -M ProfileLikelihood -d $FILENAME --signif --usePLC >& $FILENAME.sig"
 
-combine -M ProfileLikelihood -d $FILENAME --signif >& $FILENAME.sig
+combine -M ProfileLikelihood -d $FILENAME --signif --usePLC >& $FILENAME.sig
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
@@ -1822,8 +1823,8 @@ date
 echo "done"
 """
 
-  runFile.write(batchString)
-#  runFile.write(simpleBatchString)
+#  runFile.write(batchString)
+  runFile.write(simpleBatchString)
   runFile.close()
 
   runFile = open(outDir+"getStatus.sh","w")
