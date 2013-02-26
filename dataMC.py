@@ -6,7 +6,8 @@ import ROOT as root
 import os
 import sys
 
-dataDir = "input/separateSamplesTrainOnlyVBFLargeBDTG110to150/"
+dataDir = "input/separateSamplesTrainOnlyVBFLarge110to150/"
+#dataDir = "input/separateSamplesTrainOnlyVBFLargeBDTG110to150/"
 outDir = "output/"
 
 RUNPERIOD="8TeV"
@@ -67,6 +68,7 @@ if RUNPERIOD=="7TeV":
     histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1.0,1.0],"rebin":2,"ylimits":[0.1,1e7]}
     histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Non-VBF Category)","xlimits":[-0.55,0.2],"rebin":2,"ylimits":[1e-2,1e8],'vertLines':{"8TeV":-0.55,"7TeV":-0.42}}
   elif len(histDirs) == 1 and histDirs[0] == "VBFPresel/":
+    print "Using VBFPresel settings"
     histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":4,"ylimits":[0.,25]}
     #histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[80.0,150.0],"rebin":2}
   
@@ -83,9 +85,10 @@ if RUNPERIOD=="7TeV":
   
     histNames["yDiJet"] = {"xlabel":"y_{jj}","xlimits":[-3.0,3.0],"rebin":4,"ylimits":[0.,40]}
   
-    histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.4,0.25],"rebin":4,"ylimits":[0.0,55],'vertLines':{"8TeV":-0.04,"7TeV":-0.03}}
+    histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.4,0.25],"rebin":4,"ylimits":[0.0,55],'vertLines':{"8TeV":-0.04,"7TeV":0.0}}
     histNames["ptmiss"] = {"xlabel":"p_{T}^{Miss} [GeV/c]","xlimits":[0,200],"leg":stdLegendPos,'rebin':2,'ylimits':[0.,35]}
   elif len(histDirs) == 1 and histDirs[0] == "VBFBDTCut/":
+    print "Using VBFBDTCut settings"
     histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":8,"ylimits":[0.0,10]}
     histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV/c]","xlimits":[0.0,200.0],"rebin":25,"ylimits":[0.0,15]}
     histNames["yDiMu"] = {"xlabel":"y_{#mu#mu}","xlimits":[-2.2,2.2],"rebin":10,"ylimits":[0.0,15]}
@@ -98,6 +101,7 @@ if RUNPERIOD=="7TeV":
     histNames["ptmiss"] = {"xlabel":"p_{T}^{Miss} [GeV/c]","xlimits":[0,200],"leg":stdLegendPos,"rebin":10,"ylimits":[0.1,25]}
     histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.4,0.25],"rebin":4,"ylimits":[0.,20],'vertLines':{"8TeV":-0.04,"7TeV":-0.03}}
   else:
+    print "Using other settings"
     anotateText = "p_{T}(#mu#mu)>10 GeV"
     histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":2,'ylimits':[0.1,5e5]}
     #anotateText = ""
@@ -115,6 +119,7 @@ elif RUNPERIOD=="8TeV":
     histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1.0,1.0],"rebin":2,"ylimits":[0.1,5e7]}
     histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Non-VBF Category)","xlimits":[-1.0,0.2],"rebin":2,"ylimits":[1e-1,1e5],'vertLines':{"8TeV":-0.55,"7TeV":-0.42}}
   elif len(histDirs) == 1 and histDirs[0] == "VBFPresel/":
+    print "Using VBFPresel settings"
     histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":4,"ylimits":[0.0,150]}
     #histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[80.0,150.0],"rebin":2}
     histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV/c]","xlimits":[0.0,200.0],"rebin":5,"ylimits":[0.0,160]}
@@ -126,8 +131,9 @@ elif RUNPERIOD=="8TeV":
     histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj}","xlimits":[3.0,7.5],"rebin":2,"ylimits":[0.1,300]}
     histNames["yDiJet"] = {"xlabel":"y_{jj}","xlimits":[-3.0,3.0],"rebin":4,"ylimits":[0.0,300]}
     histNames["ptmiss"] = {"xlabel":"p_{T}^{Miss} [GeV/c]","xlimits":[0,200],"leg":stdLegendPos,"rebin":2,"ylimits":[0.1,160]}
-    histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.4,0.25],"rebin":4,"ylimits":[0.,350],'vertLines':{"8TeV":0.04,"7TeV":-0.03}}
+    histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.4,0.25],"rebin":4,"ylimits":[0.,350],'vertLines':{"8TeV":0.0,"7TeV":0.0}}
   elif len(histDirs) == 1 and histDirs[0] == "VBFBDTCut/":
+    print "Using VBFBDTCut settings"
     histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":5,"ylimits":[0.0,30]}
     histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV/c]","xlimits":[0.0,200.0],"rebin":25,"ylimits":[0.0,50]}
     histNames["yDiMu"] = {"xlabel":"y_{#mu#mu}","xlimits":[-2.2,2.2],"rebin":10,"ylimits":[0.0,60]}
@@ -138,8 +144,9 @@ elif RUNPERIOD=="8TeV":
     histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta_{jj}","xlimits":[3.0,7.5],"rebin":5,"ylimits":[0.1,80]}
     histNames["yDiJet"] = {"xlabel":"y_{jj}","xlimits":[-3.0,3.0],"rebin":10,"ylimits":[0.0,70]}
     histNames["ptmiss"] = {"xlabel":"p_{T}^{Miss} [GeV/c]","xlimits":[0,200],"leg":stdLegendPos,"rebin":10,"ylimits":[0.1,100]}
-    histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.4,0.25],"rebin":4,"ylimits":[0.,110],'vertLines':{"8TeV":-0.04,"7TeV":-0.03}}
+    histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.4,0.25],"rebin":4,"ylimits":[0.,110],'vertLines':{"8TeV":0.0,"7TeV":0.0}}
   else:
+    print "Using other settings"
     #histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":2,'ylimits':[0.1,1e4]}
     #anotateText = "Non-VBF, BB, p_{T}(#mu#mu)>10 GeV"
     histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":8,"ylimits":[0.0,100]}

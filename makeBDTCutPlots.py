@@ -7,11 +7,11 @@ import os
 import sys
 import random
 
-#dataDir = "input/separateSamplesTrainOnlyVBFLarge/"
-dataDir = "input/separateSamplesTrainOnlyVBFLargeBDTG/"
+dataDir = "input/separateSamplesTrainOnlyVBFLarge/"
+#dataDir = "input/separateSamplesTrainOnlyVBFLargeBDTG/"
 outDir = "output/"
 
-RUNPERIOD="8TeV"
+RUNPERIOD="7TeV"
 LUMI=lumiDict[RUNPERIOD]
 
 LOGY=True
@@ -55,10 +55,10 @@ if RUNPERIOD == "7TeV":
 #                                'vertLines':{"8TeV":-0.55,"7TeV":-0.42 },
 #                                        "rebin":1}
   histNames["BDTHistVBFVMass"] = {"xlabel":"BDT Cut (VBF Category)","xlimits":[-0.4,0.25],
-                                        'ylimits':[1e-6,100.0],
-                                        'ylimitsSqrt':[1e-2,1.0],
-                                        'ylimitsSqr':[1e-5,1.0],
-                                'vertLines':{"8TeV":-0.04,"7TeV":-0.03},
+                                        'ylimits':[1e-3,10.0],
+                                        'ylimitsSqrt':[1e-2,10.0],
+                                        'ylimitsSqr':[1e-3,10.0],
+                                'vertLines':{"7TeV":0.0},
                                         "rebin":4}
 
 if "BDTG" in dataDir:
@@ -66,7 +66,7 @@ if "BDTG" in dataDir:
     histNames[k]['rebin'] = 20
     histNames[k]['xlimits'] = [-1,1]
     #histNames[k]['ylimitsSqr'] = [1e-2,1]
-    histNames[k]['vertLines'] = {"8TeV":0.2}
+    histNames[k]['vertLines'] = {"8TeV":0.2,"7TeV":0.2}
     histNames[k]["xlabel"] = "BDTG Cut (VBF Category)"
 
 tlatex = root.TLatex()

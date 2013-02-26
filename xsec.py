@@ -130,17 +130,22 @@ nEventsMap["ZZ_8TeV"] = 10320000
 nEventsMap["WJetsToLNu_8TeV"] =  44371574
 nEventsMap["QCD_8TeV"] =  20764602
 
-nEventsMap["ggHmumu125_7TeV"] = 10000
-nEventsMap["vbfHmumu125_7TeV"] = 9994
+#nEventsMap["ggHmumu125_7TeV"] = 10000
+#nEventsMap["vbfHmumu125_7TeV"] = 9994
+
+# For different large check samples
+nEventsMap["ggHmumu125_7TeV"] = 49871
+nEventsMap["vbfHmumu125_7TeV"] = 42861
+
 nEventsMap["zHmumu125_7TeV"] = 10000
 nEventsMap["wHmumu125_7TeV"] = 10000
-nEventsMap["DYJetsToLL_7TeV"] = 36264432
-nEventsMap["ttbar_7TeV"] = 25645835
-nEventsMap["DYToMuMu_7TeV"] = 29243564
-nEventsMap["DYToTauTau_7TeV"] = 13048745
-nEventsMap["WW_7TeV"] =  4225916
-nEventsMap["WZ_7TeV"] = 4265243
-nEventsMap["ZZ_7TeV"] = 3991045
+nEventsMap["DYJetsToLL_7TeV"] = 34334400
+nEventsMap["ttbar_7TeV"] = 51360015
+nEventsMap["DYToMuMu_7TeV"] = 23263564
+nEventsMap["DYToTauTau_7TeV"] = 19937479
+nEventsMap["WW_7TeV"] =  2145916
+nEventsMap["WZ_7TeV"] = 4185243
+nEventsMap["ZZ_7TeV"] = 4191045
 nEventsMap["WJetsToLNu_7TeV"] =  0.00000001
 nEventsMap["QCD_7TeV"] =  0.00000001
 

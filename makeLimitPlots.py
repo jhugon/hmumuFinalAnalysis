@@ -643,7 +643,7 @@ if __name__ == "__main__":
   #print mpl.rcParams["backend"]
 
   ylimits=[0.1,100.0]
-  ylimits=[0.1,40.0]
+  ylimits=[0.1,60.0]
 
   lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":lumiDict["8TeV"],"7P8TeV":lumiDict["8TeV"]+lumiDict["7TeV"]}
   
@@ -682,7 +682,7 @@ if __name__ == "__main__":
       xlabel="Integrated Luminosity [fb^{-1}]"
       caption3 = ""
       if args.bdtCut:
-        #xlimits = [-0.4,0.25]
+        xlimits = [-0.9,1.0]
         xlabel="BDT Discriminant Cut"
         match = re.match(r"([^0-9.]*)([0-9.]*)",plotName)
         assert(match)

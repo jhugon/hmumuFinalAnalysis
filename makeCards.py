@@ -32,7 +32,7 @@ root.gErrorIgnoreLevel = root.kWarning
 root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.ERROR)
 PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 
-NPROCS = 1
+NPROCS = 2
 
 #Scaling Parameter for Bak norm uncertainty
 BAKUNC = 1.0
@@ -1378,10 +1378,9 @@ if __name__ == "__main__":
   print "Started makeCards.py"
   root.gROOT.SetBatch(True)
 
-  directory = "input/separateSamplesTrainOnlyVBFLargeBDTG/"
+  directory = "input/separateSamplesTrainOnlyVBFLarge/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
@@ -1432,8 +1431,8 @@ if __name__ == "__main__":
   #  ["IncPresel"],"IncPtCut",1.0,0.0,20.0,"ptVmDiMu"
   #))
   combinationsBDTCut.append((
-    #["VBFPresel"],"VBFBDTCut",0.04,-0.2,0.2,"BDTHistVBFVMass"
-    ["VBFPresel"],"VBFBDTCut",0.2,-1,1,"BDTHistVBFVMass"
+    ["VBFPresel"],"VBFBDTCut",0.04,-0.2,0.2,"BDTHistVBFVMass"
+    #["VBFPresel"],"VBFBDTCut",0.2,-1,1,"BDTHistVBFVMass"
   ))
   #combinationsBDTCut.append((
   #  ["IncPresel"+x for x in categoriesInc],"IncBDTCutCat",0.025,-0.7,-0.35,"BDTHistMuonOnlyVMass"
@@ -1717,7 +1716,9 @@ cp $FILENAME.out ..
 cp $FILENAME.mu ..
 cp $FILENAME.sig ..
 cp mlfit.root ../$FILENAME.root
-cp data_fit_s.png ../$FILENAME.png
+for subname in *_fit_s.png; do
+  cp $subname ../${FILENAME%$TXTSUFFIX}_$subname
+done
 #cp $FILENAME.expsig ..
 
 echo "done"
@@ -1793,7 +1794,9 @@ combine -M MaxLikelihoodFit --plots --saveNormalizations $FILENAME >& $FILENAME.
 rm -f roostats*
 rm -f higgsCombineTest*.root
 cp mlfit.root $FILENAME.root
-cp data_fit_s.png $FILENAME.png
+for subname in *_fit_s.png; do
+  cp $subname ${FILENAME%$TXTSUFFIX}_$subname
+done
 
 done
 
