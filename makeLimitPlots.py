@@ -682,7 +682,7 @@ if __name__ == "__main__":
       xlabel="Integrated Luminosity [fb^{-1}]"
       caption3 = ""
       if args.bdtCut:
-        xlimits = [-0.4,0.25]
+        #xlimits = [-0.4,0.25]
         xlabel="BDT Discriminant Cut"
         match = re.match(r"([^0-9.]*)([0-9.]*)",plotName)
         assert(match)

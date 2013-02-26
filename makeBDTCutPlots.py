@@ -7,7 +7,8 @@ import os
 import sys
 import random
 
-dataDir = "input/separateSamplesTrainOnlyVBFLarge/"
+#dataDir = "input/separateSamplesTrainOnlyVBFLarge/"
+dataDir = "input/separateSamplesTrainOnlyVBFLargeBDTG/"
 outDir = "output/"
 
 RUNPERIOD="8TeV"
@@ -15,6 +16,7 @@ LUMI=lumiDict[RUNPERIOD]
 
 LOGY=True
 integralPlot=False
+useDataForBak = True
 ylimitsRatio = [0.5,1.5]
 
 mRange = [120.0,130.0]
@@ -40,11 +42,11 @@ if RUNPERIOD == "8TeV":
   #                                      'ylimitsSqrt':[1e-3,10],
   #                              'vertLines':{"8TeV":-0.55,"7TeV":-0.42 },
   #                                      "rebin":1}
-  histNames["BDTHistVBFVMass"] = {"xlabel":"BDT Cut (VBF Category)","xlimits":[-0.4,0.10],
+  histNames["BDTHistVBFVMass"] = {"xlabel":"BDT Cut (VBF Category)","xlimits":[-0.4,0.40],
                                         'ylimits':[1e-3,10.0],
                                         'ylimitsSqrt':[1e-2,10.0],
                                         'ylimitsSqr':[1e-3,10.0],
-                                'vertLines':{"8TeV":0.04},
+                                'vertLines':{"8TeV":0.0},
                                         "rebin":4}
 if RUNPERIOD == "7TeV":
 #  histNames["BDTHistMuonOnlyVMass"] = {"xlabel":"BDT Cut (Non-VBF Category)","xlimits":[-0.55,0.2],
@@ -58,6 +60,14 @@ if RUNPERIOD == "7TeV":
                                         'ylimitsSqr':[1e-5,1.0],
                                 'vertLines':{"8TeV":-0.04,"7TeV":-0.03},
                                         "rebin":4}
+
+if "BDTG" in dataDir:
+  for k in histNames:
+    histNames[k]['rebin'] = 20
+    histNames[k]['xlimits'] = [-1,1]
+    #histNames[k]['ylimitsSqr'] = [1e-2,1]
+    histNames[k]['vertLines'] = {"8TeV":0.2}
+    histNames[k]["xlabel"] = "BDTG Cut (VBF Category)"
 
 tlatex = root.TLatex()
 tlatex.SetNDC()
@@ -96,6 +106,12 @@ def drawLatex():
 
     tlatex.SetTextAlign(32)
     tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,"")
+
+    if useDataForBak:
+      tlatex.SetTextSize(0.05)
+      tlatex.SetTextAlign(22)
+      tlatex.SetTextColor(root.kRed+1)
+      tlatex.DrawLatex((1.0-gStyle.GetPadRightMargin()+gStyle.GetPadLeftMargin())/2.0,0.73,"Data Used as Background")
 
 class Dataset:
   def __init__(self,filename,legendEntry,color,scaleFactor,isData=False,isSignal=False):
@@ -220,12 +236,16 @@ for ds in sigDatasetList:
 
 #######################################
 
-for histName in bkgDatasetList[0].hists:
+bakListToUse = bkgDatasetList
+if useDataForBak:
+  bakListToUse = realDatasetList
+
+for histName in bakListToUse[0].hists:
   #print("Making Histo: %s" % histName)
   canvas.Clear()
   bkgHistList = []
   sigHistList = []
-  for ds in bkgDatasetList:
+  for ds in bakListToUse:
     tmpHist = ds.hists[histName]
     bkgHistList.append(tmpHist)
   bkgHistList.reverse()

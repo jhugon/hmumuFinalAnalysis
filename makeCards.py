@@ -1378,7 +1378,7 @@ if __name__ == "__main__":
   print "Started makeCards.py"
   root.gROOT.SetBatch(True)
 
-  directory = "input/separateSamplesTrainOnlyVBFLarge/"
+  directory = "input/separateSamplesTrainOnlyVBFLargeBDTG/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
   periods = ["8TeV"]
@@ -1397,15 +1397,15 @@ if __name__ == "__main__":
     for c in categoriesVBF:
         tmpList.append(a+c)
   analyses += tmpList
-  analyses = ["IncPreselPtG10BB"]
-  #analyses = ["VBFBDTCut"]
+  #analyses = ["IncPreselPtG10BB"]
+  analyses = ["VBFBDTCut"]
   #analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
   combinations = []
   combinationsLong = []
-  """
   combinations.append((
         ["IncPreselPtG10"+x for x in categoriesInc],"IncPreselCat"
   ))
+  """
   combinations.append((
         ["VBFPresel"]+["IncPreselPtG10"],"BDTCutVBFBDTOnly"
   ))
@@ -1432,7 +1432,8 @@ if __name__ == "__main__":
   #  ["IncPresel"],"IncPtCut",1.0,0.0,20.0,"ptVmDiMu"
   #))
   combinationsBDTCut.append((
-    ["VBFPresel"],"VBFBDTCut",0.04,-0.2,0.2,"BDTHistVBFVMass"
+    #["VBFPresel"],"VBFBDTCut",0.04,-0.2,0.2,"BDTHistVBFVMass"
+    ["VBFPresel"],"VBFBDTCut",0.2,-1,1,"BDTHistVBFVMass"
   ))
   #combinationsBDTCut.append((
   #  ["IncPresel"+x for x in categoriesInc],"IncBDTCutCat",0.025,-0.7,-0.35,"BDTHistMuonOnlyVMass"
@@ -1447,12 +1448,12 @@ if __name__ == "__main__":
   backgroundNames= ["DYJetsToLL","ttbar"]
   dataDict = {}
   dataDict["8TeV"] = [
-#    "SingleMuRun2012Av1",
-#    "SingleMuRun2012Av1Recover",
-#    "SingleMuRun2012Bv1",
-#    "SingleMuRun2012Cv1",
-#    "SingleMuRun2012Cv2",
-#    "SingleMuRun2012D",
+    "SingleMuRun2012Av1",
+    "SingleMuRun2012Av1Recover",
+    "SingleMuRun2012Bv1",
+    "SingleMuRun2012Cv1",
+    "SingleMuRun2012Cv2",
+    "SingleMuRun2012D",
   ]
   dataDict["7TeV"] = [
     "SingleMuRun2011Av1",

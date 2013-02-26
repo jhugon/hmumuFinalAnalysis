@@ -6,7 +6,7 @@ import ROOT as root
 import os
 import sys
 
-dataDir = "input/separateSamplesTrainOnlyVBFLarge110to150/"
+dataDir = "input/separateSamplesTrainOnlyVBFLargeBDTG110to150/"
 outDir = "output/"
 
 RUNPERIOD="8TeV"
@@ -222,6 +222,10 @@ else:
   """
 
 for key in histNames:
+  if "BDTG" in dataDir and "BDT" in key:
+    histNames[key]["xlimits"] = [-1,1]
+    histNames[key]["rebin"] = 20
+    histNames[key]['vertLines']={"8TeV":0.2,"7TeV":0.2}
   if re.match("pt.*",key):
     histNames[key]["units"] = " GeV/c"
   elif re.match("mDi.*",key):
