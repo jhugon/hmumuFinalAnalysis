@@ -142,17 +142,28 @@ class ShapePlotter:
                                                             root.RooArgList(mMuMu),tmpHist)
       #Data Time
 
+      """
       sigPlusBakPDFGraph = None
       if plotSignalStrength>0.:
         sigPlusBakPDFGraph = getattr(self,"makeSigPlusBakPDF")(channelWS,mMuMu,data_obs,
                                                 self.processNameMap[channelNameOrig],
                                                 plotSignalStrength,tmpRebin
                                     )
-      dataGraph, bakPDFGraph, pullsGraph,chi2 = getattr(self,"makeTGraphs")(bakPDF,data_obs,mMuMu)
+      """
+
+      dataGraph, bakPDFGraph, sigPlusBakPDFGraph, sigPDFGraph, pullsGraph,chi2,sigStrength = getattr(self,"makeMainTGraphs")(bakPDF,data_obs,mMuMu,
+                                        channelWS,
+                                        self.processNameMap[channelNameOrig],
+                                        channelName
+                                                    )
+      print("Sig strength for channel {0}:".format(channelName))
+      sigStrength.Print()
+      #dataGraph, bakPDFGraph, pullsGraph,chi2 = getattr(self,"makeTGraphs")(bakPDF,data_obs,mMuMu)
       pullsDistribution = getattr(self,"draw")(channelName,dataGraph,bakPDFGraph,pullsGraph,chi2,rooDataTitle,sigPlusBakPDFGraph)
       saveName = outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName
       saveName = re.sub(r"([\d]+)\.[\d]+",r"\1",saveName)
       saveAs(self.canvas,saveName)
+      """
 
       getattr(self,"drawPulls")(channelName,pullsDistribution,rooDataTitle)
       saveName = outDir+"pulls_"+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName
@@ -176,6 +187,7 @@ class ShapePlotter:
         saveName=outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName+"_"+processName
         saveName = re.sub(r"([\d]+)\.[\d]+",r"\1",saveName)
         saveAs(self.canvas,saveName)
+      """
 
   def readCard(self,fn):
     f = open(fn)
@@ -450,9 +462,6 @@ class ShapePlotter:
         errDown += (yErr-float(yNom))**2
       if badPoint:
         continue
-      if normErr != None:
-        errUp += (normErr*yNom)**2
-        errDown += (normErr*yNom)**2
       errUp = sqrt(errUp)
       errDown = sqrt(errDown)
       modelGraph.SetPoint(iPoint,xNom,yNom)
@@ -948,6 +957,209 @@ class ShapePlotter:
   
       return modelGraph
 
+  def makeMainTGraphs(self,bakPDF,data,observable,workspace,rateMap,channelName):
+    avgWeight = 1.0
+    isRealData = (data.GetTitle() == "Real Observed Data")
+    if (not isRealData) and (data.GetName() == "data_obs" or "bak" in data.GetName()):
+      for i in backgroundList:
+        if "DY" in i:
+          datasetName = i + "_" + self.energyStr
+          avgWeight = self.lumi*1000.0*xsec[datasetName]/nEventsMap[datasetName]
+
+    plotRangeList = getRooVarRange(observable,"makeShapePlotRange")
+    getPlotRangeString = "mMuMu > {0} && mMuMu < {1}".format(*plotRangeList)
+    nData =  data.sumEntries(getPlotRangeString)
+    wImport = getattr(workspace,"import")
+    sigName = None
+    vbfChannel = "VBF" in channelName
+    for i in rateMap:
+      if i != "bak":
+        if vbfChannel and "vbf" in i:
+          sigName = i
+          break
+        elif not vbfChannel and "gg" in i:
+          sigName = i
+          break
+    sigPDF = workspace.pdf(sigName)
+
+    bakStrength = root.RooRealVar("bakStrength","bakStrength",1.0,1e6)
+    sigStrength = root.RooRealVar("sigStrength","sigStrength",0.0,1e6)
+    epdfSig = root.RooExtendPdf("epdfSig","epdfSig",sigPDF,sigStrength)
+    epdfBak = root.RooExtendPdf("epdfBak","epdfBak",bakPDF,bakStrength)
+    pdfSB = root.RooAddPdf("pdfSB","Signal + Background",root.RooArgList(epdfBak,epdfSig))
+    wImport(pdfSB)
+  
+    constraintPDFList = []
+    constraintParamList = []
+    pdfParams = bakPDF.getParameters(data)
+    itr = pdfParams.createIterator()
+    for iParam in range(pdfParams.getSize()):
+      param = itr.Next()
+      paramName = param.GetName()
+      if self.params.has_key(paramName):
+        nominal,err = self.params[paramName]
+        nominal = float(nominal)
+        err = float(err)
+        meanVar = root.RooRealVar("ConstrainMean_"+paramName,"ConstrainMean_"+paramName,nominal)
+        sigmaVar = root.RooRealVar("ConstrainSigma_"+paramName,"ConstrainSigma_"+paramName,err)
+        constraintPDF = root.RooGaussian("ConstrainPDF_"+paramName,"ConstrainPDF_"+paramName,param,meanVar,sigmaVar)
+        constraintParamList.append(meanVar)
+        constraintParamList.append(sigmaVar)
+        constraintPDFList.append(constraintPDF)
+        wImport(meanVar)
+        wImport(sigmaVar)
+        wImport(constraintPDF)
+        #print paramName,nominal,err
+    pdfFinal = None
+    if len(constraintPDFList)>0:
+      constraintPDFList.append(pdfSB)
+      pdfFinal = root.RooProdPdf("pdfSBConstraint",
+              "Signal+Background * Constraints",
+              root.RooArgList(*constraintPDFList)
+              )
+      wImport(pdfFinal)
+    else:
+      pdfFinal = pdfSB
+  
+    #frSB = pdfSB.fitTo(data,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr = pdfFinal.fitTo(data,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+
+    rng = root.RooFit.Range("makeShapePlotRange")
+    normRange = root.RooFit.NormRange("makeShapeNormRange")
+    frame = None
+    if len(self.xlimits) == 2:
+      frame = observable.frame(root.RooFit.Range(*self.xlimits))
+    else:
+      frame = observable.frame()
+    curveUpNames = []
+    curveDownNames = []
+
+    curveDataName = pdfFinal.GetName()+"_CurveData"
+    data.plotOn(frame,root.RooFit.Name(curveDataName),rng)
+    curveNomName = pdfFinal.GetName()+"_CurveNominal"
+    pdfFinal.plotOn(frame,root.RooFit.Name(curveNomName),rng,normRange,root.RooFit.Components("epdfBak"))
+    nparams = pdfFinal.getParameters(data).getSize()
+    chi2 = frame.chiSquare(nparams)
+    pulls = frame.pullHist(curveDataName,curveNomName)
+
+    curveNomPlusSigName = pdfFinal.GetName()+"_CurveNominalPlusSig"
+    pdfFinal.plotOn(frame,root.RooFit.Name(curveNomPlusSigName),rng,normRange)
+    curveSigName = pdfFinal.GetName()+"_CurveSig"
+    pdfFinal.plotOn(frame,root.RooFit.Name(curveSigName),rng,normRange,root.RooFit.Components("epdfSig"))
+
+    nParams = fr.floatParsFinal().getSize()
+    for i in range(nParams):
+      for sign in [1.0,-1.0]:
+        for j in range(nParams):
+          param = fr.floatParsFinal().at(j)
+          val = param.getVal()
+          if i == j:
+            val += sign*param.getError()
+          workspace.var(param.GetName()).setVal(val)
+        tmpName = pdfFinal.GetName()+"_Curve{0}p{1}".format(i,sign)
+        pdfFinal.plotOn(frame,root.RooFit.Name(tmpName),rng,normRange,root.RooFit.Components("epdfBak"))
+        if sign > 0.0:
+          curveUpNames.append(tmpName)
+        else:
+          curveDownNames.append(tmpName)
+
+    varUp = []
+    varDown = []
+    for nameUp,nameDown in zip(curveUpNames,curveDownNames):
+      curveUp = frame.findObject(nameUp)
+      curveDown = frame.findObject(nameDown)
+      varUp.append(curveUp)
+      varDown.append(curveDown)
+
+    curveNom = frame.findObject(curveNomName)
+    curveData = frame.findObject(curveDataName)
+    modelGraph = root.TGraphAsymmErrors()
+    dataGraph = root.TGraphAsymmErrors()
+    pullsGraph = root.TGraphAsymmErrors()
+
+    curveNomPlusSig = frame.findObject(curveNomPlusSigName)
+    curveSig = frame.findObject(curveSigName)
+    modelPlusSigGraph = root.TGraphAsymmErrors()
+    sigGraph = root.TGraphAsymmErrors()
+
+    iPoint = 0
+    xNom = root.Double()
+    yNom = root.Double()
+    xErrUp = root.Double()
+    yErrUp = root.Double()
+    xErrDown = root.Double()
+    yErrDown = root.Double()
+    for i in range(curveNom.GetN()):
+      curveNom.GetPoint(i,xNom,yNom)
+      errUp = float(yNom)**2/nData
+      errDown = float(yNom)**2/nData
+      badPoint = False
+      for errCurveUp,errCurveDown in zip(varUp,varDown):
+        iErrUp = errCurveUp.findPoint(xNom,1.0)
+        iErrDown = errCurveDown.findPoint(xNom,1.0)
+        if iErrUp < 0 or iErrDown < 0:
+          badPoint = True
+        errCurveUp.GetPoint(iErrUp,xErrUp,yErrUp)
+        errCurveDown.GetPoint(iErrDown,xErrDown,yErrDown)
+        if yErrUp >= yErrDown and yErrUp > yNom:
+          errUp += (yErrUp-float(yNom))**2
+        elif yErrDown > yNom:
+          errUp += (yErrDown-float(yNom))**2
+        if yErrUp <= yErrDown and yErrUp < yNom:
+          errDown += (yErrUp-float(yNom))**2
+        elif yErrDown < yNom:
+          errDown += (yErrDown-float(yNom))**2
+      if badPoint:
+        continue
+      errUp = sqrt(errUp)
+      errDown = sqrt(errDown)
+      modelGraph.SetPoint(iPoint,xNom,yNom)
+      modelGraph.SetPointError(iPoint,0.,0.,errUp,errDown)
+      iPoint+=1
+    iPoint = 0
+    for i in range(curveData.GetN()):
+      curveData.GetPoint(i,xNom,yNom)
+      if yNom <=0.0:
+        continue
+      dataGraph.SetPoint(iPoint,xNom,yNom)
+      errUp = sqrt(yNom)*sqrt(avgWeight)
+      errDown = sqrt(yNom)*sqrt(avgWeight)
+      dataGraph.SetPointError(iPoint,0.,0.,errUp,errDown)
+      iPoint+=1
+    iPoint = 0
+    for i in range(curveNomPlusSig.GetN()):
+      curveNomPlusSig.GetPoint(i,xNom,yNom)
+      if yNom <=0.0:
+        continue
+      modelPlusSigGraph.SetPoint(iPoint,xNom,yNom)
+      iPoint+=1
+    iPoint = 0
+    for i in range(curveSig.GetN()):
+      curveSig.GetPoint(i,xNom,yNom)
+      if yNom <=0.0:
+        continue
+      sigGraph.SetPoint(iPoint,xNom,yNom)
+      iPoint+=1
+    iPoint = 0
+    for i in range(pulls.GetN()):
+      pulls.GetPoint(i,xNom,yNom)
+      pullsGraph.SetPoint(iPoint,xNom,yNom)
+      errUp = pulls.GetErrorXhigh(i)
+      errDown = pulls.GetErrorXlow(i)
+      pullsGraph.SetPointError(iPoint,0.,0.,errUp,errDown)
+      iPoint+=1
+    dataGraph.SetName(curveData.GetName()+"_TGraph")
+    modelGraph.SetName(curveNom.GetName()+"_TGraph")
+    pullsGraph.SetName(curveData.GetName()+"_pullsTGraph")
+    modelPlusSigGraph.SetName(curveNom.GetName()+"_modelPlusSigTGraph")
+    sigGraph.SetName(curveNom.GetName()+"_sigTGraph")
+    dataGraph.SetMarkerColor(1)
+    modelGraph.SetLineColor(root.kBlue+1)
+    modelGraph.SetFillColor(root.kCyan)
+    modelGraph.SetFillStyle(1)
+    modelPlusSigGraph.SetLineColor(root.kRed)
+    sigGraph.SetLineColor(root.kRed)
+    return dataGraph, modelGraph, modelPlusSigGraph, sigGraph, pullsGraph, chi2, fr.floatParsFinal().find("sigStrength")
 
 titleMap = {
   "AllCat":"All Categories Comb.",
@@ -1021,8 +1233,8 @@ if __name__ == "__main__":
 
   shapePlotterList = []
   #for fn in glob.glob(dataDir+"*20.root")+glob.glob(dataDir+"*5.05.root"):
-  for fn in glob.glob(dataDir+"*.root"):
-  #for fn in glob.glob(dataDir+"BDTCutCat*.root"):
+  #for fn in glob.glob(dataDir+"*.root"):
+  for fn in glob.glob(dataDir+"BDTCutCat*.root"):
     if re.search("P[\d.]+TeV",fn):
         continue
     s = ShapePlotter(fn,outDir,titleMap,rebin,xlimits=plotRange,normRange=normRange,signalInject=args.signalInject,plotSignalStrength=args.plotSignalStrength,plotSignalBottom=args.plotSignalBottom)
