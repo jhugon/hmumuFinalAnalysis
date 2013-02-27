@@ -142,23 +142,15 @@ class ShapePlotter:
                                                             root.RooArgList(mMuMu),tmpHist)
       #Data Time
 
-      """
-      sigPlusBakPDFGraph = None
-      if plotSignalStrength>0.:
-        sigPlusBakPDFGraph = getattr(self,"makeSigPlusBakPDF")(channelWS,mMuMu,data_obs,
-                                                self.processNameMap[channelNameOrig],
-                                                plotSignalStrength,tmpRebin
-                                    )
-      """
-
-      dataGraph, bakPDFGraph, sigPlusBakPDFGraph, sigPDFGraph, pullsGraph,chi2,sigStrength = getattr(self,"makeMainTGraphs")(bakPDF,data_obs,mMuMu,
+      sigGraph = None
+      dataGraph, bakPDFGraph, sigPlusBakPDFGraph, sigPDFGraph, pullsGraph,chi2,sigCount = getattr(self,"makeMainTGraphs")(bakPDF,data_obs,mMuMu,
                                         channelWS,
                                         self.processNameMap[channelNameOrig],
                                         channelName
                                                     )
-      print("Sig strength for channel {0}:".format(channelName))
-      sigStrength.Print()
-      pullsDistribution = getattr(self,"draw")(channelName,dataGraph,bakPDFGraph,pullsGraph,chi2,rooDataTitle,None)
+      if plotSignalStrength>0.:
+        sigGraph = getattr(self,"scaleSigPDFGraph")(sigPDFGraph,sigCount,self.processNameMap[channelNameOrig],plotSignalStrength)
+      pullsDistribution = getattr(self,"draw")(channelName,dataGraph,bakPDFGraph,pullsGraph,chi2,rooDataTitle,sigGraph)
       saveName = outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName
       saveName = re.sub(r"([\d]+)\.[\d]+",r"\1",saveName)
       saveAs(self.canvas,saveName)
@@ -1162,7 +1154,35 @@ class ShapePlotter:
     modelGraph.SetFillStyle(1)
     modelPlusSigGraph.SetLineColor(root.kRed)
     sigGraph.SetLineColor(root.kRed)
+
     return dataGraph, modelGraph, modelPlusSigGraph, sigGraph, pullsGraph, chi2, fr.floatParsFinal().find("sigStrength")
+
+  def scaleSigPDFGraph(self,ingraph,sigCountVar,rateMap,sigStrength):
+    originalCount = sigCountVar.getVal()
+    oneSigCount = 0.0
+    for i in rateMap:
+        if i != "bak":
+          oneSigCount += rateMap[i] 
+    bestFitSigStrength = originalCount/oneSigCount
+    scaleFactor = sigStrength/bestFitSigStrength
+
+    #print("originalCount: {:.2f} oneSigCount: {:.2f}  best fit mu: {:.2f}".format(originalCount,oneSigCount, bestFitSigStrength))
+    #print("desired mu: {:.2f} desired count: {:.2f} scale factor: {:.2f}".format(sigStrength,sigStrength*oneSigCount,scaleFactor))
+
+    result = root.TGraph()
+    result.SetName("signalGraph")
+    result.SetLineColor(root.kRed)
+    iPoint = 0
+    x = root.Double()
+    y = root.Double()
+    for i in range(ingraph.GetN()):
+      ingraph.GetPoint(i,x,y)
+      #if yNom <=0.0:
+      #  continue
+      result.SetPoint(iPoint,x,y*scaleFactor)
+      iPoint+=1
+    return result
+    
 
 titleMap = {
   "AllCat":"All Categories Comb.",
