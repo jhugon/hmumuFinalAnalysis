@@ -1592,18 +1592,21 @@ def getBinWidthStr(hist):
     return ("{0:."+binWidthPrec+"f}").format(binWidth)
 
 class EfficiencyReader:
-  def __init__(self,fileDir="effDir/"):
+  def __init__(self,fileDir="EffMassScan/"):
     self.data = {}
     self.fileDir = fileDir
     for ifn in glob.glob(fileDir+"*.txt"):
-      fmatch = re.match(r".*/Eff_(.+)Higgs([0-9.]+).txt",ifn)
+      fmatch = re.match(r".*/Eff(.+)_(.+)Higgs([0-9.]+).txt",ifn)
       if not fmatch:
         print("Warning: EfficiencyReader: filename: {0} isn't recognized".format(ifn))
         continue
-      prodMode = fmatch.group(1)
-      mass = fmatch.group(2)
-      if not self.data.has_key(prodMode):
-        self.data[prodMode] = {}
+      energy = fmatch.group(1)
+      prodMode = fmatch.group(2)
+      mass = fmatch.group(3)
+      if not self.data.has_key(energy):
+        self.data[energy] = {}
+      if not self.data[energy].has_key(prodMode):
+        self.data[energy][prodMode] = {}
       f = open(ifn)
       for iline in f:
         lmatch = re.match(r"([\w]+)[\s]+([\d.]+)[\s]+([\d.]+)",iline)
@@ -1613,33 +1616,35 @@ class EfficiencyReader:
         category = lmatch.group(1)
         efficiency = float(lmatch.group(2))
         efficiencyError = float(lmatch.group(3))
-        if not self.data[prodMode].has_key(category):
-          self.data[prodMode][category] = {}
-        if not self.data[prodMode][category].has_key(mass):
-          self.data[prodMode][category][mass] = {}
-        self.data[prodMode][category][mass]['eff'] = efficiency
-        self.data[prodMode][category][mass]['effErr'] = efficiencyError
+        if not self.data[energy][prodMode].has_key(category):
+          self.data[energy][prodMode][category] = {}
+        if not self.data[energy][prodMode][category].has_key(mass):
+          self.data[energy][prodMode][category][mass] = {}
+        self.data[energy][prodMode][category][mass]['eff'] = efficiency
+        self.data[energy][prodMode][category][mass]['effErr'] = efficiencyError
         
   def __getitem__(self,key):
     return self.data[key]
-  def __call__(self,prodMode,category,mass):
-    eff = self.data[prodMode][category][mass]['eff']
-    err = self.data[prodMode][category][mass]['effErr']
+  def __call__(self,energy,prodMode,category,mass):
+    eff = self.data[energy][prodMode][category][mass]['eff']
+    err = self.data[energy][prodMode][category][mass]['effErr']
     return eff, err
-  def getEfficiency(self,prodMode,category,mass):
-    return self.data[prodMode][category][mass]['eff']
-  def getEfficiencyError(self,prodMode,category,mass):
-    return self.data[prodMode][category][mass]['effErr']
+  def getEfficiency(self,energy,prodMode,category,mass):
+    return self.data[energy][prodMode][category][mass]['eff']
+  def getEfficiencyError(self,energy,prodMode,category,mass):
+    return self.data[energy][prodMode][category][mass]['effErr']
   def __str__(self):
     result = ""
-    for mode in self.data:
-      result += "{0}:\n".format(mode)
-      sortedCats = sorted(self.data[mode].keys())
+    for energy in self.data:
+     for mode in self.data[energy]:
+      result += "{0} {1}:\n".format(mode,energy)
+      sortedCats = sorted(self.data[energy][mode].keys())
       for cat in sortedCats:
         result += "  {0}:\n".format(cat)
-        for mass in self.data[mode][cat]:
-          eff = self.data[mode][cat][mass]['eff']
-          err = self.data[mode][cat][mass]['effErr']
+        sortedMasses = sorted(self.data[energy][mode][cat].keys())
+        for mass in sortedMasses:
+          eff = self.data[energy][mode][cat][mass]['eff']
+          err = self.data[energy][mode][cat][mass]['effErr']
           result += "    {0:5}:  {1:8.2%}  +/-  {2:8.2%}\n".format(mass,eff,err)
     return result
   def __repr__(self):

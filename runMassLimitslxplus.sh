@@ -12,9 +12,10 @@ rm -f statsInput/*
 rm -f statsOutput/*
 
 #for i in "120" "121" "122" "123" "123.5" "124" "124.5" "125" "125.5" "126" "126.5" "127" "127.5" "128" "129" "130"; do
-for i in "115" "118" "120" "121" "122" "123" "123.5" "124" "124.5" "125" "125.5" "126" "126.5" "127" "127.5" "128" "129" "130" "132" "135"; do
+#for i in "115" "118" "120" "121" "122" "123" "123.5" "124" "124.5" "125" "125.5" "126" "126.5" "127" "127.5" "128" "129" "130" "132" "135"; do
+for i in "116" "118" "120" "122" "124" "126" "128" "130" "132" "134"; do
 #for i in "115" "120" "122" "125" "127" "130" "135"; do
-  nice ./makeCards.py -m $i --toyData
+  nice ./makeCards.py -m $i
 done
 echo "Removing files in lxplus:$REMOTEDIR"
 ssh lxplus "cd /tmp/jhugon/; rm -rf $REMOTEDIR/*;echo \"Contents of dir: \`ls $REMOTEDIR \`\""

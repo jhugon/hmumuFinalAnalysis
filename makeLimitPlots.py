@@ -698,7 +698,7 @@ if __name__ == "__main__":
         if energyStr == "8TeV":
             ylimits = [0.,40.]
         elif energyStr == "7TeV":
-            ylimits = [0.,40.]
+            ylimits = [0.,70.]
         xlabel="m_{H} [GeV/c^{2}]"
         caption3 = "L = {0:.1f} fb^{{-1}}".format(float(lumisToUse[energyStr]))
       #elif period == "14TeV":

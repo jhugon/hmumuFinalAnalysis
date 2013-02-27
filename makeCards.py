@@ -32,6 +32,9 @@ root.gErrorIgnoreLevel = root.kWarning
 root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.ERROR)
 PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 
+from signalfits import getRooFitSignalPars as sigFits
+effReader = EfficiencyReader()
+
 NPROCS = 2
 
 #Scaling Parameter for Bak norm uncertainty
@@ -42,6 +45,8 @@ SIGUNCON = False
 
 FREEBAKPARAMS = True
 LIMITTOSIGNALREGION = False
+
+USEGPANNA = False
 
 SIGNALFIT = [110.,140.]
 
@@ -630,6 +635,97 @@ def makePDFSigGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName
 
     return paramList, debug, sigInjectDataset
 
+def makePDFSigNew(channelName,name,mMuMu,mass,workspaceImportFn,useDG=False):
+
+    debug = ""
+    debug += "### makePDFSigNew: "+channelName+": "+name+"\n"
+    debug += "#    useDG: {0}\n".format(useDG)
+    matchChannel = re.match(r"(.*)([\d]TeV)",channelName)
+    assert(matchChannel)
+    category = matchChannel.group(1)
+    energy = matchChannel.group(2)
+    massStr = "{0:.0f}".format(mass)
+    if mass*10 % 1 > 0.0:
+      massStr = "{0:.1f}".format(mass)
+    fitTypeString = "CBG"
+    if useDG:
+      fitTypeString = "DG"
+    params = sigFits.parameters[energy][massStr][category][fitTypeString]
+
+    rooParamList = []
+    if useDG:
+      if len(params.keys())>4:
+        # define the Double Gaussian
+        meanG1 = root.RooRealVar(channelName+"_"+name+"_MeanG1",
+                                 channelName+"_"+name+"_MeanG1", 
+                                 params['meanG1'])
+        meanG2 = root.RooRealVar(channelName+"_"+name+"_MeanG2",
+                                 channelName+"_"+name+"_MeanG2", 
+                                 params['meanG2'])
+        
+        widthG1 = root.RooRealVar(channelName+"_"+name+"_WidthG1",
+                                 channelName+"_"+name+"_WidthG1", 
+                                 params['widthG1'])
+        widthG2 = root.RooRealVar(channelName+"_"+name+"_WidthG2",
+                                  channelName+"_"+name+"_WidthG2", 
+                                  params['widthG2'])
+        
+        mixGG = root.RooRealVar(channelName+"_"+name+"_mixGG",
+                                channelName+"_"+name+"_mixGG", 
+                                params['mixGG'])
+        gaus1 = root.RooGaussian(channelName+"_"+name+"_gaus1",
+                                 channelName+"_"+name+"_gaus1",
+                                 mMuMu,meanG1,widthG1)
+        gaus2 = root.RooGaussian(channelName+"_"+name+"_gaus2",
+                                 channelName+"_"+name+"_gaus2",
+                                 mMuMu,meanG2,widthG2)
+        pdfMmumu = root.RooAddPdf(name,
+                                  name,
+                                  gaus1,gaus2,mixGG)
+        workspaceImportFn(pdfMmumu)
+        rooParamList += [meanG1,meanG2,widthG1,widthG2,mixGG]
+      else:
+        # define the Single Gaussian for the EE category
+        meanSG  = root.RooRealVar(channelName+"_"+name+"_MeanSG", 
+                                  "MeanSG", 
+                                  params['meanSG'])
+        widthSG = root.RooRealVar(channelName+"_"+name+"_WidthSG",
+                                  channelName+"_"+name+"_WidthSG", 
+                                  params['widthSG'])
+        pdfMmumu = root.RooGaussian(name,name,mMuMu,meanSG,widthSG)
+        workspaceImportFn(pdfMmumu)
+        rooParamList += [meanSG,widthSG]
+        debug += "#    using Single Gaussian (Probably for EE)"
+    else:
+      mean = root.RooRealVar(channelName+"_"+name+"_Mean",
+                             channelName+"_"+name+"_Mean",
+                             params['mean'])
+      width = root.RooRealVar(channelName+"_"+name+"_Width",
+                              channelName+"_"+name+"_Width",
+                              params['width1'])
+      width2 = root.RooRealVar(channelName+"_"+name+"_Width2",
+                               channelName+"_"+name+"_Width2",
+                               params['width2'])
+      alpha = root.RooRealVar(channelName+"_"+name+"_Alpha",
+                               channelName+"_"+name+"_Alpha",
+                               params['Alpha'])
+      n = root.RooRealVar(channelName+"_"+name+"_n",
+                               channelName+"_"+name+"_n",
+                               params['n'])
+      mix = root.RooRealVar(channelName+"_"+name+"_mix",
+                               channelName+"_"+name+"_mix",
+                               params['mix'])
+      cb = root.RooCBShape(name+"_CB",name+"_CB",mMuMu,mean,width,alpha,n)
+      gaus = root.RooGaussian(name+"_Gaus",name+"_Gaus",mMuMu,mean,width2)
+      pdfMmumu = root.RooAddPdf(name,name,cb,gaus,mix)
+      workspaceImportFn(pdfMmumu)
+      rooParamList += [mean,width,alpha,n]
+
+    for i in rooParamList:
+      debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+
+    return debug
+
 makePDFSig = makePDFSigCBPlusGaus
 makePDFBak = makePDFBakOld
 #makePDFBak = makePDFBakMOverSq
@@ -644,7 +740,11 @@ class Analysis:
     doSigInject = getattr(self,"doSigInject")
 
     higgsPeakMean = args.higgsMass - 0.3
+    self.higgsMass = 125.
+    if args.higgsMass > 0.0:
+      self.higgsMass = args.higgsMass
 
+    self.energyStr = energyStr
     self.lumi = lumi
     self.sigNames = signalNames
     self.bakNames = backgroundNames
@@ -655,7 +755,7 @@ class Analysis:
     self.analysis = analysis
     self.params = []
     self.debug = ""
-    self.debug += "#Nominal Higgs Mass: "+str(args.higgsMass) +"\n"
+    self.debug += "#Nominal Higgs Mass: "+str(self.higgsMass) +"\n"
     self.debug += "#Peak Centered at: "+str(higgsPeakMean) +"\n"
 
     self.workspace = root.RooWorkspace(analysis+energyStr)
@@ -681,22 +781,23 @@ class Analysis:
 
     self.sigFiles = []
     self.sigHistsRaw = []
-    for name in signalNames:
-      tmpF = root.TFile(directory+name+".root")
-      tmpHLoc = histNameBase+analysis+histNameSuffix
-      if tmpHLoc[0] == '/':
-        tmpHLoc = tmpHLoc[1:]
-      tmpH = tmpF.Get(tmpHLoc)
-      if bdtCut != None:
-        tmpH1Loc = histNameBase+analysis+"/mDiMu"
-        if tmpH1Loc[0] == '/':
-          tmpH1Loc = tmpH1Loc[1:]
-        tmpH1 = tmpF.Get(tmpH1Loc)
-        tmpH1.Reset()
-        tmpH = self.getCutHist(tmpH,tmpH1,bdtCut)
-        tmpH = tmpH1
-      self.sigFiles.append(tmpF)
-      self.sigHistsRaw.append(tmpH)
+    if not USEGPANNA:
+      for name in signalNames:
+        tmpF = root.TFile(directory+name+".root")
+        tmpHLoc = histNameBase+analysis+histNameSuffix
+        if tmpHLoc[0] == '/':
+          tmpHLoc = tmpHLoc[1:]
+        tmpH = tmpF.Get(tmpHLoc)
+        if bdtCut != None:
+          tmpH1Loc = histNameBase+analysis+"/mDiMu"
+          if tmpH1Loc[0] == '/':
+            tmpH1Loc = tmpH1Loc[1:]
+          tmpH1 = tmpF.Get(tmpH1Loc)
+          tmpH1.Reset()
+          tmpH = self.getCutHist(tmpH,tmpH1,bdtCut)
+          tmpH = tmpH1
+        self.sigFiles.append(tmpF)
+        self.sigHistsRaw.append(tmpH)
 
     self.bakFiles = []
     self.bakHistsRaw = []
@@ -738,27 +839,28 @@ class Analysis:
 
     # Signal Shape systematics
     self.sigErrHistsMap = {}
-    if SIGUNCON:
-      for f in self.sigFiles:
-        name = histNameBase+analysis+"/mDiMu"
-        tmpDir = None
-        if name[0] == '/':
-            tmpDir = f
-        else:
-          name = name.split("/")
-          tmpDirKey = f.GetKey(name[0]) #Will break in main dir
-          tmpDir = tmpDirKey.ReadObj()
-        #tmpDir.Print()
-        for key in tmpDir.GetListOfKeys():
-          matchUp = re.match('mDiMu'+".+Up",key.GetName())
-          matchDown = re.match('mDiMu'+".+Down",key.GetName())
-          if matchUp or matchDown:
-            self.sigErrHistsMap[re.sub('mDiMu',"",key.GetName())] = []
-        break
-      for f in self.sigFiles:
-        for sysName in self.sigErrHistsMap:
-          tmpHist = f.Get(histNameBase+analysis+histNameSuffix+sysName)
-          self.sigErrHistsMap[sysName].append(tmpHist)
+    if not USEGPANNA:
+      if SIGUNCON:
+        for f in self.sigFiles:
+          name = histNameBase+analysis+"/mDiMu"
+          tmpDir = None
+          if name[0] == '/':
+              tmpDir = f
+          else:
+            name = name.split("/")
+            tmpDirKey = f.GetKey(name[0]) #Will break in main dir
+            tmpDir = tmpDirKey.ReadObj()
+          #tmpDir.Print()
+          for key in tmpDir.GetListOfKeys():
+            matchUp = re.match('mDiMu'+".+Up",key.GetName())
+            matchDown = re.match('mDiMu'+".+Down",key.GetName())
+            if matchUp or matchDown:
+              self.sigErrHistsMap[re.sub('mDiMu',"",key.GetName())] = []
+          break
+        for f in self.sigFiles:
+          for sysName in self.sigErrHistsMap:
+            tmpHist = f.Get(histNameBase+analysis+histNameSuffix+sysName)
+            self.sigErrHistsMap[sysName].append(tmpHist)
 
     #Rebin
     rb = rebin
@@ -805,7 +907,7 @@ class Analysis:
     effMap = {}
     xsecMap = {}
     lowBin = 0
-    highBin = self.sigHistsRaw[0].GetNbinsX()+1
+    highBin = self.bakHistsRaw[0].GetNbinsX()+1
     #massBounds = [controlRegionLow[0],controlRegionHigh[1]]
     #massBounds = [controlRegionVeryLow[0],controlRegionHigh[1]]
     massBounds = [controlRegionLow[0],controlRegionHigh[1]]
@@ -878,78 +980,97 @@ class Analysis:
           vetoOutOfBoundsEvents(hist,[minMass,maxMass])
 
     self.sigParamListList = []
-    if args.gaussian > 0.:
-      for name, hist in zip(signalNames,self.sigHistsRaw):
-        sigParams, sigDebug, tmpDS = makePDFSigGaus(name,hist,mMuMu,minMass,maxMass,wImport,analysis+energyStr,forceMean=higgsPeakMean,forceWidth=args.gaussian)
-        self.sigParamListList.append(sigParams)
-        self.debug += sigDebug
+    if USEGPANNA:
+      for name in signalNames:
+        self.debug +=  makePDFSigNew(analysis+energyStr,name,mMuMu,self.higgsMass,wImport)
     else:
-      for name, hist in zip(signalNames,self.sigHistsRaw):
-        sigParams, sigDebug, tmpDS = makePDFSig(name,hist,mMuMu,minMass,maxMass,wImport,analysis+energyStr,forceMean=higgsPeakMean)
-        self.sigParamListList.append(sigParams)
-        self.debug += sigDebug
-        
-    if args.gaussian > 0.:
-      for i in self.sigParamListList:
-        for j in i:
-          if "Width" in j.name:
-            j.lowErr = max(j.nominal/2.0,0.75)
-            j.highErr = max(j.nominal/2.0,0.75)
-            print("Adding sig param to list:")
-            print j
-            #self.params.append(j)
-    elif SIGUNCON:
-      for name, iSignal, paramsNoErr in zip(signalNames,
-            range(len(signalNames)),self.sigParamListList):
-        firstHist = True
-        paramErrList = []
-        for errName in self.sigErrHistsMap:
-          nameNew = name+"_"+errName
-          hist = self.sigErrHistsMap[errName][iSignal]
-          sigParams, sigDebug, tmpDS = makePDFSig(nameNew,hist,mMuMu,minMass,maxMass,None,
-                                                            analysis+energyStr,
-                                                            forceMean=higgsPeakMean
-                                                              )
+      if args.gaussian > 0.:
+        for name, hist in zip(signalNames,self.sigHistsRaw):
+          sigParams, sigDebug, tmpDS = makePDFSigGaus(name,hist,mMuMu,minMass,maxMass,wImport,analysis+energyStr,forceMean=higgsPeakMean,forceWidth=args.gaussian)
+          self.sigParamListList.append(sigParams)
           self.debug += sigDebug
-          for curErr, nominal, i in zip(sigParams,paramsNoErr,range(len(sigParams))):
-                val = curErr.nominal
-                nomVal = nominal.nominal
-                err = abs(val-nomVal)
-                if firstHist:
-                  paramErrList.append(err)
-                else:
-                  if err > paramErrList[i]:
-                    paramErrList[i] = err
-          firstHist = False
-        for i in range(len(paramErrList)):
-            paramsNoErr[i].highErr = paramErrList[i]
-            paramsNoErr[i].lowErr = paramErrList[i]
-      for i in self.sigParamListList:
-        for j in i:
-          if "Width2" in j.name:
-            self.params.append(j)
-      # To Make sure nothing got messed up!
-      for name, hist in zip(signalNames,self.sigHistsRaw):
-        sigParams, sigDebug, tmpDS = makePDFSig(name,hist,mMuMu,minMass,maxMass,None,analysis+energyStr)
+      else:
+        for name, hist in zip(signalNames,self.sigHistsRaw):
+          sigParams, sigDebug, tmpDS = makePDFSig(name,hist,mMuMu,minMass,maxMass,wImport,analysis+energyStr,forceMean=higgsPeakMean)
+          self.sigParamListList.append(sigParams)
+          self.debug += sigDebug
+          
+      if args.gaussian > 0.:
+        for i in self.sigParamListList:
+          for j in i:
+            if "Width" in j.name:
+              j.lowErr = max(j.nominal/2.0,0.75)
+              j.highErr = max(j.nominal/2.0,0.75)
+              print("Adding sig param to list:")
+              print j
+              #self.params.append(j)
+      elif SIGUNCON:
+        for name, iSignal, paramsNoErr in zip(signalNames,
+              range(len(signalNames)),self.sigParamListList):
+          firstHist = True
+          paramErrList = []
+          for errName in self.sigErrHistsMap:
+            nameNew = name+"_"+errName
+            hist = self.sigErrHistsMap[errName][iSignal]
+            sigParams, sigDebug, tmpDS = makePDFSig(nameNew,hist,mMuMu,minMass,maxMass,None,
+                                                              analysis+energyStr,
+                                                              forceMean=higgsPeakMean
+                                                                )
+            self.debug += sigDebug
+            for curErr, nominal, i in zip(sigParams,paramsNoErr,range(len(sigParams))):
+                  val = curErr.nominal
+                  nomVal = nominal.nominal
+                  err = abs(val-nomVal)
+                  if firstHist:
+                    paramErrList.append(err)
+                  else:
+                    if err > paramErrList[i]:
+                      paramErrList[i] = err
+            firstHist = False
+          for i in range(len(paramErrList)):
+              paramsNoErr[i].highErr = paramErrList[i]
+              paramsNoErr[i].lowErr = paramErrList[i]
+        for i in self.sigParamListList:
+          for j in i:
+            if "Width2" in j.name:
+              self.params.append(j)
+        # To Make sure nothing got messed up!
+        for name, hist in zip(signalNames,self.sigHistsRaw):
+          sigParams, sigDebug, tmpDS = makePDFSig(name,hist,mMuMu,minMass,maxMass,None,analysis+energyStr)
 
     self.xsecSigTotal = 0.0
     self.xsecSigList = []
     self.effSigList = []
     self.sigHists = []
-    for h,name in zip(self.sigHistsRaw,signalNames):
-      counts = getIntegralAll(h,boundaries=massBounds)
-      eff = counts/nEventsMap[name]*efficiencyMap[getPeriod(name)]
-      xs = eff*xsec[name]
-      if args.higgsMass > 0.0:
-        prec = "0"
-        if args.higgsMass % 1 > 0.0:
-          prec = "1"
-        higgsMassString =("{0:."+prec+"f}").format(args.higgsMass)
-        tmpName = name.replace("125",higgsMassString)
+    if USEGPANNA:
+      for name in signalNames:
+        higgsMassStr = "{0:.0f}".format(self.higgsMass)
+        if self.higgsMass*10 % 1 > 0.0:
+          higgsMassStr = "{0:.1f}".format(self.higgsMass)
+        nameMatch = re.match(r"(.+)Hmumu[\d.]+_[\d]+TeV",name)
+        assert(nameMatch)
+        prodMode = nameMatch.group(1)
+        eff, effErr = effReader(self.energyStr,prodMode,analysis,higgsMassStr)
+        tmpName = name.replace("125",higgsMassStr)
         xs = eff*xsec[tmpName]
-      self.xsecSigTotal += xs
-      self.xsecSigList.append(xs)
-      self.effSigList.append(eff)
+        self.xsecSigTotal += xs
+        self.xsecSigList.append(xs)
+        self.effSigList.append(eff)
+    else:
+      for h,name in zip(self.sigHistsRaw,signalNames):
+        counts = getIntegralAll(h,boundaries=massBounds)
+        eff = counts/nEventsMap[name]*efficiencyMap[getPeriod(name)]
+        xs = eff*xsec[name]
+        if args.higgsMass > 0.0:
+          prec = "0"
+          if args.higgsMass % 1 > 0.0:
+            prec = "1"
+          higgsMassString =("{0:."+prec+"f}").format(args.higgsMass)
+          tmpName = name.replace("125",higgsMassString)
+          xs = eff*xsec[tmpName]
+        self.xsecSigTotal += xs
+        self.xsecSigList.append(xs)
+        self.effSigList.append(eff)
 
     self.countsSigTotal = self.xsecSigTotal*lumi
     #self.countsBakTotal = self.xsecBakTotal*lumi
@@ -1398,23 +1519,22 @@ if __name__ == "__main__":
     for c in categoriesVBF:
         tmpList.append(a+c)
   analyses += tmpList
-  #analyses = ["IncPreselPtG10BB"]
-  analyses = ["IncPreselPtG10BO"]
-  analyses += ["IncPreselPtG10OO"]
+  analyses = ["IncPreselPtG10BB","IncPreselPtG10BO","VBFBDTCut"]
+  analyses = ["VBFBDTCut"]
   #analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
   combinations = []
   combinationsLong = []
-  """
   combinations.append((
         ["IncPreselPtG10"+x for x in categoriesInc],"IncPreselCat"
   ))
+  """
   combinations.append((
         ["VBFPresel"]+["IncPreselPtG10"],"BDTCutVBFBDTOnly"
   ))
+  """
   combinations.append((
         ["VBFBDTCut"]+["IncPreselPtG10"+x for x in categoriesInc],"BDTCutCatVBFBDTOnly"
   ))
-  """
 
 #  combinationsLong.append((
 #        ["IncBDTCut","VBFBDTCut"],"BDTCut"
@@ -1446,7 +1566,7 @@ if __name__ == "__main__":
 
   histPostFix="/mDiMu"
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
-  #signalNames=["ggHmumu125","vbfHmumu125"]
+  signalNames=["ggHmumu125","vbfHmumu125"]
   backgroundNames= ["DYJetsToLL","ttbar"]
   dataDict = {}
   dataDict["8TeV"] = [

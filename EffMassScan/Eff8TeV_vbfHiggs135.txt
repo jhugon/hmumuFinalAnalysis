@@ -1,0 +1,10 @@
+IncPreselPtG10BB   0.08087   0.0029
+IncPreselPtG10BO   0.1193   0.0034
+IncPreselPtG10BE   0.03555   0.002
+IncPreselPtG10OO   0.04335   0.0022
+IncPreselPtG10OE   0.03295   0.0019
+IncPreselPtG10EE   0.008524   0.001
+IncPresel          0.3268   0.0049
+IncPreselPtG10     0.3206   0.0048
+VBFPresel          0.2242   0.0043
+VBFBDTCut          0.1559   0.0038
