@@ -149,7 +149,8 @@ class ShapePlotter:
                                         channelName
                                                     )
       if plotSignalStrength>0.:
-        sigGraph = getattr(self,"scaleSigPDFGraph")(sigPDFGraph,sigCount,self.processNameMap[channelNameOrig],plotSignalStrength)
+        sigGraph, bestFitSigStr = getattr(self,"scaleSigPDFGraph")(sigPDFGraph,sigCount,self.processNameMap[channelNameOrig],plotSignalStrength)
+      sigGraph = sigPlusBakPDFGraph
       pullsDistribution = getattr(self,"draw")(channelName,dataGraph,bakPDFGraph,pullsGraph,chi2,rooDataTitle,sigGraph)
       saveName = outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName
       saveName = re.sub(r"([\d]+)\.[\d]+",r"\1",saveName)
@@ -1181,7 +1182,7 @@ class ShapePlotter:
       #  continue
       result.SetPoint(iPoint,x,y*scaleFactor)
       iPoint+=1
-    return result
+    return result, bestFitSigStrength
     
 
 titleMap = {
@@ -1256,8 +1257,8 @@ if __name__ == "__main__":
 
   shapePlotterList = []
   #for fn in glob.glob(dataDir+"*20.root")+glob.glob(dataDir+"*5.05.root"):
-  #for fn in glob.glob(dataDir+"*.root"):
-  for fn in glob.glob(dataDir+"BDTCutCat*.root"):
+  for fn in glob.glob(dataDir+"*.root"):
+  #for fn in glob.glob(dataDir+"BDTCutCat*.root"):
     if re.search("P[\d.]+TeV",fn):
         continue
     s = ShapePlotter(fn,outDir,titleMap,rebin,xlimits=plotRange,normRange=normRange,signalInject=args.signalInject,plotSignalStrength=args.plotSignalStrength,plotSignalBottom=args.plotSignalBottom)

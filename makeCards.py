@@ -1382,6 +1382,7 @@ if __name__ == "__main__":
   #directory = "input/preApproveSample/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
+  periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
@@ -1398,7 +1399,8 @@ if __name__ == "__main__":
         tmpList.append(a+c)
   analyses += tmpList
   #analyses = ["IncPreselPtG10BB"]
-  analyses = ["VBFBDTCut"]
+  analyses = ["IncPreselPtG10BO"]
+  analyses += ["IncPreselPtG10OO"]
   #analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
   combinations = []
   combinationsLong = []
@@ -1409,10 +1411,10 @@ if __name__ == "__main__":
   combinations.append((
         ["VBFPresel"]+["IncPreselPtG10"],"BDTCutVBFBDTOnly"
   ))
-  """
   combinations.append((
         ["VBFBDTCut"]+["IncPreselPtG10"+x for x in categoriesInc],"BDTCutCatVBFBDTOnly"
   ))
+  """
 
 #  combinationsLong.append((
 #        ["IncBDTCut","VBFBDTCut"],"BDTCut"

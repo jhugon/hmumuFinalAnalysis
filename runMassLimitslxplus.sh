@@ -12,8 +12,8 @@ rm -f statsInput/*
 rm -f statsOutput/*
 
 #for i in "120" "121" "122" "123" "123.5" "124" "124.5" "125" "125.5" "126" "126.5" "127" "127.5" "128" "129" "130"; do
-#for i in "110" "115" "118" "120" "121" "122" "123" "123.5" "124" "124.5" "125" "125.5" "126" "126.5" "127" "127.5" "128" "129" "130" "132" "135" "140"; do
-for i in "115" "120" "122" "125" "127" "130" "135"; do
+for i in "115" "118" "120" "121" "122" "123" "123.5" "124" "124.5" "125" "125.5" "126" "126.5" "127" "127.5" "128" "129" "130" "132" "135"; do
+#for i in "115" "120" "122" "125" "127" "130" "135"; do
   nice ./makeCards.py -m $i --toyData
 done
 echo "Removing files in lxplus:$REMOTEDIR"
@@ -21,7 +21,7 @@ ssh lxplus "cd /tmp/jhugon/; rm -rf $REMOTEDIR/*;echo \"Contents of dir: \`ls $R
 echo "Copying input files to lxplus..."
 scp statsCards/* lxplus:/afs/cern.ch/user/j/jhugon/work/private/stats/CMSSW_5_2_5/stats/.
 echo "Running combine on lxplus..."
-ssh lxplus "cd $REMOTEDIR; eval \`scramv1 runtime -sh\`;bash run.sh; bash getStatus2.sh"
+ssh lxplus "cd $REMOTEDIR; eval \`scramv1 runtime -sh\`;nice bash notlxbatch.sh;"
 echo "Copying output files from lxplus..."
 scp lxplus:$REMOTEDIR/*.out statsInput/.
 scp lxplus:$REMOTEDIR/*.sig statsInput/.
