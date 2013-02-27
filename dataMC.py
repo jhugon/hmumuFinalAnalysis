@@ -49,7 +49,7 @@ histDirs = ["VBFPresel/"]
 #histDirs = ["IncPresel/"]
 #histDirs = ["IncPreselPtG10BB/","VBFBDTCut/"]
 #histDirs = ["VBFBDTCut/"]
-#histDirs = ["VBFBDTCut/"]
+histDirs = ["VBFBDTCut/"]
 
 root.gErrorIgnoreLevel = root.kWarning
 
@@ -134,7 +134,8 @@ elif RUNPERIOD=="8TeV":
     histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.4,0.25],"rebin":4,"ylimits":[0.,350],'vertLines':{"8TeV":0.0,"7TeV":0.0}}
   elif len(histDirs) == 1 and histDirs[0] == "VBFBDTCut/":
     print "Using VBFBDTCut settings"
-    histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":5,"ylimits":[0.0,30]}
+    histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":5,"ylimits":[0.0,50]}
+    #anotateText = "VBF BDT Cut"
     histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV/c]","xlimits":[0.0,200.0],"rebin":25,"ylimits":[0.0,50]}
     histNames["yDiMu"] = {"xlabel":"y_{#mu#mu}","xlimits":[-2.2,2.2],"rebin":10,"ylimits":[0.0,60]}
     
