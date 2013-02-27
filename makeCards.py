@@ -1399,13 +1399,13 @@ if __name__ == "__main__":
   analyses += tmpList
   #analyses = ["IncPreselPtG10BB"]
   analyses = ["VBFBDTCut"]
-  analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
+  #analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
   combinations = []
   combinationsLong = []
+  """
   combinations.append((
         ["IncPreselPtG10"+x for x in categoriesInc],"IncPreselCat"
   ))
-  """
   combinations.append((
         ["VBFPresel"]+["IncPreselPtG10"],"BDTCutVBFBDTOnly"
   ))

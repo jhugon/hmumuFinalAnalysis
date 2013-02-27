@@ -158,17 +158,16 @@ class ShapePlotter:
                                                     )
       print("Sig strength for channel {0}:".format(channelName))
       sigStrength.Print()
-      #dataGraph, bakPDFGraph, pullsGraph,chi2 = getattr(self,"makeTGraphs")(bakPDF,data_obs,mMuMu)
-      pullsDistribution = getattr(self,"draw")(channelName,dataGraph,bakPDFGraph,pullsGraph,chi2,rooDataTitle,sigPlusBakPDFGraph)
+      pullsDistribution = getattr(self,"draw")(channelName,dataGraph,bakPDFGraph,pullsGraph,chi2,rooDataTitle,None)
       saveName = outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName
       saveName = re.sub(r"([\d]+)\.[\d]+",r"\1",saveName)
       saveAs(self.canvas,saveName)
-      """
 
       getattr(self,"drawPulls")(channelName,pullsDistribution,rooDataTitle)
       saveName = outDir+"pulls_"+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName
       saveName = re.sub(r"([\d]+)\.[\d]+",r"\1",saveName)
       saveAs(self.canvas,saveName)
+      """
 
       #Templates Time
       for processName in self.processNameMap[channelNameOrig]:
@@ -267,7 +266,7 @@ class ShapePlotter:
       else:
         continue
       ratioPlot.SetPoint(i,histX,ratio)
-      ratioPlot.SetPointError(i,0.,0.,ratioErrUp,ratioErrDown)
+      ratioPlot.SetPointError(i,0.,0.,ratioErrDown,ratioErrUp)
     return ratioPlot
 
   def getAdrian1Errors(self,hist,curve):
@@ -465,7 +464,7 @@ class ShapePlotter:
       errUp = sqrt(errUp)
       errDown = sqrt(errDown)
       modelGraph.SetPoint(iPoint,xNom,yNom)
-      modelGraph.SetPointError(iPoint,0.,0.,errUp,errDown)
+      modelGraph.SetPointError(iPoint,0.,0.,errDown,errUp)
       iPoint+=1
     iPoint = 0
     for i in range(curveData.GetN()):
@@ -475,7 +474,7 @@ class ShapePlotter:
       dataGraph.SetPoint(iPoint,xNom,yNom)
       errUp = sqrt(yNom)*sqrt(avgWeight)
       errDown = sqrt(yNom)*sqrt(avgWeight)
-      dataGraph.SetPointError(iPoint,0.,0.,errUp,errDown)
+      dataGraph.SetPointError(iPoint,0.,0.,errDown,errUp)
       iPoint+=1
     iPoint = 0
     for i in range(pulls.GetN()):
@@ -483,7 +482,7 @@ class ShapePlotter:
       pullsGraph.SetPoint(iPoint,xNom,yNom)
       errUp = pulls.GetErrorXhigh(i)
       errDown = pulls.GetErrorXlow(i)
-      pullsGraph.SetPointError(iPoint,0.,0.,errUp,errDown)
+      pullsGraph.SetPointError(iPoint,0.,0.,errDown,errUp)
       iPoint+=1
     dataGraph.SetName(curveData.GetName()+"_TGraph")
     modelGraph.SetName(curveNom.GetName()+"_TGraph")
@@ -793,7 +792,7 @@ class ShapePlotter:
       leg.SetLineColor(0)
       leg.AddEntry(dataHist,dataLabel,"pe")
       leg.AddEntry(model,"Fit","lf")
-      if self.plotSignalStrength>0.0:
+      if self.plotSignalStrength>0.0 and sigPlusBakPDF != None:
         leg.AddEntry(sigPlusBakPDF,"SM Higgs #times {0:.1f}".format(self.plotSignalStrength),"l")
       leg.Draw()
 
@@ -958,6 +957,7 @@ class ShapePlotter:
       return modelGraph
 
   def makeMainTGraphs(self,bakPDF,data,observable,workspace,rateMap,channelName):
+    nparamsForChi2 = bakPDF.getParameters(data).getSize()
     avgWeight = 1.0
     isRealData = (data.GetTitle() == "Real Observed Data")
     if (not isRealData) and (data.GetName() == "data_obs" or "bak" in data.GetName()):
@@ -1038,8 +1038,10 @@ class ShapePlotter:
     data.plotOn(frame,root.RooFit.Name(curveDataName),rng)
     curveNomName = pdfFinal.GetName()+"_CurveNominal"
     pdfFinal.plotOn(frame,root.RooFit.Name(curveNomName),rng,normRange,root.RooFit.Components("epdfBak"))
-    nparams = pdfFinal.getParameters(data).getSize()
-    chi2 = frame.chiSquare(nparams)
+    #nparamsForChi2 = pdfFinal.getParameters(data).getSize()
+    #nparamsForChi2 -= len(constraintParamList)
+    #nparamsForChi2 = epdfBak.getParameters(data).getSize()
+    chi2 = frame.chiSquare(nparamsForChi2)
     pulls = frame.pullHist(curveDataName,curveNomName)
 
     curveNomPlusSigName = pdfFinal.GetName()+"_CurveNominalPlusSig"
@@ -1049,6 +1051,7 @@ class ShapePlotter:
 
     nParams = fr.floatParsFinal().getSize()
     for i in range(nParams):
+      varyParamName = fr.floatParsFinal().at(i).GetName()
       for sign in [1.0,-1.0]:
         for j in range(nParams):
           param = fr.floatParsFinal().at(j)
@@ -1056,7 +1059,7 @@ class ShapePlotter:
           if i == j:
             val += sign*param.getError()
           workspace.var(param.GetName()).setVal(val)
-        tmpName = pdfFinal.GetName()+"_Curve{0}p{1}".format(i,sign)
+        tmpName = pdfFinal.GetName()+"_Curve{0}p{1}_{2}".format(i,sign,varyParamName)
         pdfFinal.plotOn(frame,root.RooFit.Name(tmpName),rng,normRange,root.RooFit.Components("epdfBak"))
         if sign > 0.0:
           curveUpNames.append(tmpName)
@@ -1102,19 +1105,19 @@ class ShapePlotter:
         errCurveUp.GetPoint(iErrUp,xErrUp,yErrUp)
         errCurveDown.GetPoint(iErrDown,xErrDown,yErrDown)
         if yErrUp >= yErrDown and yErrUp > yNom:
-          errUp += (yErrUp-float(yNom))**2
+          errUp += (float(yErrUp)-float(yNom))**2
         elif yErrDown > yNom:
-          errUp += (yErrDown-float(yNom))**2
+          errUp += (float(yErrDown)-float(yNom))**2
         if yErrUp <= yErrDown and yErrUp < yNom:
-          errDown += (yErrUp-float(yNom))**2
+          errDown += (float(yErrUp)-float(yNom))**2
         elif yErrDown < yNom:
-          errDown += (yErrDown-float(yNom))**2
+          errDown += (float(yErrDown)-float(yNom))**2
       if badPoint:
         continue
       errUp = sqrt(errUp)
       errDown = sqrt(errDown)
       modelGraph.SetPoint(iPoint,xNom,yNom)
-      modelGraph.SetPointError(iPoint,0.,0.,errUp,errDown)
+      modelGraph.SetPointError(iPoint,0.,0.,errDown,errUp)
       iPoint+=1
     iPoint = 0
     for i in range(curveData.GetN()):
@@ -1124,7 +1127,7 @@ class ShapePlotter:
       dataGraph.SetPoint(iPoint,xNom,yNom)
       errUp = sqrt(yNom)*sqrt(avgWeight)
       errDown = sqrt(yNom)*sqrt(avgWeight)
-      dataGraph.SetPointError(iPoint,0.,0.,errUp,errDown)
+      dataGraph.SetPointError(iPoint,0.,0.,errDown,errUp)
       iPoint+=1
     iPoint = 0
     for i in range(curveNomPlusSig.GetN()):
@@ -1146,7 +1149,7 @@ class ShapePlotter:
       pullsGraph.SetPoint(iPoint,xNom,yNom)
       errUp = pulls.GetErrorXhigh(i)
       errDown = pulls.GetErrorXlow(i)
-      pullsGraph.SetPointError(iPoint,0.,0.,errUp,errDown)
+      pullsGraph.SetPointError(iPoint,0.,0.,errDown,errUp)
       iPoint+=1
     dataGraph.SetName(curveData.GetName()+"_TGraph")
     modelGraph.SetName(curveNom.GetName()+"_TGraph")
