@@ -49,7 +49,7 @@ histDirs = ["VBFPresel/"]
 #histDirs = ["IncPresel/"]
 #histDirs = ["IncPreselPtG10BB/","VBFBDTCut/"]
 #histDirs = ["VBFBDTCut/"]
-histDirs = ["VBFBDTCut/"]
+#histDirs = ["VBFBDTCut/"]
 
 root.gErrorIgnoreLevel = root.kWarning
 
@@ -497,6 +497,7 @@ for histName in bkgDatasetList[0].hists:
     tlatex.DrawLatex(legLeftPos-0.02,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
 
   vertLine = None
+  arrow = None
   if histNames[histBaseName].has_key("vertLines"):
     #print("In vertLines for hist: {0}".format(histBaseName))
     padX1 = stack.pad1.GetX1()
@@ -523,6 +524,19 @@ for histName in bkgDatasetList[0].hists:
     #   ybot = ylimits[0]
     #   ytop = ylimits[1]
     vertLine.DrawLine(vertLineX,ybot,vertLineX,ytop)
+
+    xAxis = stack.stack.GetXaxis()
+    arrowLength = (xAxis.GetXmax() - xAxis.GetXmin())/10.
+    print(xAxis.GetXmax() , xAxis.GetXmin())
+    arrowY = (ytop-ybot)*0.5
+    arrowHeadSize = 0.025
+    arrow = root.TArrow(vertLineX,arrowY,vertLineX+arrowLength,arrowY,0.025,"|>")
+    arrow.SetLineWidth(3)
+    #arrow.SetAngle(40)
+    arrow.SetLineColor(root.kRed)
+    arrow.SetFillColor(root.kRed)
+    #arrow.Draw()
+
     stack.pad1.RedrawAxis()
 
   if stack.mcSumHist.Integral() == 0:

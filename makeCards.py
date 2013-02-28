@@ -1471,6 +1471,12 @@ class DataCardMaker:
     outfile.write("#\n#\n")
     outfile.write(rootDebugString)
     outfile.write("# Signal Injected: {0:.1f} X SM, mH = {1:.1f}\n".format(sigInject,sigInjectMass))
+
+#    for channel,channelName in zip(self.channels,self.channelNames):
+#        outfile.write("#\n")
+#        outfile.write("#Efficiency: channel {0}: \n".format(channelName))
+#        for sigName in channel.sigNames:
+#          outfile.write("#  {0:>20}: {1:4f}\n".format(sigName,channel.getSigEff(sigName)))
     outfile.close()
 
 class ThreadedCardMaker(myThread):
@@ -1503,7 +1509,6 @@ if __name__ == "__main__":
   #directory = "input/preApproveSample/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
@@ -1519,9 +1524,8 @@ if __name__ == "__main__":
     for c in categoriesVBF:
         tmpList.append(a+c)
   analyses += tmpList
-  analyses = ["IncPreselPtG10BB","IncPreselPtG10BO","VBFBDTCut"]
   analyses = ["VBFBDTCut"]
-  #analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
+  analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
   combinations = []
   combinationsLong = []
   combinations.append((
@@ -1577,10 +1581,12 @@ if __name__ == "__main__":
     "SingleMuRun2012Cv2",
     "SingleMuRun2012D",
   ]
+#  dataDict["8TeV"] = []
   dataDict["7TeV"] = [
     "SingleMuRun2011Av1",
     "SingleMuRun2011Bv1"
   ]
+#  dataDict["7TeV"] = []
   dataDict["14TeV"] = []
   lumiListLong = [5,10,15,20,25,30,40,50,75,100,200,500,1000,2000,5000]
   lumiListLong = [20,30,50,100,500,1000,5000]
@@ -1729,7 +1735,7 @@ if __name__ == "__main__":
                #__init__ args:
                directory,
                comb[0],
-               appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),[],
+               appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
                rebin=[MassRebin],
                controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,histNameSuffix="/"+comb[5],
                controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,sigInjectMass=args.signalInjectMass,

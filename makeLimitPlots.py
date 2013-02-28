@@ -254,17 +254,6 @@ class RelativePlot:
       obsGraph.SetPoint(iPoint,xNum,obs)
       iPoint += 1
 
-    self.vertLines = []
-    self.vertLabel = []
-    for xPos in vertLines:
-      tmp = root.TGraph()
-      tmp.SetPoint(0,xPos,ymin)
-      tmp.SetPoint(1,xPos,ymax)
-      tmp.SetLineColor(root.kRed)
-      tmp.SetLineStyle(3)
-      self.vertLines.append(tmp)
-      self.vertLabel.append(xPos)
-
     label = root.TLatex()
     #label.SetNDC()
     label.SetTextFont(root.gStyle.GetLabelFont("X"))
@@ -282,7 +271,7 @@ class RelativePlot:
         twoSigGraph.GetXaxis().SetRangeUser(*xlimits)
     oneSigGraph.Draw("3")
     expGraph.Draw("l")
-    oneGraph.Draw("l")
+    #oneGraph.Draw("l")
     if showObs:
       obsGraph.Draw("l")
 
@@ -299,8 +288,24 @@ class RelativePlot:
     tlatex.SetTextAlign(32)
     tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption)
 
-    for g in self.vertLines:
-      g.Draw("l")
+    self.vertLine = root.TLine()
+    self.vertLine.SetLineColor(root.kRed)
+    self.vertLine.SetLineWidth(3)
+    self.arrows = []
+    for xPos in vertLines:
+      self.vertLine.DrawLine(xPos,ylimits[0],xPos,ylimits[1])
+      xAxis = twoSigGraph.GetXaxis()
+      arrowLength = (xAxis.GetXmax() - xAxis.GetXmin())/10.
+      arrowY = (ylimits[1]-ylimits[0])*0.8
+      arrowHeadSize = 0.025
+      arrow = root.TArrow(xPos,arrowY,xPos+arrowLength,arrowY,
+                                arrowHeadSize,"|>")
+      arrow.SetLineWidth(3)
+      arrow.SetLineColor(root.kRed)
+      arrow.SetFillColor(root.kRed)
+      #arrow.SetAngle(40)
+      arrow.Draw()
+      self.arrows += [arrow]
 
     canvas.RedrawAxis()
 
@@ -677,6 +682,7 @@ if __name__ == "__main__":
     for plotName in plots:
       data = getData(dirName+plotName+"_"+energyStr+"_*.txt.out")
       xlimits = []
+      vertLines = []
       if len(data)<=1:
         continue
       xlabel="Integrated Luminosity [fb^{-1}]"
@@ -694,6 +700,14 @@ if __name__ == "__main__":
             ylimits = [0.,16.]
           elif energyStr == "7TeV":
             ylimits = [0.,32.]
+        else:
+          if energyStr == "8TeV":
+            ylimits = [0.,35.]
+            #vertLines += [-0.04]
+            vertLines += [0.0]
+          elif energyStr == "7TeV":
+            ylimits = [0.,70.]
+            vertLines += [0.0]
       elif args.higgsMass:
         if energyStr == "8TeV":
             ylimits = [0.,40.]
@@ -704,7 +718,7 @@ if __name__ == "__main__":
       #elif period == "14TeV":
       #  title = "Standard Model H#rightarrow#mu#mu"
       title = titleMap[plotName]
-      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStrWrite,xlabel=xlabel,caption3=caption3,showObs=args.higgsMass,xlimits=xlimits)
+      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStrWrite,xlabel=xlabel,caption3=caption3,showObs=args.higgsMass,xlimits=xlimits,vertLines = vertLines)
       saveAs(canvas,outDir+plotName+"_"+energyStr)
 
     if args.bdtCut:

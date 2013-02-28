@@ -736,7 +736,7 @@ class ShapePlotter:
           pullHist.GetYaxis().SetTitle("#frac{"+dataLabel+"}{Fit}")
           pullHist.GetYaxis().SetRangeUser(0,2)
         elif pullType == "pullMC":
-          pullHist.GetYaxis().SetTitle("#frac{"+dataLabel+"-Fit}{#sigma_{Fit}}")
+          pullHist.GetYaxis().SetTitle("#frac{"+dataLabel+"-Fit}{#sqrt{Fit}}")
       pullHist.SetTitle("")
       pullHist.GetXaxis().SetRangeUser(*drawXLimits)
       pullHist.GetXaxis().SetTitle("m_{#mu#mu} [GeV/c^{2}]")
