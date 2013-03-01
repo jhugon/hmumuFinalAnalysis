@@ -46,7 +46,7 @@ SIGUNCON = False
 FREEBAKPARAMS = True
 LIMITTOSIGNALREGION = False
 
-USEGPANNA = False
+USEGPANNA = True
 
 SIGNALFIT = [110.,140.]
 
@@ -635,7 +635,7 @@ def makePDFSigGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName
 
     return paramList, debug, sigInjectDataset
 
-def makePDFSigNew(channelName,name,mMuMu,mass,workspaceImportFn,useDG=False):
+def makePDFSigNew(channelName,name,mMuMu,mass,workspaceImportFn,useDG=True):
 
     debug = ""
     debug += "### makePDFSigNew: "+channelName+": "+name+"\n"
@@ -1509,6 +1509,7 @@ if __name__ == "__main__":
   #directory = "input/preApproveSample/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
+  periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
@@ -1581,12 +1582,12 @@ if __name__ == "__main__":
     "SingleMuRun2012Cv2",
     "SingleMuRun2012D",
   ]
-#  dataDict["8TeV"] = []
+  #dataDict["8TeV"] = []
   dataDict["7TeV"] = [
     "SingleMuRun2011Av1",
     "SingleMuRun2011Bv1"
   ]
-#  dataDict["7TeV"] = []
+  #dataDict["7TeV"] = []
   dataDict["14TeV"] = []
   lumiListLong = [5,10,15,20,25,30,40,50,75,100,200,500,1000,2000,5000]
   lumiListLong = [20,30,50,100,500,1000,5000]
@@ -1835,9 +1836,9 @@ combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 >& $FI
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
-echo "executing combine -M MaxLikelihoodFit --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
+echo "executing combine -M MaxLikelihoodFit -rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
 
-combine -M MaxLikelihoodFit --plots --saveNormalizations $FILENAME >& $FILENAME.mu
+combine -M MaxLikelihoodFit -rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
@@ -1917,9 +1918,9 @@ combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 >& $FI
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
-echo "executing combine -M MaxLikelihoodFit --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
+echo "executing combine -M MaxLikelihoodFit -rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
 
-combine -M MaxLikelihoodFit --plots --saveNormalizations $FILENAME >& $FILENAME.mu
+combine -M MaxLikelihoodFit -rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu
 rm -f roostats*
 rm -f higgsCombineTest*.root
 cp mlfit.root $FILENAME.root

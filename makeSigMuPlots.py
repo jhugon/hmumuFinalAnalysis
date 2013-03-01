@@ -5,6 +5,7 @@ parser = argparse.ArgumentParser(description="Makes cards for use in the CMS Com
 parser.add_argument("--signalInject", help="Inject Signal with Strength into data_obs",type=float,default=0.0)
 parser.add_argument("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
 parser.add_argument("-m","--higgsMass", help="Makes plots v. Higgs Mass",action="store_true",default=False)
+parser.add_argument("-p","--pValue", help="Makes p-value plots instead of significance",action="store_true",default=False)
 args = parser.parse_args()
 
 from helpers import *
@@ -81,6 +82,22 @@ titleMap = {
   "BDTCutCatVBFBDTOnly": "VBF & Non-VBF Combination"
 }
 
+colorMap = {
+  "IncPresel":root.kRed,
+  "VBFPresel":root.kBlue,
+  "VBFBDTCut":root.kBlue,
+  "IncPreselCat":root.kRed,
+
+  "IncPreselPtG10BB":root.kCyan,
+  "IncPreselPtG10BO":root.kOrange,
+  "IncPreselPtG10BE":root.kGreen,
+  "IncPreselPtG10OO":root.kOrange+3,
+  "IncPreselPtG10OE":root.kMagenta,
+  "IncPreselPtG10EE":root.kViolet+2,
+  "IncPreselPtG10":root.kBlue,
+  "BDTCutCatVBFBDTOnly": 1
+}
+
 comparisonMap = {
   "AllCat":"All Cat. Comb.",
   "IncCat":"!VBF Cat. Comb.",
@@ -140,7 +157,7 @@ comparisonMap = {
 #######################################
 
 # Do match and don't match w/o extensions.  \.expsig and \.sig are added automatically
-def getDataSig(fileString,matchString=r"_([-\d.]+)\.txt",dontMatchStrings=[],doSort=True):
+def getDataSig(fileString,matchString=r"_([-\d.]+)\.txt",dontMatchStrings=[],doSort=True,getPValue=False):
   def sortfun(s):
     match = re.search(matchString,s)
     result = 1e12
@@ -148,8 +165,8 @@ def getDataSig(fileString,matchString=r"_([-\d.]+)\.txt",dontMatchStrings=[],doS
       result = float(match.group(1))
     return result
 
-  print fileString
-  print matchString
+  #print fileString
+  #print matchString
   result = []
   fNames =  glob.glob(fileString)
   if doSort:
@@ -171,27 +188,37 @@ def getDataSig(fileString,matchString=r"_([-\d.]+)\.txt",dontMatchStrings=[],doS
     if match:
       xNum = match.group(1)
     for line in tmpF:
-      obsMatch = re.search(r"^Significance:[\s]+([.\deE]+)",line)
+      obsMatch = None
+      if getPValue:
+        obsMatch = re.search(r"p-value = ([.\deE]+)",line)
+      else:
+        obsMatch = re.search(r"^Significance:[\s]+([.\deE]+)",line)
       if obsMatch:
         obs = obsMatch.group(1)
     expFname = os.path.splitext(fname)[0]+".expsig"
+    """
     try:
       tmpFExp = open(expFname)
       for line in tmpFExp:
-        obsMatch = re.search(r"^Significance:[\s]+([.\deE]+)",line)
+        obsMatch = None
+        if getPValue:
+          obsMatch = re.search(r"p-value = ([.\deE]+)",line)
+        else:
+          obsMatch = re.search(r"^Significance:[\s]+([.\deE]+)",line)
         if obsMatch:
           exp = obsMatch.group(1)
     except Exception:
-      print("Expected Limit Not Found: "+expFname)
+      print("Expected Significance Not Found: "+expFname)
+    """
     thisPoint = [xNum,obs,exp]
-    print thisPoint
+    #print thisPoint
     if thisPoint.count("-10.0")>0:
         continue
     if thisPoint.count(-10.0)>0:
         continue
     #print thisPoint
     result.append(thisPoint)
-  print result
+  #print result
   return result
 
 def getDataMu(fileString,matchString=r"_([-\d.]+)\.txt\.mu",dontMatchStrings=[],doSort=True):
@@ -246,14 +273,23 @@ class RelativePlot:
     errGraph = root.TGraph()
     #errGraph.SetLineStyle(2)
     errGraph.SetLineColor(root.kRed)
+    errGraph.SetMarkerStyle(20)
+    errGraph.SetMarkerSize(1.1)
+    errGraph.SetMarkerColor(root.kRed)
     self.errGraph = errGraph
     obsGraph = root.TGraph()
     obsGraph.SetLineColor(root.kRed)
     obsGraph.SetLineStyle(2)
+    obsGraph.SetMarkerStyle(20)
+    obsGraph.SetMarkerSize(1.1)
+    obsGraph.SetMarkerColor(root.kRed)
     self.obsGraph = obsGraph
     muExtraGraphErr = root.TGraphAsymmErrors()
     muExtraGraph = root.TGraph()
     muExtraGraph.SetLineColor(root.kBlue+1)
+    muExtraGraph.SetMarkerStyle(20)
+    muExtraGraph.SetMarkerSize(1.1)
+    muExtraGraph.SetMarkerColor(root.kBlue+1)
     muExtraGraphErr.SetFillColor(root.kCyan)
     self.muExtraGraph = muExtraGraph
     self.muExtraGraphErr = muExtraGraphErr
@@ -317,6 +353,7 @@ class RelativePlot:
         muExtraGraphErr.GetYaxis().SetRangeUser(*ylimits)
       muExtraGraphErr.Draw("a3")
       muExtraGraph.Draw("l")
+      muExtraGraph.Draw("p")
       #muExtraGraphErr.Draw("a4")
       #muExtraGraph.Draw("c")
     else:
@@ -340,10 +377,12 @@ class RelativePlot:
           errGraph.SetMaximum(maxVal)
         errGraph.Draw("al")
         obsGraph.Draw("l")
+        obsGraph.Draw("p")
       else:
         if len(ylimits)==2:
           errGraph.GetYaxis().SetRangeUser(*ylimits)
         errGraph.Draw("al")
+        errGraph.Draw("p")
 
     tlatex = root.TLatex()
     tlatex.SetNDC()
@@ -362,6 +401,127 @@ class RelativePlot:
       g.Draw("l")
 
     canvas.RedrawAxis()
+
+class PValuePlotTogether:
+  def __init__(self,dataDict, canvas, caption="Standard Model H#rightarrow#mu#mu", ylabel="p-Value", xlabel="m_{H} [GeV/c^{2}]",caption2="",caption3="",ylimits=[],xlimits=[],energyStr="8TeV"):
+    graphs = []
+    ymax = 1.0
+    ymin = 1e20
+    ymin = 2e-3 # To see 3sigma line
+    xmin = 1e20
+    xmax = -1e20
+    sortedChannels = sorted(dataDict.keys())
+    sortedChannels.reverse()
+    for channel in sortedChannels:
+      dataPoints = dataDict[channel]
+      graph = root.TGraph()
+      graph.SetName("Pvalue_"+energyStr+"_"+channel)
+      #graph.SetLineStyle(2)
+      graph.SetLineColor(colorMap[channel])
+      graph.SetMarkerStyle(20)
+      graph.SetMarkerSize(1.1)
+      graph.SetMarkerColor(colorMap[channel])
+      iPoint = 0
+      for point in dataPoints:
+        value = None
+        obs = 0.0
+        xNum = float(point[0])
+        if len(xlimits)==2:
+          if xNum<xlimits[0]:
+              continue
+          if xNum>xlimits[1]:
+              continue
+        if xNum < xmin:
+            xmin = xNum
+        if xNum > xmax:
+            xmax = xNum
+        #thisPoint = [xNum,obs,exp]
+        obs = float(point[1])
+        graph.SetPoint(iPoint,xNum,obs)
+        iPoint += 1
+        if obs < ymin:
+          ymin = obs
+      graphs += [graph]
+    ymin *=0.5
+    for graph in graphs:
+      if len(ylimits)==2:
+        graph.GetYaxis().SetRangeUser(*ylimits)
+      else:
+        graph.GetYaxis().SetRangeUser(ymin*0.5,ymax)
+
+    self.hLine = root.TLine()
+    self.hLine.SetLineColor(root.kBlack)
+    self.hLine.SetLineWidth(3)
+    self.hLine.SetLineStyle(3)
+    sigmaVals = [0.8413,0.9772,0.9987]
+    sigmaVals = [1.0-x for x in sigmaVals]
+    hLabelX = None
+
+    label = root.TLatex()
+    label.SetTextFont(root.gStyle.GetLabelFont("X"))
+    label.SetTextSize(root.gStyle.GetLabelSize("X"))
+    label.SetTextAlign(11)
+    label.SetTextColor(1)
+    self.label=label
+
+    drawn = False
+    for graph in graphs:
+      if drawn == False:
+        graph.Draw("al")
+        drawn = True
+        graph.GetXaxis().SetTitle(xlabel)
+        graph.GetYaxis().SetTitle(ylabel)
+        graph.Draw("al")
+        xmin = graph.GetXaxis().GetXmin()
+        xmax = graph.GetXaxis().GetXmax()
+        print xmin, xmax
+        hLabelX = (xmax-xmin)/0.02+xmin
+        for yPos in sigmaVals:
+         if yPos < ymin:
+           break
+         self.hLine.DrawLine(xmin,yPos,xmax,yPos)
+        graph.Draw("l")
+      else:
+        graph.Draw("l")
+      graph.Draw("p")
+
+    tlatex = root.TLatex()
+    tlatex.SetNDC()
+    tlatex.SetTextFont(root.gStyle.GetLabelFont())
+    #tlatex.SetTextSize(0.05)
+    tlatex.SetTextSize(0.04)
+    tlatex.SetTextAlign(12)
+    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+    tlatex.SetTextAlign(32)
+    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption)
+
+    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin()-0.03,0.88,caption2)
+    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin()-0.03,0.82,caption3)
+
+    #legend = root.TLegend(0.58,0.70,0.9,0.9) # UR
+    baselineY = gStyle.GetPadBottomMargin()+0.02
+    marginR = 1.0-gStyle.GetPadRightMargin()+0.01
+    legend = root.TLegend(marginR-0.28,baselineY,marginR,baselineY+0.4)
+    if len(graphs) < 5:
+      legend = root.TLegend(marginR-0.32,baselineY,marginR,baselineY+0.25)
+    legend.SetFillColor(0)
+    legend.SetLineColor(0)
+    self.legend = legend
+    for channel,graph in zip(reversed(sortedChannels),reversed(graphs)):
+      entry = titleMap[channel]
+      if channel == "BDTCutCatVBFBDTOnly":
+        entry = "VBF & Non-VBF"
+      legend.AddEntry(graph,entry,"lp")
+
+    legend.Draw()
+
+    for yPos,iSigma in zip(sigmaVals,range(len(sigmaVals))):
+      if yPos < ymin:
+        break
+      label.DrawLatex(xmin+0.05*(xmax-xmin),yPos*1.05,"{0}#sigma".format(iSigma+1))
+
+    canvas.RedrawAxis()
+    self.graphs = graphs
 
 class ComparePlot:
   def __init__(self,data,ylabel="Expected 95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},showObs=False):
@@ -472,6 +632,10 @@ if __name__ == "__main__":
         energyStr = match.group(2)
   
     caption2 = "#sqrt{s}="+energyStr
+    caption3 = ""
+    if args.signalInject>0.0:
+      caption3 = "Signal Injected {0:.1f}#timesSM".format(args.signalInject)
+      caption3 += " m_{H} = "+"{0:.1f}".format(args.signalInjectMass)+" GeV/c^{2}"
     legend = root.TLegend(0.58,0.70,0.9,0.9)
     legend.SetFillColor(0)
     legend.SetLineColor(0)
@@ -479,24 +643,22 @@ if __name__ == "__main__":
     for ytitle,fnPref in zip(["Significance","Error on #sigma_{Measured}/#sigma_{SM}","#sigma_{Measured}/#sigma_{SM}"],["sig","mu","muToy"]):
       if args.higgsMass and fnPref == "mu":
         continue
+      if args.pValue and fnPref == "sig":
+        canvas.SetLogy(1)
+        ytitle = "p-Value of Background Only Hypothesis"
+      else:
+        canvas.SetLogy(0)
       for plotName in plots:
         data = None
         doMuExtraPlot=False
-        caption3=""
         showObs=False
         if fnPref == "sig":
-          data = getDataSig(dirName+plotName+"_"+energyStr+"_*.txt*")
-          if args.signalInject>0.0:
-            caption3 = "Signal Injected {0:.1f}#timesSM".format(args.signalInject)
-            caption3 += " m_{H} = "+"{0:.1f}".format(args.signalInjectMass)+" GeV/c^{2}"
-            showObs=True
+          data = getDataSig(dirName+plotName+"_"+energyStr+"_*.txt*",getPValue=args.pValue)
+          showObs=True
         else:
           data = getDataMu(dirName+plotName+"_"+energyStr+"_*.txt*")
         if fnPref == "muToy":
           doMuExtraPlot = True
-          if args.signalInject>0.0:
-            caption3 = "Signal Injected {0:.1f}#times SM".format(args.signalInject)
-            caption3 += " m_{H} = "+"{0:.1f}".format(args.signalInjectMass)+" GeV/c^{2}"
         #print("{0} {1} v. Lumi: {2}".format(period,fnPref, data))
         if len(data)<=1:
           continue
@@ -507,6 +669,38 @@ if __name__ == "__main__":
           xlabel="m_{H} [GeV/c^{2}]"
         incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,caption3=caption3,ylabel=ytitle,energyStr=energyStr,doMuExtraPlot=doMuExtraPlot,showObs=showObs,xlabel=xlabel)
         saveAs(canvas,outDir+fnPref+plotName+"_"+energyStr)
+
+    ## All p-values together plot
+    canvas.SetLogy(1)
+    pValueVetos = [
+        [],
+        [
+          "VBFBDTCut",
+          "BDTCutCatVBFBDTOnly"#,
+          #"IncPreselCat",
+        ],
+        [
+          "IncPreselPtG10BB",
+          "IncPreselPtG10BE",
+          "IncPreselPtG10BO",
+          "IncPreselPtG10EE",
+          "IncPreselPtG10OE",
+          "IncPreselPtG10OO"
+        ]
+    ]
+    for saveName,vetos in zip(["All","NonVBF","Final"],pValueVetos):
+      if len(plots)==0 or not args.higgsMass:
+        continue
+      pValueDict = {}
+      for plotName in plots:
+        if plotName in vetos:
+            continue
+
+        data = getDataSig(dirName+plotName+"_"+energyStr+"_*.txt*",getPValue=True)
+        pValueDict[plotName] = data
+      pValueAllPlot = PValuePlotTogether(pValueDict,canvas,caption2=caption2,caption3=caption3,energyStr=energyStr)
+      saveAs(canvas,outDir+"pValues_"+saveName+energyStr)
+    canvas.SetLogy(0)
     
     ## Compare all types of limits
     print "Doing Compare..."

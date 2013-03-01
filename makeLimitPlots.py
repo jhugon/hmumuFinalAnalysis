@@ -224,6 +224,9 @@ class RelativePlot:
     obsGraph.SetLineColor(1)
     obsGraph.SetLineStyle(1)
     obsGraph.SetLineWidth(3)
+    obsGraph.SetMarkerStyle(20)
+    obsGraph.SetMarkerSize(1.1)
+    obsGraph.SetMarkerColor(1)
     self.expGraph = expGraph
     self.oneSigGraph = oneSigGraph
     self.twoSigGraph = twoSigGraph
@@ -274,6 +277,7 @@ class RelativePlot:
     #oneGraph.Draw("l")
     if showObs:
       obsGraph.Draw("l")
+      obsGraph.Draw("P")
 
     tlatex = root.TLatex()
     tlatex.SetNDC()
