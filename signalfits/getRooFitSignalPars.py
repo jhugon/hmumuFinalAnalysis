@@ -7,11 +7,13 @@ import os
 import re
 import math
 import commands
+from ROOT import *
+gSystem.Load('libRooFit')
+import ROOT as root
 
 #from helpers import *
 
-
-#folder = "/afs/cern.ch/user/d/digiovan/public/forJustin/signalfits/fitresults/"
+#folder = "/afs/cern.ch/user/d/digiovan/public/forJustin/signalfits7and8TeV/fitresults/"
 folder = "signalfits/fitresults/"
 
 baseNames = ["IncPreselPtG10BB",
@@ -109,40 +111,41 @@ parameters = {}
 
 
 for baseName in baseNames:
-   #print  baseName
+   print  baseName
 
    for fit in fitNames:
       #print fit
 
-      parTmp = expandParameters(baseName,fit,'8TeV')
+      for bener in benergy:
+         parTmp = expandParameters(baseName,fit,bener)
 
-      if (len(parameters.keys()) == 0 ):
-          parameters = parTmp
-          
-      for ben in parTmp.keys():
-         #print ben, parameters.has_key(ben)
-         if ( parameters.has_key(ben) == False ):
-            parameters[ben] = parTmp[ben]
-            
-
-         for mass in parTmp[ben].keys():
-            #print mass, parameters[ben].has_key(mass)
-
-            if ( parameters[ben].has_key(mass) == False ):
-               parameters[ben][mass] = parTmp[ben][mass]
-
-
-            for cat in parTmp[ben][mass].keys():
-               #print cat, parameters[ben][mass].has_key(cat)
-
-               if ( parameters[ben][mass].has_key(cat) == False ):
-                  parameters[ben][mass][cat] = parTmp[ben][mass][cat]
-
-
-               for thefit in parTmp[ben][mass][cat].keys():
-                  #print thefit
-
-                  if ( parameters[ben][mass][cat].has_key(thefit) == False ):
-                     parameters[ben][mass][cat][thefit] = parTmp[ben][mass][cat][thefit]
-                     
+         if (len(parameters.keys()) == 0 ):
+             parameters = parTmp
+             
+         for ben in parTmp.keys():
+            #print ben, parameters.has_key(ben)
+            if ( parameters.has_key(ben) == False ):
+               parameters[ben] = parTmp[ben]
+               
+         
+            for mass in parTmp[ben].keys():
+               #print mass, parameters[ben].has_key(mass)
+         
+               if ( parameters[ben].has_key(mass) == False ):
+                  parameters[ben][mass] = parTmp[ben][mass]
+         
+         
+               for cat in parTmp[ben][mass].keys():
+                  #print cat, parameters[ben][mass].has_key(cat)
+         
+                  if ( parameters[ben][mass].has_key(cat) == False ):
+                     parameters[ben][mass][cat] = parTmp[ben][mass][cat]
+         
+         
+                  for thefit in parTmp[ben][mass][cat].keys():
+                     #print thefit
+         
+                     if ( parameters[ben][mass][cat].has_key(thefit) == False ):
+                        parameters[ben][mass][cat][thefit] = parTmp[ben][mass][cat][thefit]
+                        
 

@@ -257,6 +257,11 @@ class RelativePlot:
       obsGraph.SetPoint(iPoint,xNum,obs)
       iPoint += 1
 
+      if float(point[6]) > ymax:
+        ymax = float(point[6])
+      if obs > ymax:
+        ymax = obs
+
     label = root.TLatex()
     #label.SetNDC()
     label.SetTextFont(root.gStyle.GetLabelFont("X"))
@@ -270,6 +275,8 @@ class RelativePlot:
     twoSigGraph.GetYaxis().SetTitle(ylabel)
     if len(ylimits)==2:
         twoSigGraph.GetYaxis().SetRangeUser(*ylimits)
+    else:
+        twoSigGraph.GetYaxis().SetRangeUser(0.0,ymax*1.1)
     if len(xlimits)==2:
         twoSigGraph.GetXaxis().SetRangeUser(*xlimits)
     oneSigGraph.Draw("3")
@@ -659,7 +666,7 @@ if __name__ == "__main__":
   for period in ["7TeV","8TeV","14TeV","7P8TeV"]:
     fnToGlob = dirName+"*_"+period+"_*.txt.out"
     allfiles = glob.glob(fnToGlob)
-    
+
     ## Limit v. Lumi
     energyStr = ""
     plots = set()
@@ -670,7 +677,7 @@ if __name__ == "__main__":
       if match and not (badPlot or badPlot2):
         plots.add(match.group(1))
         energyStr = match.group(2)
-  
+
     energyStrWrite = energyStr
     if energyStr == "7P8TeV":
       energyStrWrite = "7 & 8 TeV"
@@ -717,6 +724,7 @@ if __name__ == "__main__":
             ylimits = [0.,40.]
         elif energyStr == "7TeV":
             ylimits = [0.,70.]
+        ylimits = []
         xlabel="m_{H} [GeV/c^{2}]"
         caption3 = "L = {0:.1f} fb^{{-1}}".format(float(lumisToUse[energyStr]))
       #elif period == "14TeV":

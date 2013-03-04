@@ -614,9 +614,9 @@ if __name__ == "__main__":
 
   ylimits=[]
 
-  lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":lumiDict["8TeV"]}
+  lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":lumiDict["8TeV"],"7P8TeV":lumiDict["8TeV"]+lumiDict["7TeV"]}
   
-  for period in ["7TeV","8TeV","14TeV"]:
+  for period in ["7TeV","8TeV","14TeV","7P8TeV"]:
     fnToGlob = dirName+"*_"+period+"_*.txt.out"
     allfiles = glob.glob(fnToGlob)
 
@@ -630,8 +630,13 @@ if __name__ == "__main__":
       if match and not (badPlot or badPlot2):
         plots.add(match.group(1))
         energyStr = match.group(2)
+
+    if energyStr == "7P8TeV":
+      energyStr = "7 & 8 TeV"
+    else:
+      energyStr.replace("TeV"," TeV")
   
-    caption2 = "#sqrt{s}="+energyStr
+    caption2 = "#sqrt{s} = "+energyStr
     caption3 = ""
     if args.signalInject>0.0:
       caption3 = "Signal Injected {0:.1f}#timesSM".format(args.signalInject)
@@ -653,10 +658,10 @@ if __name__ == "__main__":
         doMuExtraPlot=False
         showObs=False
         if fnPref == "sig":
-          data = getDataSig(dirName+plotName+"_"+energyStr+"_*.txt*",getPValue=args.pValue)
+          data = getDataSig(dirName+plotName+"_"+period+"_*.txt*",getPValue=args.pValue)
           showObs=True
         else:
-          data = getDataMu(dirName+plotName+"_"+energyStr+"_*.txt*")
+          data = getDataMu(dirName+plotName+"_"+period+"_*.txt*")
         if fnPref == "muToy":
           doMuExtraPlot = True
         #print("{0} {1} v. Lumi: {2}".format(period,fnPref, data))
@@ -668,16 +673,14 @@ if __name__ == "__main__":
           title = titleMap[plotName]
           xlabel="m_{H} [GeV/c^{2}]"
         incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,caption3=caption3,ylabel=ytitle,energyStr=energyStr,doMuExtraPlot=doMuExtraPlot,showObs=showObs,xlabel=xlabel)
-        saveAs(canvas,outDir+fnPref+plotName+"_"+energyStr)
+        saveAs(canvas,outDir+fnPref+plotName+"_"+period)
 
     ## All p-values together plot
     canvas.SetLogy(1)
     pValueVetos = [
-        [],
         [
           "VBFBDTCut",
-          "BDTCutCatVBFBDTOnly"#,
-          #"IncPreselCat",
+          "BDTCutCatVBFBDTOnly"
         ],
         [
           "IncPreselPtG10BB",
@@ -688,7 +691,7 @@ if __name__ == "__main__":
           "IncPreselPtG10OO"
         ]
     ]
-    for saveName,vetos in zip(["All","NonVBF","Final"],pValueVetos):
+    for saveName,vetos in zip(["NonVBF","Final"],pValueVetos):
       if len(plots)==0 or not args.higgsMass:
         continue
       pValueDict = {}
@@ -696,10 +699,10 @@ if __name__ == "__main__":
         if plotName in vetos:
             continue
 
-        data = getDataSig(dirName+plotName+"_"+energyStr+"_*.txt*",getPValue=True)
+        data = getDataSig(dirName+plotName+"_"+period+"_*.txt*",getPValue=True)
         pValueDict[plotName] = data
       pValueAllPlot = PValuePlotTogether(pValueDict,canvas,caption2=caption2,caption3=caption3,energyStr=energyStr)
-      saveAs(canvas,outDir+"pValues_"+saveName+energyStr)
+      saveAs(canvas,outDir+"pValues_"+saveName+period)
     canvas.SetLogy(0)
     
     ## Compare all types of limits

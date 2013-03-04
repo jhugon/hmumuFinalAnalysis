@@ -1509,7 +1509,6 @@ if __name__ == "__main__":
   #directory = "input/preApproveSample/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
@@ -1526,7 +1525,7 @@ if __name__ == "__main__":
         tmpList.append(a+c)
   analyses += tmpList
   analyses = ["VBFBDTCut"]
-  analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
+  #analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
   combinations = []
   combinationsLong = []
   combinations.append((
@@ -1954,6 +1953,49 @@ echo "done"
 
 #  runFile.write(batchString)
   runFile.write(simpleBatchString)
+  runFile.close()
+
+  uftrigString = \
+"""#!/bin/bash
+echo "running uftrig01.sh"
+date
+for i in *.txt; do
+    [[ -e "$i" ]] || continue
+FILENAME=$i
+echo "executing combine -M Asymptotic $FILENAME >& $FILENAME.out"
+
+combine -M Asymptotic $FILENAME >& $FILENAME.out &
+
+echo "executing combine -M ProfileLikelihood -d $FILENAME --signif --usePLC >& $FILENAME.sig"
+
+combine -M ProfileLikelihood -d $FILENAME --signif --usePLC >& $FILENAME.sig &
+
+echo "executing combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig"
+
+combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 >& $FILENAME.expsig
+#combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig
+
+echo "executing combine -M MaxLikelihoodFit -rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
+
+combine -M MaxLikelihoodFit -rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu
+cp mlfit.root $FILENAME.root
+for subname in *_fit_s.png; do
+  cp $subname ${FILENAME%$TXTSUFFIX}_$subname
+done
+
+wait
+
+rm -f roostats*
+rm -f higgsCombineTest*.root
+
+done
+
+date
+echo "done"
+"""
+
+  runFile = open(outDir+"uftrig01.sh","w")
+  runFile.write(uftrigString)
   runFile.close()
 
   runFile = open(outDir+"getStatus.sh","w")

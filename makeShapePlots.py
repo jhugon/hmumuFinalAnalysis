@@ -976,7 +976,10 @@ class ShapePlotter:
     sigPDF = workspace.pdf(sigName)
 
     bakStrength = root.RooRealVar("bakStrength","bakStrength",1.0,1e6)
-    sigStrength = root.RooRealVar("sigStrength","sigStrength",0.0,1e6)
+    #sigStrength = root.RooRealVar("sigStrength","sigStrength",0.0,1e6)
+    #sigStrength = root.RooRealVar("sigStrength","sigStrength",0.0,10.0)
+    #sigStrength = root.RooRealVar("sigStrength","sigStrength",5.65)
+    sigStrength = root.RooRealVar("sigStrength","sigStrength",2.0)
     epdfSig = root.RooExtendPdf("epdfSig","epdfSig",sigPDF,sigStrength)
     epdfBak = root.RooExtendPdf("epdfBak","epdfBak",bakPDF,bakStrength)
     pdfSB = root.RooAddPdf("pdfSB","Signal + Background",root.RooArgList(epdfBak,epdfSig))
@@ -1155,6 +1158,8 @@ class ShapePlotter:
     modelGraph.SetFillStyle(1)
     modelPlusSigGraph.SetLineColor(root.kRed)
     sigGraph.SetLineColor(root.kRed)
+    print "{} sig Events: {:.2f} +/- {:.2f}".format(channelName,sigStrength.getVal(),sigStrength.getError())
+    print "{} bak Events: {:.2f} +/- {:.2f}".format(channelName,bakStrength.getVal(),bakStrength.getError())
 
     return dataGraph, modelGraph, modelPlusSigGraph, sigGraph, pullsGraph, chi2, fr.floatParsFinal().find("sigStrength")
 
@@ -1257,8 +1262,8 @@ if __name__ == "__main__":
 
   shapePlotterList = []
   #for fn in glob.glob(dataDir+"*20.root")+glob.glob(dataDir+"*5.05.root"):
-  for fn in glob.glob(dataDir+"*.root"):
-  #for fn in glob.glob(dataDir+"BDTCutCat*.root"):
+  #for fn in glob.glob(dataDir+"*.root"):
+  for fn in glob.glob(dataDir+"BDTCutCat*.root"):
     if re.search("P[\d.]+TeV",fn):
         continue
     s = ShapePlotter(fn,outDir,titleMap,rebin,xlimits=plotRange,normRange=normRange,signalInject=args.signalInject,plotSignalStrength=args.plotSignalStrength,plotSignalBottom=args.plotSignalBottom)
