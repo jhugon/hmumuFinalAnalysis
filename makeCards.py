@@ -1531,14 +1531,14 @@ if __name__ == "__main__":
   combinations.append((
         ["IncPreselPtG10"+x for x in categoriesInc],"IncPreselCat"
   ))
+  combinations.append((
+        ["VBFBDTCut"]+["IncPreselPtG10"+x for x in categoriesInc],"BDTCutCatVBFBDTOnly"
+  ))
   """
   combinations.append((
         ["VBFPresel"]+["IncPreselPtG10"],"BDTCutVBFBDTOnly"
   ))
   """
-  combinations.append((
-        ["VBFBDTCut"]+["IncPreselPtG10"+x for x in categoriesInc],"BDTCutCatVBFBDTOnly"
-  ))
 
 #  combinationsLong.append((
 #        ["IncBDTCut","VBFBDTCut"],"BDTCut"
@@ -1835,9 +1835,9 @@ combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 >& $FI
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
-echo "executing combine -M MaxLikelihoodFit -rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
+echo "executing combine -M MaxLikelihoodFit --rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
 
-combine -M MaxLikelihoodFit -rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu
+combine -M MaxLikelihoodFit --rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
@@ -1917,9 +1917,9 @@ combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 >& $FI
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
-echo "executing combine -M MaxLikelihoodFit -rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
+echo "executing combine -M MaxLikelihoodFit --rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
 
-combine -M MaxLikelihoodFit -rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu
+combine -M MaxLikelihoodFit --rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu
 rm -f roostats*
 rm -f higgsCombineTest*.root
 cp mlfit.root $FILENAME.root
@@ -1976,9 +1976,9 @@ echo "executing combine -M ProfileLikelihood -d $FILENAME --signif --expectSigna
 combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 >& $FILENAME.expsig
 #combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig
 
-echo "executing combine -M MaxLikelihoodFit -rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
+echo "executing combine -M MaxLikelihoodFit --rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
 
-combine -M MaxLikelihoodFit -rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu
+combine -M MaxLikelihoodFit --rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu
 cp mlfit.root $FILENAME.root
 for subname in *_fit_s.png; do
   cp $subname ${FILENAME%$TXTSUFFIX}_$subname

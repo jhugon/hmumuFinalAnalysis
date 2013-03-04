@@ -20,6 +20,8 @@
 #PBS -l pmem=2500mb
 
 # initialize environment for worker
+STARTTIME=`date +%s`
+
 export SCRAM_ARCH=slc5_amd64_gcc462
 export OSG_APP=/osg/app
 export VO_CMS_SW_DIR=${OSG_APP}/cmssoft/cms
@@ -85,9 +87,9 @@ combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 >& $FI
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
-echo "executing combine -M MaxLikelihoodFit -rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
+echo "executing combine -M MaxLikelihoodFit --rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
 
-combine -M MaxLikelihoodFit -rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu
+combine -M MaxLikelihoodFit --rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
@@ -101,5 +103,7 @@ done
 #cp $FILENAME.expsig ..
 
 echo "done"
+ENDTIME=`date +%s`
+echo "Took $(( $ENDTIME - $STARTTIME )) seconds"
 date
 
