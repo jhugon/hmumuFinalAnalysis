@@ -498,6 +498,11 @@ class PValuePlotTogether:
     tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin()-0.03,0.88,caption2)
     tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin()-0.03,0.82,caption3)
 
+    #tlatex.SetTextAlign(12)
+    #tlatex.SetTextSize(0.05)
+    #tlatex.DrawLatex(gStyle.GetPadLeftMargin()+0.03,gStyle.GetPadBottomMargin()+0.23,"p-Value of #sigma/#sigma_{SM}=1")
+    #tlatex.DrawLatex(gStyle.GetPadLeftMargin()+0.03,gStyle.GetPadBottomMargin()+0.17,"Hypothesis")
+
     #legend = root.TLegend(0.58,0.70,0.9,0.9) # UR
     baselineY = gStyle.GetPadBottomMargin()+0.02
     marginR = 1.0-gStyle.GetPadRightMargin()+0.01
@@ -617,14 +622,14 @@ if __name__ == "__main__":
   lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":lumiDict["8TeV"],"7P8TeV":lumiDict["8TeV"]+lumiDict["7TeV"]}
   
   for period in ["7TeV","8TeV","14TeV","7P8TeV"]:
-    fnToGlob = dirName+"*_"+period+"_*.txt.out"
+    fnToGlob = dirName+"*_"+period+"_*.txt.sig"
     allfiles = glob.glob(fnToGlob)
 
     ## Limit v. Lumi
     energyStr = ""
     plots = set()
     for fn in allfiles:
-      match = re.search(r".*/(.+)_(.+)_[.\d]+.txt.out",fn)
+      match = re.search(r".*/(.+)_(.+)_[.\d]+.txt.sig",fn)
       badPlot = re.search(r"Silly",fn)
       badPlot2 = re.search(r"Silly",fn)
       if match and not (badPlot or badPlot2):

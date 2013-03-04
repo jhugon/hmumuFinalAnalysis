@@ -1945,6 +1945,7 @@ echo "executing combine -M Asymptotic $FILENAME >& $FILENAME.out"
 combine -M Asymptotic -v 2 $FILENAME >& $FILENAME.out
 rm -f roostats*
 rm -f higgsCombineTest*.root
+
 done
 
 date
@@ -1998,51 +1999,9 @@ echo "done"
   runFile.write(uftrigString)
   runFile.close()
 
-  runFile = open(outDir+"getStatus.sh","w")
-  batchString = \
-"""#!/bin/bash
-
-echo "==========================="
-echo "Files Found: `ls *.out | wc -l` of `ls *.txt | wc -l`"
-echo "==========================="
-for i in *.out; do wc $i; done
-echo "==========================="
-"""
-  runFile.write(batchString)
-  runFile.close()
-
-  runFile = open(outDir+"getStatus2.sh","w")
-  batchString = \
-"""#!/bin/bash
-
-echo "==========================="
-
-NJOBS=`ls *.txt | wc -l`
-STARTTIME=`date +%s`
-
-while true; do
-  NCOMPLETE="0"
-  for i in *.out; do
-    NTMP=`cat $i | wc -l`
-    if [ "$NTMP" -gt "0" ]; then
-        NCOMPLETE=$(( $NCOMPLETE + 1 ))
-    fi  
-  done
-  NSTARTED=`ls *.out | wc -l`
-  echo "`date --rfc-3339=seconds` Jobs: $NJOBS Started: $NSTARTED Complete: $NCOMPLETE"
-  if [ "$NCOMPLETE" -eq "$NJOBS" ]; then
-    ENDTIME=`date +%s`
-    echo "Took $(( $ENDTIME - $STARTTIME )) seconds"
-    echo "All Jobs Complete"
-    echo "==========================="
-    exit "0"
-  fi
-  sleep 10
-done
-
-"""
-  runFile.write(batchString)
-  runFile.close()
   shutil.copy("etc/nuisanceDiff.py",outDir+"diffNuisances.py")
   shutil.copy("etc/fitNormsToText_mlfit.py",outDir+"fitNormsToText_mlfit.py")
   shutil.copy("etc/myNuisancePrinter.py",outDir+"myNuisancePrinter.py")
+  shutil.copy("etc/hpcTemplate.sh",outDir+"hpcTemplate.sh")
+  shutil.copy("etc/runHPC.sh",outDir+"runHPC.sh")
+  shutil.copy("etc/getStatus2.sh",outDir+"getStatus2.sh")
