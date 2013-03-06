@@ -1509,6 +1509,7 @@ if __name__ == "__main__":
   #directory = "input/preApproveSample/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
+  periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
@@ -1526,15 +1527,16 @@ if __name__ == "__main__":
   analyses += tmpList
   analyses = ["VBFBDTCut"]
   #analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
+  analyses += ["IncPreselPtG10BB"]
   combinations = []
   combinationsLong = []
+  """
   combinations.append((
         ["IncPreselPtG10"+x for x in categoriesInc],"IncPreselCat"
   ))
   combinations.append((
         ["VBFBDTCut"]+["IncPreselPtG10"+x for x in categoriesInc],"BDTCutCatVBFBDTOnly"
   ))
-  """
   combinations.append((
         ["VBFPresel"]+["IncPreselPtG10"],"BDTCutVBFBDTOnly"
   ))
@@ -2005,3 +2007,7 @@ echo "done"
   shutil.copy("etc/hpcTemplate.sh",outDir+"hpcTemplate.sh")
   shutil.copy("etc/runHPC.sh",outDir+"runHPC.sh")
   shutil.copy("etc/getStatus2.sh",outDir+"getStatus2.sh")
+  shutil.copy("etc/gof.sh",outDir+"gof.sh")
+  shutil.copy("etc/gofHPC_Template.sh",outDir+"gofHPC_Template.sh")
+  shutil.copy("etc/runHPC_GOF.sh",outDir+"runHPC_GOF.sh")
+

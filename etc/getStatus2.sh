@@ -5,9 +5,16 @@ echo "==========================="
 NJOBS=`ls *.txt | wc -l`
 STARTTIME=`date +%s`
 
+EXT=".out"
+if [ -n "$1" ]; then
+  EXT=$1
+fi
+
+echo "Looking for completed files *$EXT"
+
 while true; do
   NCOMPLETE="0"
-  FILELISTOUT=`ls *.out 2> /dev/null`
+  FILELISTOUT=`ls *$EXT 2> /dev/null`
   if [ -n "$FILELISTOUT" ]; then
     for i in $FILELISTOUT; do
       NTMP=`cat $i | wc -l`
