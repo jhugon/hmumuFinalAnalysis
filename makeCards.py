@@ -2009,5 +2009,6 @@ echo "done"
   shutil.copy("etc/getStatus2.sh",outDir+"getStatus2.sh")
   shutil.copy("etc/gof.sh",outDir+"gof.sh")
   shutil.copy("etc/gofHPC_Template.sh",outDir+"gofHPC_Template.sh")
+  shutil.copy("etc/gofHPC_Template_bak.sh",outDir+"gofHPC_Template_bak.sh")
   shutil.copy("etc/runHPC_GOF.sh",outDir+"runHPC_GOF.sh")
 

@@ -15,7 +15,7 @@
 #PBS -t 1-YAYYAYYAY
 
 ##Job Resources
-#PBS -l walltime=00:10:00
+#PBS -l walltime=00:35:00
 #PBS -l nodes=1:ppn=1
 #PBS -l pmem=2500mb
 
@@ -79,7 +79,7 @@ date
 
 iSeed="0"
 while true; do
-  combine -M GoodnessOfFit --algorithm saturated --fixedSignalStrength=0.0 $FILENAME -t 100 -s $(( 124389 + $iSeed )) >> logGOF
+  combine -M GoodnessOfFit --algorithm saturated $FILENAME -t 100 -s $(( 124389 + $iSeed )) >> logGOF
   iSeed=$(( $iSeed + 1 ))
   if [ "$iSeed" -gt 10 ]; then
     break
@@ -91,7 +91,7 @@ hadd -f -k $FILENAME.GOF-Toys.root higgsCombineTest.GoodnessOfFit.*.root
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
-combine -M GoodnessOfFit --algorithm saturated --fixedSignalStrength=0.0 $FILENAME >> logGOF
+combine -M GoodnessOfFit --algorithm saturated $FILENAME >> logGOF
 mv higgsCombineTest.GoodnessOfFit.*.root $FILENAME.GOF.root
 
 rm -f roostats*

@@ -10,6 +10,11 @@ if [ -n "$1" ]; then
   EXT=$1
 fi
 
+if [ -n "$2" ]; then
+  NJOBS=$(( $NJOBS + $2 ))
+  echo "Additional NJOBS from command line: $2"
+fi
+
 echo "Looking for completed files *$EXT"
 
 while true; do
@@ -25,7 +30,7 @@ while true; do
   fi
   NSTARTED=`ls -d Dir* 2> /dev/null | wc -l`
   echo "`date --rfc-3339=seconds` Jobs: $NJOBS Started: $NSTARTED Complete: $NCOMPLETE"
-  if [ "$NCOMPLETE" -eq "$NJOBS" ]; then
+  if [ "$NCOMPLETE" -ge "$NJOBS" ]; then
     ENDTIME=`date +%s`
     echo "Took $(( $ENDTIME - $STARTTIME )) seconds"
     echo "All Jobs Complete"
