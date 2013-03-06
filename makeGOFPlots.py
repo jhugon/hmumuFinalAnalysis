@@ -9,6 +9,7 @@ import ROOT as root
 import glob
 import re
 import os.path
+import random
 
 import numpy
 
@@ -151,37 +152,85 @@ comparisonMap = {
 
 #######################################
 
-def getDataGOF(basename):
-  print basename
-  observed = None
-  toys = []
-  for postfix, isObs in zip([".txt.GOF-Toys.root",".txt.GOF.root"],[False,True]):
-    globList =  glob.glob(basename+"*"+postfix)
-    assert(len(globList)==1)
-    filename = globList[0]
-    print filename
-    f = root.TFile(filename)
-    tree = f.Get("limit")
-    print "entries: {}".format(tree.GetEntries())
-    for i in range(tree.GetEntries()):
-      tree.GetEntry(i)
-      toy = tree.limit
-      if isObs:
-        observed = toy
-      else:
-        toys += [toy]
-  print observed
-  ntoys =  len(toys)
-  print ntoys
-  toysGT = 0
-  for i in toys:
-    if i > observed:
-      toysGT += 1
-  pvalue = float(toysGT)/ntoys
-  print "p-Value: {}".format(pvalue)
+def getDataGOF(basename,outDir):
+  def getPValue(filename):
+    bakStr = ""
+    if ".bak." in filename:
+      bakStr = "bak."
+    filename = re.sub(r"\.txt.*","",filename)
+    outFilename = filename
+    if len(bakStr)>0:
+      outFilename += bakStr[0:-1]
+    outFilename = os.path.basename(outFilename)
+    endStr = [".txt."+bakStr+"GOF.root",".txt."+bakStr+"GOF-Toys.root"]
+    observed = None
+    nToys = None
+    nNum = 0
+    tmpFiles = []
+    tmpTrees = []
+    tmpHists = []
+    for postfix in endStr:
+      f = root.TFile(filename+postfix)
+      tree = f.Get("limit")
+      nEntries = tree.GetEntries()
+      if nEntries > 1:
+        nToys = nEntries
+      for i in range(nEntries):
+        tree.GetEntry(i)
+        toy = tree.limit
+        if nEntries == 1:
+          observed = toy
+        elif toy > observed:
+          nNum += 1
+      tmpFiles += [f]
+      tmpTrees += [tree]
+    result = float(nNum)/nToys
+    ## Now Drawing Distribution
+    canvas = root.TCanvas("tmpCanvas"+str(random.randint(0,10000)))
+    histName = "tmpHist"+str(random.randint(0,10000))
+    tmpTrees[1].Draw("limit >> "+histName)
+    tmpHist = root.gDirectory.Get(histName)
+    tmpHist.SetTitle('')
+    binWidthStr = getBinWidthStr(tmpHist)
+    setHistTitles(tmpHist,"GOF Test Statistic","Toys/"+binWidthStr)
+    tmpHist.SetLineWidth(2)
+
+    # Observed Arrow
+    yAxis = tmpHist.GetYaxis()
+    arrowLength = (1.0-2e-3)/10.
+    arrowYmax = tmpHist.GetMaximum()
+    arrowHeadSize = 0.025
+    arrow = root.TLine(observed,0.0,observed,arrowYmax
+                                )
+    arrow.SetLineWidth(3)
+    arrow.SetLineColor(root.kRed)
+    #arrow.SetFillColor(root.kRed)
+    #arrow.SetAngle(40)
+    arrow.Draw()
+
+    saveAs(canvas,outDir+"testStat_"+outFilename)
+    return result
+
+  result = {}
+
+  bakFiles = glob.glob(basename+"*.bak.GOF.root")
+  if(len(bakFiles)<1):
+    print("Error: Number of files '*.bak.GOF.root' doesn't equal 1 for basename: {}".format(basename))
+    sys.exit(1)
+  result['bak'] = getPValue(bakFiles[0])
+  result['sig'] = []
+  files = glob.glob(basename+"*.GOF.root")
+  for f in files:
+    if "bak" in f:
+      continue
+    massMatch = re.match(r".+_.+TeV_([0-9.]+).txt.*",f)
+    assert(massMatch)
+    mass = massMatch.group(1)
+    result["sig"] += [[float(mass),getPValue(f)]]
+  return result
 
 class PValuePlotTogether:
-  def __init__(self,dataDict, canvas, caption="Standard Model H#rightarrow#mu#mu", ylabel="p-Value", xlabel="m_{H} [GeV/c^{2}]",caption2="",caption3="",ylimits=[],xlimits=[],energyStr="8TeV"):
+  def __init__(self,dataDict, canvas, caption="Standard Model H#rightarrow#mu#mu", ylabel="Goodness of Fit p-Value", xlabel="m_{H} [GeV/c^{2}]",caption2="",caption3="",ylimits=[],xlimits=[],energyStr="8TeV"):
     graphs = []
     ymax = 1.0
     ymin = 1e20
@@ -191,7 +240,8 @@ class PValuePlotTogether:
     sortedChannels = sorted(dataDict.keys())
     sortedChannels.reverse()
     for channel in sortedChannels:
-      dataPoints = dataDict[channel]
+      dataPoints = dataDict[channel]['sig']
+      dataPoints.sort(key=lambda x:x[0])
       graph = root.TGraph()
       graph.SetName("Pvalue_"+energyStr+"_"+channel)
       #graph.SetLineStyle(2)
@@ -252,7 +302,6 @@ class PValuePlotTogether:
         graph.Draw("al")
         xmin = graph.GetXaxis().GetXmin()
         xmax = graph.GetXaxis().GetXmax()
-        print xmin, xmax
         hLabelX = (xmax-xmin)/0.02+xmin
         for yPos in sigmaVals:
          if yPos < ymin:
@@ -262,6 +311,15 @@ class PValuePlotTogether:
       else:
         graph.Draw("l")
       graph.Draw("p")
+
+    # Now Draw Background p-Value
+    for channel in sortedChannels:
+      yPos = dataDict[channel]['bak']
+      self.hLine.SetLineStyle(2)
+      self.hLine.SetLineColor(colorMap[channel])
+      xmin = graph.GetXaxis().GetXmin()
+      xmax = graph.GetXaxis().GetXmax()
+      self.hLine.DrawLine(xmin,yPos,xmax,yPos)
 
     tlatex = root.TLatex()
     tlatex.SetNDC()
@@ -371,7 +429,7 @@ if __name__ == "__main__":
         if plotName in vetos:
             continue
 
-        data = getDataGOF(dirName+plotName+"_"+period)
+        data = getDataGOF(dirName+plotName+"_"+period,outDir)
         pValueDict[plotName] = data
       pValueAllPlot = PValuePlotTogether(pValueDict,canvas,caption2=caption2,caption3=caption3,energyStr=energyStr)
       saveAs(canvas,outDir+"gof_"+saveName+period)

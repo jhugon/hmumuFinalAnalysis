@@ -15,7 +15,7 @@
 #PBS -t 1-YAYYAYYAY
 
 ##Job Resources
-#PBS -l walltime=00:35:00
+#PBS -l walltime=01:35:00
 #PBS -l nodes=1:ppn=1
 #PBS -l pmem=2500mb
 
