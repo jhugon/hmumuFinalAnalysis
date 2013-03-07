@@ -12,12 +12,12 @@
 #Multiple Job Submission:
 #Jobs will have a variable called $PBS_ARRAYID
 #that will be one of the following numbers
-#PBS -t 1-YAYYAYYAY
+#PBS -t 0-YAYYAYYAY
 
 ##Job Resources
-#PBS -l walltime=00:15:00
+#PBS -l walltime=01:30:00
 #PBS -l nodes=1:ppn=1
-#PBS -l pmem=2500mb
+#PBS -l pmem=4000mb
 
 # initialize environment for worker
 STARTTIME=`date +%s`
@@ -48,14 +48,13 @@ eval `scram runtime -sh`
 
 ntoyjobs=WOWOWOWO
 ntoys=50
-njobsperjob=1
 ifiletorun=$(( $PBS_ARRAYID / $ntoyjobs ))
 toysrun=$(( $PBS_ARRAYID % $ntoyjobs ))
 echo "ntoyjobs: $ntoyjobs"
 echo "ifiletorun: $ifiletorun"
 echo "toysrun: $toysrun"
 
-ifile="1"
+ifile="0"
 for f in `ls *.txt`; do
   if [ "$ifile" -eq "$ifiletorun" ]; then
     FILENAME=$f
@@ -91,6 +90,7 @@ rm -f roostats*
 rm -f higgsCombineTest*.root
 
 if [ "$toysrun" -eq "0" ]; then
+  echo "running the Observed compatability"
   combine -M ChannelCompatibilityCheck --saveFitResult --rMax 50 $FILENAME >> logCCC
   mv higgsCombineTest.ChannelCompatibilityCheck.*.root ../$FILENAME.CCC.root
 

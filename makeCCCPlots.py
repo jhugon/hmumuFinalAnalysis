@@ -153,7 +153,7 @@ def getDataGOF(basename,outDir):
     filename = re.sub(r"\.txt.*","",filename)
     outFilename = filename
     outFilename = os.path.basename(outFilename)
-    endStr = [".txt.CCC.root",".txt.CCC-Toys.root"]
+    endStr = [".txt.CCC.root",".txt.CCC-Toys-*.root"]
     observed = None
     nToys = None
     nNum = 0
@@ -161,8 +161,9 @@ def getDataGOF(basename,outDir):
     tmpTrees = []
     tmpHists = []
     for postfix in endStr:
-      f = root.TFile(filename+postfix)
-      tree = f.Get("limit")
+      tree = root.TChain("limit")
+      for fname in glob.glob(filename+postfix):
+        tree.AddFile(fname)
       nEntries = tree.GetEntries()
       if nEntries > 1:
         nToys = nEntries
@@ -176,15 +177,26 @@ def getDataGOF(basename,outDir):
       tmpFiles += [f]
       tmpTrees += [tree]
     result = float(nNum)/nToys
+    print("{} obs: {:.2f} nToys: {} result: {:.2f}".format(filename,observed,nToys,result))
     ## Now Drawing Distribution
     canvas = root.TCanvas("tmpCanvas"+str(random.randint(0,10000)))
     histName = "tmpHist"+str(random.randint(0,10000))
-    tmpTrees[1].Draw("limit >> "+histName)
-    tmpHist = root.gDirectory.Get(histName)
-    tmpHist.SetTitle('')
-    binWidthStr = getBinWidthStr(tmpHist)
-    setHistTitles(tmpHist,"Channel Compatability Test Statistic","Toys/"+binWidthStr)
-    tmpHist.SetLineWidth(2)
+    tmpHist = None
+    first = True
+    for tree in tmpTrees:
+      if first:
+        first = False
+        continue
+      if tmpHist == None:
+        tree.Draw("limit >> "+histName)
+        tmpHist = root.gDirectory.Get(histName)
+        tmpHist.SetTitle(filename)
+        binWidthStr = getBinWidthStr(tmpHist)
+        setHistTitles(tmpHist,"Channel Compatability Test Statistic","Toys/"+binWidthStr)
+        tmpHist.SetLineWidth(2)
+      else:
+        tree.Draw("limit >>+ "+histName)
+    tmpHist.Draw()
 
     # Observed Arrow
     yAxis = tmpHist.GetYaxis()
@@ -199,6 +211,17 @@ def getDataGOF(basename,outDir):
     #arrow.SetAngle(40)
     arrow.Draw()
 
+    label = root.TLatex()
+    label.SetNDC()
+    label.SetTextFont(root.gStyle.GetLabelFont("X"))
+    label.SetTextSize(root.gStyle.GetLabelSize("X"))
+    label.SetTextAlign(23)
+    label.DrawLatex(
+            (1.0+root.gStyle.GetPadLeftMargin()-root.gStyle.GetPadRightMargin())/2.,
+            1.0-root.gStyle.GetPadTopMargin()-0.02,
+            "Observed: {0:.2f}, nToys: {1}, p-Value: {2:.2g}".format(
+                        observed,nToys,result)
+            )
     saveAs(canvas,outDir+"testStat_"+outFilename)
     return result
 
@@ -339,6 +362,106 @@ class PValuePlotTogether:
     canvas.RedrawAxis()
     self.graphs = graphs
 
+class ChannelPlot:
+  def __init__(self,filename,outname):
+    self.canvas = root.TCanvas()
+    getattr(self,"getData")(filename)
+    getattr(self,"plot")(outname)
+
+  def getData(self,filename):
+    f = root.TFile(filename)
+    fit_nom = f.Get("fit_nominal")
+    fpf_nom = fit_nom.floatParsFinal()
+    fit_alt = f.Get("fit_alternate")
+    fpf_alt = fit_alt.floatParsFinal()
+
+    r_nom = fpf_nom.find("r")
+    data = {'r':[r_nom.getVal(),-r_nom.getErrorLo(),r_nom.getErrorHi()]}
+
+    xMin = r_nom.getVal()-r_nom.getErrorLo()
+    xMax = r_nom.getVal()+r_nom.getErrorHi()
+
+    self.differentEnergies = False
+
+    for i in range(fpf_alt.getSize()):
+      param = fpf_alt.at(i)
+      name = param.GetName()
+      match = re.match(r".*ChannelCompatibilityCheck.*_r_(.*)([\d])TeV",name)
+      energy = None
+      if match:
+        channel = match.group(1)+match.group(2)
+        tmpEnergy = match.group(2)
+        data[channel] = [param.getVal(),-param.getErrorLo(),param.getErrorHi(),match.group(1),match.group(2)]
+        print channel
+        print data[channel]
+        high = data[channel][0]+data[channel][2]
+        low = data[channel][0]-data[channel][1]
+        if high > xMax:
+            xMax = high
+        if low < xMin:
+            xMin = low
+
+
+        if energy == None:
+            energy = tmpEnergy
+        else:
+          if energy != tmpEnergy:
+            self.differentEnergies = True
+        
+    self.data = data
+    self.channels = self.data.keys()
+    self.channels.pop(self.channels.index("r"))
+    self.nChannels = len(self.channels)
+    self.xMax = xMax
+    self.xMin = xMin
+
+  def plot(self,savename):
+    self.canvas.cd()
+    self.canvas.SetLeftMargin(0.3)
+    frame = root.TH2F("frame","",1,self.xMin*0.5,self.xMax*1.1,self.nChannels+1,0,self.nChannels+1)
+    if self.differentEnergies:
+      frame.GetYaxis().SetLabelSize(frame.GetYaxis().GetLabelSize()*1.5)
+    else:
+      frame.GetYaxis().SetLabelSize(frame.GetYaxis().GetLabelSize()*1.75)
+    frame.GetXaxis().SetLabelSize(frame.GetXaxis().GetLabelSize()*1.4)
+    frame.GetXaxis().SetTitleSize(frame.GetXaxis().GetTitleSize()*1.2)
+    frame.GetXaxis().SetTitleOffset(frame.GetXaxis().GetTitleOffset()*0.8)
+    setHistTitles(frame,"Best Fit #sigma/#sigma_{SM}","")
+    points = root.TGraphAsymmErrors()
+    points.SetMarkerStyle(21)
+    points.SetMarkerColor(1)
+    points.SetMarkerSize(2)
+    points.SetLineColor(root.kRed)
+    points.SetLineWidth(5)
+    
+    for i in range(self.nChannels):
+        datapoint = self.data[self.channels[i]]
+        points.SetPoint(i,datapoint[0],i+0.5)
+        points.SetPointError(i,datapoint[1],datapoint[2],0.,0.)
+        extra = ""
+        if self.differentEnergies:
+            extra = " {0} TeV".format(datapoint[4])
+        frame.GetYaxis().SetBinLabel(i+1,titleMap[datapoint[3]]+extra)
+
+    globalFitVal = self.data['r'][0]
+    globalFitP1Sig = self.data['r'][2]+globalFitVal
+    globalFitM1Sig = -self.data['r'][1]+globalFitVal
+
+    globalFitBand = root.TBox(globalFitM1Sig, 0., globalFitP1Sig, self.nChannels);
+    globalFitBand.SetFillColor(root.kGreen);
+
+    globalFitLine = root.TLine(globalFitVal, 0., globalFitVal, self.nChannels);
+    globalFitLine.SetLineWidth(5);
+    globalFitLine.SetLineColor(1);
+
+    frame.Draw()
+    globalFitBand.Draw()
+    globalFitLine.Draw()
+    points.Draw("PZ")
+
+    self.canvas.RedrawAxis() # Updates Axis Lines
+
+    saveAs(self.canvas,savename)
 
 if __name__ == "__main__":
 
@@ -362,6 +485,7 @@ if __name__ == "__main__":
     fnToGlob = dirName+"*_"+period+"_*.txt.*root"
     allfiles = glob.glob(fnToGlob)
 
+    """
     ## Limit v. Lumi
     energyStr = ""
     plots = set()
@@ -410,4 +534,10 @@ if __name__ == "__main__":
       pValueAllPlot = PValuePlotTogether(pValueDict,canvas,caption2=caption2,caption3=caption3,energyStr=energyStr)
       saveAs(canvas,outDir+"ccc_"+saveName+period)
     canvas.SetLogy(0)
+    """
+
+    compareFileGlob = "BDTCutCatVBFBDTOnly*"+period+"*125.0.txt.CCC.root"
+    compareFiles = glob.glob(dirName+compareFileGlob)
+    for f in compareFiles:
+      ChannelPlot(f,outDir+"cccCompare_"+period)
     
