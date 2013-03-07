@@ -76,9 +76,9 @@ date
 
 iSeed="0"
 while true; do
-  combine -M ChannelCompatibilityCheck --saveFitResult --rMax 50 $FILENAME -t 100 -s $(( 124389 + $iSeed )) >> logCCCToys
+  combine -M ChannelCompatibilityCheck --saveFitResult --rMax 50 $FILENAME -t 10 -s $(( 124389 + $iSeed )) >> logCCCToys
   iSeed=$(( $iSeed + 1 ))
-  if [ "$iSeed" -gt 2 ]; then
+  if [ "$iSeed" -gt 10 ]; then
     break
   fi
 done

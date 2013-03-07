@@ -22,6 +22,6 @@ ssh $NODE "rm -rf $REMOTEDIR/*;echo \"Contents of dir: \`ls $REMOTEDIR \`\""
 echo "Copying input files to $NODE..."
 rsync -az -e ssh statsCards/* $NODE:$REMOTEDIR/.
 echo "Running combine on $NODE..."
-ssh $NODE "cd $REMOTEDIR; eval \`scramv1 runtime -sh\`;bash runHPC_Compat.sh; bash getStatus2.sh .CCC.root"
+ssh $NODE "cd $REMOTEDIR; bash runHPC_Compat.sh; bash getStatus2.sh .CCC.root"
 echo "Copying output files from $NODE..."
 rsync -az -e ssh  $NODE:$REMOTEDIR/*CCC*.root statsInput/.

@@ -1510,7 +1510,6 @@ if __name__ == "__main__":
   #directory = "input/preApproveSample/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
@@ -1531,13 +1530,13 @@ if __name__ == "__main__":
   analyses += ["IncPreselPtG10BB"]
   combinations = []
   combinationsLong = []
-  """
   combinations.append((
         ["IncPreselPtG10"+x for x in categoriesInc],"IncPreselCat"
   ))
   combinations.append((
         ["VBFBDTCut"]+["IncPreselPtG10"+x for x in categoriesInc],"BDTCutCatVBFBDTOnly"
   ))
+  """
   combinations.append((
         ["VBFPresel"]+["IncPreselPtG10"],"BDTCutVBFBDTOnly"
   ))
@@ -2014,4 +2013,6 @@ echo "done"
   shutil.copy("etc/gofHPC_Template.sh",outDir+"gofHPC_Template.sh")
   shutil.copy("etc/gofHPC_Template_bak.sh",outDir+"gofHPC_Template_bak.sh")
   shutil.copy("etc/runHPC_GOF.sh",outDir+"runHPC_GOF.sh")
+  shutil.copy("etc/runHPC_Compat.sh",outDir+"runHPC_Compat.sh")
+  shutil.copy("etc/compatHPC_Template.sh",outDir+"compatHPC_Template.sh")
 
