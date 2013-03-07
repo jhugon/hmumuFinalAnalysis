@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
-import argparse
-parser = argparse.ArgumentParser(description="Makes Limit Plots from output text from combine tool.")
-parser.add_argument("--bdtCut", help="Makes plots v. BDT Cut Instead of Luminosity",action="store_true",default=False)
-parser.add_argument("-m","--higgsMass", help="Makes plots v. Higgs Mass",action="store_true",default=False)
-parser.add_argument("--signalInject", help="Sets a caption saying that signal was injected with strength",type=float,default=0.0)
-parser.add_argument("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
-args = parser.parse_args()
-
+import optparse
+parser = optparse.OptionParser(description="Makes Limit Plots from output text from combine tool.")
+parser.add_option("--bdtCut", help="Makes plots v. BDT Cut Instead of Luminosity",action="store_true",default=False)
+parser.add_option("-m","--higgsMass", help="Makes plots v. Higgs Mass",action="store_true",default=False)
+parser.add_option("--signalInject", help="Sets a caption saying that signal was injected with strength",type=float,default=0.0)
+parser.add_option("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
+args, fakeargs = parser.parse_args()
 
 from helpers import *
 import ROOT as root

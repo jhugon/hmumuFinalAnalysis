@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-import argparse
-parser = argparse.ArgumentParser(description="Makes cards for use in the CMS Combine tool.")
-parser.add_argument("--signalInject", help="Inject Signal with Strength into data_obs",type=float,default=0.0)
-parser.add_argument("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
-parser.add_argument("-m","--higgsMass", help="Makes plots v. Higgs Mass",action="store_true",default=False)
-parser.add_argument("-p","--pValue", help="Makes p-value plots instead of significance",action="store_true",default=False)
-args = parser.parse_args()
+import optparse
+parser = optparse.OptionParser(description="Makes cards for use in the CMS Combine tool.")
+parser.add_option("--signalInject", help="Inject Signal with Strength into data_obs",type=float,default=0.0)
+parser.add_option("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
+parser.add_option("-m","--higgsMass", help="Makes plots v. Higgs Mass",action="store_true",default=False)
+parser.add_option("-p","--pValue", help="Makes p-value plots instead of significance",action="store_true",default=False)
+args, fakeargs = parser.parse_args()
 
 from helpers import *
 import ROOT as root

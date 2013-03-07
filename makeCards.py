@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 
-import argparse
-parser = argparse.ArgumentParser(description="Makes cards for use in the CMS Combine tool.")
-parser.add_argument("--signalInject", help="Inject Signal with Strength into data_obs",type=float,default=0.0)
-parser.add_argument("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
-parser.add_argument("--toyData", help="Make Toy Data from PDFs for data_obs",action="store_true",default=False)
-parser.add_argument("--bdtCut", help="Creates Cards with different BDT Cuts",action="store_true",default=False)
-parser.add_argument("--gaussian", help="Use A Gaussian Signal Template with floating width",type=float,default=-1.0)
-parser.add_argument("-m","--higgsMass", help="Use This Higgs Mass",type=float,default=-1.0)
-parser.add_argument("--combinationsOnly", help="Run Only Combinations of Channels",action="store_true",default=False)
-args = parser.parse_args()
+import optparse
+parser = optparse.OptionParser(description="Makes cards for use in the CMS Combine tool.")
+parser.add_option("--signalInject", help="Inject Signal with Strength into data_obs",type=float,default=0.0)
+parser.add_option("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
+parser.add_option("--toyData", help="Make Toy Data from PDFs for data_obs",action="store_true",default=False)
+parser.add_option("--bdtCut", help="Creates Cards with different BDT Cuts",action="store_true",default=False)
+parser.add_option("--gaussian", help="Use A Gaussian Signal Template with floating width",type=float,default=-1.0)
+parser.add_option("-m","--higgsMass", help="Use This Higgs Mass",type=float,default=-1.0)
+parser.add_option("--combinationsOnly", help="Run Only Combinations of Channels",action="store_true",default=False)
+args, fakeargs = parser.parse_args()
 
 import math
 import ROOT as root

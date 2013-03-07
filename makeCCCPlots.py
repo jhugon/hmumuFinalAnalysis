@@ -150,15 +150,10 @@ comparisonMap = {
 
 def getDataGOF(basename,outDir):
   def getPValue(filename):
-    bakStr = ""
-    if ".bak." in filename:
-      bakStr = "bak."
     filename = re.sub(r"\.txt.*","",filename)
     outFilename = filename
-    if len(bakStr)>0:
-      outFilename += bakStr[0:-1]
     outFilename = os.path.basename(outFilename)
-    endStr = [".txt."+bakStr+"GOF.root",".txt."+bakStr+"GOF-Toys.root"]
+    endStr = [".txt.CCC.root",".txt.CCC-Toys.root"]
     observed = None
     nToys = None
     nNum = 0
@@ -188,7 +183,7 @@ def getDataGOF(basename,outDir):
     tmpHist = root.gDirectory.Get(histName)
     tmpHist.SetTitle('')
     binWidthStr = getBinWidthStr(tmpHist)
-    setHistTitles(tmpHist,"GOF Test Statistic","Toys/"+binWidthStr)
+    setHistTitles(tmpHist,"Channel Compatability Test Statistic","Toys/"+binWidthStr)
     tmpHist.SetLineWidth(2)
 
     # Observed Arrow
@@ -209,16 +204,9 @@ def getDataGOF(basename,outDir):
 
   result = {}
 
-  bakFiles = glob.glob(basename+"*.bak.GOF.root")
-  if(len(bakFiles)<1):
-    print("Error: Number of files '*.bak.GOF.root' doesn't equal 1 for basename: {}".format(basename))
-    sys.exit(1)
-  result['bak'] = getPValue(bakFiles[0])
   result['sig'] = []
-  files = glob.glob(basename+"*.GOF.root")
+  files = glob.glob(basename+"*.CCC.root")
   for f in files:
-    if "bak" in f:
-      continue
     massMatch = re.match(r".+_.+TeV_([0-9.]+).txt.*",f)
     assert(massMatch)
     mass = massMatch.group(1)
@@ -226,7 +214,7 @@ def getDataGOF(basename,outDir):
   return result
 
 class PValuePlotTogether:
-  def __init__(self,dataDict, canvas, caption="Standard Model H#rightarrow#mu#mu", ylabel="Goodness of Fit p-Value", xlabel="m_{H} [GeV/c^{2}]",caption2="",caption3="",ylimits=[],xlimits=[],energyStr="8TeV"):
+  def __init__(self,dataDict, canvas, caption="Standard Model H#rightarrow#mu#mu", ylabel="Channel Compatability p-Value", xlabel="m_{H} [GeV/c^{2}]",caption2="",caption3="",ylimits=[],xlimits=[],energyStr="8TeV"):
     graphs = []
     ymax = 1.0
     ymin = 1e20
@@ -308,15 +296,6 @@ class PValuePlotTogether:
         graph.Draw("l")
       graph.Draw("p")
 
-    # Now Draw Background p-Value
-    for channel in sortedChannels:
-      yPos = dataDict[channel]['bak']
-      self.hLine.SetLineStyle(2)
-      self.hLine.SetLineColor(colorMap[channel])
-      xmin = graph.GetXaxis().GetXmin()
-      xmax = graph.GetXaxis().GetXmax()
-      self.hLine.DrawLine(xmin,yPos,xmax,yPos)
-
     tlatex = root.TLatex()
     tlatex.SetNDC()
     tlatex.SetTextFont(root.gStyle.GetLabelFont())
@@ -359,6 +338,7 @@ class PValuePlotTogether:
 
     canvas.RedrawAxis()
     self.graphs = graphs
+
 
 if __name__ == "__main__":
 
@@ -428,6 +408,6 @@ if __name__ == "__main__":
         data = getDataGOF(dirName+plotName+"_"+period,outDir)
         pValueDict[plotName] = data
       pValueAllPlot = PValuePlotTogether(pValueDict,canvas,caption2=caption2,caption3=caption3,energyStr=energyStr)
-      saveAs(canvas,outDir+"gof_"+saveName+period)
+      saveAs(canvas,outDir+"ccc_"+saveName+period)
     canvas.SetLogy(0)
     
