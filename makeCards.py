@@ -8,6 +8,7 @@ parser.add_argument("--toyData", help="Make Toy Data from PDFs for data_obs",act
 parser.add_argument("--bdtCut", help="Creates Cards with different BDT Cuts",action="store_true",default=False)
 parser.add_argument("--gaussian", help="Use A Gaussian Signal Template with floating width",type=float,default=-1.0)
 parser.add_argument("-m","--higgsMass", help="Use This Higgs Mass",type=float,default=-1.0)
+parser.add_argument("--combinationsOnly", help="Run Only Combinations of Channels",action="store_true",default=False)
 args = parser.parse_args()
 
 import math
@@ -1607,6 +1608,8 @@ if __name__ == "__main__":
   shape=True
   toyData=args.toyData
 
+  if args.combinationsOnly:
+    analyses = []
   threads = []
   if not args.bdtCut:
     print("Simple Analyses to run:")

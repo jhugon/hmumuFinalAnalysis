@@ -24,3 +24,5 @@ echo "Running combine on $NODE..."
 ssh $NODE "cd $REMOTEDIR; eval \`scramv1 runtime -sh\`; bash getStatus2.sh .GOF.root \`bash runHPC_GOF.sh\`"
 echo "Copying output files from $NODE..."
 rsync -az -e ssh  $NODE:$REMOTEDIR/*GOF*.root statsInput/.
+
+./makeGOFPlots.py
