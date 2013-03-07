@@ -15,7 +15,7 @@
 #PBS -t 1-YAYYAYYAY
 
 ##Job Resources
-#PBS -l walltime=00:30:00
+#PBS -l walltime=00:15:00
 #PBS -l nodes=1:ppn=1
 #PBS -l pmem=2500mb
 
@@ -46,9 +46,18 @@ eval `scram runtime -sh`
 #####Begin Real Job##################
 #####################################
 
+ntoyjobs=WOWOWOWO
+ntoys=50
+njobsperjob=1
+ifiletorun=$(( $PBS_ARRAYID / $ntoyjobs ))
+toysrun=$(( $PBS_ARRAYID % $ntoyjobs ))
+echo "ntoyjobs: $ntoyjobs"
+echo "ifiletorun: $ifiletorun"
+echo "toysrun: $toysrun"
+
 ifile="1"
 for f in `ls *.txt`; do
-  if [ "$ifile" -eq "$PBS_ARRAYID" ]; then
+  if [ "$ifile" -eq "$ifiletorun" ]; then
     FILENAME=$f
   fi
   ifile=$(( $ifile + 1 ))
@@ -62,7 +71,7 @@ if [ -z "$FILENAME" ]; then
 fi
 
 TXTSUFFIX=".txt"
-DIRNAME="Dir"$FILENAME"Dir"
+DIRNAME="Dir"$FILENAME"DirToysRun"$toysrun
 ROOTFILENAME=${FILENAME%$TXTSUFFIX}.root
 
 mkdir $DIRNAME
@@ -74,27 +83,20 @@ STARTTIME=`date +%s`
 echo "running runGOF.sh"
 date
 
-iSeed="0"
-while true; do
-  combine -M ChannelCompatibilityCheck --saveFitResult --rMax 50 $FILENAME -t 10 -s $(( 124389 + $iSeed )) >> logCCCToys
-  iSeed=$(( $iSeed + 1 ))
-  if [ "$iSeed" -gt 10 ]; then
-    break
-  fi
-done
+combine -M ChannelCompatibilityCheck --saveFitResult --rMax 50 $FILENAME -t $ntoys -s $(( 121324 + $PBS_ARRAYID)) >> logCCCToys
 
-hadd -f -k $FILENAME.CCC-Toys.root higgsCombineTest.ChannelCompatibilityCheck.*.root
+mv higgsCombineTest.ChannelCompatibilityCheck.*.root ../$FILENAME.CCC-Toys-$toysrun.root
 
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
-combine -M ChannelCompatibilityCheck --saveFitResult --rMax 50 $FILENAME >> logCCC
-mv higgsCombineTest.ChannelCompatibilityCheck.*.root $FILENAME.CCC.root
+if [ "$toysrun" -eq "0" ]; then
+  combine -M ChannelCompatibilityCheck --saveFitResult --rMax 50 $FILENAME >> logCCC
+  mv higgsCombineTest.ChannelCompatibilityCheck.*.root ../$FILENAME.CCC.root
 
-rm -f roostats*
-rm -f higgsCombineTest*.root
-
-cp *CCC*.root ..
+  rm -f roostats*
+  rm -f higgsCombineTest*.root
+fi
 
 date
 echo "done"
