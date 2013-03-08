@@ -174,15 +174,14 @@ def getDataGOF(basename,outDir):
         nToys = nEntries
       for i in range(nEntries):
         tree.GetEntry(i)
-        toy = tree.limit
+        toy = -tree.limit
         if nEntries == 1:
           observed = toy
-        elif toy > observed:
+        elif toy < observed:
           nNum += 1
       tmpFiles += [f]
       tmpTrees += [tree]
     result = float(nNum)/nToys
-    print("{} obs: {:.2f} nToys: {} result: {:.2f}".format(filename,observed,nToys,result))
     ## Now Drawing Distribution
     canvas = root.TCanvas("tmpCanvas"+str(random.randint(0,10000)))
     histName = "tmpHist"+str(random.randint(0,10000))
@@ -193,15 +192,20 @@ def getDataGOF(basename,outDir):
         first = False
         continue
       if tmpHist == None:
-        tree.Draw("limit >> "+histName)
+        tree.Draw("-limit >> "+histName)
         tmpHist = root.gDirectory.Get(histName)
         tmpHist.SetTitle(filename)
         binWidthStr = getBinWidthStr(tmpHist)
         setHistTitles(tmpHist,"Channel Compatability Test Statistic","Toys/"+binWidthStr)
         tmpHist.SetLineWidth(2)
       else:
-        tree.Draw("limit >>+ "+histName)
+        tree.Draw("-limit >>+ "+histName)
+    gaus = root.TF1("fit","gaus",tmpHist.GetXaxis().GetXmin(),tmpHist.GetXaxis().GetXmax())
+    tmpHist.Fit(gaus,"MLEQ")
     tmpHist.Draw()
+
+    resultFromFit = root.Math.gaussian_cdf_c(observed,gaus.GetParameter(2),gaus.GetParameter(1))
+    print("{} obs: {:.2f} nToys: {} result: {:.2g} resultFit: {:.2g}".format(filename,observed,nToys,result,resultFromFit))
 
     # Observed Arrow
     yAxis = tmpHist.GetYaxis()
@@ -223,12 +227,25 @@ def getDataGOF(basename,outDir):
     label.SetTextAlign(23)
     label.DrawLatex(
             (1.0+root.gStyle.GetPadLeftMargin()-root.gStyle.GetPadRightMargin())/2.,
-            1.0-root.gStyle.GetPadTopMargin()-0.02,
+            1.0-root.gStyle.GetPadTopMargin()-0.03,
             "Observed: {0:.2f}, nToys: {1}, p-Value: {2:.2g}".format(
                         observed,nToys,result)
             )
+    label.DrawLatex(
+            (1.0+root.gStyle.GetPadLeftMargin()-root.gStyle.GetPadRightMargin())/2.,
+            1.0-root.gStyle.GetPadTopMargin()-0.08,
+            "Mean: {0:.2f}, #sigma: {1:.2f}, #chi^{{2}}/ndf: {2:.1f}/{3:.0f}".format(
+                        gaus.GetParameter(1),gaus.GetParameter(2),gaus.GetChisquare(),gaus.GetNDF())
+            )
+    label.DrawLatex(
+            (1.0+root.gStyle.GetPadLeftMargin()-root.gStyle.GetPadRightMargin())/2.,
+            1.0-root.gStyle.GetPadTopMargin()-0.13,
+            "p-value from fit: {0:.2g}".format( resultFromFit
+                        ))
+            
     saveAs(canvas,outDir+"testStat_"+outFilename)
     return result
+    #return resultFromFit
 
   result = {}
 

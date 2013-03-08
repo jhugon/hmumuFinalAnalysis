@@ -1528,13 +1528,12 @@ if __name__ == "__main__":
         tmpList.append(a+c)
   analyses += tmpList
   analyses = ["VBFBDTCut"]
-  #analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
-  analyses += ["IncPreselPtG10BB"]
+  analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
   combinations = []
   combinationsLong = []
-#  combinations.append((
-#        ["IncPreselPtG10"+x for x in categoriesInc],"IncPreselCat"
-#  ))
+  combinations.append((
+        ["IncPreselPtG10"+x for x in categoriesInc],"IncPreselCat"
+  ))
   combinations.append((
         ["VBFBDTCut"]+["IncPreselPtG10"+x for x in categoriesInc],"BDTCutCatVBFBDTOnly"
   ))

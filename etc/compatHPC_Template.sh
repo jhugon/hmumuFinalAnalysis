@@ -85,7 +85,7 @@ STARTTIME=`date +%s`
 echo "running runGOF.sh"
 date
 
-combine -M ChannelCompatibilityCheck --saveFitResult --rMax 50 $FILENAME -t $ntoys -s $(( 121324 + $PBS_ARRAYID)) >> logCCCToys
+combine -M ChannelCompatibilityCheck --saveFitResult --rMax 60 --rMin -60 $FILENAME -t $ntoys -s $(( 121324 + $PBS_ARRAYID)) >> logCCCToys
 
 mv higgsCombineTest.ChannelCompatibilityCheck.*.root ../$FILENAME.CCC-Toys-$toysrun.root
 
@@ -94,7 +94,7 @@ rm -f higgsCombineTest*.root
 
 if [ "$toysrun" -eq "0" ]; then
   echo "running the Observed compatability"
-  combine -M ChannelCompatibilityCheck --saveFitResult --rMax 50 $FILENAME >> logCCC
+  combine -M ChannelCompatibilityCheck --saveFitResult --rMax 60 --rMin -60 $FILENAME >> logCCC
   mv higgsCombineTest.ChannelCompatibilityCheck.*.root ../$FILENAME.CCC.root
 
   rm -f roostats*
