@@ -1778,242 +1778,19 @@ if __name__ == "__main__":
           break
 
     time.sleep(0.1)
+
+  simpleScripts = False
+
+  if simpleScripts:
+    shutil.copy("etc/notlxbatch_simple.sh",outDir+"notlxbatch.sh")
+    shutil.copy("etc/lxbatch_simple.sh",outDir+"lxbatch.sh")
+  else:
+    shutil.copy("etc/notlxbatch.sh",outDir+"notlxbatch.sh")
+    shutil.copy("etc/lxbatch.sh",outDir+"lxbatch.sh")
+
+  shutil.copy("etc/run.sh",outDir+"run.sh")
+  shutil.copy("etc/uftrig01.sh",outDir+"uftrig01.sh")
       
-
-  runFile = open(outDir+"run.sh","w")
-  batchString = \
-"""#!/bin/bash
-
-chmod +x lxbatch.sh
-
-for i in *.txt; do
-    [[ -e "$i" ]] || continue
-echo "Running on "$i
-bsub -o /dev/null lxbatch.sh $i
-#bsub -q 1nh -o /dev/null lxbatch.sh $i
-done
-"""
-  runFile.write(batchString)
-  runFile.close()
-
-  runFile = open(outDir+"lxbatch.sh","w")
-  batchString = \
-"""#!/bin/bash
-echo "Sourcing cmsset_default.sh"
-cd /afs/cern.ch/cms/sw
-source cmsset_default.sh
-export SCRAM_ARCH=slc5_amd64_gcc462
-echo "SCRAM_ARCH is $SCRAM_ARCH"
-cd $LS_SUBCWD
-echo "In Directory: "
-pwd
-eval `scramv1 runtime -sh`
-echo "cmsenv success!"
-date
-
-TXTSUFFIX=".txt"
-FILENAME=$1
-DIRNAME="Dir"$1"Dir"
-ROOTFILENAME=${1%$TXTSUFFIX}.root
-
-mkdir $DIRNAME
-cp $FILENAME $DIRNAME/
-cp $ROOTFILENAME $DIRNAME/
-cd $DIRNAME
-
-echo "executing combine -M Asymptotic $FILENAME >& $FILENAME.out"
-
-combine -M Asymptotic $FILENAME >& $FILENAME.out
-
-echo "executing combine -M ProfileLikelihood -d $FILENAME --signif --usePLC >& $FILENAME.sig"
-
-combine -M ProfileLikelihood -d $FILENAME --signif --usePLC >& $FILENAME.sig
-rm -f roostats*
-rm -f higgsCombineTest*.root
-
-echo "executing combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig"
-
-combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 >& $FILENAME.expsig
-##combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig
-rm -f roostats*
-rm -f higgsCombineTest*.root
-
-echo "executing combine -M MaxLikelihoodFit --rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
-
-combine -M MaxLikelihoodFit --rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu
-rm -f roostats*
-rm -f higgsCombineTest*.root
-
-combine -M ChannelCompatibilityCheck --saveFitResult --rMax 50 $FILENAME >> logCCC
-mv higgsCombineTest.ChannelCompatibilityCheck.*.root ../$FILENAME.CCC.root
-
-rm -f roostats*
-rm -f higgsCombineTest*.root
-
-cp $FILENAME.out ..
-cp $FILENAME.mu ..
-cp $FILENAME.sig ..
-cp mlfit.root ../$FILENAME.root
-for subname in *_fit_s.png; do
-  cp $subname ../${FILENAME%$TXTSUFFIX}_$subname
-done
-#cp $FILENAME.expsig ..
-
-echo "done"
-date
-"""
-  simpleBatchString = \
-"""#!/bin/bash
-echo "Sourcing cmsset_default.sh"
-cd /afs/cern.ch/cms/sw
-source cmsset_default.sh
-export SCRAM_ARCH=slc5_amd64_gcc462
-echo "SCRAM_ARCH is $SCRAM_ARCH"
-cd $LS_SUBCWD
-echo "In Directory: "
-pwd
-eval `scramv1 runtime -sh`
-echo "cmsenv success!"
-date
-
-TXTSUFFIX=".txt"
-FILENAME=$1
-DIRNAME="Dir"$1"Dir"
-ROOTFILENAME=${1%$TXTSUFFIX}.root
-
-mkdir $DIRNAME
-cp $FILENAME $DIRNAME/
-cp $ROOTFILENAME $DIRNAME/
-cd $DIRNAME
-
-echo "executing combine -M Asymptotic $FILENAME >& $FILENAME.out"
-
-combine -M Asymptotic $FILENAME >& $FILENAME.out
-
-cp $FILENAME.out ..
-
-echo "done"
-date
-"""
-  #runFile.write(simpleBatchString)
-  runFile.write(batchString)
-  runFile.close()
-
-  runFile = open(outDir+"notlxbatch.sh","w")
-  batchString = \
-"""#!/bin/bash
-echo "running notlxbatch.sh"
-date
-for i in *.txt; do
-    [[ -e "$i" ]] || continue
-FILENAME=$i
-echo "executing combine -M Asymptotic $FILENAME >& $FILENAME.out"
-
-combine -M Asymptotic $FILENAME >& $FILENAME.out
-rm -f roostats*
-rm -f higgsCombineTest*.root
-
-echo "executing combine -M ProfileLikelihood -d $FILENAME --signif --usePLC >& $FILENAME.sig"
-
-combine -M ProfileLikelihood -d $FILENAME --signif --usePLC >& $FILENAME.sig
-rm -f roostats*
-rm -f higgsCombineTest*.root
-
-echo "executing combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig"
-
-combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 >& $FILENAME.expsig
-#combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig
-rm -f roostats*
-rm -f higgsCombineTest*.root
-
-echo "executing combine -M MaxLikelihoodFit --rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
-
-combine -M MaxLikelihoodFit --rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu
-rm -f roostats*
-rm -f higgsCombineTest*.root
-cp mlfit.root $FILENAME.root
-for subname in *_fit_s.png; do
-  cp $subname ${FILENAME%$TXTSUFFIX}_$subname
-done
-
-combine -M ChannelCompatibilityCheck --saveFitResult --rMax 50 $FILENAME >> logCCC
-mv higgsCombineTest.ChannelCompatibilityCheck.*.root $FILENAME.CCC.root
-
-rm -f roostats*
-rm -f higgsCombineTest*.root
-
-done
-
-date
-echo "done"
-"""
-
-  simpleBatchString = \
-"""#!/bin/bash
-echo "running notlxbatch.sh Simple Style"
-date
-for i in *.txt; do
-    [[ -e "$i" ]] || continue
-FILENAME=$i
-echo "executing combine -M Asymptotic $FILENAME >& $FILENAME.out"
-
-combine -M Asymptotic -v 2 $FILENAME >& $FILENAME.out
-rm -f roostats*
-rm -f higgsCombineTest*.root
-
-done
-
-date
-echo "done"
-"""
-
-#  runFile.write(batchString)
-  runFile.write(simpleBatchString)
-  runFile.close()
-
-  uftrigString = \
-"""#!/bin/bash
-echo "running uftrig01.sh"
-date
-for i in *.txt; do
-    [[ -e "$i" ]] || continue
-FILENAME=$i
-echo "executing combine -M Asymptotic $FILENAME >& $FILENAME.out"
-
-combine -M Asymptotic $FILENAME >& $FILENAME.out &
-
-echo "executing combine -M ProfileLikelihood -d $FILENAME --signif --usePLC >& $FILENAME.sig"
-
-combine -M ProfileLikelihood -d $FILENAME --signif --usePLC >& $FILENAME.sig &
-
-echo "executing combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig"
-
-combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 >& $FILENAME.expsig
-#combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig
-
-echo "executing combine -M MaxLikelihoodFit --rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
-
-combine -M MaxLikelihoodFit --rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu
-cp mlfit.root $FILENAME.root
-for subname in *_fit_s.png; do
-  cp $subname ${FILENAME%$TXTSUFFIX}_$subname
-done
-
-wait
-
-rm -f roostats*
-rm -f higgsCombineTest*.root
-
-done
-
-date
-echo "done"
-"""
-
-  runFile = open(outDir+"uftrig01.sh","w")
-  runFile.write(uftrigString)
-  runFile.close()
-
   shutil.copy("etc/nuisanceDiff.py",outDir+"diffNuisances.py")
   shutil.copy("etc/fitNormsToText_mlfit.py",outDir+"fitNormsToText_mlfit.py")
   shutil.copy("etc/myNuisancePrinter.py",outDir+"myNuisancePrinter.py")
@@ -2022,8 +1799,6 @@ echo "done"
   shutil.copy("etc/getStatus2.sh",outDir+"getStatus2.sh")
   shutil.copy("etc/gof.sh",outDir+"gof.sh")
   shutil.copy("etc/gofHPC_Template.sh",outDir+"gofHPC_Template.sh")
-  shutil.copy("etc/gofHPC_Template_bak.sh",outDir+"gofHPC_Template_bak.sh")
   shutil.copy("etc/runHPC_GOF.sh",outDir+"runHPC_GOF.sh")
   shutil.copy("etc/runHPC_Compat.sh",outDir+"runHPC_Compat.sh")
   shutil.copy("etc/compatHPC_Template.sh",outDir+"compatHPC_Template.sh")
-
