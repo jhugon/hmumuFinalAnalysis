@@ -27,6 +27,8 @@ scp uftrig01:$REMOTEDIR/*.sig statsInput/.
 scp uftrig01:$REMOTEDIR/*.mu statsInput/.
 scp uftrig01:$REMOTEDIR/*.txt.root statsInput/.
 scp uftrig01:$REMOTEDIR/*.png statsInput/.
+scp uftrig01:$REMOTEDIR/*CCC*.root statsInput/.
 
 nice ./makeLimitPlots.py -m
 nice ./makeSigMuPlots.py -m
+nice ./makeCCCPlots.py

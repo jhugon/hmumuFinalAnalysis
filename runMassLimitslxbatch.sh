@@ -28,6 +28,8 @@ scp lxplus:$REMOTEDIR/*.sig statsInput/.
 scp lxplus:$REMOTEDIR/*.mu statsInput/.
 scp lxplus:$REMOTEDIR/*.txt.root statsInput/.
 scp lxplus:$REMOTEDIR/*.png statsInput/.
+scp lxplus:$REMOTEDIR/*CCC*.root statsInput/.
 
 nice ./makeLimitPlots.py -m
 nice ./makeSigMuPlots.py -m
+nice ./makeCCCPlots.py

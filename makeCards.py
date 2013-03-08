@@ -1506,10 +1506,12 @@ if __name__ == "__main__":
   print "Started makeCards.py"
   root.gROOT.SetBatch(True)
 
-  directory = "input/separateSamplesTrainOnlyVBFLarge/"
+  #directory = "input/separateSamplesTrainOnlyVBFLarge/"
+  directory = "input/separateSamplesTrainOnlyVBFLargeMuScle7TeV/"
   #directory = "input/preApproveSample/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
+  periods = ["7TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
@@ -1843,6 +1845,12 @@ combine -M MaxLikelihoodFit --rMax 50 --plots --saveNormalizations $FILENAME >& 
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
+combine -M ChannelCompatibilityCheck --saveFitResult --rMax 50 $FILENAME >> logCCC
+mv higgsCombineTest.ChannelCompatibilityCheck.*.root ../$FILENAME.CCC.root
+
+rm -f roostats*
+rm -f higgsCombineTest*.root
+
 cp $FILENAME.out ..
 cp $FILENAME.mu ..
 cp $FILENAME.sig ..
@@ -1928,6 +1936,12 @@ cp mlfit.root $FILENAME.root
 for subname in *_fit_s.png; do
   cp $subname ${FILENAME%$TXTSUFFIX}_$subname
 done
+
+combine -M ChannelCompatibilityCheck --saveFitResult --rMax 50 $FILENAME >> logCCC
+mv higgsCombineTest.ChannelCompatibilityCheck.*.root $FILENAME.CCC.root
+
+rm -f roostats*
+rm -f higgsCombineTest*.root
 
 done
 

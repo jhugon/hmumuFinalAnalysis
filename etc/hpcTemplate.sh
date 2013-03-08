@@ -93,6 +93,12 @@ combine -M MaxLikelihoodFit --rMax 50 --plots --saveNormalizations $FILENAME >& 
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
+combine -M ChannelCompatibilityCheck --saveFitResult --rMax 50 $FILENAME >> logCCC
+mv higgsCombineTest.ChannelCompatibilityCheck.*.root ../$FILENAME.CCC.root
+
+rm -f roostats*
+rm -f higgsCombineTest*.root
+
 cp $FILENAME.out ..
 cp $FILENAME.mu ..
 cp $FILENAME.sig ..

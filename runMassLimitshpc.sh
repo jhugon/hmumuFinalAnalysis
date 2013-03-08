@@ -30,6 +30,8 @@ rsync -az -e ssh  $NODE:$REMOTEDIR/*.sigSM statsInput/.
 rsync -az -e ssh $NODE:$REMOTEDIR/*.mu statsInput/.
 rsync -az -e ssh $NODE:$REMOTEDIR/*.txt.root statsInput/.
 rsync -az -e ssh $NODE:$REMOTEDIR/*.png statsInput/.
+rsync -az -e ssh $NODE:$REMOTEDIR/*CCC*.root statsInput/.
 
 nice ./makeLimitPlots.py -m
 nice ./makeSigMuPlots.py -m
+nice ./makeCCCPlots.py

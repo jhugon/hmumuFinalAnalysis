@@ -3,7 +3,7 @@
 NJOBS=`ls *.txt | wc -l`
 NFILES=$NJOBS
 echo "$NJOBS Seperate Cards" 1>&2
-TOYJOBS=5
+TOYJOBS=20
 echo "$TOYJOBS Toy Jobs per Card" 1>&2
 NJOBS=$(( $NJOBS * $TOYJOBS ))
 NJOBSTORPL=$(( $NJOBS - 1 ))

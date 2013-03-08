@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+import optparse
+parser = optparse.OptionParser(description="Makes Channel compatabiltiy plots")
+parser.add_option("-t","--plotTests", help="Use This Higgs Mass",action="store_true",default=False)
+args, fakeargs = parser.parse_args()
+
 from helpers import *
 import ROOT as root
 import glob
@@ -363,8 +368,23 @@ class PValuePlotTogether:
     self.graphs = graphs
 
 class ChannelPlot:
-  def __init__(self,filename,outname):
+  def __init__(self,filename,outname,showNumbers=True):
     self.canvas = root.TCanvas()
+    self.padL = 0.3
+    self.padR = root.gStyle.GetPadRightMargin()
+    self.padT = root.gStyle.GetPadTopMargin()
+    self.padB = root.gStyle.GetPadBottomMargin()
+    self.padM = (1.0+self.padL-self.padR)/2.
+    self.canvas.SetLeftMargin(self.padL)
+    self.showNumbers = showNumbers
+    self.massStr = None
+    self.mass = None
+    massMatch = re.search(r"([\d][\d][\d]\.[\d])",filename)
+    if massMatch:
+      self.mass = float(massMatch.group(1))
+      self.massStr = str(self.mass)
+      if self.mass % 1 == 0.0:
+        self.massStr = "{0:.0f}".format(self.mass)
     getattr(self,"getData")(filename)
     getattr(self,"plot")(outname)
 
@@ -383,17 +403,15 @@ class ChannelPlot:
 
     self.differentEnergies = False
 
+    energy = None
     for i in range(fpf_alt.getSize()):
       param = fpf_alt.at(i)
       name = param.GetName()
       match = re.match(r".*ChannelCompatibilityCheck.*_r_(.*)([\d])TeV",name)
-      energy = None
       if match:
         channel = match.group(1)+match.group(2)
         tmpEnergy = match.group(2)
         data[channel] = [param.getVal(),-param.getErrorLo(),param.getErrorHi(),match.group(1),match.group(2)]
-        print channel
-        print data[channel]
         high = data[channel][0]+data[channel][2]
         low = data[channel][0]-data[channel][1]
         if high > xMax:
@@ -411,16 +429,18 @@ class ChannelPlot:
     self.data = data
     self.channels = self.data.keys()
     self.channels.pop(self.channels.index("r"))
+    self.channels.sort()
+    self.channels.reverse()
     self.nChannels = len(self.channels)
-    self.xMax = xMax
-    self.xMin = xMin
+    self.energy = energy
+    self.xMax = xMax*1.1
+    self.xMin = xMin*0.5
 
   def plot(self,savename):
     self.canvas.cd()
-    self.canvas.SetLeftMargin(0.3)
-    frame = root.TH2F("frame","",1,self.xMin*0.5,self.xMax*1.1,self.nChannels+1,0,self.nChannels+1)
+    frame = root.TH2F("frame","",1,self.xMin,self.xMax,self.nChannels+1,0,self.nChannels+1)
     if self.differentEnergies:
-      frame.GetYaxis().SetLabelSize(frame.GetYaxis().GetLabelSize()*1.5)
+      frame.GetYaxis().SetLabelSize(frame.GetYaxis().GetLabelSize()*1.3)
     else:
       frame.GetYaxis().SetLabelSize(frame.GetYaxis().GetLabelSize()*1.75)
     frame.GetXaxis().SetLabelSize(frame.GetXaxis().GetLabelSize()*1.4)
@@ -459,9 +479,69 @@ class ChannelPlot:
     globalFitLine.Draw()
     points.Draw("PZ")
 
+    getattr(self,"drawCaptions")()
+
     self.canvas.RedrawAxis() # Updates Axis Lines
 
     saveAs(self.canvas,savename)
+
+  def drawCaptions(self):
+    def getYNDC(y):
+      return (1.0-self.padT-self.padB)*y/(self.nChannels+1.0) + self.padB
+    tlatex = root.TLatex()
+    tlatex.SetNDC()
+    tlatex.SetTextFont(root.gStyle.GetLabelFont())
+    #tlatex.SetTextSize(0.05)
+    tlatex.SetTextSize(0.04)
+
+    energyStr = ""
+    if self.differentEnergies:
+      energyStr="#sqrt{{s}} = 7 TeV, L = {0:.1f} fb^{{-1}} #sqrt{{s}} = 8 TeV, L = {1:.1f} fb^{{-1}}".format(lumiDict["7TeV"],lumiDict["8TeV"])
+      tlatex.SetTextSize(0.035)
+    else:
+      tmp = self.energy+"TeV"
+      energyStr="#sqrt{{s}} = {0} TeV, L = {1:.1f} fb^{{-1}}".format(tmp,lumiDict[tmp])
+      tlatex.SetTextSize(0.04)
+    tlatex.SetTextAlign(21)
+    tlatex.DrawLatex(self.padM,1.01-self.padT,energyStr)
+
+    tlatex.SetTextSize(0.04)
+    tlatex.SetNDC(False)
+    tlatex.SetTextAlign(22)
+    tmpShift = 0.0
+    if self.nChannels >= 10:
+        tmpShift = -0.15
+    tlatex.DrawLatex((self.xMax-self.xMin)*0.25,self.nChannels+0.5+tmpShift,PRELIMINARYSTRING)
+    if self.massStr != None:
+      tlatex.DrawLatex((self.xMax-self.xMin)*0.75,self.nChannels+0.5+tmpShift,
+            "m_{{H}} = {0} GeV/c^{{2}}".format(self.massStr))
+
+
+    tlatex.SetNDC(True)
+    if self.nChannels >= 10:
+      tlatex.SetTextAlign(12)
+      tlatex.DrawLatex(0.01,getYNDC(self.nChannels+0.5),
+            "Combined")
+      tlatex.SetTextSize(0.028)
+      tlatex.SetTextAlign(32)
+      tlatex.DrawLatex(self.padL,getYNDC(self.nChannels+0.5)-0.005,
+            "#mu={0:.1f}#pm{1:.1f}".format(self.data['r'][0],self.data['r'][1]))
+    else:
+      tlatex.SetTextAlign(22)
+      tlatex.DrawLatex(self.padL*0.5,getYNDC(self.nChannels+0.5),
+            "Combined")
+      tlatex.SetTextSize(0.035)
+      tlatex.SetTextAlign(32)
+      tlatex.DrawLatex(self.padL-0.01,getYNDC(self.nChannels+0.05),
+            "#mu={0:.1f}#pm{1:.1f}".format(self.data['r'][0],self.data['r'][1]))
+
+    if self.showNumbers and self.nChannels < 10:
+      for i in range(self.nChannels):
+        j = self.channels[i]
+        tlatex.DrawLatex(self.padL-0.01,getYNDC(i+0.05),
+            "#mu={0:.1f}#pm{1:.1f}".format(self.data[j][0],self.data[j][2]))
+    
+
 
 if __name__ == "__main__":
 
@@ -485,58 +565,57 @@ if __name__ == "__main__":
     fnToGlob = dirName+"*_"+period+"_*.txt.*root"
     allfiles = glob.glob(fnToGlob)
 
-    """
-    ## Limit v. Lumi
-    energyStr = ""
-    plots = set()
-    for fn in allfiles:
-      match = re.search(r".*/(.+)_(.+)_[.\d]+.txt.*root",fn)
-      badPlot = re.search(r"Silly",fn)
-      badPlot2 = re.search(r"Silly",fn)
-      if match and not (badPlot or badPlot2):
-        plots.add(match.group(1))
-        energyStr = match.group(2)
-
-    if energyStr == "7P8TeV":
-      energyStr = "7 & 8 TeV"
-    else:
-      energyStr.replace("TeV"," TeV")
+    if args.plotTests:
+      ## Limit v. Lumi
+      energyStr = ""
+      plots = set()
+      for fn in allfiles:
+        match = re.search(r".*/(.+)_(.+)_[.\d]+.txt.*root",fn)
+        badPlot = re.search(r"Silly",fn)
+        badPlot2 = re.search(r"Silly",fn)
+        if match and not (badPlot or badPlot2):
+          plots.add(match.group(1))
+          energyStr = match.group(2)
   
-    caption2 = "#sqrt{s} = "+energyStr
-    caption3 = ""
+      if energyStr == "7P8TeV":
+        energyStr = "7 & 8 TeV"
+      else:
+        energyStr.replace("TeV"," TeV")
+    
+      caption2 = "#sqrt{s} = "+energyStr
+      caption3 = ""
+  
+      ## All p-values together plot
+      canvas.SetLogy(1)
+      pValueVetos = [
+          [
+            "VBFBDTCut",
+            "BDTCutCatVBFBDTOnly"
+          ],
+          [
+            "IncPreselPtG10BB",
+            "IncPreselPtG10BE",
+            "IncPreselPtG10BO",
+            "IncPreselPtG10EE",
+            "IncPreselPtG10OE",
+            "IncPreselPtG10OO"
+          ]
+      ]
+      for saveName,vetos in zip(["NonVBF","Final"],pValueVetos):
+        if len(plots)==0:
+          continue
+        pValueDict = {}
+        for plotName in plots:
+          if plotName in vetos:
+              continue
+  
+          data = getDataGOF(dirName+plotName+"_"+period,outDir)
+          pValueDict[plotName] = data
+        pValueAllPlot = PValuePlotTogether(pValueDict,canvas,caption2=caption2,caption3=caption3,energyStr=energyStr)
+        saveAs(canvas,outDir+"ccc_"+saveName+period)
+      canvas.SetLogy(0)
 
-    ## All p-values together plot
-    canvas.SetLogy(1)
-    pValueVetos = [
-        [
-          "VBFBDTCut",
-          "BDTCutCatVBFBDTOnly"
-        ],
-        [
-          "IncPreselPtG10BB",
-          "IncPreselPtG10BE",
-          "IncPreselPtG10BO",
-          "IncPreselPtG10EE",
-          "IncPreselPtG10OE",
-          "IncPreselPtG10OO"
-        ]
-    ]
-    for saveName,vetos in zip(["NonVBF","Final"],pValueVetos):
-      if len(plots)==0:
-        continue
-      pValueDict = {}
-      for plotName in plots:
-        if plotName in vetos:
-            continue
-
-        data = getDataGOF(dirName+plotName+"_"+period,outDir)
-        pValueDict[plotName] = data
-      pValueAllPlot = PValuePlotTogether(pValueDict,canvas,caption2=caption2,caption3=caption3,energyStr=energyStr)
-      saveAs(canvas,outDir+"ccc_"+saveName+period)
-    canvas.SetLogy(0)
-    """
-
-    compareFileGlob = "BDTCutCatVBFBDTOnly*"+period+"*125.0.txt.CCC.root"
+    compareFileGlob = "BDTCutCatVBFBDTOnly*_"+period+"_*125.0.txt.CCC.root"
     compareFiles = glob.glob(dirName+compareFileGlob)
     for f in compareFiles:
       ChannelPlot(f,outDir+"cccCompare_"+period)

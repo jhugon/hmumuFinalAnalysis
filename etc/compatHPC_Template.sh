@@ -14,10 +14,13 @@
 #that will be one of the following numbers
 #PBS -t 0-YAYYAYYAY
 
+### Need > 4 GB (8 Works) of memory for 7P8 TeV combination
+### 3 GB is fine for all others
+
 ##Job Resources
-#PBS -l walltime=01:30:00
+#PBS -l walltime=01:00:00
 #PBS -l nodes=1:ppn=1
-#PBS -l pmem=4000mb
+#PBS -l pmem=8000mb
 
 # initialize environment for worker
 STARTTIME=`date +%s`

@@ -4,8 +4,8 @@
 import optparse
 parser = optparse.OptionParser(description="Makes Shape Diagnostic Plots from Datacards")
 parser.add_option("--signalInject", help="Sets a caption saying that signal was injected with strength",type=float,default=0.0)
-parser.add_option("--plotSignalStrength", help="Plots a signal bump with this strength",type=float,default=10.0)
-parser.add_option("--plotSignalBottom", help="Plots a signal bump with this strength",action="store_true",default=False)
+parser.add_option("--plotSignalStrength", help="Plots a signal bump with this strength",type=float,default=0.0)
+parser.add_option("--plotSignalBottom", help="Plots a signal bump on the bottom (bool)",action="store_true",default=False)
 parser.add_option("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
 args, fakeargs = parser.parse_args()
 
@@ -150,7 +150,9 @@ class ShapePlotter:
                                                     )
       if plotSignalStrength>0.:
         sigGraph, bestFitSigStr = getattr(self,"scaleSigPDFGraph")(sigPDFGraph,sigCount,self.processNameMap[channelNameOrig],plotSignalStrength)
-      sigGraph = sigPlusBakPDFGraph
+        sigPlusBakPDFGraph = getattr(self,"addSigBakPDFGraph")(sigPDFGraph,bakPDFGraph)
+      if not self.plotSignalBottom:
+        sigGraph = sigPlusBakPDFGraph
       pullsDistribution = getattr(self,"draw")(channelName,dataGraph,bakPDFGraph,pullsGraph,chi2,rooDataTitle,sigGraph)
       saveName = outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName
       saveName = re.sub(r"([\d]+)\.[\d]+",r"\1",saveName)
@@ -816,139 +818,6 @@ class ShapePlotter:
 
       return pullDistribution 
 
-  def makeSigPlusBakPDF(self,workspace,mMuMu,data_obs,rateMap,r,rebin):
-    if self.plotSignalBottom:
-      multiplyFactor = 1000
-      r = float(r)
-      sigNames = []
-      for i in rateMap:
-        if i != "bak":
-          sigNames.append(i)
-      sigNames.sort()
-      signalPDFs = [workspace.pdf(i) for i in sigNames]
-      signalNs = [rateMap[i]*r for i in sigNames]
-      signalNTotal = sum(signalNs)
-      signalNormParams = []
-      print signalNTotal
-      for sigName, sigN in zip(sigNames,signalNs):
-        signalNormParams.append(root.RooRealVar("normParam_"+sigName,"normParam_"+sigName,
-                                              sigN
-                                              )
-                                  )
-      addPDFList = []
-      for name, norm, pdf in zip(sigNames, signalNormParams, signalPDFs):
-        addPDFList.append(
-                    root.RooExtendPdf(name+"ExtPDF",name+"ExtPDF",pdf,norm)
-            )
-      sigPlusBakPDF = root.RooAddPdf("sigPlusBakPDF","sigPlusBakPDF",
-                                              root.RooArgList(*addPDFList)
-                                            )
-      data = sigPlusBakPDF.generate(root.RooArgSet(mMuMu),int(signalNTotal*multiplyFactor))
-      print data.sumEntries()
-      boundaries = getRooVarRange(mMuMu,"makeShapePlotRange")
-      binningName = "sillyBinning"+str(random.randint(0,10000))
-      binning = root.RooBinning(int(boundaries[1]-boundaries[0]),boundaries[0],boundaries[1],
-                                            binningName)
-      mMuMu.setBinning(binning)
-      binWidth = 1.0
-      
-      print "bin widht", binWidth
-      
-      self.signalNormParamList += signalNormParams
-  
-      frame = None
-      if len(self.xlimits) == 2:
-        frame = mMuMu.frame(root.RooFit.Range(*self.xlimits))
-      else:
-        frame = mMuMu.frame()
-      curveNomName = sigPlusBakPDF.GetName()+"_CurveNomSigPBak"
-      curveDataName = data.GetName()+"_CurveSigPBak"
-      rng = root.RooFit.Range("makeShapePlotRange")
-      data.plotOn(frame,root.RooFit.Name(curveDataName),root.RooFit.Binning(binningName))
-      sigPlusBakPDF.plotOn(frame,root.RooFit.Name(curveNomName),rng)
-  
-      for i, pdf in zip(range(6,10),signalPDFs):
-        sigPlusBakPDF.plotOn(frame,root.RooFit.Components(pdf.GetName()),root.RooFit.LineColor(i))
-      self.canvas.cd()
-      frame.Draw()
-      self.canvas.SaveAs("debug_SigPlusBakPDFs"+str(random.randint(0,100))+".png")
-      frame.Print()
-  
-      curveNom = frame.findObject(curveNomName)
-      modelGraph = root.TGraph()
-      iPoint = 0
-      xNom = root.Double()
-      yNom = root.Double()
-      for i in range(curveNom.GetN()):
-        curveNom.GetPoint(i,xNom,yNom)
-        yNom = root.Double(yNom/multiplyFactor*rebin/2.0)
-        modelGraph.SetPoint(iPoint,xNom,yNom)
-        iPoint+=1
-      modelGraph.SetName(curveNom.GetName()+"_TGraph")
-      modelGraph.SetLineColor(root.kRed)
-      self.signalPlusBakGraphList.append(modelGraph)
-  
-      return modelGraph
-    else:
-      r = float(r)
-      bakPDF = workspace.pdf("bak")
-      bakN = rateMap['bak']
-      sigNames = []
-      for i in rateMap:
-        if i != "bak":
-          sigNames.append(i)
-      sigNames.sort()
-      signalPDFs = [workspace.pdf(i) for i in sigNames]
-      signalNs = [rateMap[i]*r for i in sigNames]
-      signalNTotal = sum(signalNs)
-      allNTotal = bakN+signalNTotal
-      signalNormParams = []
-      for sigName, sigN in zip(sigNames,signalNs):
-        signalNormParams.append(root.RooRealVar("normParam_"+sigName,"normParam_"+sigName,
-                                              float(sigN)/allNTotal
-                                              )
-                                  )
-      addPDFList = signalPDFs+[bakPDF]
-      sigPlusBakPDF = root.RooAddPdf("sigPlusBakPDF","sigPlusBakPDF",
-                                              root.RooArgList(*addPDFList),
-                                              root.RooArgList(*signalNormParams))
-      self.signalNormParamList += signalNormParams
-  
-      frame = None
-      if len(self.xlimits) == 2:
-        frame = mMuMu.frame(root.RooFit.Range(*self.xlimits))
-      else:
-        frame = mMuMu.frame()
-      curveNomName = sigPlusBakPDF.GetName()+"_CurveNomSigPBak"
-      curveDataName = data_obs.GetName()+"_CurveSigPBak"
-      rng = root.RooFit.Range("makeShapePlotRange")
-      normRange = root.RooFit.NormRange("makeShapeNormRange1,makeShapeNormRange2")
-      data_obs.plotOn(frame,root.RooFit.Name(curveDataName))
-      sigPlusBakPDF.plotOn(frame,root.RooFit.Name(curveNomName),rng,normRange)
-  
-  #    sigPlusBakPDF.plotOn(frame,root.RooFit.Components(bakPDF.GetName()),root.RooFit.LineColor(2))
-  #    for i, pdf in zip(range(6,10),signalPDFs):
-  #      sigPlusBakPDF.plotOn(frame,root.RooFit.Components(pdf.GetName()),root.RooFit.LineColor(i))
-  #    self.canvas.cd()
-  #    frame.Draw()
-  #    self.canvas.SaveAs("debug_SigPlusBakPDFs"+str(random.randint(0,100))+".png")
-  #    frame.Print()
-  
-      curveNom = frame.findObject(curveNomName)
-      modelGraph = root.TGraph()
-      iPoint = 0
-      xNom = root.Double()
-      yNom = root.Double()
-      for i in range(curveNom.GetN()):
-        curveNom.GetPoint(i,xNom,yNom)
-        modelGraph.SetPoint(iPoint,xNom,yNom)
-        iPoint+=1
-      modelGraph.SetName(curveNom.GetName()+"_TGraph")
-      modelGraph.SetLineColor(root.kRed)
-      self.signalPlusBakGraphList.append(modelGraph)
-  
-      return modelGraph
-
   def makeMainTGraphs(self,bakPDF,data,observable,workspace,rateMap,channelName):
     nparamsForChi2 = bakPDF.getParameters(data).getSize()
     avgWeight = 1.0
@@ -976,10 +845,10 @@ class ShapePlotter:
     sigPDF = workspace.pdf(sigName)
 
     bakStrength = root.RooRealVar("bakStrength","bakStrength",1.0,1e6)
-    #sigStrength = root.RooRealVar("sigStrength","sigStrength",0.0,1e6)
+    sigStrength = root.RooRealVar("sigStrength","sigStrength",0.0,1e6)
     #sigStrength = root.RooRealVar("sigStrength","sigStrength",0.0,10.0)
     #sigStrength = root.RooRealVar("sigStrength","sigStrength",5.65)
-    sigStrength = root.RooRealVar("sigStrength","sigStrength",2.0)
+    #sigStrength = root.RooRealVar("sigStrength","sigStrength",2.0)
     epdfSig = root.RooExtendPdf("epdfSig","epdfSig",sigPDF,sigStrength)
     epdfBak = root.RooExtendPdf("epdfBak","epdfBak",bakPDF,bakStrength)
     pdfSB = root.RooAddPdf("pdfSB","Signal + Background",root.RooArgList(epdfBak,epdfSig))
@@ -1188,7 +1057,9 @@ class ShapePlotter:
       result.SetPoint(iPoint,x,y*scaleFactor)
       iPoint+=1
     return result, bestFitSigStrength
-    
+
+  def addSigBakPDFGraph(self,sigGraph,backGraph):
+    return result
 
 titleMap = {
   "AllCat":"All Categories Comb.",
