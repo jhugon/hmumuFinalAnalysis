@@ -7,6 +7,7 @@ parser.add_option("--signalInject", help="Sets a caption saying that signal was 
 parser.add_option("--plotSignalStrength", help="Plots a signal bump with this strength",type=float,default=0.0)
 parser.add_option("--plotSignalBottom", help="Plots a signal bump on the bottom (bool)",action="store_true",default=False)
 parser.add_option("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
+parser.add_option("-r","--rebinOverride", help="Rebin All plots with this rebinning, overriding all internal configuration",type=int,default=0)
 args, fakeargs = parser.parse_args()
 
 from helpers import *
@@ -56,7 +57,7 @@ def getGraphIntegral(graph):
   return result
 
 class ShapePlotter:
-  def __init__(self,filename,outDir,titleMap,rebin=1,doSignalScaling=True,xlimits=[],normRange=[],signalInject=0.0,plotSignalStrength=8.0,plotSignalBottom=False):
+  def __init__(self,filename,outDir,titleMap,rebin=1,doSignalScaling=True,xlimits=[],normRange=[],signalInject=0.0,plotSignalStrength=8.0,plotSignalBottom=False,rebinOverride=0):
     self.plotSignalBottom=plotSignalBottom
     self.signalInject=signalInject
     self.plotSignalStrength=plotSignalStrength
@@ -127,12 +128,11 @@ class ShapePlotter:
       elif "EE" in channelName:
           tmpRebin *= 5
       elif "BB" in channelName:
-        if self.energyStr == "7TeV":
-          tmpRebin *= 4
-        else:
           tmpRebin *= 2
       else:
           tmpRebin *= 2
+      if rebinOverride > 0:
+        tmpRebin = rebinOverride
       if tmpRebin != 1:
         realName = data_obs.GetName()
         data_obs.SetName(realName+str(random.randint(0,1000)))
@@ -151,6 +151,9 @@ class ShapePlotter:
       if plotSignalStrength>0.:
         sigGraph, bestFitSigStr = getattr(self,"scaleSigPDFGraph")(sigPDFGraph,sigCount,self.processNameMap[channelNameOrig],plotSignalStrength)
         sigPlusBakPDFGraph = getattr(self,"addSigBakPDFGraph")(sigPDFGraph,bakPDFGraph)
+      else:
+        sigGraph = None
+        sigPlusBakPDFGraph = None
       if not self.plotSignalBottom:
         sigGraph = sigPlusBakPDFGraph
       pullsDistribution = getattr(self,"draw")(channelName,dataGraph,bakPDFGraph,pullsGraph,chi2,rooDataTitle,sigGraph)
@@ -1137,5 +1140,5 @@ if __name__ == "__main__":
   for fn in glob.glob(dataDir+"BDTCutCat*.root"):
     if re.search("P[\d.]+TeV",fn):
         continue
-    s = ShapePlotter(fn,outDir,titleMap,rebin,xlimits=plotRange,normRange=normRange,signalInject=args.signalInject,plotSignalStrength=args.plotSignalStrength,plotSignalBottom=args.plotSignalBottom)
+    s = ShapePlotter(fn,outDir,titleMap,rebin,xlimits=plotRange,normRange=normRange,signalInject=args.signalInject,plotSignalStrength=args.plotSignalStrength,plotSignalBottom=args.plotSignalBottom,rebinOverride=args.rebinOverride)
     shapePlotterList.append(s)
