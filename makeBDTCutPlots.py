@@ -7,11 +7,12 @@ import os
 import sys
 import random
 
-dataDir = "input/separateSamplesTrainOnlyVBFLarge/"
+#dataDir = "input/separateSamplesTrainOnlyVBFLarge/"
+dataDir = "input/vbfCutOpt/"
 #dataDir = "input/separateSamplesTrainOnlyVBFLargeBDTG/"
 outDir = "output/"
 
-RUNPERIOD="7TeV"
+RUNPERIOD="8TeV"
 LUMI=lumiDict[RUNPERIOD]
 
 LOGY=True
@@ -48,6 +49,12 @@ if RUNPERIOD == "8TeV":
                                         'ylimitsSqr':[1e-3,10.0],
                                 'vertLines':{"8TeV":0.0},
                                         "rebin":4}
+  histNames["mDiJetsVMass"] = {"xlabel":"m_{jj}","xlimits":[300,1200],
+                                        'ylimits':[1e-3,10.0],
+                                        'ylimitsSqrt':[1e-2,10.0],
+                                        'ylimitsSqr':[1e-3,1e-1],
+                                'vertLines':{"8TeV":0.0},
+                                        "rebin":4}
 if RUNPERIOD == "7TeV":
 #  histNames["BDTHistMuonOnlyVMass"] = {"xlabel":"BDT Cut (Non-VBF Category)","xlimits":[-0.55,0.2],
 #                                        'ylimits':[1e-6,10.0],
@@ -58,6 +65,12 @@ if RUNPERIOD == "7TeV":
                                         'ylimits':[1e-3,10.0],
                                         'ylimitsSqrt':[1e-2,10.0],
                                         'ylimitsSqr':[1e-3,10.0],
+                                'vertLines':{"7TeV":0.0},
+                                        "rebin":4}
+  histNames["mDiJetsVMass"] = {"xlabel":"m_{jj}","xlimits":[300,1200],
+                                        'ylimits':[1e-3,10.0],
+                                        'ylimitsSqrt':[1e-2,10.0],
+                                        'ylimitsSqr':[1e-3,1e-1],
                                 'vertLines':{"7TeV":0.0},
                                         "rebin":4}
 

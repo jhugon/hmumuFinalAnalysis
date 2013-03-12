@@ -483,7 +483,7 @@ def makePDFSigCBPlusGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,chann
     mix = root.RooRealVar(channelName+"_"+name+"_mix",channelName+"_"+name+"_mix",0.5,0.0,1.0)
     cb = root.RooCBShape(name+"_CB",name+"_CB",mMuMu,mean,width,alpha,n)
     gaus = root.RooGaussian(name+"_Gaus",name+"_Gaus",mMuMu,mean,width2)
-    pdfMmumu = root.RooAddPdf(name,name,cb,gaus,mix)
+    pdfMmumu = root.RooAddPdf(convertSigName(name),convertSigName(name),cb,gaus,mix)
     
     mMuMuRooDataHist = root.RooDataHist(name+"_Template",channelName+"_"+name+"_Template",root.RooArgList(mMuMu),hist)
 
@@ -528,18 +528,42 @@ def makePDFSigCBPlusGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,chann
 
     return paramList, debug, sigInjectDataset
 
-def makePDFSigCB(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName,forceMean=-1.,sigInject=0):
+def makePDFSigDG(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName,forceMean=-1.,sigInject=0):
 
     debug = ""
-    debug += "### makePDFSigCB: "+channelName+": "+name+"\n"
+    debug += "### makePDFSigDG: "+channelName+": "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
 
-    mean = root.RooRealVar(channelName+"_"+name+"_Mean",channelName+"_"+name+"_Mean",125.,100.,150.)
-    width = root.RooRealVar(channelName+"_"+name+"_Width",channelName+"_"+name+"_Width",5.0,0.5,20.0)
-    alpha = root.RooRealVar(channelName+"_"+name+"_Alpha",channelName+"_"+name+"_Alpha",1.0,0.1,10.0)
-    n = root.RooRealVar(channelName+"_"+name+"_n",channelName+"_"+name+"_n",1.0,0.1,10.0)
-    #pdfMmumu = root.RooGaussian(name,name,mMuMu,mean,width)
-    pdfMmumu = root.RooCBShape(name,name,mMuMu,mean,width,alpha,n)
+    rooParamList = []
+
+    meanG1 = root.RooRealVar(channelName+"_"+name+"_MeanG1",
+                             channelName+"_"+name+"_MeanG1", 
+                             123.,100.,150.)
+    meanG2 = root.RooRealVar(channelName+"_"+name+"_MeanG2",
+                             channelName+"_"+name+"_MeanG2", 
+                             125.,100.,150.)
+    
+    widthG1 = root.RooRealVar(channelName+"_"+name+"_WidthG1",
+                             channelName+"_"+name+"_WidthG1", 
+                             5.,2.,10.)
+    widthG2 = root.RooRealVar(channelName+"_"+name+"_WidthG2",
+                              channelName+"_"+name+"_WidthG2", 
+                              1.,0.5,5.)
+    
+    mixGG = root.RooRealVar(channelName+"_"+name+"_mixGG",
+                            channelName+"_"+name+"_mixGG", 
+                            0.5,0.,1.)
+    gaus1 = root.RooGaussian(channelName+"_"+name+"_gaus1",
+                             channelName+"_"+name+"_gaus1",
+                             mMuMu,meanG1,widthG1)
+    gaus2 = root.RooGaussian(channelName+"_"+name+"_gaus2",
+                             channelName+"_"+name+"_gaus2",
+                             mMuMu,meanG2,widthG2)
+    pdfMmumu = root.RooAddPdf(convertSigName(name),
+                              name,
+                              gaus1,gaus2,mixGG)
+    workspaceImportFn(pdfMmumu)
+    rooParamList += [meanG1,meanG2,widthG1,widthG2,mixGG]
     
     mMuMuRooDataHist = root.RooDataHist(name+"_Template",channelName+"_"+name+"_Template",root.RooArgList(mMuMu),hist)
 
@@ -552,11 +576,10 @@ def makePDFSigCB(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName,f
     #n.setVal(2.2)
 
     if forceMean > 0.0:
-        mean.setVal(forceMean)
+        meanG2.setVal(forceMean)
 
     ## Error time
 
-    rooParamList = [mean,width,alpha,n]
     paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
     for i in rooParamList:
        i.setConstant(True)
@@ -565,70 +588,8 @@ def makePDFSigCB(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName,f
       workspaceImportFn(pdfMmumu)
       workspaceImportFn(mMuMuRooDataHist)
       workspaceImportFn(fr)
-
 
     ## Debug Time
-#    frame = mMuMu.frame()
-#    frame.SetName(name+"_Plot")
-#    mMuMuRooDataHist.plotOn(frame)
-#    pdfMmumu.plotOn(frame)
-#    canvas = root.TCanvas()
-#    frame.Draw()
-#    canvas.SaveAs("debug_"+name+".png")
-
-    for i in rooParamList:
-      debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
-
-    sigInjectDataset = None
-    if sigInject > 0:
-      sigInjectDataset = pdfMmumu.generate(root.RooArgSet(mMuMu),sigInject,False)
-
-    return paramList, debug, sigInjectDataset
-
-def makePDFSigGaus(name,hist,mMuMu,minMass,maxMass,workspaceImportFn,channelName,forceMean=-1.,forceWidth=-1.,sigInject=0):
-
-    debug = ""
-    debug += "### makePDFSigGaus: "+channelName+": "+name+"\n"
-    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
-
-    mean = root.RooRealVar(channelName+"_"+name+"_Mean",channelName+"_"+name+"_Mean",125.,100.,150.)
-    width = root.RooRealVar(channelName+"_"+name+"_Width",channelName+"_"+name+"_Width",5.0,0.1,20.0)
-    pdfMmumu = root.RooGaussian(name,name,mMuMu,mean,width)
-    
-    mMuMuRooDataHist = root.RooDataHist(name+"_Template",channelName+"_"+name+"_Template",root.RooArgList(mMuMu),hist)
-    #debug += "#    DatasetInfo: \n"
-    #debug += "#      sumEntries: {0:.2f} nEntries: {1}\n".format(mMuMuRooDataHist.sumEntries(),mMuMuRooDataHist.numEntries())
-    #debug += "#      Mean: {0:.2f} Sigma: {1:.2f}\n".format(mMuMuRooDataHist.mean(mMuMu),mMuMuRooDataHist.sigma(mMuMu))
-
-    fr = pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True),root.RooFit.Range("signalfit"))
-    fr.SetName(name+"_fitResult")
-
-    #mean.setVal(125.)
-    #width.setVal(2.)
-
-    #mMuMu.Print()
-    #pdfMmumu.Print()
-    #hist.Print()
-    #print hist.GetNbinsX()
-
-    if forceMean > 0.0:
-        mean.setVal(forceMean)
-    if forceWidth > 0.0:
-        width.setVal(forceWidth)
-
-    ## Error time
-
-    rooParamList = [mean,width]
-    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
-    for i in rooParamList:
-       i.setConstant(True)
-
-    if workspaceImportFn != None:
-      workspaceImportFn(pdfMmumu)
-      workspaceImportFn(mMuMuRooDataHist)
-      workspaceImportFn(fr)
-
-    ### Debug Time
 #    frame = mMuMu.frame()
 #    frame.SetName(name+"_Plot")
 #    mMuMuRooDataHist.plotOn(frame)
@@ -738,6 +699,7 @@ def makePDFSigNew(channelName,name,mMuMu,mass,workspaceImportFn,useDG=True):
     return debug
 
 makePDFSig = makePDFSigCBPlusGaus
+#makePDFSig = makePDFSigDG
 makePDFBak = makePDFBakOld
 #makePDFBak = makePDFBakMOverSq
 #makePDFBak = makePDFBakExpMOverSq
@@ -746,7 +708,7 @@ makePDFBak = makePDFBakOld
 ###################################################################################
 
 class Analysis:
-  def __init__(self,directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,histNameBase="mDiMu",rebin=[],histNameSuffix="",toyData=False,sigInject=0.0,sigInjectMass=125.0,bdtCut=None,energyStr="8TeV"):
+  def __init__(self,directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,histNameBase="mDiMu",rebin=[],histNameSuffix="",toyData=False,sigInject=0.0,sigInjectMass=125.0,bdtCut=None,cutAbove=False,energyStr="8TeV"):
     getCutHist = getattr(self,"getCutHist")
     doSigInject = getattr(self,"doSigInject")
 
@@ -805,7 +767,7 @@ class Analysis:
             tmpH1Loc = tmpH1Loc[1:]
           tmpH1 = tmpF.Get(tmpH1Loc)
           tmpH1.Reset()
-          tmpH = self.getCutHist(tmpH,tmpH1,bdtCut)
+          tmpH = self.getCutHist(tmpH,tmpH1,bdtCut,cutAbove)
           tmpH = tmpH1
         self.sigFiles.append(tmpF)
         self.sigHistsRaw.append(tmpH)
@@ -824,7 +786,7 @@ class Analysis:
           tmpH1Loc = tmpH1Loc[1:]
         tmpH1 = tmpF.Get(tmpH1Loc)
         tmpH1.Reset()
-        tmpH = self.getCutHist(tmpH,tmpH1,bdtCut)
+        tmpH = self.getCutHist(tmpH,tmpH1,bdtCut,cutAbove)
         tmpH = tmpH1
       self.bakFiles.append(tmpF)
       self.bakHistsRaw.append(tmpH)
@@ -843,7 +805,7 @@ class Analysis:
           tmpH1Loc = tmpH1Loc[1:]
         tmpH1 = tmpF.Get(tmpH1Loc)
         tmpH1.Reset()
-        tmpH = self.getCutHist(tmpH,tmpH1,bdtCut)
+        tmpH = self.getCutHist(tmpH,tmpH1,bdtCut,cutAbove)
         tmpH = tmpH1
       self.datFiles.append(tmpF)
       self.datHists.append(tmpH)
@@ -994,28 +956,31 @@ class Analysis:
     if USEGPANNA:
       for name in signalNames:
         self.debug +=  makePDFSigNew(analysis+energyStr,name,mMuMu,self.higgsMass,wImport)
-    else:
-      if args.gaussian > 0.:
-        for name, hist in zip(signalNames,self.sigHistsRaw):
-          sigParams, sigDebug, tmpDS = makePDFSigGaus(name,hist,mMuMu,minMass,maxMass,wImport,analysis+energyStr,forceMean=higgsPeakMean,forceWidth=args.gaussian)
+    elif True: # Use ggH for non-VBF channels, and VBF shape for VBF
+      isVBF = re.match(r"^VBF.*",analysis)
+      sigNameToUse = None
+      if isVBF:
+        for sigName in signalNames:
+          if "vbfH" in sigName:
+            sigNameToUse = sigName
+            break
+      else:
+        for sigName in signalNames:
+          if "ggH" in sigName:
+            sigNameToUse = sigName
+            break
+      sigHistRawToUse = self.sigHistsRaw[signalNames.index(sigNameToUse)]
+      for name in signalNames:
+          sigParams, sigDebug, tmpDS = makePDFSig(name,sigHistRawToUse,mMuMu,minMass,maxMass,wImport,analysis+energyStr)
           self.sigParamListList.append(sigParams)
           self.debug += sigDebug
-      else:
-        for name, hist in zip(signalNames,self.sigHistsRaw):
+    else:
+      for name, hist in zip(signalNames,self.sigHistsRaw):
           sigParams, sigDebug, tmpDS = makePDFSig(name,hist,mMuMu,minMass,maxMass,wImport,analysis+energyStr,forceMean=higgsPeakMean)
           self.sigParamListList.append(sigParams)
           self.debug += sigDebug
           
-      if args.gaussian > 0.:
-        for i in self.sigParamListList:
-          for j in i:
-            if "Width" in j.name:
-              j.lowErr = max(j.nominal/2.0,0.75)
-              j.highErr = max(j.nominal/2.0,0.75)
-              print("Adding sig param to list:")
-              print j
-              #self.params.append(j)
-      elif SIGUNCON:
+      if SIGUNCON:
         for name, iSignal, paramsNoErr in zip(signalNames,
               range(len(signalNames)),self.sigParamListList):
           firstHist = True
@@ -1120,7 +1085,7 @@ class Analysis:
       #realDataHistNotVeryLow = realDataHist.reduce(root.RooFit.CutRange("low,signal,high"))
       #wImport(realDataHistNotVeryLow)
 
-  def getCutHist(self,inHist,outHist,cut):
+  def getCutHist(self,inHist,outHist,cut,cutAbove=False):
     if not inHist.InheritsFrom("TH1"):
       print("Error: Analysis.getCutHist(): inHist is not a hist exiting.")
       sys.exit(1)
@@ -1139,8 +1104,12 @@ class Analysis:
     #print("max bin: {0}, cutBin: {1}".format(nBinsY,cutBin))
     for iX in range(0,nBinsX+2):
       mySum = 0.
-      for iY in range(cutBin,nBinsY+2):
-        mySum += inHist.GetBinContent(iX,iY)
+      if keepBelow:
+        for iY in range(0,cutBin):
+          mySum += inHist.GetBinContent(iX,iY)
+      else:
+        for iY in range(cutBin,nBinsY+2):
+          mySum += inHist.GetBinContent(iX,iY)
       outHist.SetBinContent(iX,mySum)
 
   def doSigInject(self,dataHist,sigStrength,sigMass):
@@ -1516,8 +1485,9 @@ if __name__ == "__main__":
   print "Started makeCards.py"
   root.gROOT.SetBatch(True)
 
-  directory = "input/separateSamplesTrainOnlyVBFLarge/"
-  #directory = "input/muScleFitAll/"
+  #directory = "input/separateSamplesTrainOnlyVBFLarge/"
+  #directory = "input/vbfCutOpt/"
+  directory = "input/muScleFitAll/"
   #directory = "input/preApproveSample/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
@@ -1537,7 +1507,7 @@ if __name__ == "__main__":
         tmpList.append(a+c)
   analyses += tmpList
   analyses = ["VBFBDTCut"]
-  analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
+  #analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
   combinations = []
   combinationsLong = []
   combinations.append((
@@ -1564,12 +1534,17 @@ if __name__ == "__main__":
   #combinationsBDTCut.append((
   #  ["IncPresel"],"IncBDTCut",0.025,-0.7,-0.25,"BDTHistMuonOnlyVMass"
   #))
-  #combinationsBDTCut.append((
-  #  ["IncPresel"],"IncPtCut",1.0,0.0,20.0,"ptVmDiMu"
-  #))
+  combinationsBDTCut.append((
+    ["IncPresel"],"IncPtCut",1.0,0.0,30.0,"ptVmDiMu"
+  ))
   combinationsBDTCut.append((
     ["VBFPresel"],"VBFBDTCut",0.04,-0.2,0.2,"BDTHistVBFVMass"
-    #["VBFPresel"],"VBFBDTCut",0.2,-1,1,"BDTHistVBFVMass"
+  ))
+  combinationsBDTCut.append((
+    ["VBFPresel"],"VBFmDiJetCut",50,300,1200,"mDiJetsVMass"
+  ))
+  combinationsBDTCut.append((
+    ["VBFPresel"],"VBFdeltaEtaJetCut",0.1,3.0,7.0,"deltaEtaJetsVMass"
   ))
   #combinationsBDTCut.append((
   #  ["IncPresel"+x for x in categoriesInc],"IncBDTCutCat",0.025,-0.7,-0.35,"BDTHistMuonOnlyVMass"
