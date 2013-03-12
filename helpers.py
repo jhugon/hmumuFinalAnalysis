@@ -6,6 +6,7 @@ import re
 import csv
 import glob
 from math import sqrt
+import math
 import numpy
 import array
 import sys
@@ -1591,6 +1592,16 @@ def getBinWidthStr(hist):
         binWidthPrec = "2"
     return ("{0:."+binWidthPrec+"f}").format(binWidth)
 
+def getEfficiencyInterval(passed,total):
+  eff = root.TEfficiency()
+  nom = 0.
+  quant=0.682689492137
+  if total>0:
+    nom = float(passed)/total
+  low = eff.ClopperPearson(int(total),int(passed),quant,False)
+  high = eff.ClopperPearson(int(total),int(passed),quant,True)
+  return [low,nom,high]
+
 class EfficiencyReader:
   def __init__(self,fileDir="EffMassScan/"):
     self.data = {}
@@ -1649,10 +1660,50 @@ class EfficiencyReader:
     return result
   def __repr__(self):
     return str(self)
+  def plot(self,fileNameBase):
+    canvas = root.TCanvas("canvas")
+    for energy in self.data:
+     for mode in self.data[energy]:
+      sortedCats = sorted(self.data[energy][mode].keys())
+      for cat in sortedCats:
+        sortedMasses = sorted(self.data[energy][mode][cat].keys())
+        fileNameOut = fileNameBase+mode+energy+"_"+cat+".png"
+        graph = root.TGraphErrors()
+        iPoint = 0
+        eff = None
+        err = None
+        ymax = 0.0
+        ymin = 1.0
+        for mass in sortedMasses:
+          x = float(mass)
+          eff = self.data[energy][mode][cat][mass]['eff']
+          err = self.data[energy][mode][cat][mass]['effErr']
+          graph.SetPoint(iPoint,x,eff)
+          graph.SetPointError(iPoint,0.,err)
+          iPoint += 1
+          if ymax < eff+err:
+            ymax = eff+err
+          if ymin > eff+err:
+            ymin = eff+err
+        setHistTitles(graph,"m_{H} [GeV/c^{2}]","Efficiency #times Acceptance")
+        graph.SetTitle("{0} {1} {2}:\n".format(mode,energy,cat))
+        graph.Draw("ape")
+        ywidth = 1.0 * (ymax-ymin)
+        ymax = ywidth+ymax
+        ymin = ymin-ywidth
+        if ymax > 1.0:
+            ymax = 1.0
+        ymin = 0.0
+        graph.GetYaxis().SetRangeUser(ymin,ymax)
+        graph.Draw("ape")
+        canvas.SaveAs(fileNameOut)
+        
 
 if __name__ == "__main__":
 
+  root.gROOT.SetBatch(True)
   print("Running helpers.py")
   eff = EfficiencyReader()
   print eff
+  eff.plot("output/eff_")
   

@@ -87,14 +87,20 @@ combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 >& $FI
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
-echo "executing combine -M MaxLikelihoodFit --rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
+echo "executing combine -M MaxLikelihoodFit --rMin -50 --rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
 
-combine -M MaxLikelihoodFit --rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu
+combine -M MaxLikelihoodFit --rMin -50 --rMax 50 --plots --saveNormalizations $FILENAME >& $FILENAME.mu
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
 combine -M ChannelCompatibilityCheck --saveFitResult --rMax 50 $FILENAME >> logCCC
 mv higgsCombineTest.ChannelCompatibilityCheck.*.root ../$FILENAME.CCC.root
+
+rm -f roostats*
+rm -f higgsCombineTest*.root
+
+combine -M ChannelCompatibilityCheck --saveFitResult --rMin -150 --rMax 150 $FILENAME >> logCCC2
+mv higgsCombineTest.ChannelCompatibilityCheck.*.root ../$FILENAME.CCC2.root
 
 rm -f roostats*
 rm -f higgsCombineTest*.root

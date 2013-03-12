@@ -71,6 +71,16 @@ def vetoOutOfBoundsEvents(hist,boundaries=[]):
     hist.SetBinContent(i,0.0)
     hist.SetBinError(i,0.0)
 
+def convertSigName(name):
+  if "ggH" in name:
+    return "ggH"
+  if "vbfH" in name:
+    return "qqH"
+  if "wH" in name:
+    return "WH"
+  if "zH" in name:
+    return "ZH"
+
 ###################################################################################
 
 class Param:
@@ -680,7 +690,7 @@ def makePDFSigNew(channelName,name,mMuMu,mass,workspaceImportFn,useDG=True):
         gaus2 = root.RooGaussian(channelName+"_"+name+"_gaus2",
                                  channelName+"_"+name+"_gaus2",
                                  mMuMu,meanG2,widthG2)
-        pdfMmumu = root.RooAddPdf(name,
+        pdfMmumu = root.RooAddPdf(convertSigName(name),
                                   name,
                                   gaus1,gaus2,mixGG)
         workspaceImportFn(pdfMmumu)
@@ -693,7 +703,7 @@ def makePDFSigNew(channelName,name,mMuMu,mass,workspaceImportFn,useDG=True):
         widthSG = root.RooRealVar(channelName+"_"+name+"_WidthSG",
                                   channelName+"_"+name+"_WidthSG", 
                                   params['widthSG'])
-        pdfMmumu = root.RooGaussian(name,name,mMuMu,meanSG,widthSG)
+        pdfMmumu = root.RooGaussian(convertSigName(name),name,mMuMu,meanSG,widthSG)
         workspaceImportFn(pdfMmumu)
         rooParamList += [meanSG,widthSG]
         debug += "#    using Single Gaussian (Probably for EE)"
@@ -718,7 +728,7 @@ def makePDFSigNew(channelName,name,mMuMu,mass,workspaceImportFn,useDG=True):
                                params['mix'])
       cb = root.RooCBShape(name+"_CB",name+"_CB",mMuMu,mean,width,alpha,n)
       gaus = root.RooGaussian(name+"_Gaus",name+"_Gaus",mMuMu,mean,width2)
-      pdfMmumu = root.RooAddPdf(name,name,cb,gaus,mix)
+      pdfMmumu = root.RooAddPdf(convertSigName(name),name,cb,gaus,mix)
       workspaceImportFn(pdfMmumu)
       rooParamList += [mean,width,alpha,n]
 
@@ -1337,7 +1347,7 @@ class DataCardMaker:
           binFormatList.append(channelName)
   
           proc1FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-          proc1FormatList.append(sigName)
+          proc1FormatList.append(convertSigName(sigName))
   
           proc2FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
           proc2FormatList.append(iProc)
@@ -1506,8 +1516,8 @@ if __name__ == "__main__":
   print "Started makeCards.py"
   root.gROOT.SetBatch(True)
 
-  #directory = "input/separateSamplesTrainOnlyVBFLarge/"
-  directory = "input/muScleFitAll/"
+  directory = "input/separateSamplesTrainOnlyVBFLarge/"
+  #directory = "input/muScleFitAll/"
   #directory = "input/preApproveSample/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]

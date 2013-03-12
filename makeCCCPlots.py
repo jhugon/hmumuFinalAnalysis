@@ -431,12 +431,11 @@ class ChannelPlot:
         data[channel] = [param.getVal(),-param.getErrorLo(),param.getErrorHi(),match.group(1),match.group(2)]
         high = data[channel][0]+data[channel][2]
         low = data[channel][0]-data[channel][1]
+        print param.getVal()
         if high > xMax:
             xMax = high
         if low < xMin:
             xMin = low
-
-
         if energy == None:
             energy = tmpEnergy
         else:
@@ -451,7 +450,16 @@ class ChannelPlot:
     self.nChannels = len(self.channels)
     self.energy = energy
     self.xMax = xMax*1.1
-    self.xMin = xMin*0.5
+    if xMin >= 0.0:
+      xMin = xMin*0.5
+    else:
+      xMin = xMin*1.1
+    self.xMin = xMin
+
+    if self.xMin < -50.:
+      self.xMin = -50.
+    if self.xMax > 50.:
+      self.xMax = 50.
 
   def plot(self,savename):
     self.canvas.cd()
@@ -528,9 +536,9 @@ class ChannelPlot:
     tmpShift = 0.0
     if self.nChannels >= 10:
         tmpShift = -0.15
-    tlatex.DrawLatex((self.xMax-self.xMin)*0.25,self.nChannels+0.5+tmpShift,PRELIMINARYSTRING)
+    tlatex.DrawLatex((self.xMax-self.xMin)*0.25+self.xMin,self.nChannels+0.5+tmpShift,PRELIMINARYSTRING)
     if self.massStr != None:
-      tlatex.DrawLatex((self.xMax-self.xMin)*0.75,self.nChannels+0.5+tmpShift,
+      tlatex.DrawLatex((self.xMax-self.xMin)*0.75+self.xMin,self.nChannels+0.5+tmpShift,
             "m_{{H}} = {0} GeV/c^{{2}}".format(self.massStr))
 
 
@@ -632,8 +640,14 @@ if __name__ == "__main__":
         saveAs(canvas,outDir+"ccc_"+saveName+period)
       canvas.SetLogy(0)
 
-    compareFileGlob = "BDTCutCatVBFBDTOnly*_"+period+"_*125.0.txt.CCC.root"
+    compareMass = "125.0"
+    compareFileGlob = "BDTCutCatVBFBDTOnly*_"+period+"_*"+compareMass+".txt.CCC.root"
     compareFiles = glob.glob(dirName+compareFileGlob)
     for f in compareFiles:
       ChannelPlot(f,outDir+"cccCompare_"+period)
+
+    compareFileGlob = "BDTCutCatVBFBDTOnly*_"+period+"_*"+compareMass+".txt.CCC2.root"
+    compareFiles = glob.glob(dirName+compareFileGlob)
+    for f in compareFiles:
+      ChannelPlot(f,outDir+"cccCompare2_"+period)
     
