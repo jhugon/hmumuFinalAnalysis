@@ -447,6 +447,9 @@ if __name__ == "__main__":
       incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStrWrite,xlabel=xlabel,caption3=caption3,showObs=args.higgsMass,xlimits=xlimits,vertLines = vertLines)
       saveAs(canvas,outDir+plotName+"_"+energyStr)
 
+    if not mplGood:
+        continue
+
     if args.bdtCut:
         continue
 
