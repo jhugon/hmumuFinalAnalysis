@@ -19,7 +19,7 @@ done
 echo "Removing files in lxplus:$REMOTEDIR"
 ssh lxplus "cd /tmp/jhugon/; rm -rf $REMOTEDIR/*;echo \"Contents of dir: \`ls $REMOTEDIR \`\""
 echo "Copying input files to lxplus..."
-scp statsCards/* lxplus:/afs/cern.ch/user/j/jhugon/work/private/stats/CMSSW_5_2_5/stats/.
+scp statsCards/* lxplus:$REMOTEDIR/.
 echo "Running combine on lxplus..."
 ssh lxplus "cd $REMOTEDIR; eval \`scramv1 runtime -sh\`;bash run.sh; bash getStatus2.sh"
 echo "Copying output files from lxplus..."
