@@ -10,7 +10,7 @@ import math
 import numpy
 import array
 import sys
-import matplotlib.pyplot as mpl
+#import matplotlib.pyplot as mpl
 
 #PRELIMINARYSTRING="CMS Internal"
 PRELIMINARYSTRING="CMS Preliminary"
@@ -1431,22 +1431,22 @@ def linearChi2(xList,yList,order,yErrList=None,funcName="poly"):
   else:
     poly,stats = numpy.polynomial.chebfit(xList,yList,order,full=True,w=weights)
 
-  # For Debug
-  fig = mpl.figure()
-  ax = fig.add_subplot(111)
-  ax.errorbar(xList,yList,yerr=1.0/weights,linestyle="None",color="k")
-
-  polyInst = None
-
-  if funcName == "poly":
-    polyInst = numpy.polynomial.Polynomial(poly)
-  else:
-    polyInst = numpy.polynomial.Chebyshev(poly)
-
-  yy = polyInst(xList)
-  ax.plot(xList,yy,"-b")
-  
-  fig.savefig("debugLinearChi2.png")
+#  # For Debug
+#  fig = mpl.figure()
+#  ax = fig.add_subplot(111)
+#  ax.errorbar(xList,yList,yerr=1.0/weights,linestyle="None",color="k")
+#
+#  polyInst = None
+#
+#  if funcName == "poly":
+#    polyInst = numpy.polynomial.Polynomial(poly)
+#  else:
+#    polyInst = numpy.polynomial.Chebyshev(poly)
+#
+#  yy = polyInst(xList)
+#  ax.plot(xList,yy,"-b")
+#  
+#  fig.savefig("debugLinearChi2.png")
 
   return poly
 
