@@ -14,9 +14,6 @@ import glob
 import re
 import os.path
 
-import matplotlib.pyplot as mpl
-import numpy
-
 from xsec import *
 
 #######################################
@@ -286,11 +283,11 @@ class RelativePlot:
     self.obsGraph = obsGraph
     muExtraGraphErr = root.TGraphAsymmErrors()
     muExtraGraph = root.TGraph()
-    muExtraGraph.SetLineColor(root.kBlue+1)
+    muExtraGraph.SetLineColor(root.kBlack)
     muExtraGraph.SetMarkerStyle(20)
-    muExtraGraph.SetMarkerSize(1.1)
-    muExtraGraph.SetMarkerColor(root.kBlue+1)
-    muExtraGraphErr.SetFillColor(root.kCyan)
+    muExtraGraph.SetMarkerSize(1.0)
+    muExtraGraph.SetMarkerColor(root.kBlack)
+    muExtraGraphErr.SetFillColor(root.kGreen)
     self.muExtraGraph = muExtraGraph
     self.muExtraGraphErr = muExtraGraphErr
     iPoint = 0
@@ -325,6 +322,7 @@ class RelativePlot:
         muExtraGraph.SetPoint(iPoint,xNum,float(point[1]))
         muExtraGraphErr.SetPoint(iPoint,xNum,float(point[1]))
         muExtraGraphErr.SetPointError(iPoint,0.,0.,float(point[2]),float(point[3]))
+        #canvas.SetGrid(0,1)
       iPoint += 1
 
     self.vertLines = []
@@ -528,78 +526,6 @@ class PValuePlotTogether:
     canvas.RedrawAxis()
     self.graphs = graphs
 
-class ComparePlot:
-  def __init__(self,data,ylabel="Expected 95% CL Limit $\sigma/\sigma_{SM}$",titleMap={},showObs=False):
-    fig = mpl.figure()
-    self.fig = fig
-    ax1 = fig.add_subplot(111)
-    self.ax1 = ax1
-    ax1bounds = ax1.get_position().bounds
-    ax1.set_position([0.25,0.1,0.7,0.85])
-
-    data.sort(key=lambda x: x[0].lower())
-
-    obs = [float(point[1]) for point in data]
-    exp = None
-    high1sigs = None
-    low1sigs = None
-    if len(data[0])==4: #mu
-      #thisPoint = [xNum,obs,low1sig,high1sig]
-      high1sigs = [float(point[3]) for point in data]
-      low1sigs = [float(point[2]) for point in data]
-    else: #sig len=3
-      #thisPoint = [xNum,obs,exp]
-      exp = [float(point[2]) for point in data]
-      high1sigs = [0.0 for point in data]
-
-    xPos = numpy.arange(len(obs))
-    xLabels = [point[0] for point in data]
-    xLabels = [re.sub(r".*/","",s) for s in xLabels]
-    xLabels = [titleMap[s] if titleMap.has_key(s) else s for s in xLabels]
-
-    ax1.set_yticks(xPos+0.25)
-    ax1.set_yticklabels(tuple(xLabels),size="small")
-    ax1.set_xlabel(ylabel)
-    #ax1.set_xlim([0,20])
-    bars = None
-    if len(data[0])==4: #mu
-      bars = ax1.barh(xPos,obs, 0.5, xerr=[low1sigs,high1sigs],ecolor="k")
-    else: #sig
-      bars = ax1.barh(xPos,exp, 0.5)
-    self.bars = bars
-    xPosObs = [x+0.25 for x in xPos]
-    if showObs and len(data[0]) != 4: #is sig
-      self.obs = ax1.plot(obs,xPosObs,marker="|",color="r",markersize=10,linestyle="None")
-    writeInValues = getattr(self,"writeInValues")
-    writeInValues(bars,high1sigs)
-  def save(self,saveName):
-    self.fig.savefig(saveName+".png")
-    self.fig.savefig(saveName+".pdf")
-  def writeInValues(self,rects,high2sigs):
-    axisWidth = self.ax1.get_xlim()[1]-self.ax1.get_xlim()[0]
-    size="medium"
-    if len(rects)<5:
-      size="large"
-    elif len(rects)>12:
-      size="xx-small"
-    elif len(rects)>9:
-      size="x-small"
-    maxWidth = axisWidth
-    for rect,sigUp in zip(rects,high2sigs):
-      width = rect.get_width()
-      if (width/maxWidth < 0.1): # The bars aren't wide enough to print the ranking inside
-        xloc = width + sigUp + maxWidth*0.01 # Shift the text to the right side of the right edge
-        clr = 'black' # Black against white background
-        align = 'left'
-      else:
-        xloc = width - maxWidth*0.01 # Shift the text to the left side of the right edge
-        clr = 'white' # White on magenta
-        align = 'right'
-      yloc = rect.get_y()+rect.get_height()/2.0 
-      valueStr = "{0:.1f}".format(width)
-      self.ax1.text(xloc, yloc, valueStr, horizontalalignment=align,
-            verticalalignment='center', color=clr, weight='bold',size=size)
-
 if __name__ == "__main__":
 
   dirName = "statsInput/"
@@ -614,9 +540,6 @@ if __name__ == "__main__":
     canvas.SetLogx(1)
   canvas.SetLogy(0)
   
-  mpl.rcParams["font.family"] = "sans-serif"
-  #print mpl.rcParams["backend"]
-
   ylimits=[]
 
   lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":lumiDict["8TeV"],"7P8TeV":lumiDict["8TeV"]+lumiDict["7TeV"]}
@@ -650,35 +573,22 @@ if __name__ == "__main__":
     legend.SetFillColor(0)
     legend.SetLineColor(0)
     
-    for ytitle,fnPref in zip(["Significance","Error on #sigma_{Measured}/#sigma_{SM}","#sigma_{Measured}/#sigma_{SM}"],["sig","mu","muToy"]):
-      if args.higgsMass and fnPref == "mu":
+    canvas.SetLogy(0)
+    for plotName in plots:
+      data = None
+      doMuExtraPlot=True
+      showObs=False
+      data = getDataMu(dirName+plotName+"_"+period+"_*.txt*")
+      if len(data)<=1 or not args.higgsMass:
         continue
-      if args.pValue and fnPref == "sig":
-        canvas.SetLogy(1)
-        ytitle = "p-Value of Background Only Hypothesis"
-      else:
-        canvas.SetLogy(0)
-      for plotName in plots:
-        data = None
-        doMuExtraPlot=False
-        showObs=False
-        if fnPref == "sig":
-          data = getDataSig(dirName+plotName+"_"+period+"_*.txt*",getPValue=args.pValue)
-          showObs=True
-        else:
-          data = getDataMu(dirName+plotName+"_"+period+"_*.txt*")
-        if fnPref == "muToy":
-          doMuExtraPlot = True
-        #print("{0} {1} v. Lumi: {2}".format(period,fnPref, data))
-        if len(data)<=1:
-          continue
-        title = "Standard Model H#rightarrow#mu#mu"
-        xlabel="Integrated Luminosity [fb^{-1}]"
-        if args.higgsMass:
-          title = titleMap[plotName]
-          xlabel="m_{H} [GeV/c^{2}]"
-        incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,caption3=caption3,ylabel=ytitle,energyStr=energyStr,doMuExtraPlot=doMuExtraPlot,showObs=showObs,xlabel=xlabel)
-        saveAs(canvas,outDir+fnPref+plotName+"_"+period)
+      title = "Standard Model H#rightarrow#mu#mu"
+      xlabel="Integrated Luminosity [fb^{-1}]"
+      ytitle = "Best Fit #sigma/#sigma_{SM}"
+      if args.higgsMass:
+        title = titleMap[plotName]
+        xlabel="m_{H} [GeV/c^{2}]"
+      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,caption3=caption3,ylabel=ytitle,energyStr=energyStr,doMuExtraPlot=doMuExtraPlot,showObs=showObs,xlabel=xlabel)
+      saveAs(canvas,outDir+"mu"+plotName+"_"+period)
 
     ## All p-values together plot
     canvas.SetLogy(1)
@@ -709,34 +619,3 @@ if __name__ == "__main__":
       pValueAllPlot = PValuePlotTogether(pValueDict,canvas,caption2=caption2,caption3=caption3,energyStr=energyStr)
       saveAs(canvas,outDir+"pValues_"+saveName+period)
     canvas.SetLogy(0)
-    
-    ## Compare all types of limits
-    print "Doing Compare..."
-    if period == "14TeV":
-        continue
-    #veto = [r"CNC",r"PM","BB","BO","BE","OO","OE","EE","NotBB"]
-    #veto = [r"CNC",r"PM","Presel","BB","BO","BE","OO","OE","EE","NotBB"]
-    #veto = [r"CNC",r"PM","BDT","BB","BO","BE","OO","OE","EE","NotBB"]
-    #veto = [r"CNC",r"PM","Presel"]
-    #veto = [r"CNC",r"PM","BDT"]
-    veto = []
-
-    mustBe = r"(.+)_(.+)_[.\d]+.txt"
-    #mustBe = r"(.+Cat)_(.+)_[.\d]+.txt"
-
-    desiredLumiStr=str(lumisToUse[period])
-    fnGlobStr = dirName+"*_"+period+"_"+desiredLumiStr+".txt*"
-    compareDataSig = getDataSig(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
-    compareDataMu = getDataMu(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
-    #print compareDataSig
-    #print compareDataMu
-
-    for datCase,ytitle,fnPref in zip([compareDataSig,compareDataMu],["Expected Significance","$\sigma/\sigma_{SM}$"],["sig","mu"]):
-      if len(datCase)==0:
-        print("No Data to Compare for {0} {1}!!".format(period,fnPref))
-        continue
-      comparePlot = ComparePlot(datCase,titleMap=comparisonMap,showObs=False,ylabel=ytitle)
-      comparePlot.ax1.set_xlim(*[0,20])
-      comparePlot.fig.text(0.9,0.2,"$\mathcal{L}="+desiredLumiStr+"$ fb$^{-1}$",horizontalalignment="right",size="x-large")
-      comparePlot.fig.text(0.9,0.27,"$\sqrt{s}=$"+energyStr,horizontalalignment="right",size="x-large")
-      comparePlot.save(outDir+fnPref+"Compare"+"_"+energyStr)
