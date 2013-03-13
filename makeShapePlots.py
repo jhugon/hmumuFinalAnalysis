@@ -557,11 +557,12 @@ class ShapePlotter:
         y = root.Double()
         for i in range(graph.GetN()):
           graph.GetPoint(i,x,y)
+          yf = float(y)+graph.GetErrorYhigh(i)
           if x < drawXLimits[0]:
                 continue
           if x > drawXLimits[1]:
                 continue
-          l.append(float(y))
+          l.append(yf)
         if len(l) == 0:
             return -1.0
         return max(l)
@@ -839,10 +840,10 @@ class ShapePlotter:
     vbfChannel = "VBF" in channelName
     for i in rateMap:
       if i != "bak":
-        if vbfChannel and "vbf" in i:
+        if vbfChannel and "qqH" == i:
           sigName = i
           break
-        elif not vbfChannel and "gg" in i:
+        elif not vbfChannel and "ggH" == i:
           sigName = i
           break
     sigPDF = workspace.pdf(sigName)

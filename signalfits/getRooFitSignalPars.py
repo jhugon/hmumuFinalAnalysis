@@ -13,7 +13,8 @@ import ROOT as root
 
 #from helpers import *
 
-#folder = "/afs/cern.ch/user/d/digiovan/public/forJustin/signalfits7and8TeV/fitresults/"
+
+#folder = "/afs/cern.ch/user/d/digiovan/public/forJustin/signalfits7and8TeV.bothMuScleFit/fitresults/"
 folder = "signalfits/fitresults/"
 
 baseNames = ["IncPreselPtG10BB",
@@ -111,7 +112,7 @@ parameters = {}
 
 
 for baseName in baseNames:
-   print  baseName
+   #print  baseName
 
    for fit in fitNames:
       #print fit
