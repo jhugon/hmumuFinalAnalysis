@@ -34,6 +34,7 @@ root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.ERROR)
 PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 
 from signalfits import getRooFitSignalPars as sigFits
+#from signalfitsNoMuScle import getRooFitSignalPars as sigFits
 effReader = EfficiencyReader()
 
 NPROCS = 2
