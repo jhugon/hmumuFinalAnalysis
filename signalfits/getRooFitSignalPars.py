@@ -11,10 +11,8 @@ from ROOT import *
 gSystem.Load('libRooFit')
 import ROOT as root
 
-#from helpers import *
 
-
-#folder = "/afs/cern.ch/user/d/digiovan/public/forJustin/signalfits7and8TeV.bothMuScleFit/fitresults/"
+#folder = "/afs/cern.ch/user/d/digiovan/public/forJustin/signalfits7and8TeV.MuScleFit.AllCats/fitresults/"
 folder = "signalfits/fitresults/"
 
 baseNames = ["IncPreselPtG10BB",
@@ -23,8 +21,18 @@ baseNames = ["IncPreselPtG10BB",
              "IncPreselPtG10OO",
              "IncPreselPtG10OE",
              "IncPreselPtG10EE",
-             "VBFBDTCut"]
-
+             "IncPresel",
+             "IncPreselPtG10",
+             "IncPreselBB",
+             "IncPreselBO",
+             "IncPreselBE",
+             "IncPreselOO",
+             "IncPreselOE",
+             "IncPreselEE",
+             "VBFPresel",
+             "VBFBDTCut",
+             "VBFMJJG550"]
+            
 fitNames= ['DG','CBG']
 benergy = ['7TeV','8TeV']
 
@@ -62,11 +70,11 @@ def expandParameters(baseName,fit,benergy):
       parameters[benergy][mass][baseName] = {}
 
       varNames    = ['meanG1','widthG1','meanG2','widthG2','mixGG']
-      varNamesEE  = ['meanSG','widthSG']
+      #varNamesEE  = ['meanSG','widthSG']
       varNamesCBG = ['mean','width1','width2','mix','Alpha','n']
    
-      if ("EE" in baseName):
-         varNames = varNamesEE
+      #if ("EE" in baseName):
+      #   varNames = varNamesEE
    
       if (fit == 'CBG'):
          varNames = varNamesCBG
