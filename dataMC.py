@@ -6,7 +6,8 @@ import ROOT as root
 import os
 import sys
 
-dataDir = "input/separateSamplesTrainOnlyVBFLarge110to150/"
+#dataDir = "input/separateSamplesTrainOnlyVBFLarge110to150/"
+dataDir = "input/withMjjCutCat/"
 #dataDir = "input/separateSamplesTrainOnlyVBFLargeBDTG110to150/"
 outDir = "output/"
 
@@ -15,7 +16,7 @@ LUMI=lumiDict[RUNPERIOD]
 
 scaleHiggsBy = 10.
 
-LOGY=True
+LOGY=False
 integralPlot=False
 MCErrors=True
 #PULLTYPE="adrian1"
@@ -46,6 +47,7 @@ histDirs = ["NotBlindWindow/"]
 histDirs = ["VBFPreselDiMuPtL20/","IncPreselDiMuPtL20/"]
 #histDirs = ["VBFPresel/","IncPresel/"]
 histDirs = ["VBFPresel/"]
+histDirs = ["VBFMJJG550/"]
 #histDirs = ["IncPresel/"]
 #histDirs = ["IncPreselPtG10BB/","VBFBDTCut/"]
 #histDirs = ["VBFBDTCut/"]
@@ -67,7 +69,7 @@ if RUNPERIOD=="7TeV":
     histNames["yDiMu"] = {"xlabel":"y_{#mu#mu}","xlimits":[-2.2,2.2],"rebin":2,"ylimits":[0.1,3e6]}
     histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1.0,1.0],"rebin":2,"ylimits":[0.1,1e7]}
     histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Non-VBF Category)","xlimits":[-0.55,0.2],"rebin":2,"ylimits":[1e-2,1e8],'vertLines':{"8TeV":-0.55,"7TeV":-0.42}}
-  elif len(histDirs) == 1 and histDirs[0] == "VBFPresel/":
+  elif len(histDirs) == 1 and (histDirs[0] == "VBFPresel/" or histDirs[0] == "VBFMJJG550/"):
     print "Using VBFPresel settings"
     histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":4,"ylimits":[0.,25]}
     #histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[80.0,150.0],"rebin":2}
@@ -118,7 +120,7 @@ elif RUNPERIOD=="8TeV":
     
     histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1.0,1.0],"rebin":2,"ylimits":[0.1,5e7]}
     histNames["BDTHistMuonOnly"] = {"xlabel":"BDT (Non-VBF Category)","xlimits":[-1.0,0.2],"rebin":2,"ylimits":[1e-1,1e5],'vertLines':{"8TeV":-0.55,"7TeV":-0.42}}
-  elif len(histDirs) == 1 and histDirs[0] == "VBFPresel/":
+  elif len(histDirs) == 1 and (histDirs[0] == "VBFPresel/" or histDirs[0] == "VBFMJJG550/"):
     print "Using VBFPresel settings"
     histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":4,"ylimits":[0.0,150]}
     #histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[80.0,150.0],"rebin":2}

@@ -8,3 +8,10 @@ IncPresel          0.3488   0.005
 IncPreselPtG10     0.3432   0.005
 VBFPresel          0.1879   0.0041
 VBFBDTCut          0.1264   0.0035
+IncPreselBB        0.09628   0.0031
+IncPreselBO        0.1237   0.0035
+IncPreselBE        0.0434   0.0022
+IncPreselOO        0.04138   0.0022
+IncPreselOE        0.03617   0.002
+IncPreselEE        0.007872   0.001
+VBFMJJG550         0.1278   0.0035
