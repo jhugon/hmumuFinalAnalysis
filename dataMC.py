@@ -7,21 +7,22 @@ import os
 import sys
 
 #dataDir = "input/separateSamplesTrainOnlyVBFLarge110to150/"
-dataDir = "input/withMjjCutCat/"
+dataDir = "input/jets20/"
+#dataDir = "input/jets20f25/"
 #dataDir = "input/separateSamplesTrainOnlyVBFLargeBDTG110to150/"
 outDir = "output/"
 
 RUNPERIOD="8TeV"
 LUMI=lumiDict[RUNPERIOD]
 
-scaleHiggsBy = 10.
+scaleHiggsBy = 1000.
 
-LOGY=False
+LOGY=True
 integralPlot=False
 MCErrors=True
 #PULLTYPE="adrian1"
 PULLTYPE="pullMC"
-allHiggsTogether = True
+allHiggsTogether = False
 ylimitsRatio = [-5,5]
 if PULLTYPE=="adrian1":
   ylimitsRatio = [-1.5,1.5]
@@ -46,12 +47,12 @@ stdLegendPos = urLegendPos
 histDirs = ["NotBlindWindow/"]
 histDirs = ["VBFPreselDiMuPtL20/","IncPreselDiMuPtL20/"]
 #histDirs = ["VBFPresel/","IncPresel/"]
-histDirs = ["VBFPresel/"]
-histDirs = ["VBFMJJG550/"]
 #histDirs = ["IncPresel/"]
 #histDirs = ["IncPreselPtG10BB/","VBFBDTCut/"]
 #histDirs = ["VBFBDTCut/"]
 #histDirs = ["VBFBDTCut/"]
+histDirs = [""]
+histDirs = ["VBFMJJG550/"]
 
 root.gErrorIgnoreLevel = root.kWarning
 
@@ -148,6 +149,31 @@ elif RUNPERIOD=="8TeV":
     histNames["yDiJet"] = {"xlabel":"y_{jj}","xlimits":[-3.0,3.0],"rebin":10,"ylimits":[0.0,70]}
     histNames["ptmiss"] = {"xlabel":"p_{T}^{Miss} [GeV/c]","xlimits":[0,200],"leg":stdLegendPos,"rebin":10,"ylimits":[0.1,100]}
     histNames["BDTHistVBF"] = {"xlabel":"BDT (VBF Category)","xlimits":[-0.4,0.25],"rebin":4,"ylimits":[0.,110],'vertLines':{"8TeV":0.0,"7TeV":0.0}}
+  if True:#len(histDirs) == 1 and histDirs[0] == "":
+    print "Using '' settings"
+    histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":5}#,"ylimits":[0.0,50]}
+    #anotateText = "VBF BDT Cut"
+    #histNames["ptDiMu"] = {"xlabel":"p_{T,#mu#mu} [GeV/c]","xlimits":[0.0,200.0],"rebin":25}#,"ylimits":[0.0,50]}
+    #histNames["ptMu1"] = {"xlabel":"Leading Muon p_{T} [GeV/c]","xlimits":[0.0,200.0],"rebin":2}#,"ylimits":[0.0,50]}
+    #histNames["ptMu2"] = {"xlabel":"Sub-Leading Muon p_{T} [GeV/c]","xlimits":[0.0,200.0],"rebin":2}#,"ylimits":[0.0,50]}
+    histNames["ptJet1"] = {"xlabel":"Leading Jet p_{T} [GeV/c]","xlimits":[0.0,200.0],"rebin":2}#,"ylimits":[0.0,50]}
+    histNames["ptJet2"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c]","xlimits":[0.0,200.0],"rebin":2}#,"ylimits":[0.0,50]}
+    histNames["ptJet1Central"] = {"xlabel":"Leading Jet p_{T} [GeV/c] (#eta_{jet}<2.4)","xlimits":[0.0,200.0],"rebin":2}#,"ylimits":[0.0,50]}
+    histNames["ptJet2Central"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c] (#eta_{jet}<2.4)","xlimits":[0.0,200.0],"rebin":2}#,"ylimits":[0.0,50]}
+    histNames["ptJet1Forward"] = {"xlabel":"Leading Jet p_{T} [GeV/c] (#eta_{jet}>2.4)","xlimits":[0.0,200.0],"rebin":2}#,"ylimits":[0.0,50]}
+    histNames["ptJet2Forward"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c] (#eta_{jet}>2.4)","xlimits":[0.0,200.0],"rebin":2}#,"ylimits":[0.0,50]}
+    #histNames["etaMu1"] = {"xlabel":"Leading Muon #eta","xlimits":[-2.1,2.1],"rebin":2}#,"ylimits":[0.0,50]}
+    #histNames["etaMu2"] = {"xlabel":"Sub-Leading Muon #eta","xlimits":[-2.1,2.1],"rebin":2}#,"ylimits":[0.0,50]}
+    histNames["etaJet1"] = {"xlabel":"Leading Jet #eta","xlimits":[-5.,5.],"rebin":2}#,"ylimits":[0.0,50]}
+    histNames["etaJet2"] = {"xlabel":"Sub-Leading Jet #eta","xlimits":[-5.,5.],"rebin":2}#,"ylimits":[0.0,50]}
+    histNames["puJetIDSimpleDiscJet1"] = {"xlabel":"Leading Jet PUID Discriminator","xlimits":[-5.,5.],"rebin":2}#,"ylimits":[0.0,50]}
+    histNames["puJetIDSimpleDiscJet2"] = {"xlabel":"Sub-Leading Jet PUID Discriminator","xlimits":[-5.,5.],"rebin":2}#,"ylimits":[0.0,50]}
+    histNames["puJetIDSimpleDiscJet1Central"] = {"xlabel":"Leading Jet PUID Discriminator (#eta_{jet}<2.4)","xlimits":[-5.,5.],"rebin":2}#,"ylimits":[0.0,50]}
+    histNames["puJetIDSimpleDiscJet2Central"] = {"xlabel":"Sub-Leading Jet PUID Discriminator (#eta_{jet}<2.4)","xlimits":[-5.,5.],"rebin":2}#,"ylimits":[0.0,50]}
+    histNames["puJetIDSimpleDiscJet1Forward"] = {"xlabel":"Leading Jet PUID Discriminator (#eta_{jet}>2.4)","xlimits":[-5.,5.],"rebin":2}#,"ylimits":[0.0,50]}
+    histNames["puJetIDSimpleDiscJet2Forward"] = {"xlabel":"Sub-Leading Jet PUID Discriminator (#eta_{jet}>2.4)","xlimits":[-5.,5.],"rebin":2}#,"ylimits":[0.0,50]}
+    histNames["puJetIDSimpleJet1"] = {"xlabel":"Leading Jet PUID","xlimits":[-5.,5.]}#,"ylimits":[0.0,50]}
+    histNames["puJetIDSimpleJet2"] = {"xlabel":"Sub-Leading Jet PUID","xlimits":[-5.,5.]}#,"ylimits":[0.0,50]}
   else:
     print "Using other settings"
     #histNames["mDiMu"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,149.99],"rebin":2,'ylimits':[0.1,1e4]}

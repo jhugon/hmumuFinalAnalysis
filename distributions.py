@@ -7,7 +7,7 @@ import os
 
 dataDir = "input/freezeSample110to150/"
 caption1= "110 GeV < m_{#mu#mu} < 150 GeV"
-dataDir = "input/preApproveSample/"
+dataDir = "input/jets20/"
 caption1= ""
 outDir = "output/"
 
