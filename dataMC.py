@@ -7,7 +7,7 @@ import os
 import sys
 
 #dataDir = "input/separateSamplesTrainOnlyVBFLarge110to150/"
-dataDir = "input/jets20/"
+dataDir = "input/110to150/"
 #dataDir = "input/jets20f25/"
 #dataDir = "input/separateSamplesTrainOnlyVBFLargeBDTG110to150/"
 outDir = "output/"
@@ -52,7 +52,6 @@ histDirs = ["VBFPreselDiMuPtL20/","IncPreselDiMuPtL20/"]
 #histDirs = ["VBFBDTCut/"]
 #histDirs = ["VBFBDTCut/"]
 histDirs = [""]
-histDirs = ["VBFMJJG550/"]
 
 root.gErrorIgnoreLevel = root.kWarning
 

@@ -1698,12 +1698,53 @@ class EfficiencyReader:
         graph.Draw("ape")
         canvas.SaveAs(fileNameOut)
         
+def treeCut(category,cutString,eventWeights=True,muonRequirements=True):
+  result = cutString
+  if len(result)==0:
+    result = "1"
+  if len(category) > 0:
+    mask = 0
+    if "VBF" in category and "Presel" in category:
+        result += " && ((1 & eventType) > 0)"
+    if "VBF" in category and "BDT" in category:
+        result += " && ((2 & eventType) > 0)"
+    if "Inc" in category and "Presel" in category:
+        result += " && ((4 & eventType) > 0)"
+    if "Inc" in category and "BDT" in category:
+        result += " && ((8 & eventType) > 0)"
+    if "NotBB" in category:
+        result += " && ((1024 & eventType) > 0)"
+    elif "BB" in category:
+        result += " && ((16 & eventType) > 0)"
+    if "BO" in category:
+        result += " && ((32 & eventType) > 0)"
+    if "BE" in category:
+        result += " && ((64 & eventType) > 0)"
+    if "OO" in category:
+        result += " && ((128 & eventType) > 0)"
+    if "OE" in category:
+        result += " && ((256 & eventType) > 0)"
+    if "EE" in category:
+        result += " && ((512 & eventType) > 0)"
+
+  if muonRequirements:
+    result += " && muonLead_passPFRelIso && muonSub_passPFRelIso && (muonLead_isHltMatched || muonSub_isHltMatched)"
+  if eventWeights:
+    result = "("+result+")*puWeight"
+  return result
 
 if __name__ == "__main__":
 
+  """
   root.gROOT.SetBatch(True)
   print("Running helpers.py")
   eff = EfficiencyReader()
   print eff
   eff.plot("output/eff_")
+  """
+  print treeCut("","dimuonPt>10.")
+  print treeCut("VBFPresel","dimuonPt>10.")
+  print treeCut("VBFBDTCut","dimuonPt>10.")
+  print treeCut("IncPresel","dimuonPt>10.")
+  print treeCut("IncBDTCutBB","dimuonPt>10.")
   
