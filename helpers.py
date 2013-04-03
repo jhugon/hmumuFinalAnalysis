@@ -718,12 +718,6 @@ class DataMCStack:
       histForAxis = root.TH2F(dataHist.GetName()+"ForAxis","",1,xlimits[0],xlimits[1],1,0.1,ymax*2.0)
     else:
       histForAxis = root.TH2F(dataHist.GetName()+"ForAxis","",1,xlimits[0],xlimits[1],1,0.0,ymax*1.05)
-    histForAxis.GetXaxis().SetTitle("")
-    histForAxis.GetXaxis().SetLabelSize(0)
-    histForAxis.GetYaxis().SetTitle(ytitle)
-    histForAxis.GetYaxis().SetLabelSize(0.050)
-    histForAxis.GetYaxis().SetTitleSize(0.055)
-    histForAxis.GetXaxis().SetNdivisions(nDivX)
     self.histForAxis = histForAxis
     self.histForAxis.Draw()
     self.mcSumHist.Draw("e1same")
@@ -731,6 +725,14 @@ class DataMCStack:
     if len(self.ylimits)!=2:
       setYLimitsAuto(yMaxXRanges,yMaxVals,self.ymax)
     self.histForAxis.Draw()
+    self.histForAxis.GetXaxis().SetTitle("")
+    self.histForAxis.GetXaxis().SetLabelSize(0)
+    self.histForAxis.GetYaxis().SetTitle(ytitle)
+    self.histForAxis.GetYaxis().SetLabelSize(0.050)
+    self.histForAxis.GetYaxis().SetTitleSize(0.055)
+    self.histForAxis.GetXaxis().SetNdivisions(nDivX)
+    self.histForAxis.GetXaxis().SetTitleColor(0)
+    self.histForAxis.GetXaxis().SetLabelColor(0)
     if drawStack:
       self.stack.Draw("hist same")
       if doMCErrors:
