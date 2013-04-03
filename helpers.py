@@ -6,10 +6,12 @@ import re
 import csv
 import glob
 from math import sqrt
+from math import log10
 import math
 import numpy
 import array
 import sys
+import time
 #import matplotlib.pyplot as mpl
 
 #PRELIMINARYSTRING="CMS Internal"
@@ -537,8 +539,11 @@ def makeWeightHist(f1,canvas,leg):
   leg.Draw("same")
 
 class DataMCStack:
-  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",ylimits=[],ylimitsRatio=[],pullType="",doMCErrors=False,showPullStats=False):
+  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",ylimits=[],ylimitsRatio=[],pullType="",doMCErrors=False,showPullStats=False,yMaxVals=[],yMaxXRanges=[]):
     nBinsX = dataHist.GetNbinsX()
+    self.xlimits = xlimits
+    self.ylimits = ylimits
+    self.logy = logy
     self.nBinsX = nBinsX
     self.dataHist = dataHist
     self.canvas = canvas
@@ -547,8 +552,9 @@ class DataMCStack:
     self.tlatex.SetTextFont(root.gStyle.GetLabelFont())
     self.tlatex.SetTextSize(0.05)
     self.tlatex.SetTextAlign(22)
+    setYLimitsAuto = getattr(self,"setYLimitsAuto")
     if ytitle=="":
-      ytitle="Events/{0}".format(getBinWidthStr(dataHist))
+      ytitle="Events/%s" % (getBinWidthStr(dataHist))
     for mcHist in mcHistList:
       #print("nBinsX data: %i, mc: %i" % (nBinsX,mcHist.GetNbinsX()))
       assert(nBinsX == mcHist.GetNbinsX())
@@ -668,6 +674,10 @@ class DataMCStack:
   
     #Setup Canvas
     canvas.cd()
+    self.pad1Top = 0.98
+    self.pad1Bot = 0.30
+    self.pad1Right = 0.98
+    self.pad1Left = 0.02
     pad1 = root.TPad("pad1"+dataHist.GetName(),"",0.02,0.30,0.98,0.98,0)
     pad2 = root.TPad("pad2"+dataHist.GetName(),"",0.02,0.01,0.98,0.29,0)
     self.pad1 = pad1
@@ -701,29 +711,28 @@ class DataMCStack:
     pad1.cd();
     xAxis = None
     yAxis = None
+    histForAxis = None
+    if len(self.ylimits)==2:
+      histForAxis = root.TH2F(dataHist.GetName()+"ForAxis","",1,xlimits[0],xlimits[1],1,self.ylimits[0],self.ylimits[1])
+    elif self.logy:
+      histForAxis = root.TH2F(dataHist.GetName()+"ForAxis","",1,xlimits[0],xlimits[1],1,0.1,ymax*2.0)
+    else:
+      histForAxis = root.TH2F(dataHist.GetName()+"ForAxis","",1,xlimits[0],xlimits[1],1,0.0,ymax*1.05)
+    histForAxis.GetXaxis().SetTitle("")
+    histForAxis.GetXaxis().SetLabelSize(0)
+    histForAxis.GetYaxis().SetTitle(ytitle)
+    histForAxis.GetYaxis().SetLabelSize(0.050)
+    histForAxis.GetYaxis().SetTitleSize(0.055)
+    histForAxis.GetXaxis().SetNdivisions(nDivX)
+    self.histForAxis = histForAxis
+    self.histForAxis.Draw()
+    self.mcSumHist.Draw("e1same")
+    #self.canvas.SaveAs("debug.png")
+    if len(self.ylimits)!=2:
+      setYLimitsAuto(yMaxXRanges,yMaxVals,self.ymax)
+    self.histForAxis.Draw()
     if drawStack:
-      self.stack.Draw("hist")
-      if xlimits != []:
-        self.stack.GetXaxis().SetRangeUser(*xlimits)
-      self.stack.GetXaxis().SetTitle("")
-      self.stack.GetXaxis().SetLabelSize(0)
-      self.stack.GetYaxis().SetTitle(ytitle)
-      self.stack.GetYaxis().SetLabelSize(0.050)
-      self.stack.GetYaxis().SetTitleSize(0.055)
-      self.stack.GetXaxis().SetNdivisions(nDivX)
-      self.stack.SetMaximum(ymax*1.00)
-      if logy:
-        self.stack.SetMinimum(0.1)
-        if len(ylimits) == 2:
-          self.stack.SetMaximum(ylimits[1]*0.47)
-          self.stack.SetMinimum(ylimits[0])
-          if logy and ylimits[0]==0.0:
-            self.stack.SetMinimum(0.1)
-      else:
-        if len(ylimits) == 2:
-          self.stack.SetMaximum(ylimits[1]*0.95)
-          self.stack.SetMinimum(ylimits[0])
-      self.stack.Draw("hist")
+      self.stack.Draw("hist same")
       if doMCErrors:
         self.mcSumHist.Draw("e2same")
       pad1.Update()
@@ -732,21 +741,6 @@ class DataMCStack:
       self.mcSumHist.SetLineColor(856)
       self.mcSumHist.SetMarkerColor(856)
       self.mcSumHist.SetFillStyle(1001)
-      self.mcSumHist.SetTitle("")
-      self.mcSumHist.GetXaxis().SetTitle("")
-      self.mcSumHist.GetXaxis().SetLabelSize(0)
-      self.mcSumHist.GetYaxis().SetTitle(ytitle)
-      self.mcSumHist.GetYaxis().SetLabelSize(0.050)
-      self.mcSumHist.GetYaxis().SetTitleSize(0.055)
-      self.mcSumHist.GetXaxis().SetNdivisions(nDivX)
-      if logy:
-        self.mcSumHist.GetYaxis().SetRangeUser(1.0,ymax*1.04)
-      else:
-        self.mcSumHist.GetYaxis().SetRangeUser(0.0,ymax*1.04)
-      if xlimits != []:
-        self.mcSumHist.GetXaxis().SetRangeUser(*xlimits)
-      if len(ylimits) == 2:
-        self.stack.GetYaxis().SetRangeUser(*ylimits)
       self.mcSumHist.Draw("histo b")
     for sigHist in signalsNoStack:
       sigHist.Draw("histo same")
@@ -801,8 +795,8 @@ class DataMCStack:
       yToDraw = 0.41 #bottom
       yToDraw = 0.92 #top
       #self.problatex.DrawLatex(0.18,yToDraw,"KS Prob: {0:.3g}".format(self.KSProb))
-      self.problatex.DrawLatex(0.18,yToDraw,"#chi^{{2}}/NDF: {0:.3g}".format(self.normchi2))
-      self.problatex.DrawLatex(0.18,yToDraw-0.08,"#chi^{{2}}  Prob: {0:.3g}".format(self.chi2Prob))
+      self.problatex.DrawLatex(0.18,yToDraw,"#chi^{2}/NDF: %.3g" % (self.normchi2))
+      self.problatex.DrawLatex(0.18,yToDraw-0.08,"#chi^{2}  Prob: %.3g" % (self.chi2Prob))
 
     pad2.Update()
     pad2.GetFrame().DrawClone()
@@ -810,7 +804,7 @@ class DataMCStack:
   
     canvas.cd()
     self.tlatex.DrawLatex(0.33,0.96,PRELIMINARYSTRING)
-    self.tlatex.DrawLatex(0.75,0.96,"#sqrt{{s}}={0}, L={1:.1f} fb^{{-1}}".format(energyStr,lumi))
+    self.tlatex.DrawLatex(0.75,0.96,"#sqrt{s}=%s, L=%.1f fb^{-1}" % (energyStr,lumi))
 
   def getPullDistributionParams(self,pullList):
     pull = root.RooRealVar("pull","pull",-20,20)
@@ -824,8 +818,8 @@ class DataMCStack:
     self.pullFR = self.pullGaus.fitTo(self.pullDS,PRINTLEVEL)
     self.pullMean = mean
     self.pullSigma = sigma
-    meanStr = "<Pull> = {0:.2f} #pm {1:.2f}".format(mean.getVal(), mean.getError())
-    sigmaStr = "#sigma(Pull) = {0:.2f} #pm {1:.2f}".format(sigma.getVal(), sigma.getError())
+    meanStr = "<Pull> = %.2f #pm %.2f" % (mean.getVal(), mean.getError())
+    sigmaStr = "#sigma(Pull) = %.2f #pm %.2f" % (sigma.getVal(), sigma.getError())
 
     frame = pull.frame(root.RooFit.Bins(20))
     self.pullDS.plotOn(frame)
@@ -833,6 +827,86 @@ class DataMCStack:
     frame.Draw()
     self.canvas.SaveAs("pullDist"+self.dataHist.GetName()+".png")
     return meanStr, sigmaStr
+
+  def getXNDC(self,x):
+    minX = self.pad1.GetX1()
+    maxX = self.pad1.GetX2()
+    result=(x-minX)/(maxX-minX)
+    return result
+  def getYNDC(self,y):
+    minY = self.pad1.GetY1()
+    maxY = self.pad1.GetY2()
+    result=(y-minY)/(maxY-minY)
+    return result
+  def getXUser(self,x):
+    minX = self.pad1.GetX1()
+    maxX = self.pad1.GetX2()
+    result=x*(maxX-minX)+minX
+    return result
+  def getYUser(self,y):
+    minY = self.pad1.GetY1()
+    maxY = self.pad1.GetY2()
+    result=y*(maxY-minY)+minY
+    #print "running getYUser with: %.2f" % y
+    #print "  minY: %.2f" % minY
+    #print "  maxY: %.2f" % maxY
+    #print "  result: %.2f" % result
+    return result
+  def setYLimitsAuto(self,rangesNDC,yNDCLimits,yMaxCurrent):
+    #self.canvas.SaveAs("before_"+str(int(time.time()*100))+".png")
+    #print("Running setYLimitsAuto...")
+    self.pad1.Update()
+    self.canvas.Update()
+    getXUser = getattr(self,"getXUser")
+    getYUser = getattr(self,"getYUser")
+    setYLimitsAuto = getattr(self,"setYLimitsAuto")
+    self.pad1.cd()
+    ranges = [[getXUser(i[0]),getXUser(i[1])] for i in rangesNDC]
+    yLimitsScaleFactor = 1.0
+    if self.logy:
+      yLimitsScaleFactor = 0.75
+    yLimits = [getYUser(i)*yLimitsScaleFactor for i in yNDCLimits]
+    maxPoints = []
+    xAxis = self.mcSumHist.GetXaxis()
+    #print("yMaxCurrent: %.2f " % (yMaxCurrent))
+    for r,yLim in zip(ranges,yLimits):
+      maxY = 0.0
+      for i in range(1,xAxis.GetNbins()+1):
+        if xAxis.GetBinUpEdge(i) >= r[0] and xAxis.GetBinLowEdge(i) <= r[1]:
+          y = self.mcSumHist.GetBinContent(i)
+          y += self.mcSumHist.GetBinError(i)
+          maxY = max(y,maxY)
+      maxPoints += [maxY]
+    rescale = 0.0
+    if self.logy:
+      newMaxPoints = []
+      for x in maxPoints:
+        if x>0.:
+          newMaxPoints += [log10(x)]
+        else:
+          newMaxPoints += [0.]
+      maxPoints = newMaxPoints
+    for yLim,maxY in zip(yLimits,maxPoints):
+      #print("yLim: %.2f maxY: %.2f" % (yLim, maxY))
+      if maxY > yLim:
+        rescaleTmp = (maxY/yLim)
+        if rescaleTmp > rescale:
+          rescale = rescaleTmp
+    if rescale == 0.0:
+        self.ymax = yMaxCurrent
+        return
+    if self.logy:
+      rescale = 10**rescale*5.
+    #print(rescale)
+    newYMax = yMaxCurrent*rescale*1.5
+    newYMin = 0.0
+    if self.logy:
+      newYMin = 0.1
+    self.histForAxis = root.TH2F(self.histForAxis.GetName()+"ForAxis","",1,self.xlimits[0],self.xlimits[1],1,newYMin,newYMax)
+    self.histForAxis.Draw("")
+    self.mcSumHist.Draw("e1 same")
+    #self.canvas.SaveAs("after_"+str(int(time.time()*100))+".png")
+    setYLimitsAuto(rangesNDC,yNDCLimits,newYMax)
 
 class CompareTwoHists:
   def __init__(self, hist1,hist2, canvas, xtitle, ytitle="Events",nDivX=7,nDivPullY=5,xlimits=[],ylimits=[],pullHistRangeY=[0.0,2.0],isPreliminary=True,is7TeV=False,lumi=5.0):
@@ -1116,7 +1190,7 @@ class CompareTwoHistsAndData:
   
     canvas.cd()
     self.tlatex.DrawLatex(0.33,0.96,PRELIMINARYSTRING)
-    self.tlatex.DrawLatex(0.75,0.96,"#sqrt{{s}}={0}, L={1:.1f} fb^{{-1}}".format(energyStr,lumi))
+    self.tlatex.DrawLatex(0.75,0.96,"#sqrt{s}=%s, L=%.1f fb^{-1}" % (energyStr,lumi))
 
 def makeBootstrapHist(hist,outHist,entries=None):
  outHist.Reset()
@@ -1547,7 +1621,7 @@ def readCSVXS(filename):
     prec = "0"
     if mass % 1 > 0:
         prec = '1'
-    result[("{0:."+prec+"f}").format(mass)] = [float(i) for i in row[1:]]
+    result[("%."+prec+"f") % (mass)] = [float(i) for i in row[1:]]
   f.close()
   return CrossSecsErrs(result)
 
@@ -1590,7 +1664,7 @@ def getBinWidthStr(hist):
       binWidthPrec = "1"
       if binWidth*10 % 1 > 0.0:
         binWidthPrec = "2"
-    return ("{0:."+binWidthPrec+"f}").format(binWidth)
+    return ("%."+binWidthPrec+"f") % (binWidth)
 
 def getEfficiencyInterval(passed,total):
   eff = root.TEfficiency()
@@ -1609,7 +1683,7 @@ class EfficiencyReader:
     for ifn in glob.glob(fileDir+"*.txt"):
       fmatch = re.match(r".*/Eff(.+)_(.+)Higgs([0-9.]+).txt",ifn)
       if not fmatch:
-        print("Warning: EfficiencyReader: filename: {0} isn't recognized".format(ifn))
+        print("Warning: EfficiencyReader: filename: %s isn't recognized" % (ifn))
         continue
       energy = fmatch.group(1)
       prodMode = fmatch.group(2)
@@ -1622,7 +1696,7 @@ class EfficiencyReader:
       for iline in f:
         lmatch = re.match(r"([\w]+)[\s]+([\d.]+)[\s]+([\d.]+)",iline)
         if not fmatch:
-          print("Warning: EfficiencyReader: text line isn't recognized: \n{0}\n in file: {1}".format(iline,ifn))
+          print("Warning: EfficiencyReader: text line isn't recognized: \n%s\n in file: %s" % (iline,ifn))
           continue
         category = lmatch.group(1)
         efficiency = float(lmatch.group(2))
@@ -1648,15 +1722,15 @@ class EfficiencyReader:
     result = ""
     for energy in self.data:
      for mode in self.data[energy]:
-      result += "{0} {1}:\n".format(mode,energy)
+      result += "%s %s:\n" % (mode,energy)
       sortedCats = sorted(self.data[energy][mode].keys())
       for cat in sortedCats:
-        result += "  {0}:\n".format(cat)
+        result += "  %s:\n" %s (cat)
         sortedMasses = sorted(self.data[energy][mode][cat].keys())
         for mass in sortedMasses:
           eff = self.data[energy][mode][cat][mass]['eff']
           err = self.data[energy][mode][cat][mass]['effErr']
-          result += "    {0:5}:  {1:8.2%}  +/-  {2:8.2%}\n".format(mass,eff,err)
+          result += "    %5s:  %8.2f%%  +/-  %8.2f%%\n" % (mass,eff*100.,err*100.)
     return result
   def __repr__(self):
     return str(self)
@@ -1686,7 +1760,7 @@ class EfficiencyReader:
           if ymin > eff+err:
             ymin = eff+err
         setHistTitles(graph,"m_{H} [GeV/c^{2}]","Efficiency #times Acceptance")
-        graph.SetTitle("{0} {1} {2}:\n".format(mode,energy,cat))
+        graph.SetTitle("%s %s %s:\n" % (mode,energy,cat))
         graph.Draw("ape")
         ywidth = 1.0 * (ymax-ymin)
         ymax = ywidth+ymax

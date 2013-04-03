@@ -26,7 +26,7 @@ vbfHDict7 = helpers.readCSVXS("etc/vbfH_7TeV.csv")
 wHDict7 = helpers.readCSVXS("etc/wH_7TeV.csv")
 zHDict7 = helpers.readCSVXS("etc/zH_7TeV.csv")
 
-class CrossSections():
+class CrossSections:
   def __init__(self):
     self.data = {}
     self.br = helpers.readCSVXS("etc/br.csv")
@@ -60,7 +60,7 @@ class CrossSections():
       elif prodMode == "z":
         result = self.zh[energy][mass]
       else:
-        raise Exception("Higgs Production mode not recognized for: {0}".format(key))
+        raise Exception("Higgs Production mode not recognized for: " + key)
       return result*self.br[mass]
     else:
       return self.data[key]
@@ -310,7 +310,7 @@ class NuisanceMap:
       elif prodMode == "z":
         result = self.zh[energy].lnN[mass]
       else:
-        raise Exception("Higgs Production mode not recognized for: {0}".format(ds))
+        raise Exception("Higgs Production mode not recognized for: "+ds)
       return result
     if nu == "br_Hmm" and match:
       return self.br.lnN[match.group(2)]
