@@ -199,7 +199,7 @@ legendEntries["DYToMuMu"] = "DY->#mu#mu"
 legendEntries["WJetsToLNu"] = "W\rightarrow\ell\nu+Jets"
 legendEntries["ttbar"] = "t#bar{t}"
 legendEntries["vbfHmumu125"] = "VBF H->#mu#mu"
-legendEntries["ggHmumu125"] = "ggH->#mu#mu"
+legendEntries["ggHmumu125"] = "gg->H->#mu#mu"
 legendEntries["vbfHmumu125ChangeEvents"] = "New VBF H->#mu#mu"
 legendEntries["ggHmumu125ChangeEvents"] = "New ggH->#mu#mu"
 legendEntries["zHmumu125"] = "ZH, H->#mu#mu"
@@ -247,6 +247,19 @@ mcPlotScaleFactorMap = {}
 mcPlotScaleFactorMap["7TeV"] = 1.0 #IncPresel
 mcPlotScaleFactorMap["8TeV"] = 1.03 #IncPresel
 mcPlotScaleFactorMap["14TeV"] = 1.0
+
+# MEKD Normalization Factors
+MENormDict = {}
+MENormDict['7TeV'] = {}
+MENormDict['8TeV'] = {}
+MENormDict['7TeV']['sigME'] = 2104
+MENormDict['7TeV']['bakME'] = 41.72
+MENormDict['7TeV']['sigMEPdf'] = 0.0143
+MENormDict['7TeV']['bakMEPdf'] = 0.01406
+MENormDict['8TeV']['sigME'] = 2104
+MENormDict['8TeV']['bakME'] = 41.62
+MENormDict['8TeV']['sigMEPdf'] = 0.008808
+MENormDict['8TeV']['bakMEPdf'] = 0.009364
 
 class NuisanceMap:
   def __init__(self):

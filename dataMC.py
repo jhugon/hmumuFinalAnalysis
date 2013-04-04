@@ -5,7 +5,6 @@ from helpers import *
 import ROOT as root
 import os
 import sys
-import random
 
 #dataDir = "input/separateSamplesTrainOnlyVBFLarge110to150/"
 dataDir = "input/lowPtCuts/"
@@ -58,6 +57,7 @@ histDirs = [""]
 CUTS="dimuonMass < 150. && dimuonMass > 110."
 
 root.gErrorIgnoreLevel = root.kWarning
+GLOBALCOUNTER=0
 
 histNames = {}
 if True:
@@ -141,17 +141,23 @@ class Dataset:
     return self.rootFile.IsZombie()
 
   def loadHistos(self,names,prefix=""):
+    global GLOBALCOUNTER
     for name in names:
       #print("In datasetName: %, loading histogram: %" % (self.datasetName,name))
       tmpHistInfo = histNames[name]
       xlimits = tmpHistInfo["xlimits"]
       nbins = tmpHistInfo["nbins"]
-      tmpHistName = name+str(random.randint(0,1000))
+      tmpHistName = name+str(GLOBALCOUNTER)
+      GLOBALCOUNTER += 1
       varToDraw = name
       if name == "KD":
-        varToDraw = "sigME/(bakME+sigME)"
+        sigNorm = MENormDict[RUNPERIOD]["sigME"]
+        bakNorm = MENormDict[RUNPERIOD]["bakME"]
+        varToDraw = "sigME*%f/(bakME*%f+sigME*%f)" % (sigNorm,bakNorm,sigNorm)
       if name == "KDPdf":
-        varToDraw = "sigMEPdf/(bakMEPdf+sigMEPdf)"
+        sigNorm = MENormDict[RUNPERIOD]["sigMEPdf"]
+        bakNorm = MENormDict[RUNPERIOD]["bakMEPdf"]
+        varToDraw = "sigMEPdf*%f/(bakMEPdf*%f+sigMEPdf*%f)" %(sigNorm,bakNorm,sigNorm)
       drawStr = varToDraw+" >> "+tmpHistName+"("+str(nbins)+","+str(xlimits[0])+","+str(xlimits[1])+")"
       #print drawStr
       cutStr = treeCut(prefix,CUTS)
