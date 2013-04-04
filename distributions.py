@@ -10,6 +10,8 @@ caption1= "110 GeV < m_{#mu#mu} < 150 GeV"
 outDir = "output/"
 
 CUTS="dimuonMass < 150. && dimuonMass > 110."
+CUTS += " && ((jetLead_pt > 25.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.4))"
+CUTS += " && ((jetSub_pt > 25.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.4))"
 
 RUNPERIOD="8TeV"
 LUMI=lumiDict[RUNPERIOD]
@@ -23,16 +25,16 @@ LEGDRAWSTRING="l"
 histDirs = [""]
 
 backgroundList = [
-"DYJetsToLL"#,
-#"ttbar"
+"DYJetsToLL",
+"ttbar"
 ]
 
 signalList = [
-"ggHmumu125"#,
-#"vbfHmumu125"
+"ggHmumu125",
+"vbfHmumu125"
 ]
 
-colors["DYJetsToLL"] = root.kBlue
+#colors["DYJetsToLL"] = root.kBlue
 
 urLegendPos = [0.68,0.65,0.88,0.88]
 lcLegendPos = [0.45,0.25,0.65,0.48]
@@ -61,6 +63,11 @@ if True:
     histNames["jetSub_eta"] = {"xlabel":"Sub-Leading Jet #eta","xlimits":[-5,5],"nbins":20}#,"ylimits":[0.1,3e6]}
     histNames["jetLead_PUIDDisc"] = {"xlabel":"Leading Jet PUID","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
     histNames["jetSub_PUIDDisc"] = {"xlabel":"Sub-Leading Jet PUID","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
+    histNames["jetLead_PUIDDisc_Forward"] = {"xlabel":"Leading Jet PUID (|#eta|>2.4)","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
+    histNames["jetSub_PUIDDisc_Forward"] = {"xlabel":"Sub-Leading Jet PUID (|#eta|>2.4)","xlimits":[-1,1],"nbins":20,"leg":urLegendPos}#,"ylimits":[0.1,3e6]}
+
+    histNames["jetLead_PUIDDisc_Central"] = {"xlabel":"Leading Jet PUID (|#eta|<2.4)","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
+    histNames["jetSub_PUIDDisc_Central"] = {"xlabel":"Sub-Leading Jet PUID (|#eta|<2.4)","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
 
     histNames["KD"] = {"xlabel":"MEKD","xlimits":[0.0,1.0],"nbins":20,'leg':ulLegendPos}#,"ylimits":[0.1,3e6]}
     histNames["KDPdf"] = {"xlabel":"MEKD","xlimits":[0.0,1.0],"nbins":20,'leg':ulLegendPos}#,"ylimits":[0.1,3e6]}
@@ -117,9 +124,22 @@ class Dataset:
       tmpHistName = name+str(GLOBALCOUNTER)
       GLOBALCOUNTER += 1
       varToDraw = name
+      tmpCUTS = CUTS
       if "Norm" in name:
         varToDraw = varToDraw.replace("Norm","")
         varToDraw += " * "+str(MENormDict[RUNPERIOD][varToDraw])
+      if "_Forward" in name:
+        varToDraw = varToDraw.replace("_Forward","")
+        if "jetLead" in varToDraw:
+          tmpCUTS += " && abs(jetLead_eta) > 2.4"
+        elif "jetSub" in varToDraw:
+          tmpCUTS += " && abs(jetSub_eta) > 2.4"
+      if "_Central" in name:
+        varToDraw = varToDraw.replace("_Central","")
+        if "jetLead" in varToDraw:
+          tmpCUTS += " && abs(jetLead_eta) < 2.4"
+        elif "jetSub" in varToDraw:
+          tmpCUTS += " && abs(jetSub_eta) < 2.4"
       if name == "KD":
         sigNorm = MENormDict[RUNPERIOD]["sigME"]
         bakNorm = MENormDict[RUNPERIOD]["bakME"]
@@ -130,12 +150,12 @@ class Dataset:
         varToDraw = "sigMEPdf*%f/(bakMEPdf*%f+sigMEPdf*%f)" %(sigNorm,bakNorm,sigNorm)
       drawStr = varToDraw+" >> "+tmpHistName+"("+str(nbins)+","+str(xlimits[0])+","+str(xlimits[1])+")"
       #print drawStr
-      cutStr = treeCut(prefix,CUTS)
+      cutStr = treeCut(prefix,tmpCUTS)
       #print cutStr
       self.tree.Draw(drawStr,cutStr)
       tmp = root.gDirectory.Get(tmpHistName)
       if type(tmp) != root.TH1F:
-        print("Warning: In datasetName: {0}, loading histogram: {1}: Object type is not TH1F!!".format(self.datasetName,prefix+name))
+        print("Warning: In datasetName: %s, loading histogram: %s: Object type is not TH1F!!" % (self.datasetName,prefix+name))
         continue
       tmp.UseCurrentStyle()
       if histNames[name].has_key("rebin"):
@@ -298,9 +318,13 @@ for histName in bkgDatasetList[0].hists:
   tlatex.SetTextAlign(12)
   tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
   tlatex.SetTextAlign(32)
-  tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,"#sqrt{{s}}={0}".format(RUNPERIOD))
-  tlatex.SetTextAlign(13)
-  tlatex.DrawLatex(gStyle.GetPadLeftMargin()+0.03,1.0-gStyle.GetPadTopMargin()-0.04,caption1)
+  tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,"#sqrt{s}=%s" % (RUNPERIOD))
+  if histNames[histBaseName].has_key("leg") and histNames[histBaseName]["leg"] == ulLegendPos:
+    tlatex.SetTextAlign(33)
+    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin()-0.03,1.0-gStyle.GetPadTopMargin()-0.04,caption1)
+  else:
+    tlatex.SetTextAlign(13)
+    tlatex.DrawLatex(gStyle.GetPadLeftMargin()+0.03,1.0-gStyle.GetPadTopMargin()-0.04,caption1)
 
   saveName = histName.replace("(","")
   saveName = saveName.replace(")","")
