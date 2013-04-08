@@ -1727,7 +1727,7 @@ class EfficiencyReader:
       result += "%s %s:\n" % (mode,energy)
       sortedCats = sorted(self.data[energy][mode].keys())
       for cat in sortedCats:
-        result += "  %s:\n" %s (cat)
+        result += "  %s:\n" % (cat)
         sortedMasses = sorted(self.data[energy][mode][cat].keys())
         for mass in sortedMasses:
           eff = self.data[energy][mode][cat][mass]['eff']
@@ -1811,16 +1811,9 @@ def treeCut(category,cutString,eventWeights=True,muonRequirements=True):
 
 if __name__ == "__main__":
 
-  """
   root.gROOT.SetBatch(True)
   print("Running helpers.py")
   eff = EfficiencyReader()
   print eff
   eff.plot("output/eff_")
-  """
-  print treeCut("","dimuonPt>10.")
-  print treeCut("VBFPresel","dimuonPt>10.")
-  print treeCut("VBFBDTCut","dimuonPt>10.")
-  print treeCut("IncPresel","dimuonPt>10.")
-  print treeCut("IncBDTCutBB","dimuonPt>10.")
   
