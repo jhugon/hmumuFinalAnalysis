@@ -623,7 +623,7 @@ class ShapePlotter:
         diffs = []
         x = root.Double()
         y = root.Double()
-        for i in range(graph.GetN()):
+        for i in range(graph.GetN()-1):
           graph.GetPoint(i,x,y)
           x1 = float(x)
           graph.GetPoint(i+1,x,y)
