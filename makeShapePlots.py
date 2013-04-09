@@ -623,7 +623,7 @@ class ShapePlotter:
         diffs = []
         x = root.Double()
         y = root.Double()
-        for i in range(graph.GetN()-1):
+        for i in range(graph.GetN()):
           graph.GetPoint(i,x,y)
           x1 = float(x)
           graph.GetPoint(i+1,x,y)
@@ -635,7 +635,7 @@ class ShapePlotter:
       def getHistFromGraph(graph,hist):
         x = root.Double()
         y = root.Double()
-        for i in range(graph.GetN()-1):
+        for i in range(graph.GetN()):
           graph.GetPoint(i,x,y)
           yErr = graph.GetErrorYhigh(i)
           iBin = hist.GetXaxis().FindBin(x)
@@ -1063,7 +1063,7 @@ class ShapePlotter:
     return result, bestFitSigStrength
 
   def addSigBakPDFGraph(self,sigGraph,backGraph):
-    return result
+    return None
 
 titleMap = {
   "AllCat":"All Categories Comb.",
