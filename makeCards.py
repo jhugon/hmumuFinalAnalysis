@@ -627,6 +627,7 @@ class Analysis:
     self.weightName = "puWeight"
     self.fileList = []
     self.treeList = []
+    self.origHistList = []
     self.binSize = 0.5
     
     higgsPeakMean = args.higgsMass - 0.3
@@ -956,8 +957,8 @@ class Analysis:
     tmpTree = tmpF.Get(self.treename)
     tmpTree.SetCacheSize(10000000);
     tmpTree.AddBranchToCache("*");
-    self.treeList.append(tmpTree)
-    self.fileList.append(tmpF)
+    #self.treeList.append(tmpTree)
+    #self.fileList.append(tmpF)
     minMass = self.minMass
     maxMass = self.maxMass
     mMuMu = self.mMuMu
@@ -980,6 +981,7 @@ class Analysis:
       tmpHist = root.TH1F(histName,"",nBins,minMass,maxMass)
       drawString = "dimuonMass >> {0}".format(histName)
       tmpTree.Draw(drawString,self.fullCutString)
+      self.origHistList.append(tmpHist)
       tmpH = root.RooDataHist(name,name,root.RooArgList(mMuMu),tmpHist)
       return tmpH
 
