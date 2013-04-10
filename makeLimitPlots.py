@@ -367,7 +367,7 @@ if __name__ == "__main__":
     maxLen = max(fLens)+1
     maxLen = str(maxLen)
     print(("\n\n{0:"+maxLen+"}  {1:>4}  {2:>4}  {3:>4} {4:>4} {5:>4} {6:>4}").format("file","obs","exp","-1s","+1s","-2s","+2s"))
-    for f in allfiles:
+    for f in sorted(allfiles):
       data =  getData(f)[0]
       data = [float(x) for x in data]
       f = re.sub(".*/","",f)

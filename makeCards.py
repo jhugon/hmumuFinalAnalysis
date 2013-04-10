@@ -147,14 +147,14 @@ def makePDFBakExpLog(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,mMu
     #if workspaceImportFn != None:
     #  workspaceImportFn(rooDataset2)
 
-    ## Debug Time
-    frame = mMuMu.frame()
-    frame.SetName("bak_Plot")
-    rooDataset.plotOn(frame)
-    pdfMmumu.plotOn(frame)
-    canvas = root.TCanvas()
-    frame.Draw()
-    canvas.SaveAs("debug_"+name+channelName+".png")
+#    ## Debug Time
+#    frame = mMuMu.frame()
+#    frame.SetName("bak_Plot")
+#    rooDataset.plotOn(frame)
+#    pdfMmumu.plotOn(frame)
+#    canvas = root.TCanvas()
+#    frame.Draw()
+#    canvas.SaveAs("debug_"+name+channelName+".png")
 
     for i in rooParamList:
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
@@ -210,14 +210,14 @@ def makePDFBakExpMOverSq(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn
     #if workspaceImportFn != None:
     #  workspaceImportFn(rooDataset2)
 
-    ## Debug Time
-    frame = mMuMu.frame()
-    frame.SetName("bak_Plot")
-    rooDataset.plotOn(frame)
-    pdfMmumu.plotOn(frame)
-    canvas = root.TCanvas()
-    frame.Draw()
-    canvas.SaveAs("debug_"+name+channelName+".png")
+#    ## Debug Time
+#    frame = mMuMu.frame()
+#    frame.SetName("bak_Plot")
+#    rooDataset.plotOn(frame)
+#    pdfMmumu.plotOn(frame)
+#    canvas = root.TCanvas()
+#    frame.Draw()
+#    canvas.SaveAs("debug_"+name+channelName+".png")
 
     for i in rooParamList:
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
@@ -271,14 +271,14 @@ def makePDFBakMOverSq(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,mM
     #if workspaceImportFn != None:
     #  workspaceImportFn(rooDataset2)
 
-    ## Debug Time
-    frame = mMuMu.frame()
-    frame.SetName("bak_Plot")
-    rooDataset.plotOn(frame)
-    pdfMmumu.plotOn(frame)
-    canvas = root.TCanvas()
-    frame.Draw()
-    canvas.SaveAs("debug_"+name+channelName+".png")
+#    ## Debug Time
+#    frame = mMuMu.frame()
+#    frame.SetName("bak_Plot")
+#    rooDataset.plotOn(frame)
+#    pdfMmumu.plotOn(frame)
+#    canvas = root.TCanvas()
+#    frame.Draw()
+#    canvas.SaveAs("debug_"+name+channelName+".png")
 
     for i in rooParamList:
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
@@ -369,14 +369,14 @@ def makePDFBakOld(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,mMuMuZ
     #if workspaceImportFn != None:
     #  workspaceImportFn(rooDataset2)
 
-    ## Debug Time
-    frame = mMuMu.frame()
-    frame.SetName("bak_Plot")
-    rooDataset.plotOn(frame)
-    pdfMmumu.plotOn(frame)
-    canvas = root.TCanvas()
-    frame.Draw()
-    canvas.SaveAs("debug_"+name+channelName+".png")
+#    ## Debug Time
+#    frame = mMuMu.frame()
+#    frame.SetName("bak_Plot")
+#    rooDataset.plotOn(frame)
+#    pdfMmumu.plotOn(frame)
+#    canvas = root.TCanvas()
+#    frame.Draw()
+#    canvas.SaveAs("debug_"+name+channelName+".png")
 
     for i in rooParamList:
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
