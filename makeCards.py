@@ -37,7 +37,7 @@ from signalfits import getRooFitSignalPars as sigFits
 #from signalfitsNoMuScle import getRooFitSignalPars as sigFits
 effReader = EfficiencyReader()
 
-NPROCS = 2
+NPROCS = 4
 
 #Scaling Parameter for Bak norm uncertainty
 BAKUNC = 1.0
@@ -1593,7 +1593,7 @@ if __name__ == "__main__":
 
     time.sleep(0.1)
 
-  simpleScripts = False
+  simpleScripts = True
 
   if simpleScripts:
     shutil.copy("etc/notlxbatch_simple.sh",outDir+"notlxbatch.sh")
