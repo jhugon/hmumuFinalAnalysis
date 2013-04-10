@@ -37,7 +37,7 @@ from signalfits import getRooFitSignalPars as sigFits
 #from signalfitsNoMuScle import getRooFitSignalPars as sigFits
 effReader = EfficiencyReader()
 
-NPROCS = 1
+NPROCS = 2
 
 #Scaling Parameter for Bak norm uncertainty
 BAKUNC = 1.0
@@ -1322,9 +1322,9 @@ if __name__ == "__main__":
   root.gROOT.SetBatch(True)
 
   directory = "input/lowPtCuts/"
+  directory = "input/V00-01-10/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
@@ -1341,18 +1341,15 @@ if __name__ == "__main__":
         tmpList.append(a+c)
   analyses += tmpList
   analyses = ["VBFBDTCut"]
-  analyses += ["IncPreselBB"]
-  #analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
+  analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
   combinations = []
   combinationsLong = []
-  """
   combinations.append((
         ["IncPreselPtG10"+x for x in categoriesInc],"IncPreselCat"
   ))
   combinations.append((
         ["VBFBDTCut"]+["IncPreselPtG10"+x for x in categoriesInc],"BDTCutCatVBFBDTOnly"
   ))
-  """
 #  combinations.append((
 #        ["VBFPresel"]+["IncPreselPtG10"],"BDTCutVBFBDTOnly"
 #  ))

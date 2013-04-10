@@ -1802,6 +1802,14 @@ def treeCut(category,cutString,eventWeights=True,muonRequirements=True):
         result += " && ((256 & eventType) > 0)"
     if "EE" in category:
         result += " && ((512 & eventType) > 0)"
+    if "PtG10" in category:
+        result += " && (dimuonPt > 10.)"
+    if "PtG20" in category:
+        result += " && (dimuonPt > 20.)"
+    if "PtL10" in category:
+        result += " && (dimuonPt <= 10.)"
+    if "PtL20" in category:
+        result += " && (dimuonPt <= 20.)"
 
   if muonRequirements:
     result += " && muonLead_passPFRelIso && muonSub_passPFRelIso && (muonLead_isHltMatched || muonSub_isHltMatched)"

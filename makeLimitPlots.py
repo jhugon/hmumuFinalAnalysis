@@ -6,6 +6,7 @@ parser.add_option("--bdtCut", help="Makes plots v. BDT Cut Instead of Luminosity
 parser.add_option("-m","--higgsMass", help="Makes plots v. Higgs Mass",action="store_true",default=False)
 parser.add_option("--signalInject", help="Sets a caption saying that signal was injected with strength",type=float,default=0.0)
 parser.add_option("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
+parser.add_option("-p","--printLimits", help="Just Print The Limits",action="store_true",default=False)
 args, fakeargs = parser.parse_args()
 
 from helpers import *
@@ -358,6 +359,22 @@ if __name__ == "__main__":
   ylimits=[0.1,60.0]
 
   lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":lumiDict["8TeV"],"7P8TeV":lumiDict["8TeV"]+lumiDict["7TeV"]}
+
+  if args.printLimits:
+    fnToGlob = dirName+"*_*TeV_*.txt.out"
+    allfiles = glob.glob(fnToGlob)
+    fLens = [len(re.sub(".*/","",f)) for f in allfiles]
+    maxLen = max(fLens)+1
+    maxLen = str(maxLen)
+    print(("\n\n{0:"+maxLen+"}  {1:>4}  {2:>4}  {3:>4} {4:>4} {5:>4} {6:>4}").format("file","obs","exp","-1s","+1s","-2s","+2s"))
+    for f in allfiles:
+      data =  getData(f)[0]
+      data = [float(x) for x in data]
+      f = re.sub(".*/","",f)
+      f += ":"
+      print(("{0:"+maxLen+"}  {1:4.1f}  {2:4.1f}  {3:4.1f} {4:4.1f} {5:4.1f} {6:4.1f}").format(f,data[1],data[4],data[3],data[5],data[2],data[6]))
+    print
+    sys.exit(0)
   
   for period in ["7TeV","8TeV","14TeV","7P8TeV"]:
     fnToGlob = dirName+"*_"+period+"_*.txt.out"
