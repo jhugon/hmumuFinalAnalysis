@@ -107,6 +107,8 @@ class Dataset:
     if filename != "":
       self.rootFile = root.TFile(filename)
       self.tree = self.rootFile.Get("outtree")
+      self.tree.SetCacheSize(10000000);
+      self.tree.AddBranchToCache("*");
     self.hists = {}
     self.datasetName = os.path.basename(filename)
     self.datasetName = self.datasetName.replace(".root","")
