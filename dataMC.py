@@ -15,7 +15,7 @@ outDir = "output/"
 RUNPERIOD="8TeV"
 LUMI=lumiDict[RUNPERIOD]
 
-scaleHiggsBy = 100.
+scaleHiggsBy = 1000.
 
 LOGY=False
 integralPlot=False
@@ -56,11 +56,35 @@ histDirs = [""]
 
 CUTS="dimuonMass < 150. && dimuonMass > 110."
 
+## New Jet Pt Cuts Justin-Special
+#CUTS += " && ((jetLead_pt > 25.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.4))"
+#CUTS += " && ((jetSub_pt > 25.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.4))"
+#CUTS += " && (abs(jetLead_eta) < 2.4 || jetLead_PUIDDisc > -0.5)"
+#CUTS += " && (abs(jetSub_eta) < 2.4 || jetSub_PUIDDisc > -0.5)"
+
 # New Jet Pt Cuts
-CUTS += " && ((jetLead_pt > 25.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.4))"
-CUTS += " && ((jetSub_pt > 25.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.4))"
-CUTS += " && (abs(jetLead_eta) < 2.4 || jetLead_PUIDDisc > -0.5)"
-CUTS += " && (abs(jetSub_eta) < 2.4 || jetSub_PUIDDisc > -0.5)"
+#CUTS += " && ((jetLead_pt > 25.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.4))"
+#CUTS += " && ((jetSub_pt > 25.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.4))"
+#CUTS += " && ((jetLead_pt > 30.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.4))"
+#CUTS += " && ((jetSub_pt > 30.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.4))"
+#CUTS += " && ((jetLead_pt > 25.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.6))"
+#CUTS += " && ((jetSub_pt > 25.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.6))"
+#CUTS += " && jetLead_pt > 30."
+#CUTS += " && jetSub_pt > 30."
+CUTS += " && jetLead_pt > 25."
+CUTS += " && jetSub_pt > 25."
+# New Jet Pt Cuts PUID Tight
+CUTS += " && (jetLead_FullPUIDFlag >= 7)"
+CUTS += " && (jetSub_FullPUIDFlag >= 7)"
+# New Jet Pt Cuts PUID Medium
+#CUTS += " && (abs(jetLead_eta) < 2.4 || jetLead_FullPUIDFlag >= 6)"
+#CUTS += " && (abs(jetSub_eta) < 2.4 || jetSub_FullPUIDFlag >= 6)"
+# New Jet Pt Cuts PUID Loose
+#CUTS += " && (abs(jetLead_eta) < 2.4 || jetLead_FullPUIDFlag >= 4)"
+#CUTS += " && (abs(jetSub_eta) < 2.4 || jetSub_FullPUIDFlag >= 4)"
+
+## Old Jet Pt Cuts
+#CUTS += " && jetLead_pt > 30. && jetSub_pt > 30."
 
 # VBF Cut Based 1
 #CUTS += " && deltaEtaJets > 3.5 && dijetMass > 550. && ptMiss < 100."
@@ -72,6 +96,7 @@ GLOBALCOUNTER=0
 
 histNames = {}
 if True:
+    """
     histNames["dimuonMass"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,150.],"nbins":40}#,"ylimits":[0.1,5e5]}
     histNames["dimuonPt"] = {"xlabel":"p_{T,#mu#mu} [GeV/c]","xlimits":[0.0,200.0],"nbins":20}#,"ylimits":[0.1,1e5]}
     histNames["dimuonY"] = {"xlabel":"y_{#mu#mu}","xlimits":[-2.2,2.2],"nbins":10}#,"ylimits":[0.1,3e6]}
@@ -80,6 +105,7 @@ if True:
     histNames["muonSub_pt"] = {"xlabel":"Sub-Leading Muon p_{T} [GeV/c]","xlimits":[25.,150.],"nbins":25}#,"ylimits":[0.1,3e6]}
     histNames["muonLead_eta"] = {"xlabel":"Leading Muon #eta","xlimits":[-2.1,2.1],"nbins":25}#,"ylimits":[0.1,3e6]}
     histNames["muonSub_eta"] = {"xlabel":"Sub-Leading Muon #eta","xlimits":[-2.1,2.1],"nbins":10}#,"ylimits":[0.1,3e6]}
+    """
 
     histNames["nJets"] = {"xlabel":"N_{jets}","xlimits":[-0.5,5.5],"nbins":6}#,"ylimits":[0.1,3e6]}
     histNames["ptMiss"] = {"xlabel":"Missing p_{T} [GeV/c]","xlimits":[0.0,300.0],"nbins":12}#,"ylimits":[0.1,3e6]}
@@ -93,6 +119,8 @@ if True:
     histNames["jetSub_pt"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c]","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
     histNames["jetLead_eta"] = {"xlabel":"Leading Jet #eta","xlimits":[-5,5],"nbins":20}#,"ylimits":[0.1,3e6]}
     histNames["jetSub_eta"] = {"xlabel":"Sub-Leading Jet #eta","xlimits":[-5,5],"nbins":20}#,"ylimits":[0.1,3e6]}
+    histNames["jetLead_abseta"] = {"xlabel":"Leading Jet |#eta|","xlimits":[0,5],"nbins":25}#,"ylimits":[0.1,3e6]}
+    histNames["jetSub_abseta"] = {"xlabel":"Sub-Leading Jet |#eta|","xlimits":[0,5],"nbins":25}#,"ylimits":[0.1,3e6]}
     histNames["jetLead_PUIDDisc"] = {"xlabel":"Leading Jet PUID","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
     histNames["jetSub_PUIDDisc"] = {"xlabel":"Sub-Leading Jet PUID","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
 
@@ -102,8 +130,10 @@ if True:
     histNames["jetLead_PUIDDisc_Central"] = {"xlabel":"Leading Jet PUID (|#eta|<2.4)","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
     histNames["jetSub_PUIDDisc_Central"] = {"xlabel":"Sub-Leading Jet PUID (|#eta|<2.4)","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
 
+    """
     histNames["KD"] = {"xlabel":"MEKD","xlimits":[0.0,1.0],"nbins":20}#,"ylimits":[0.1,3e6]}
     histNames["KDPdf"] = {"xlabel":"MEKD","xlimits":[0.0,1.0],"nbins":20}#,"ylimits":[0.1,3e6]}
+    """
 
 for key in histNames:
   if "BDTG" in dataDir and "BDT" in key:
@@ -174,6 +204,10 @@ class Dataset:
       GLOBALCOUNTER += 1
       varToDraw = name
       tmpCUTS = CUTS
+
+      if "abs" in name:
+        varToDraw = varToDraw.replace("abs","")
+        varToDraw = "abs("+varToDraw+")"
       if "_Forward" in name:
         varToDraw = varToDraw.replace("_Forward","")
         if "jetLead" in varToDraw:

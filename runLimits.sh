@@ -10,5 +10,5 @@ cd statsCards/
 nice bash notlxbatch.sh
 cd ..
 cp statsCards/*.out statsInput/.
-nice ./makeShapePlots.py
-nice ./makeLimitPlots.py
+#nice ./makeShapePlots.py
+nice ./makeLimitPlots.py -p

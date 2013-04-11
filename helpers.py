@@ -1810,7 +1810,10 @@ def treeCut(category,cutString,eventWeights=True,muonRequirements=True):
         result += " && (dimuonPt <= 10.)"
     if "PtL20" in category:
         result += " && (dimuonPt <= 20.)"
-
+    if "VBFCutBasedLoose" in category:
+        result += " && deltaEtaJets>3.5 && dijetMass>550. && ptMiss<100"
+    if "VBFCutBasedTight" in category:
+        result += " && deltaEtaJets>3.4 && dijetMass>500. && ptMiss<25"
   if muonRequirements:
     result += " && muonLead_passPFRelIso && muonSub_passPFRelIso && (muonLead_isHltMatched || muonSub_isHltMatched)"
   if eventWeights:

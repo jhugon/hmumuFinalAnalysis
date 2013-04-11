@@ -1324,9 +1324,9 @@ if __name__ == "__main__":
   root.gROOT.SetBatch(True)
 
   directory = "input/lowPtCuts/"
-  directory = "input/V00-01-10/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
+  periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
@@ -1342,16 +1342,33 @@ if __name__ == "__main__":
     for c in categoriesVBF:
         tmpList.append(a+c)
   analyses += tmpList
-  analyses = ["VBFBDTCut"]
-  analyses += ["IncPreselPtG10"+ x for x in categoriesInc]
+  analyses = [["VBFBDTCut"]]
+  analyses += [["VBFPresel"]]
+  puidTightString = " && jetLead_FullPUIDFlag >= 7 && jetSub_FullPUIDFlag >= 7"
+  oldJetCutString = "jetLead_pt > 30. && jetSub_pt > 30."
+  funJetCutString = "((jetLead_pt > 25.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.4))"
+  funJetCutString += " && ((jetSub_pt > 25.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.4))"
+  funJetCutString += puidTightString
+
+  kindaFunJetCutString = oldJetCutString
+  kindaFunJetCutString += puidTightString
+  analyses += [["funVBFCutBasedLoose",funJetCutString]]
+  analyses += [["funVBFCutBasedTight",funJetCutString]]
+  analyses += [["VBFCutBasedLoose",oldJetCutString]]
+  analyses += [["VBFCutBasedTight",oldJetCutString]]
+  analyses += [["kindaFunVBFCutBasedLoose",kindaFunJetCutString]]
+  analyses += [["kindaFunVBFCutBasedTight",kindaFunJetCutString]]
+  #analyses += [["IncPreselPtG10"]+ x for x in categoriesInc]
   combinations = []
   combinationsLong = []
+  """
   combinations.append((
         ["IncPreselPtG10"+x for x in categoriesInc],"IncPreselCat"
   ))
   combinations.append((
         ["VBFBDTCut"]+["IncPreselPtG10"+x for x in categoriesInc],"BDTCutCatVBFBDTOnly"
   ))
+  """
 #  combinations.append((
 #        ["VBFPresel"]+["IncPreselPtG10"],"BDTCutVBFBDTOnly"
 #  ))
@@ -1410,11 +1427,8 @@ if __name__ == "__main__":
   ]
   #dataDict["7TeV"] = []
   dataDict["14TeV"] = []
-  lumiListLong = [5,10,15,20,25,30,40,50,75,100,200,500,1000,2000,5000]
-  lumiListLong = [20,30,50,100,500,1000,5000]
   lumiList = [lumiDict["8TeV"],20,25,30]
   lumiList = [lumiDict["8TeV"]]
-  #lumiListLong = lumiList
 
   controlRegionVeryLow=[60,110]
   controlRegionLow=[110,120]
@@ -1448,15 +1462,19 @@ if __name__ == "__main__":
         if args.higgsMass > 0.0:
           name = args.higgsMass
         for ana in analyses:
+          cutsToDo = ""
+          if len(ana) == 2:
+            cutsToDo = ana[1]
+          anaName = ana[0]
           tmp = ThreadedCardMaker(
             #__init__ args:
-            directory,[ana],
+            directory,[anaName],
             appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
             controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
             controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,sigInjectMass=args.signalInjectMass,
-            energyStr=p,
+            energyStr=p, cutString=cutsToDo,
             #write args:
-            outfilename=outDir+ana+"_"+p+"_"+str(name)+".txt",lumi=i
+            outfilename=outDir+anaName+"_"+p+"_"+str(name)+".txt",lumi=i
             )
           threads.append(tmp)
         for comb in combinations:
@@ -1487,17 +1505,21 @@ if __name__ == "__main__":
         filenamePeriod = filenamePeriod.rstrip("P")
         filenamePeriod += "TeV"
         for ana in analyses:
+          cutsToDo = ""
+          if len(ana) == 2:
+            cutsToDo = ana[1]
+          anaName = ana[0]
           tmp = ThreadedCardMaker(
             #__init__ args:
-            directory,[ana],
+            directory,[anaName],
             [appendPeriod(signalNames,p) for p in periods],
             [appendPeriod(backgroundNames,p) for p in periods],
             [dataDict[p] for p in periods],
             controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
             controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,sigInjectMass=args.signalInjectMass,
-            energyStr=periods,
+            energyStr=periods,cutString=cutsToDo,
             #write args:
-            outfilename=outDir+ana+"_"+filenamePeriod+"_"+filenameLumi+".txt",lumi=[float(lumiDict[p]) for p in periods]
+            outfilename=outDir+anaName+"_"+filenamePeriod+"_"+filenameLumi+".txt",lumi=[float(lumiDict[p]) for p in periods]
             )
           threads.append(tmp)
         for comb in combinations:
@@ -1517,22 +1539,6 @@ if __name__ == "__main__":
           )
          )
   
-    for i in lumiListLong:
-      p = "14TeV"
-      for comb in combinationsLong:
-         threads.append(
-          ThreadedCardMaker(
-            #__init__ args:
-            directory,
-            comb[0],
-            appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
-            controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
-            controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,sigInjectMass=args.signalInjectMass,
-            energyStr=p,
-            #write args:
-            outfilename=outDir+comb[1]+"_"+p+"_"+str(i)+".txt",lumi=i
-          )
-         )
   else: #Do bdtCut Stuff
     for p in periods:
       i = lumiDict[p]

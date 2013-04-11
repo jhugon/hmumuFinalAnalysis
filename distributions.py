@@ -10,8 +10,11 @@ caption1= "110 GeV < m_{#mu#mu} < 150 GeV"
 outDir = "output/"
 
 CUTS="dimuonMass < 150. && dimuonMass > 110."
-CUTS += " && ((jetLead_pt > 25.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.4))"
-CUTS += " && ((jetSub_pt > 25.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.4))"
+#CUTS += " && ((jetLead_pt > 25.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.4))"
+#CUTS += " && ((jetSub_pt > 25.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.4))"
+
+# Old Jet Pt Cuts
+CUTS += " && jetLead_pt > 30. && jetSub_pt > 30."
 
 RUNPERIOD="8TeV"
 LUMI=lumiDict[RUNPERIOD]
@@ -25,12 +28,12 @@ LEGDRAWSTRING="l"
 histDirs = [""]
 
 backgroundList = [
-"DYJetsToLL",
-"ttbar"
+"DYJetsToLL"#,
+#"ttbar"
 ]
 
 signalList = [
-"ggHmumu125",
+#"ggHmumu125",
 "vbfHmumu125"
 ]
 
@@ -185,7 +188,6 @@ class Dataset:
           self.hists[key].Add(ds.hists[key])
 
 #######################################
-print scaleFactors
 
 bkgDatasetList = []
 for i in backgroundList:
