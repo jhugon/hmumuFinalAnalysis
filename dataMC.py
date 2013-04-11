@@ -15,7 +15,7 @@ outDir = "output/"
 RUNPERIOD="8TeV"
 LUMI=lumiDict[RUNPERIOD]
 
-scaleHiggsBy = 1000.
+scaleHiggsBy = 500.
 
 LOGY=False
 integralPlot=False
@@ -34,6 +34,7 @@ elif PULLTYPE=="ratio":
 anotateText = "110 GeV < m_{#mu#mu} < 150 GeV"
 #anotateText = "80 GeV < m_{#mu#mu} < 160 GeV"
 #anotateText = "VBF Preselection"
+anotateText2 = "VBF Tight Cuts + PUID"
 
 urLegendPos = [0.70,0.67,0.9,0.9]
 ulLegendPos = [0.20,0.67,0.4,0.9]
@@ -71,8 +72,8 @@ CUTS="dimuonMass < 150. && dimuonMass > 110."
 #CUTS += " && ((jetSub_pt > 25.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.6))"
 #CUTS += " && jetLead_pt > 30."
 #CUTS += " && jetSub_pt > 30."
-CUTS += " && jetLead_pt > 25."
-CUTS += " && jetSub_pt > 25."
+CUTS += " && jetLead_pt > 20."
+CUTS += " && jetSub_pt > 20."
 # New Jet Pt Cuts PUID Tight
 CUTS += " && (jetLead_FullPUIDFlag >= 7)"
 CUTS += " && (jetSub_FullPUIDFlag >= 7)"
@@ -86,10 +87,12 @@ CUTS += " && (jetSub_FullPUIDFlag >= 7)"
 ## Old Jet Pt Cuts
 #CUTS += " && jetLead_pt > 30. && jetSub_pt > 30."
 
-# VBF Cut Based 1
+## VBF Presel
+#CUTS += " && deltaEtaJets > 3. && dijetMass > 300."
+## VBF Cut Based 1
 #CUTS += " && deltaEtaJets > 3.5 && dijetMass > 550. && ptMiss < 100."
-# VBF Cut Based 2
-#CUTS += " && deltaEtaJets > 3.5 && dijetMass > 500. && ptMiss < 50."
+## VBF Cut Based 2
+CUTS += " && deltaEtaJets > 3.4 && dijetMass > 500. && ptMiss < 25."
 
 root.gErrorIgnoreLevel = root.kWarning
 GLOBALCOUNTER=0
@@ -106,6 +109,7 @@ if True:
     histNames["muonLead_eta"] = {"xlabel":"Leading Muon #eta","xlimits":[-2.1,2.1],"nbins":25}#,"ylimits":[0.1,3e6]}
     histNames["muonSub_eta"] = {"xlabel":"Sub-Leading Muon #eta","xlimits":[-2.1,2.1],"nbins":10}#,"ylimits":[0.1,3e6]}
     """
+    """
 
     histNames["nJets"] = {"xlabel":"N_{jets}","xlimits":[-0.5,5.5],"nbins":6}#,"ylimits":[0.1,3e6]}
     histNames["ptMiss"] = {"xlabel":"Missing p_{T} [GeV/c]","xlimits":[0.0,300.0],"nbins":12}#,"ylimits":[0.1,3e6]}
@@ -115,8 +119,18 @@ if True:
     histNames["dijetPt"] = {"xlabel":"p_{T,jj} [GeV/c]","xlimits":[0.0,1000.0],"nbins":50}#,"ylimits":[0.1,1e5]}
     histNames["dijetY"] = {"xlabel":"y_{jj}","xlimits":[-5.0,5.0],"nbins":20}#,"ylimits":[0.1,3e6]}
 
+    """
     histNames["jetLead_pt"] = {"xlabel":"Leading Jet p_{T} [GeV/c]","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
     histNames["jetSub_pt"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c]","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
+    histNames["jetLead_pt_Central"] = {"xlabel":"Leading Jet p_{T} [GeV/c] (|#eta|<2.4)","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
+    histNames["jetSub_pt_Central"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c] (|#eta|<2.4)","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
+    histNames["jetLead_pt_lowpt_Forward"] = {"xlabel":"Leading Jet p_{T} [GeV/c] (|#eta|>2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
+    histNames["jetSub_pt_lowpt_Forward"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c] (|#eta|>2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
+    histNames["jetLead_pt_lowpt_Forward"] = {"xlabel":"Leading Jet p_{T} [GeV/c] (|#eta|>2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
+    histNames["jetSub_pt_lowpt_Forward"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c] (|#eta|>2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
+    histNames["jetLead_pt_lowpt_Central"] = {"xlabel":"Leading Jet p_{T} [GeV/c] (|#eta|<2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
+    histNames["jetSub_pt_lowpt_Central"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c] (|#eta|<2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
+    """
     histNames["jetLead_eta"] = {"xlabel":"Leading Jet #eta","xlimits":[-5,5],"nbins":20}#,"ylimits":[0.1,3e6]}
     histNames["jetSub_eta"] = {"xlabel":"Sub-Leading Jet #eta","xlimits":[-5,5],"nbins":20}#,"ylimits":[0.1,3e6]}
     histNames["jetLead_abseta"] = {"xlabel":"Leading Jet |#eta|","xlimits":[0,5],"nbins":25}#,"ylimits":[0.1,3e6]}
@@ -130,7 +144,6 @@ if True:
     histNames["jetLead_PUIDDisc_Central"] = {"xlabel":"Leading Jet PUID (|#eta|<2.4)","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
     histNames["jetSub_PUIDDisc_Central"] = {"xlabel":"Sub-Leading Jet PUID (|#eta|<2.4)","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
 
-    """
     histNames["KD"] = {"xlabel":"MEKD","xlimits":[0.0,1.0],"nbins":20}#,"ylimits":[0.1,3e6]}
     histNames["KDPdf"] = {"xlabel":"MEKD","xlimits":[0.0,1.0],"nbins":20}#,"ylimits":[0.1,3e6]}
     """
@@ -205,6 +218,8 @@ class Dataset:
       varToDraw = name
       tmpCUTS = CUTS
 
+      if "_lowpt" in name:
+        varToDraw = varToDraw.replace("_lowpt","")
       if "abs" in name:
         varToDraw = varToDraw.replace("abs","")
         varToDraw = "abs("+varToDraw+")"
@@ -420,24 +435,27 @@ for histName in bkgDatasetList[0].hists:
     tlatex.SetTextSize(0.03)
     tlatex.SetTextAlign(22)
     tlatex.DrawLatex(0.55,0.75,anotateText)
+    tlatex.DrawLatex(0.55,0.6,anotateText2)
   elif scaleHiggsPos == "ll" or scaleHiggsPos == "ul":
     if scaleHiggsBy != 1.0:
       tlatex.SetTextSize(0.07)
       tlatex.SetTextAlign(22)
-      tlatex.DrawLatex(0.55,0.8,"Higgs #times %.0f" % (scaleHiggsBy))
+      tlatex.DrawLatex(0.55,0.82,"Higgs #times %.0f" % (scaleHiggsBy))
 
     tlatex.SetTextSize(0.04)
     tlatex.SetTextAlign(23)
     tlatex.DrawLatex(0.55,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
+    tlatex.DrawLatex(0.55,0.77,anotateText2)
   else:
     if scaleHiggsBy != 1.0:
       tlatex.SetTextSize(0.07)
       tlatex.SetTextAlign(32)
-      tlatex.DrawLatex(legLeftPos-0.02,0.8,"Higgs #times %.0f" % (scaleHiggsBy))
+      tlatex.DrawLatex(legLeftPos-0.02,0.82,"Higgs #times %.0f" % (scaleHiggsBy))
 
     tlatex.SetTextSize(0.04)
     tlatex.SetTextAlign(33)
     tlatex.DrawLatex(legLeftPos-0.02,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
+    tlatex.DrawLatex(legLeftPos-0.02,0.77,anotateText2)
 
   vertLine = None
   arrow = None
