@@ -1400,7 +1400,7 @@ if __name__ == "__main__":
 #  ))
   combinationsCutOpt.append((
     [["Yay"]],"PtCutOpt",{
-        'dimuonPtG':[2,0.,500.],
+        'dimuonPtG':[2,0.,50.],
         }
   ))
 
@@ -1538,20 +1538,54 @@ if __name__ == "__main__":
          )
   
   else: #Do cutOpt Stuff
+    print "combinationsCutOpt: {0}".format(combinationsCutOpt)
     for p in periods:
       i = lumiDict[p]
       for comb in combinationsCutOpt:
-          cutOptList = []
-          tmpCut = float(comb[3])
-          while True:
-            if tmpCut > float(comb[4]):
-                break
-            cutOptList.append(tmpCut)
-            tmpCut += float(comb[2])
-            if abs(tmpCut) < 1e-10:
-              tmpCut = 0.0
-          for cutOptVal in cutOptList:
-            print("BDT Cut Card: {0} {1} {2} fb^-1 hist={3} cut={4}".format(p,comb[1],i,comb[5],cutOptVal))
+        print "\ncomb: {0}\n".format(comb)
+        cutDict = comb[2]
+        print "cutDict: {0}".format(cutDict)
+        cutBaseString = "1"
+        nameBaseString = comb[1]
+        cutDictKeyList = cutDict.keys()
+        nCutVars = len(cutDictKeyList)
+        cutPoints = []
+        for key,cutIndex in zip(cutDictKeyList,range(nCutVars)):
+          cutIndex = str(cutIndex)
+          cut = key[:-1]
+          cutType = key[-1]
+          cutOp = ''
+          if cutType == "S":
+            print("Cut Type Split not yet implemented...exiting.")
+            sys.exit(1)
+          elif cutType == "G":
+            cutOp = '>'
+          elif cutType == "L":
+            cutOp = '<'
+          else:
+            print("Cut Type Not Recognized...exiting.")
+            sys.exit(1)
+          cutBaseString += " && "+cut+" "+cutOp+" {"+cutIndex+"}"
+          nameBaseString += "_"+key+"{"+cutIndex+"}"
+          cutData = cutDict[key]
+          print "cutData: {0}".format(cutData)
+          cutStep = (cutData[2]-cutData[1])/(cutData[0]-1)
+          tmpCuts = [cutData[1]+iC*cutStep for iC in range(cutData[0])]
+          cutPoints += [tmpCuts]
+        print "cutBaseString: "+cutBaseString
+        print "nameBaseString: "+nameBaseString
+        print "cutPoints: {0}".format(cutPoints)
+        assert(len(cutPoints)==nCutVars)
+        
+        notDone=True
+        indexList = [0 for iC in range(nCutVars)]
+        lenList = [len(iC) for iC in cutPoints]
+        while notDone:
+            cutList = [cL[iC] for iC, cL in zip(indexList,cutPoints)]
+            cutString = cutBaseString.format(*cutList)
+            nameString = nameBaseString.format(*cutList)
+            nameString = nameString.replace('.','p')
+            print "cutString: "+cutString
             threads.append(
              ThreadedCardMaker(
                #__init__ args:
@@ -1562,10 +1596,18 @@ if __name__ == "__main__":
                controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,sigInjectMass=args.signalInjectMass,
                energyStr=p,
                #write args:
-               outfilename=outDir+comb[1]+str(i)+"_"+p+"_"+str(cutOptVal)+".txt",lumi=i,
-               cutOpt=cutOptVal
+               outfilename=outDir+nameString+"_"+p+"_"+str(i)+".txt",lumi=i,
+               cutString=cutString
              )
             )
+            for ind,iLen,iInd in reversed(zip(indexList,lenList,range(nCutVars))):
+              if ind < iLen-1:
+                indexList[iInd] += 1
+                break
+              else:
+                indexList[iInd] = 0
+            if sum(indexList) == 0:
+              notDone = False
 
   nThreads = len(threads)
   print("nProcs: {0}".format(NPROCS))

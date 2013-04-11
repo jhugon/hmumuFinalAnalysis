@@ -11,7 +11,7 @@ rm -f statsCards/*
 rm -f statsInput/*
 rm -f statsOutput/*
 
-nice ./makeCards.py --bdtCut
+nice ./makeCards.py --cutOpt
 echo "Removing files in lxplus:$REMOTEDIR"
 ssh lxplus "cd /tmp/jhugon/; rm -rf $REMOTEDIR/*;echo \"Contents of dir: \`ls $REMOTEDIR \`\""
 echo "Copying input files to lxplus..."
