@@ -5,7 +5,7 @@ parser = optparse.OptionParser(description="Makes cards for use in the CMS Combi
 parser.add_option("--signalInject", help="Inject Signal with Strength into data_obs",type=float,default=0.0)
 parser.add_option("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
 parser.add_option("--toyData", help="Make Toy Data from PDFs for data_obs",action="store_true",default=False)
-parser.add_option("--bdtCut", help="Creates Cards with different BDT Cuts",action="store_true",default=False)
+parser.add_option("--cutOpt", help="Creates Cards with Different Cut Values",action="store_true",default=False)
 parser.add_option("--gaussian", help="Use A Gaussian Signal Template with floating width",type=float,default=-1.0)
 parser.add_option("-m","--higgsMass", help="Use This Higgs Mass",type=float,default=-1.0)
 parser.add_option("--combinationsOnly", help="Run Only Combinations of Channels",action="store_true",default=False)
@@ -51,7 +51,7 @@ USEGPANNA = False
 
 SIGNALFIT = [110.,140.]
 
-if args.bdtCut:
+if args.cutOpt:
   SIGUNCON = False
 
 from xsec import *
@@ -619,7 +619,7 @@ makePDFBak = makePDFBakOld
 ###################################################################################
 
 class Analysis:
-  def __init__(self,directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,toyData=False,sigInject=0.0,sigInjectMass=125.0,bdtCut=None,cutAbove=False,energyStr="8TeV",cutString=""):
+  def __init__(self,directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,toyData=False,sigInject=0.0,sigInjectMass=125.0,cutOpt=None,cutAbove=False,energyStr="8TeV",cutString=""):
     getCutHist = getattr(self,"getCutHist")
     doSigInject = getattr(self,"doSigInject")
     self.treename = "outtree"
@@ -1031,25 +1031,39 @@ class Analysis:
 ###################################################################################
 
 class DataCardMaker:
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,dataNames,outfilename,lumi,nuisanceMap=None,controlRegionLow=[110.,115],controlRegionHigh=[135,150],controlRegionVeryLow=[80.,110.],sigInject=0.0,sigInjectMass=125.0,toyData=False,bdtCut=None,energyStr="8TeV",cutString=""):
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,dataNames,outfilename,lumi,nuisanceMap=None,controlRegionLow=[110.,115],controlRegionHigh=[135,150],controlRegionVeryLow=[80.,110.],sigInject=0.0,sigInjectMass=125.0,toyData=False,cutOpt=None,energyStr="8TeV",cutString=""):
 
     ########################
     ## Setup
+
+    if len(analysisNames)==0:
+      print("Error: DataCardMaker: len(analysisNames)==0")
+      return
 
     channels = []
     self.is2D = False
 
     if type(energyStr) == list:
       for analysis in analysisNames:
+        cutStringTmp = cutString
+        if type(analysis)==list:
+          if len(analysis)>1:
+            cutStringTmp += analysis[1]
+          analysis = analysis[0]
         for es,sn,bn,dn,lu in zip(energyStr,signalNames,backgroundNames,dataNames,lumi):
           lu *= 1000.0
-          tmp = Analysis(directory,sn,bn,dn,analysis,lu,controlRegionVeryLow,controlRegionLow,controlRegionHigh,toyData=toyData,sigInject=sigInject,sigInjectMass=sigInjectMass,bdtCut=bdtCut,energyStr=es,cutString=cutString)
+          tmp = Analysis(directory,sn,bn,dn,analysis,lu,controlRegionVeryLow,controlRegionLow,controlRegionHigh,toyData=toyData,sigInject=sigInject,sigInjectMass=sigInjectMass,cutOpt=cutOpt,energyStr=es,cutString=cutStringTmp)
           channels.append(tmp)
       self.channels = channels
     else:
       lumi *= 1000.0
       for analysis in analysisNames:
-        tmp = Analysis(directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,toyData=toyData,sigInject=sigInject,sigInjectMass=sigInjectMass,bdtCut=bdtCut,energyStr=energyStr,cutString=cutString)
+        cutStringTmp = cutString
+        if type(analysis)==list:
+          if len(analysis)>1:
+            cutStringTmp += analysis[1]
+          analysis = analysis[0]
+        tmp = Analysis(directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,toyData=toyData,sigInject=sigInject,sigInjectMass=sigInjectMass,cutOpt=cutOpt,energyStr=energyStr,cutString=cutStringTmp)
         channels.append(tmp)
       self.channels = channels
 
@@ -1359,52 +1373,36 @@ if __name__ == "__main__":
   analyses += [["kindaFunVBFCutBasedLoose",kindaFunJetCutString]]
   analyses += [["kindaFunVBFCutBasedTight",kindaFunJetCutString]]
   #analyses += [["IncPreselPtG10"]+ x for x in categoriesInc]
+  analyses = []
   combinations = []
-  combinationsLong = []
-  """
-  combinations.append((
-        ["IncPreselPtG10"+x for x in categoriesInc],"IncPreselCat"
-  ))
-  combinations.append((
-        ["VBFBDTCut"]+["IncPreselPtG10"+x for x in categoriesInc],"BDTCutCatVBFBDTOnly"
-  ))
-  """
+  #combinations.append((
+  #      [["IncPreselPtG10"+x] for x in categoriesInc],"IncPreselCat"
+  #))
+  #combinations.append((
+  #      [["VBFBDTCut",oldJetCutString]]+[["IncPreselPtG10"+x] for x in categoriesInc],"BDTCutCatVBFBDTOnly"
+  #))
 #  combinations.append((
 #        ["VBFPresel"]+["IncPreselPtG10"],"BDTCutVBFBDTOnly"
 #  ))
 
-#  combinationsLong.append((
-#        ["IncBDTCut","VBFBDTCut"],"BDTCut"
+  # Multi-dimensional Optimization of Cuts
+  # First two arguments are just like combinations
+  # 3rd arg is a dictionary with the keys 
+  # that are variables to be cut on with "L","G", or "S" appended
+  # for cutting Less-than, Greater-then, or Splitting by
+  combinationsCutOpt = []
+#  combinationsCutOpt.append((
+#    [["Jets",funJetCutString]],"Jets",{
+#        'ptMissL':[2,0.,100.],
+#        'deltaEtaJetsG':[2,2.0,5.0],
+#        'dijetMassG':[2,200.,700.],
+#        }
 #  ))
-#  combinationsLong.append((
-#        ["VBFBDTCut"]+["IncBDTCut"+x for x in categoriesInc],"BDTCutCat"
-#  ))
-#  combinationsLong.append((
-#        ["VBFPresel"]+["IncPresel"+x for x in categoriesInc],"PreselCat"
-#  ))
-
-  combinationsBDTCut = []
-  #combinationsBDTCut.append((
-  #  ["IncPresel"],"IncBDTCut",0.025,-0.7,-0.25,"BDTHistMuonOnlyVMass"
-  #))
-  combinationsBDTCut.append((
-    ["IncPresel"],"IncPtCut",1.0,0.0,30.0,"ptVmDiMu"
+  combinationsCutOpt.append((
+    [["Yay"]],"PtCutOpt",{
+        'dimuonPtG':[2,0.,500.],
+        }
   ))
-  combinationsBDTCut.append((
-    ["VBFPresel"],"VBFBDTCut",0.04,-0.2,0.2,"BDTHistVBFVMass"
-  ))
-  combinationsBDTCut.append((
-    ["VBFPresel"],"VBFmDiJetCut",50,300,1200,"mDiJetsVMass"
-  ))
-  combinationsBDTCut.append((
-    ["VBFPresel"],"VBFdeltaEtaJetCut",0.1,3.0,7.0,"deltaEtaJetsVMass"
-  ))
-  #combinationsBDTCut.append((
-  #  ["IncPresel"+x for x in categoriesInc],"IncBDTCutCat",0.025,-0.7,-0.35,"BDTHistMuonOnlyVMass"
-  #))
-  #combinationsBDTCut.append((
-  #  ["VBFPresel"+x for x in categoriesVBF],"VBFBDTCutCat",0.025,-0.2,0.0,"BDTHistVBFVMass"
-  #))
 
   histPostFix="/mDiMu"
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
@@ -1443,7 +1441,7 @@ if __name__ == "__main__":
   if args.combinationsOnly:
     analyses = []
   threads = []
-  if not args.bdtCut:
+  if not args.cutOpt:
     print("Simple Analyses to run:")
     for a in analyses:
       print("  {0}".format(a))
@@ -1539,21 +1537,21 @@ if __name__ == "__main__":
           )
          )
   
-  else: #Do bdtCut Stuff
+  else: #Do cutOpt Stuff
     for p in periods:
       i = lumiDict[p]
-      for comb in combinationsBDTCut:
-          bdtCutList = []
+      for comb in combinationsCutOpt:
+          cutOptList = []
           tmpCut = float(comb[3])
           while True:
             if tmpCut > float(comb[4]):
                 break
-            bdtCutList.append(tmpCut)
+            cutOptList.append(tmpCut)
             tmpCut += float(comb[2])
             if abs(tmpCut) < 1e-10:
               tmpCut = 0.0
-          for bdtCutVal in bdtCutList:
-            print("BDT Cut Card: {0} {1} {2} fb^-1 hist={3} cut={4}".format(p,comb[1],i,comb[5],bdtCutVal))
+          for cutOptVal in cutOptList:
+            print("BDT Cut Card: {0} {1} {2} fb^-1 hist={3} cut={4}".format(p,comb[1],i,comb[5],cutOptVal))
             threads.append(
              ThreadedCardMaker(
                #__init__ args:
@@ -1564,8 +1562,8 @@ if __name__ == "__main__":
                controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,sigInjectMass=args.signalInjectMass,
                energyStr=p,
                #write args:
-               outfilename=outDir+comb[1]+str(i)+"_"+p+"_"+str(bdtCutVal)+".txt",lumi=i,
-               bdtCut=bdtCutVal
+               outfilename=outDir+comb[1]+str(i)+"_"+p+"_"+str(cutOptVal)+".txt",lumi=i,
+               cutOpt=cutOptVal
              )
             )
 
