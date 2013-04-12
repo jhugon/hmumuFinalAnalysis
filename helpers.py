@@ -424,7 +424,24 @@ def makeResPlotFromMVATree(tfile,xname,yname,truename,cuts,doDivide):
   tmpS.SetTitle("")
   return tmpM, tmpS
 
-
+def setNormalColorTable():
+  rArray = array.array('d',[0.0,1.0,1.0])
+  gArray = array.array('d',[1.0,1.0,0.0])
+  bArray = array.array('d',[0.0,0.0,0.0])
+  stopArray = array.array('d',[0.,0.5,1.])
+  nTabColors = 500
+  root.TColor.CreateGradientColorTable(len(stopArray),
+            stopArray,rArray,gArray,bArray,nTabColors
+         )
+def setInvertColorTable():
+  rArray = array.array('d',[1.0,1.0,0.0])
+  gArray = array.array('d',[0.0,1.0,1.0])
+  bArray = array.array('d',[0.0,0.0,0.0])
+  stopArray = array.array('d',[0.,0.5,1.])
+  nTabColors = 500
+  root.TColor.CreateGradientColorTable(len(stopArray),
+            stopArray,rArray,gArray,bArray,nTabColors
+         )
 
 def setStyle():
   gStyle.SetCanvasColor(0)
@@ -487,7 +504,8 @@ def setStyle():
   gStyle.SetTextFont(42)
  
   gStyle.SetOptStat(0)
-
+  setNormalColorTable()
+  
 setStyle()
 
 def setHistTitles(hist,xlabel,ylabel):

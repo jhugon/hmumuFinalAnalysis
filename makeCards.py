@@ -619,7 +619,7 @@ makePDFBak = makePDFBakOld
 ###################################################################################
 
 class Analysis:
-  def __init__(self,directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,toyData=False,sigInject=0.0,sigInjectMass=125.0,cutOpt=None,cutAbove=False,energyStr="8TeV",cutString=""):
+  def __init__(self,directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,toyData=False,sigInject=0.0,sigInjectMass=125.0,energyStr="8TeV",cutString=""):
     getCutHist = getattr(self,"getCutHist")
     doSigInject = getattr(self,"doSigInject")
     self.treename = "outtree"
@@ -1031,7 +1031,7 @@ class Analysis:
 ###################################################################################
 
 class DataCardMaker:
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,dataNames,outfilename,lumi,nuisanceMap=None,controlRegionLow=[110.,115],controlRegionHigh=[135,150],controlRegionVeryLow=[80.,110.],sigInject=0.0,sigInjectMass=125.0,toyData=False,cutOpt=None,energyStr="8TeV",cutString=""):
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,dataNames,outfilename,lumi,nuisanceMap=None,controlRegionLow=[110.,115],controlRegionHigh=[135,150],controlRegionVeryLow=[80.,110.],sigInject=0.0,sigInjectMass=125.0,toyData=False,energyStr="8TeV",cutString=""):
 
     ########################
     ## Setup
@@ -1048,11 +1048,13 @@ class DataCardMaker:
         cutStringTmp = cutString
         if type(analysis)==list:
           if len(analysis)>1:
+            if len(cutStringTmp)>0:
+              cutStringTmp += " && "
             cutStringTmp += analysis[1]
           analysis = analysis[0]
         for es,sn,bn,dn,lu in zip(energyStr,signalNames,backgroundNames,dataNames,lumi):
           lu *= 1000.0
-          tmp = Analysis(directory,sn,bn,dn,analysis,lu,controlRegionVeryLow,controlRegionLow,controlRegionHigh,toyData=toyData,sigInject=sigInject,sigInjectMass=sigInjectMass,cutOpt=cutOpt,energyStr=es,cutString=cutStringTmp)
+          tmp = Analysis(directory,sn,bn,dn,analysis,lu,controlRegionVeryLow,controlRegionLow,controlRegionHigh,toyData=toyData,sigInject=sigInject,sigInjectMass=sigInjectMass,energyStr=es,cutString=cutStringTmp)
           channels.append(tmp)
       self.channels = channels
     else:
@@ -1061,9 +1063,11 @@ class DataCardMaker:
         cutStringTmp = cutString
         if type(analysis)==list:
           if len(analysis)>1:
+            if len(cutStringTmp)>0:
+              cutStringTmp += " && "
             cutStringTmp += analysis[1]
           analysis = analysis[0]
-        tmp = Analysis(directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,toyData=toyData,sigInject=sigInject,sigInjectMass=sigInjectMass,cutOpt=cutOpt,energyStr=energyStr,cutString=cutStringTmp)
+        tmp = Analysis(directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,toyData=toyData,sigInject=sigInject,sigInjectMass=sigInjectMass,energyStr=energyStr,cutString=cutStringTmp)
         channels.append(tmp)
       self.channels = channels
 
@@ -1391,18 +1395,25 @@ if __name__ == "__main__":
   # that are variables to be cut on with "L","G", or "S" appended
   # for cutting Less-than, Greater-then, or Splitting by
   combinationsCutOpt = []
-#  combinationsCutOpt.append((
-#    [["Jets",funJetCutString]],"Jets",{
-#        'ptMissL':[2,0.,100.],
-#        'deltaEtaJetsG':[2,2.0,5.0],
-#        'dijetMassG':[2,200.,700.],
-#        }
-#  ))
   combinationsCutOpt.append((
-    [["Yay"]],"PtCutOpt",{
-        'dimuonPtG':[2,0.,50.],
+    [["Yay",funJetCutString+"&& ptMiss<100."]],"VBFLowJetPtOptPtMiss100",{
+        #'ptMissL':[5,0.,100.],
+        'deltaEtaJetsG':[11,3.0,4.0],
+        'dijetMassG':[7,300.,600.],
         }
   ))
+  combinationsCutOpt.append((
+    [["Yay",funJetCutString]],"VBFLowJetPtOpt",{
+        'ptMissL':[5,0.,100.],
+        'deltaEtaJetsG':[6,3.0,4.0],
+        'dijetMassG':[7,300.,600.],
+        }
+  ))
+  #combinationsCutOpt.append((
+  #  [["Yay"]],"PtCutOpt",{
+  #      'dimuonPtG':[11,0.,50.],
+  #      }
+  #))
 
   histPostFix="/mDiMu"
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]

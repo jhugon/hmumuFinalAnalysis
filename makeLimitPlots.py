@@ -3,6 +3,7 @@
 import optparse
 parser = optparse.OptionParser(description="Makes Limit Plots from output text from combine tool.")
 parser.add_option("--bdtCut", help="Makes plots v. BDT Cut Instead of Luminosity",action="store_true",default=False)
+parser.add_option("--cutOpt", help="Makes plots for cutOptimization",action="store_true",default=False)
 parser.add_option("-m","--higgsMass", help="Makes plots v. Higgs Mass",action="store_true",default=False)
 parser.add_option("--signalInject", help="Sets a caption saying that signal was injected with strength",type=float,default=0.0)
 parser.add_option("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
@@ -14,6 +15,8 @@ import ROOT as root
 import glob
 import re
 import os.path
+from copy import deepcopy
+from array import array
 
 from xsec import *
 
@@ -337,6 +340,107 @@ class RelativePlot:
 
     canvas.RedrawAxis()
 
+class CutOptPlots:
+  def __init__(self,globName):
+    self.histList = []
+    self.globName = globName
+    self.canvas = root.TCanvas("CutOptCanvas")
+    self.tlatex = root.TLatex()
+    self.tlatex.SetNDC()
+    self.tlatex.SetTextFont(root.gStyle.GetLabelFont())
+    self.tlatex.SetTextSize(0.04)
+    #root.gStyle.SetPalette(53)
+    root.gStyle.SetPaintTextFormat(".2f")
+    files = glob.glob(globName)
+    self.data = {}
+    for f in sorted(files):
+      data =  getData(f)
+      if len(data)==0:
+        continue
+      data =  data[0]
+      data = [float(x) for x in data]
+      f = re.sub(".*/","",f)
+      f = re.sub("_8TeV.*","",f)
+      f = re.sub("_7TeV.*","",f)
+      f = re.sub("_7P8TeV.*","",f)
+      match = re.match(r"([a-zA-Z0-9]+)_.*",f)
+      assert(match)
+      testName = match.group(1)
+      match = re.findall(r"_([a-zA-Z0-9]+[GLS])([0-9p]+)",f)
+      assert(match)
+      limit = data[4]
+      print("limit: {0} data: {1}".format(limit,data))
+      tmpDict= {}
+      tmpDict['limit'] = limit
+      for i in match:
+        val = float((i[1]).replace('p','.'))
+        tmpDict[i[0]] = val
+      if not self.data.has_key(testName):
+        self.data[testName] = []
+      self.data[testName] += [tmpDict]
+    for c in self.data:
+      d = self.data[c]
+      d.sort(key=lambda x: x['limit'])
+
+  def printBest(self,N):
+    for c in self.data:
+      print("The Best {1} For Test: {0}".format(c,N))
+      for i in range(min(len(self.data[c]),N)):
+        d = self.data[c][i]
+        printStr = "  {limit:.1f}"
+        for key in d:
+          if key == 'limit':
+            continue
+          printStr += " "+key +' {'+key+':.1f}'
+        print(printStr.format(**d))
+
+  def plot(self,dataName,xName,yName,holdConstDict,rootHistParamList):
+    self.canvas.cd()
+    hist = root.TH2F(*rootHistParamList)
+    #hist.SetMarkerColor(0)
+    hist.SetMarkerSize(2*hist.GetMarkerSize())
+    data = self.data[dataName]
+    for d in data:
+      doContinue = False
+      for sliceVar in holdConstDict:
+        if not d.has_key(sliceVar):
+          break
+        if d[sliceVar] != holdConstDict[sliceVar]:
+          doContinue = True
+          break
+      if doContinue:
+        break
+      x = d[xName]+0.00001
+      y = d[yName]+0.00001
+      limit = d['limit']
+      ix = hist.GetXaxis().FindBin(x)
+      iy = hist.GetYaxis().FindBin(y)
+      hist.SetBinContent(ix,iy,limit)
+      #hist.Fill(x,y)
+      #print x,y,limit, d['ptMissL']
+    xTitle = xName
+    yTitle = yName
+    if xTitle[-1] == 'G':
+        xTitle = xTitle[:-1]+" > X"
+    elif xTitle[-1] == 'L':
+        xTitle = xTitle[:-1]+" < X"
+    else:
+        raise
+    if yTitle[-1] == 'G':
+        yTitle = yTitle[:-1]+" > Y"
+    elif yTitle[-1] == 'L':
+        yTitle = yTitle[:-1]+" < Y"
+    else:
+        raise
+    setHistTitles(hist,xTitle,yTitle)
+    hist.Draw('coltext')
+    self.histList += [hist]
+    self.tlatex.SetTextAlign(12)
+    self.tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+
+  def annotatePlot(self,text):
+    optPlots.tlatex.SetTextAlign(32)
+    optPlots.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,text)
 
 if __name__ == "__main__":
 
@@ -347,6 +451,28 @@ if __name__ == "__main__":
   root.gErrorIgnoreLevel = root.kWarning
   root.gROOT.SetBatch(True)
   setStyle()
+  if args.cutOpt:
+    optPlots = CutOptPlots(dirName+"*.txt.out")
+    optPlots.printBest(10)
+    tlatex = root.TLatex()
+    dataName = 'VBFLowJetPtOpt'
+    xName = 'dijetMassG'
+    yName = 'deltaEtaJetsG'
+    holdConstDict = {'ptMissL':25.0}
+    rootHistParamList = [dataName,'',6,300.,600.,5,3.,4.]
+    optPlots.plot(dataName,xName,yName,holdConstDict,rootHistParamList)
+    optPlots.annotatePlot("p_{T}^{Miss} < 25 GeV")
+    saveAs(optPlots.canvas,outDir+dataName)
+    dataName = 'VBFLowJetPtOptPtMiss100'
+    xName = 'dijetMassG'
+    yName = 'deltaEtaJetsG'
+    holdConstDict = {}
+    rootHistParamList = [dataName,'',6,300.,600.,10,3.,4.]
+    optPlots.plot(dataName,xName,yName,holdConstDict,rootHistParamList)
+    optPlots.annotatePlot("p_{T}^{Miss} < 100 GeV")
+    saveAs(optPlots.canvas,outDir+dataName)
+    sys.exit(0)
+
   canvas = root.TCanvas()
   if (not args.bdtCut) and (not args.higgsMass):
     canvas.SetLogx(1)
@@ -368,7 +494,10 @@ if __name__ == "__main__":
     maxLen = str(maxLen)
     print(("\n\n{0:"+maxLen+"}  {1:>4}  {2:>4}  {3:>4} {4:>4} {5:>4} {6:>4}").format("file","obs","exp","-1s","+1s","-2s","+2s"))
     for f in sorted(allfiles):
-      data =  getData(f)[0]
+      data =  getData(f)
+      if len(data)==0:
+        continue
+      data =  data[0]
       data = [float(x) for x in data]
       f = re.sub(".*/","",f)
       f += ":"
