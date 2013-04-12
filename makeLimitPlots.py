@@ -369,7 +369,6 @@ class CutOptPlots:
       match = re.findall(r"_([a-zA-Z0-9]+[GLS])([0-9p]+)",f)
       assert(match)
       limit = data[4]
-      print("limit: {0} data: {1}".format(limit,data))
       tmpDict= {}
       tmpDict['limit'] = limit
       for i in match:
@@ -455,22 +454,66 @@ if __name__ == "__main__":
     optPlots = CutOptPlots(dirName+"*.txt.out")
     optPlots.printBest(10)
     tlatex = root.TLatex()
-    dataName = 'VBFLowJetPtOpt'
-    xName = 'dijetMassG'
-    yName = 'deltaEtaJetsG'
-    holdConstDict = {'ptMissL':25.0}
-    rootHistParamList = [dataName,'',6,300.,600.,5,3.,4.]
-    optPlots.plot(dataName,xName,yName,holdConstDict,rootHistParamList)
-    optPlots.annotatePlot("p_{T}^{Miss} < 25 GeV")
-    saveAs(optPlots.canvas,outDir+dataName)
-    dataName = 'VBFLowJetPtOptPtMiss100'
-    xName = 'dijetMassG'
-    yName = 'deltaEtaJetsG'
+    #dataName = 'VBFLowJetPtOptPtMiss25'
+    #xName = 'dijetMassG'
+    #yName = 'deltaEtaJetsG'
+    #holdConstDict = {'ptMissL':25.0}
+    #rootHistParamList = [dataName,'',8,400.,800.,15,3.5,5.]
+    #optPlots.plot(dataName,xName,yName,holdConstDict,rootHistParamList)
+    #optPlots.annotatePlot("p_{T}^{Miss} < 25 GeV")
+    #saveAs(optPlots.canvas,outDir+dataName)
+    #dataName = 'VBFLowJetPtOptPtMiss100'
+    #xName = 'dijetMassG'
+    #yName = 'deltaEtaJetsG'
+    #holdConstDict = {}
+    #rootHistParamList = [dataName,'',6,300.,600.,10,3.,4.]
+    #optPlots.plot(dataName,xName,yName,holdConstDict,rootHistParamList)
+    #optPlots.annotatePlot("p_{T}^{Miss} < 100 GeV")
+    #saveAs(optPlots.canvas,outDir+dataName)
+
+    #dataName = 'VBFHighJetPtOptPtMiss25'
+    #xName = 'dijetMassG'
+    #yName = 'deltaEtaJetsG'
+    #holdConstDict = {'ptMissL':25.0}
+    #rootHistParamList = [dataName,'',6,300.,600.,10,3.0,4.]
+    #optPlots.plot(dataName,xName,yName,holdConstDict,rootHistParamList)
+    #optPlots.annotatePlot("p_{T}^{Miss} < 25 GeV")
+    #saveAs(optPlots.canvas,outDir+dataName)
+    #dataName = 'VBFHighJetPtOptPtMiss100'
+    #xName = 'dijetMassG'
+    #yName = 'deltaEtaJetsG'
+    #holdConstDict = {}
+    #rootHistParamList = [dataName,'',6,300.,600.,10,3.,4.]
+    #optPlots.plot(dataName,xName,yName,holdConstDict,rootHistParamList)
+    #optPlots.annotatePlot("p_{T}^{Miss} < 100 GeV")
+    #saveAs(optPlots.canvas,outDir+dataName)
+
+    #dataName = 'VBFHighJetPtNoPUIDOptPtMiss100'
+    #xName = 'dijetMassG'
+    #yName = 'deltaEtaJetsG'
+    #holdConstDict = {}
+    #rootHistParamList = [dataName,'',6,300.,600.,10,3.,4.]
+    #optPlots.plot(dataName,xName,yName,holdConstDict,rootHistParamList)
+    #optPlots.annotatePlot("p_{T}^{Miss} < 100 GeV")
+    #saveAs(optPlots.canvas,outDir+dataName)
+    #dataName = 'VBFHighJetPtNoPUIDOptPtMiss25'
+    #xName = 'dijetMassG'
+    #yName = 'deltaEtaJetsG'
+    #holdConstDict = {}
+    #rootHistParamList = [dataName,'',6,300.,600.,10,3.,4.]
+    #optPlots.plot(dataName,xName,yName,holdConstDict,rootHistParamList)
+    #optPlots.annotatePlot("p_{T}^{Miss} < 25 GeV")
+    #saveAs(optPlots.canvas,outDir+dataName)
+
+    dataName = 'PtKDCutOpt'
+    xName = 'dimuonPtG'
+    yName = 'KDG'
     holdConstDict = {}
-    rootHistParamList = [dataName,'',6,300.,600.,10,3.,4.]
+    rootHistParamList = [dataName,'',10,0.,50.,8,0.4,0.8]
     optPlots.plot(dataName,xName,yName,holdConstDict,rootHistParamList)
-    optPlots.annotatePlot("p_{T}^{Miss} < 100 GeV")
+    optPlots.annotatePlot("Inclusive")
     saveAs(optPlots.canvas,outDir+dataName)
+
     sys.exit(0)
 
   canvas = root.TCanvas()

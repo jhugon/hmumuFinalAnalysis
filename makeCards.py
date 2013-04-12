@@ -1395,25 +1395,48 @@ if __name__ == "__main__":
   # that are variables to be cut on with "L","G", or "S" appended
   # for cutting Less-than, Greater-then, or Splitting by
   combinationsCutOpt = []
-  combinationsCutOpt.append((
-    [["Yay",funJetCutString+"&& ptMiss<100."]],"VBFLowJetPtOptPtMiss100",{
-        #'ptMissL':[5,0.,100.],
-        'deltaEtaJetsG':[11,3.0,4.0],
-        'dijetMassG':[7,300.,600.],
-        }
-  ))
-  combinationsCutOpt.append((
-    [["Yay",funJetCutString]],"VBFLowJetPtOpt",{
-        'ptMissL':[5,0.,100.],
-        'deltaEtaJetsG':[6,3.0,4.0],
-        'dijetMassG':[7,300.,600.],
-        }
-  ))
   #combinationsCutOpt.append((
-  #  [["Yay"]],"PtCutOpt",{
-  #      'dimuonPtG':[11,0.,50.],
+  #  [["Yay",funJetCutString+"&& ptMiss<100."]],"VBFLowJetPtOptPtMiss100",{
+  #      'deltaEtaJetsG':[11,3.0,4.0],
+  #      'dijetMassG':[7,300.,600.],
   #      }
   #))
+  #combinationsCutOpt.append((
+  #  [["Yay",funJetCutString+"&& ptMiss<25."]],"VBFLowJetPtOptPtMiss25",{
+  #      'deltaEtaJetsG':[16,3.5,5.0],
+  #      'dijetMassG':[9,400.,800.],
+  #      }
+  #))
+  #combinationsCutOpt.append((
+  #  [["Yay",kindaFunJetCutString+"&& ptMiss<100."]],"VBFHighJetPtOptPtMiss100",{
+  #      'deltaEtaJetsG':[11,3.0,4.0],
+  #      'dijetMassG':[7,300.,600.],
+  #      }
+  #))
+  #combinationsCutOpt.append((
+  #  [["Yay",kindaFunJetCutString+"&& ptMiss<25."]],"VBFHighJetPtOptPtMiss25",{
+  #      'deltaEtaJetsG':[11,3.0,4.0],
+  #      'dijetMassG':[7,300.,600.],
+  #      }
+  #))
+  #combinationsCutOpt.append((
+  #  [["Yay",oldJetCutString+"&& ptMiss<100."]],"VBFHighJetPtNoPUIDOptPtMiss100",{
+  #      'deltaEtaJetsG':[11,3.0,4.0],
+  #      'dijetMassG':[7,300.,600.],
+  #      }
+  #))
+  #combinationsCutOpt.append((
+  #  [["Yay",oldJetCutString+"&& ptMiss<25."]],"VBFHighJetPtNoPUIDOptPtMiss25",{
+  #      'deltaEtaJetsG':[11,3.0,4.0],
+  #      'dijetMassG':[7,300.,600.],
+  #      }
+  #))
+  combinationsCutOpt.append((
+    [["Yay"]],"PtKDCutOpt",{
+        'dimuonPtG':[11,0.,50.],
+        'KDG':[9,0.4,0.8],
+        }
+  ))
 
   histPostFix="/mDiMu"
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
@@ -1576,6 +1599,10 @@ if __name__ == "__main__":
           else:
             print("Cut Type Not Recognized...exiting.")
             sys.exit(1)
+          if cut == "KD":
+            cut = '(sigMEPdf*{0}/(bakMEPdf*{1}+sigMEPdf*{0}))'.format(
+                   MENormDict[p]["sigMEPdf"],MENormDict["8TeV"]["bakMEPdf"]
+                )
           cutBaseString += " && "+cut+" "+cutOp+" {"+cutIndex+"}"
           nameBaseString += "_"+key+"{"+cutIndex+"}"
           cutData = cutDict[key]
