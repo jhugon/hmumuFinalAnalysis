@@ -48,6 +48,8 @@ SIGUNCON = False
 FREEBAKPARAMS = True
 
 USEGPANNA = False
+if args.cutOpt:
+  USEGPANNA = False
 
 SIGNALFIT = [110.,140.]
 
@@ -103,6 +105,7 @@ def makePDFBakExpLog(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,mMu
     debug = ""
     debug += "### makePDFBakExpLog: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
+    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
 
     channelName = name
 
@@ -167,6 +170,7 @@ def makePDFBakExpMOverSq(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn
     debug = ""
     debug += "### makePDFBakExpMOverSq: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
+    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
 
     channelName = name
 
@@ -229,6 +233,7 @@ def makePDFBakMOverSq(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,mM
     debug = ""
     debug += "### makePDFBakMOverSq: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
+    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
 
     channelName = name
 
@@ -292,6 +297,7 @@ def makePDFBakOld(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,mMuMuZ
     debug = ""
     debug += "### makePDFBakOld: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
+    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
 
     channelName = name
 
@@ -389,6 +395,7 @@ def makePDFSigCBPlusGaus(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn
     debug = ""
     debug += "### makePDFSigCBPlusGaus: "+channelName+": "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
+    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
 
     mean = root.RooRealVar(channelName+"_"+name+"_Mean",channelName+"_"+name+"_Mean",125.,100.,150.)
     width = root.RooRealVar(channelName+"_"+name+"_Width",channelName+"_"+name+"_Width",5.0,0.5,20.0)
@@ -446,6 +453,7 @@ def makePDFSigDG(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,channel
     debug = ""
     debug += "### makePDFSigDG: "+channelName+": "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
+    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
 
     rooParamList = []
 
@@ -690,12 +698,14 @@ class Analysis:
     if not USEGPANNA:
       for name in signalNames:
         tmpH = self.getRooDataSample(name,self.observablesForRooDataset)
+        self.debug += "#  N Events in {0}: {1}\n".format(name,tmpH.sumEntries())
         self.sigHistsRaw.append(tmpH)
 
     self.bakHistsRaw = []
     self.bakHistsRawZ = []
     for name in backgroundNames:
       tmpH = self.getRooDataSample(name,self.observablesForRooDataset)
+      self.debug += "#  N Events in {0}: {1}\n".format(name,tmpH.sumEntries())
       self.bakHistsRaw.append(tmpH)
       tmpH = self.getRooDataSample(name,self.observablesForRooDatasetZ,True)
       self.bakHistsRawZ.append(tmpH)
@@ -704,6 +714,7 @@ class Analysis:
     self.datHistsZ = []
     for name in dataNames:
       tmpH = self.getRooDataSample(name,self.observablesForRooDataset)
+      self.debug += "#  N Events in {0}: {1}\n".format(name,tmpH.sumEntries())
       self.datHists.append(tmpH)
       tmpH = self.getRooDataSample(name,self.observablesForRooDatasetZ,True)
       self.datHistsZ.append(tmpH)
@@ -789,19 +800,14 @@ class Analysis:
       for name in signalNames:
         self.debug +=  makePDFSigNew(analysis+energyStr,name,mMuMu,self.higgsMass,wImport)
     elif True: # Use ggH for non-VBF channels, and VBF shape for VBF
-      isVBF = re.match(r"^VBF.*",analysis)
       sigNameToUse = None
-      if isVBF:
-        for sigName in signalNames:
-          if "vbfH" in sigName:
-            sigNameToUse = sigName
-            break
-      else:
-        for sigName in signalNames:
-          if "ggH" in sigName:
-            sigNameToUse = sigName
-            break
-      sigHistRawToUse = self.sigHistsRaw[signalNames.index(sigNameToUse)]
+      sigHistCounts = []
+      for name, hist in zip(signalNames,self.sigHistsRaw):
+         sigHistCounts += [hist.sumEntries()]
+      maxCounts = max(sigHistCounts)
+      maxIndex = sigHistCounts.index(maxCounts)
+      self.debug += "# Signal Histogram for Shape: {0} Counts: {1:.1f}\n".format(signalNames[maxIndex],maxCounts)
+      sigHistRawToUse = self.sigHistsRaw[maxIndex]
       for name in signalNames:
           sigParams, sigDebug, tmpDS = makePDFSig(name,sigHistRawToUse,mMuMu,minMass,maxMass,wImport,analysis+energyStr)
           self.sigParamListList.append(sigParams)
@@ -1370,14 +1376,12 @@ if __name__ == "__main__":
 
   kindaFunJetCutString = oldJetCutString
   kindaFunJetCutString += puidTightString
-  analyses += [["funVBFCutBasedLoose",funJetCutString]]
-  analyses += [["funVBFCutBasedTight",funJetCutString]]
   analyses += [["VBFCutBasedLoose",oldJetCutString]]
   analyses += [["VBFCutBasedTight",oldJetCutString]]
-  analyses += [["kindaFunVBFCutBasedLoose",kindaFunJetCutString]]
-  analyses += [["kindaFunVBFCutBasedTight",kindaFunJetCutString]]
   #analyses += [["IncPreselPtG10"]+ x for x in categoriesInc]
   analyses = []
+  analyses += [["VBFJustinHighJetPtPtMissL25DEtaJetsG3p7MJJG400",kindaFunJetCutString+" && deltaEtaJets > 3.7 && dijetMass>400. && ptMiss < 25."]]
+  analyses += [["VBFJustinLowJetPtPtMissL25DEtaJetsG3p6MJJG450",funJetCutString+" && deltaEtaJets > 3.6 && dijetMass>450. && ptMiss < 25."]]
   combinations = []
   #combinations.append((
   #      [["IncPreselPtG10"+x] for x in categoriesInc],"IncPreselCat"
@@ -1395,48 +1399,48 @@ if __name__ == "__main__":
   # that are variables to be cut on with "L","G", or "S" appended
   # for cutting Less-than, Greater-then, or Splitting by
   combinationsCutOpt = []
-  #combinationsCutOpt.append((
-  #  [["Yay",funJetCutString+"&& ptMiss<100."]],"VBFLowJetPtOptPtMiss100",{
-  #      'deltaEtaJetsG':[11,3.0,4.0],
-  #      'dijetMassG':[7,300.,600.],
-  #      }
-  #))
-  #combinationsCutOpt.append((
-  #  [["Yay",funJetCutString+"&& ptMiss<25."]],"VBFLowJetPtOptPtMiss25",{
-  #      'deltaEtaJetsG':[16,3.5,5.0],
-  #      'dijetMassG':[9,400.,800.],
-  #      }
-  #))
-  #combinationsCutOpt.append((
-  #  [["Yay",kindaFunJetCutString+"&& ptMiss<100."]],"VBFHighJetPtOptPtMiss100",{
-  #      'deltaEtaJetsG':[11,3.0,4.0],
-  #      'dijetMassG':[7,300.,600.],
-  #      }
-  #))
-  #combinationsCutOpt.append((
-  #  [["Yay",kindaFunJetCutString+"&& ptMiss<25."]],"VBFHighJetPtOptPtMiss25",{
-  #      'deltaEtaJetsG':[11,3.0,4.0],
-  #      'dijetMassG':[7,300.,600.],
-  #      }
-  #))
-  #combinationsCutOpt.append((
-  #  [["Yay",oldJetCutString+"&& ptMiss<100."]],"VBFHighJetPtNoPUIDOptPtMiss100",{
-  #      'deltaEtaJetsG':[11,3.0,4.0],
-  #      'dijetMassG':[7,300.,600.],
-  #      }
-  #))
-  #combinationsCutOpt.append((
-  #  [["Yay",oldJetCutString+"&& ptMiss<25."]],"VBFHighJetPtNoPUIDOptPtMiss25",{
-  #      'deltaEtaJetsG':[11,3.0,4.0],
-  #      'dijetMassG':[7,300.,600.],
-  #      }
-  #))
   combinationsCutOpt.append((
-    [["Yay"]],"PtKDCutOpt",{
-        'dimuonPtG':[11,0.,50.],
-        'KDG':[9,0.4,0.8],
+    [["Yay",funJetCutString+"&& ptMiss<100."]],"VBFLowJetPtOptPtMiss100",{
+        'deltaEtaJetsG':[11,3.0,4.0],
+        'dijetMassG':[7,300.,600.],
         }
   ))
+  combinationsCutOpt.append((
+    [["Yay",funJetCutString+"&& ptMiss<25."]],"VBFLowJetPtOptPtMiss25",{
+        'deltaEtaJetsG':[16,3.5,5.0],
+        'dijetMassG':[9,400.,800.],
+        }
+  ))
+  combinationsCutOpt.append((
+    [["Yay",kindaFunJetCutString+"&& ptMiss<100."]],"VBFHighJetPtOptPtMiss100",{
+        'deltaEtaJetsG':[11,3.0,4.0],
+        'dijetMassG':[7,300.,600.],
+        }
+  ))
+  combinationsCutOpt.append((
+    [["Yay",kindaFunJetCutString+"&& ptMiss<25."]],"VBFHighJetPtOptPtMiss25",{
+        'deltaEtaJetsG':[11,3.0,4.0],
+        'dijetMassG':[7,300.,600.],
+        }
+  ))
+  combinationsCutOpt.append((
+    [["Yay",oldJetCutString+"&& ptMiss<100."]],"VBFHighJetPtNoPUIDOptPtMiss100",{
+        'deltaEtaJetsG':[11,3.0,4.0],
+        'dijetMassG':[7,300.,600.],
+        }
+  ))
+  combinationsCutOpt.append((
+    [["Yay",oldJetCutString+"&& ptMiss<25."]],"VBFHighJetPtNoPUIDOptPtMiss25",{
+        'deltaEtaJetsG':[11,3.0,4.0],
+        'dijetMassG':[7,300.,600.],
+        }
+  ))
+  #combinationsCutOpt.append((
+  #  [["Yay"]],"PtKDCutOpt",{
+  #      'dimuonPtG':[11,0.,50.],
+  #      'KDG':[9,0.4,0.8],
+  #      }
+  #))
 
   histPostFix="/mDiMu"
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]

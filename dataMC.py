@@ -34,7 +34,7 @@ elif PULLTYPE=="ratio":
 anotateText = "110 GeV < m_{#mu#mu} < 150 GeV"
 #anotateText = "80 GeV < m_{#mu#mu} < 160 GeV"
 #anotateText = "VBF Preselection"
-anotateText2 = "VBF Tight Cuts + PUID"
+anotateText2 = "No PUID, Jet p_{T}>30 GeV"
 
 urLegendPos = [0.70,0.67,0.9,0.9]
 ulLegendPos = [0.20,0.67,0.4,0.9]
@@ -64,19 +64,19 @@ CUTS="dimuonMass < 150. && dimuonMass > 110."
 #CUTS += " && (abs(jetSub_eta) < 2.4 || jetSub_PUIDDisc > -0.5)"
 
 # New Jet Pt Cuts
-#CUTS += " && ((jetLead_pt > 25.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.4))"
-#CUTS += " && ((jetSub_pt > 25.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.4))"
+CUTS += " && ((jetLead_pt > 25.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.4))"
+CUTS += " && ((jetSub_pt > 25.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.4))"
 #CUTS += " && ((jetLead_pt > 30.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.4))"
 #CUTS += " && ((jetSub_pt > 30.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.4))"
 #CUTS += " && ((jetLead_pt > 25.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.6))"
 #CUTS += " && ((jetSub_pt > 25.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.6))"
 #CUTS += " && jetLead_pt > 30."
 #CUTS += " && jetSub_pt > 30."
-CUTS += " && jetLead_pt > 20."
-CUTS += " && jetSub_pt > 20."
+#CUTS += " && jetLead_pt > 20."
+#CUTS += " && jetSub_pt > 20."
 # New Jet Pt Cuts PUID Tight
-CUTS += " && (jetLead_FullPUIDFlag >= 7)"
-CUTS += " && (jetSub_FullPUIDFlag >= 7)"
+#CUTS += " && (jetLead_FullPUIDFlag >= 7)"
+#CUTS += " && (jetSub_FullPUIDFlag >= 7)"
 # New Jet Pt Cuts PUID Medium
 #CUTS += " && (abs(jetLead_eta) < 2.4 || jetLead_FullPUIDFlag >= 6)"
 #CUTS += " && (abs(jetSub_eta) < 2.4 || jetSub_FullPUIDFlag >= 6)"
@@ -92,7 +92,7 @@ CUTS += " && (jetSub_FullPUIDFlag >= 7)"
 ## VBF Cut Based 1
 #CUTS += " && deltaEtaJets > 3.5 && dijetMass > 550. && ptMiss < 100."
 ## VBF Cut Based 2
-CUTS += " && deltaEtaJets > 3.4 && dijetMass > 500. && ptMiss < 25."
+#CUTS += " && deltaEtaJets > 3.4 && dijetMass > 500. && ptMiss < 25."
 
 root.gErrorIgnoreLevel = root.kWarning
 GLOBALCOUNTER=0
@@ -130,7 +130,6 @@ if True:
     histNames["jetSub_pt_lowpt_Forward"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c] (|#eta|>2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
     histNames["jetLead_pt_lowpt_Central"] = {"xlabel":"Leading Jet p_{T} [GeV/c] (|#eta|<2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
     histNames["jetSub_pt_lowpt_Central"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c] (|#eta|<2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
-    """
     histNames["jetLead_eta"] = {"xlabel":"Leading Jet #eta","xlimits":[-5,5],"nbins":20}#,"ylimits":[0.1,3e6]}
     histNames["jetSub_eta"] = {"xlabel":"Sub-Leading Jet #eta","xlimits":[-5,5],"nbins":20}#,"ylimits":[0.1,3e6]}
     histNames["jetLead_abseta"] = {"xlabel":"Leading Jet |#eta|","xlimits":[0,5],"nbins":25}#,"ylimits":[0.1,3e6]}
@@ -143,6 +142,7 @@ if True:
 
     histNames["jetLead_PUIDDisc_Central"] = {"xlabel":"Leading Jet PUID (|#eta|<2.4)","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
     histNames["jetSub_PUIDDisc_Central"] = {"xlabel":"Sub-Leading Jet PUID (|#eta|<2.4)","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
+    """
 
     histNames["KD"] = {"xlabel":"MEKD","xlimits":[0.0,1.0],"nbins":20}#,"ylimits":[0.1,3e6]}
     histNames["KDPdf"] = {"xlabel":"MEKD","xlimits":[0.0,1.0],"nbins":20}#,"ylimits":[0.1,3e6]}
