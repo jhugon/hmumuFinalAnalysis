@@ -7,7 +7,7 @@ import os
 import sys
 
 #dataDir = "input/separateSamplesTrainOnlyVBFLarge110to150/"
-dataDir = "input/lowPtCuts/"
+dataDir = "input/V00-01-10/"
 #dataDir = "input/jets20f25/"
 #dataDir = "input/separateSamplesTrainOnlyVBFLargeBDTG110to150/"
 outDir = "output/"
@@ -15,7 +15,7 @@ outDir = "output/"
 RUNPERIOD="8TeV"
 LUMI=lumiDict[RUNPERIOD]
 
-scaleHiggsBy = 500.
+scaleHiggsBy = 1000.
 
 LOGY=False
 integralPlot=False
@@ -34,7 +34,12 @@ elif PULLTYPE=="ratio":
 anotateText = "110 GeV < m_{#mu#mu} < 150 GeV"
 #anotateText = "80 GeV < m_{#mu#mu} < 160 GeV"
 #anotateText = "VBF Preselection"
-anotateText2 = "No PUID, Jet p_{T}>30 GeV"
+anotateText2 = ""
+
+categoryAnotations ={}
+categoryAnotations['Jets0/'] = "0 Jets"
+categoryAnotations['Jets1/'] = "1 Jets"
+categoryAnotations['Jets2/'] = "#geq2 Jets"
 
 urLegendPos = [0.70,0.67,0.9,0.9]
 ulLegendPos = [0.20,0.67,0.4,0.9]
@@ -53,7 +58,7 @@ histDirs = ["VBFPreselDiMuPtL20/","IncPreselDiMuPtL20/"]
 #histDirs = ["VBFBDTCut/"]
 #histDirs = ["VBFBDTCut/"]
 histDirs = ["","BB/","IncPreselBB/","VBFPresel/"]
-histDirs = [""]
+histDirs = ["Jets0/","Jets1/","Jets2/"]
 
 CUTS="dimuonMass < 150. && dimuonMass > 110."
 
@@ -64,8 +69,8 @@ CUTS="dimuonMass < 150. && dimuonMass > 110."
 #CUTS += " && (abs(jetSub_eta) < 2.4 || jetSub_PUIDDisc > -0.5)"
 
 # New Jet Pt Cuts
-CUTS += " && ((jetLead_pt > 25.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.4))"
-CUTS += " && ((jetSub_pt > 25.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.4))"
+#CUTS += " && ((jetLead_pt > 25.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.4))"
+#CUTS += " && ((jetSub_pt > 25.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.4))"
 #CUTS += " && ((jetLead_pt > 30.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.4))"
 #CUTS += " && ((jetSub_pt > 30.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.4))"
 #CUTS += " && ((jetLead_pt > 25.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.6))"
@@ -99,7 +104,6 @@ GLOBALCOUNTER=0
 
 histNames = {}
 if True:
-    """
     histNames["dimuonMass"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,150.],"nbins":40}#,"ylimits":[0.1,5e5]}
     histNames["dimuonPt"] = {"xlabel":"p_{T,#mu#mu} [GeV/c]","xlimits":[0.0,200.0],"nbins":20}#,"ylimits":[0.1,1e5]}
     histNames["dimuonY"] = {"xlabel":"y_{#mu#mu}","xlimits":[-2.2,2.2],"nbins":10}#,"ylimits":[0.1,3e6]}
@@ -108,8 +112,6 @@ if True:
     histNames["muonSub_pt"] = {"xlabel":"Sub-Leading Muon p_{T} [GeV/c]","xlimits":[25.,150.],"nbins":25}#,"ylimits":[0.1,3e6]}
     histNames["muonLead_eta"] = {"xlabel":"Leading Muon #eta","xlimits":[-2.1,2.1],"nbins":25}#,"ylimits":[0.1,3e6]}
     histNames["muonSub_eta"] = {"xlabel":"Sub-Leading Muon #eta","xlimits":[-2.1,2.1],"nbins":10}#,"ylimits":[0.1,3e6]}
-    """
-    """
 
     histNames["nJets"] = {"xlabel":"N_{jets}","xlimits":[-0.5,5.5],"nbins":6}#,"ylimits":[0.1,3e6]}
     histNames["ptMiss"] = {"xlabel":"Missing p_{T} [GeV/c]","xlimits":[0.0,300.0],"nbins":12}#,"ylimits":[0.1,3e6]}
@@ -119,7 +121,6 @@ if True:
     histNames["dijetPt"] = {"xlabel":"p_{T,jj} [GeV/c]","xlimits":[0.0,1000.0],"nbins":50}#,"ylimits":[0.1,1e5]}
     histNames["dijetY"] = {"xlabel":"y_{jj}","xlimits":[-5.0,5.0],"nbins":20}#,"ylimits":[0.1,3e6]}
 
-    """
     histNames["jetLead_pt"] = {"xlabel":"Leading Jet p_{T} [GeV/c]","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
     histNames["jetSub_pt"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c]","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
     histNames["jetLead_pt_Central"] = {"xlabel":"Leading Jet p_{T} [GeV/c] (|#eta|<2.4)","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
@@ -142,11 +143,9 @@ if True:
 
     histNames["jetLead_PUIDDisc_Central"] = {"xlabel":"Leading Jet PUID (|#eta|<2.4)","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
     histNames["jetSub_PUIDDisc_Central"] = {"xlabel":"Sub-Leading Jet PUID (|#eta|<2.4)","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
-    """
 
     histNames["KD"] = {"xlabel":"MEKD","xlimits":[0.0,1.0],"nbins":20}#,"ylimits":[0.1,3e6]}
     histNames["KDPdf"] = {"xlabel":"MEKD","xlimits":[0.0,1.0],"nbins":20}#,"ylimits":[0.1,3e6]}
-    """
 
 for key in histNames:
   if "BDTG" in dataDir and "BDT" in key:
@@ -167,6 +166,12 @@ tlatex = root.TLatex()
 tlatex.SetNDC()
 tlatex.SetTextSize(0.07)
 tlatex.SetTextAlign(12)
+
+if "KD" in CUTS:
+  sigNorm = MENormDict[RUNPERIOD]["sigME"]
+  bakNorm = MENormDict[RUNPERIOD]["bakME"]
+  varToPutIn = "sigME*%f/(bakME*%f+sigME*%f)" % (sigNorm,bakNorm,sigNorm)
+  CUTS = CUTS.replace("KD",varToPutIn)
 
 #######################################
 root.gROOT.SetBatch(True)
@@ -392,6 +397,7 @@ for histName in bkgDatasetList[0].hists:
     dataHist.Add(realDS.hists[histName])
 
   histBaseName = re.sub(r".*/","",histName)
+  categoryName = re.sub(r"/.*","",histName)+'/'
   xtitle = histNames[histBaseName]["xlabel"]
   ylimits = []
   if histNames[histBaseName].has_key("ylimits"):
@@ -426,6 +432,10 @@ for histName in bkgDatasetList[0].hists:
 
   leg.Draw("same")
 
+  thisAnnotation = anotateText2
+  if categoryAnotations.has_key(categoryName):
+    thisAnnotation += categoryAnotations[categoryName]
+
   if scaleHiggsPos == "lc":
     if scaleHiggsBy != 1.0:
       tlatex.SetTextSize(0.07)
@@ -435,7 +445,7 @@ for histName in bkgDatasetList[0].hists:
     tlatex.SetTextSize(0.03)
     tlatex.SetTextAlign(22)
     tlatex.DrawLatex(0.55,0.75,anotateText)
-    tlatex.DrawLatex(0.55,0.6,anotateText2)
+    tlatex.DrawLatex(0.55,0.6,thisAnnotation)
   elif scaleHiggsPos == "ll" or scaleHiggsPos == "ul":
     if scaleHiggsBy != 1.0:
       tlatex.SetTextSize(0.07)
@@ -445,7 +455,7 @@ for histName in bkgDatasetList[0].hists:
     tlatex.SetTextSize(0.04)
     tlatex.SetTextAlign(23)
     tlatex.DrawLatex(0.55,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
-    tlatex.DrawLatex(0.55,0.77,anotateText2)
+    tlatex.DrawLatex(0.55,0.77,thisAnnotation)
   else:
     if scaleHiggsBy != 1.0:
       tlatex.SetTextSize(0.07)
@@ -455,7 +465,7 @@ for histName in bkgDatasetList[0].hists:
     tlatex.SetTextSize(0.04)
     tlatex.SetTextAlign(33)
     tlatex.DrawLatex(legLeftPos-0.02,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
-    tlatex.DrawLatex(legLeftPos-0.02,0.77,anotateText2)
+    tlatex.DrawLatex(legLeftPos-0.02,0.77,thisAnnotation)
 
   vertLine = None
   arrow = None

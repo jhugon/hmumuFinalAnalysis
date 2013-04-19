@@ -37,7 +37,7 @@ from signalfits import getRooFitSignalPars as sigFits
 #from signalfitsNoMuScle import getRooFitSignalPars as sigFits
 effReader = EfficiencyReader()
 
-NPROCS = 4
+NPROCS = 8
 
 #Scaling Parameter for Bak norm uncertainty
 BAKUNC = 1.0
@@ -628,6 +628,9 @@ makePDFBak = makePDFBakOld
 
 class Analysis:
   def __init__(self,directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,toyData=False,sigInject=0.0,sigInjectMass=125.0,energyStr="8TeV",cutString=""):
+    if analysis[0] in "0123456789-.*+/":
+       print("Error: Analysis: analysis name '{0}' begins with a forbidden character".format(analysis))
+       sys.exit(1)
     getCutHist = getattr(self,"getCutHist")
     doSigInject = getattr(self,"doSigInject")
     self.treename = "outtree"
@@ -690,7 +693,10 @@ class Analysis:
                         )
 
     # Dealing with cut string
-    self.fullCutString = treeCut(analysis,cutString,eventWeights=False,muonRequirements=True)
+    KDString = '(sigMEPdf*{0}/(bakMEPdf*{1}+sigMEPdf*{0}))'.format(
+                   MENormDict[energyStr]["sigMEPdf"],MENormDict[energyStr]["bakMEPdf"]
+                )
+    self.fullCutString = treeCut(analysis,cutString,eventWeights=False,muonRequirements=True,KDString=KDString)
     self.debug += "#  Full Cut String:\n"
     self.debug += "#  {0}\n".format(self.fullCutString)
 
@@ -1380,9 +1386,60 @@ if __name__ == "__main__":
   analyses += [["VBFCutBasedTight",oldJetCutString]]
   #analyses += [["IncPreselPtG10"]+ x for x in categoriesInc]
   analyses = []
-  analyses += [["VBFJustinHighJetPtPtMissL25DEtaJetsG3p7MJJG400",kindaFunJetCutString+" && deltaEtaJets > 3.7 && dijetMass>400. && ptMiss < 25."]]
-  analyses += [["VBFJustinLowJetPtPtMissL25DEtaJetsG3p6MJJG450",funJetCutString+" && deltaEtaJets > 3.6 && dijetMass>450. && ptMiss < 25."]]
+  analyses += [["Inclusive",""]]
+  analyses += [["Jet0All","nJets == 0"]]
+  analyses += [["Jet1All","nJets == 1"]]
+  analyses += [["Jet2All","nJets >= 2"]]
+  analyses += [["Jet2AllPtMissL25.","nJets >= 2 && ptMiss<25."]]
+  analyses += [["Jet2AllPtMissL100.","nJets >= 2 && ptMiss<100."]]
+
+  analyses += [["Jet2Pass","nJets >= 2 && deltaEtaJets>3. && dijetMass>750. && ptMiss < 100."]]
+  analyses += [["Jet2Fail","nJets >= 2 && !(deltaEtaJets>3. && dijetMass>750.) && ptMiss < 100."]]
+  analyses += [["Jet1Pass","nJets == 1 && dimuonPt > 10."]]
+  analyses += [["Jet1Fail","nJets == 1 && !(dimuonPt > 10.)"]]
+  analyses += [["Jet0Pass","nJets == 0 && dimuonPt > 10."]]
+  analyses += [["Jet0Fail","nJets == 0 && !(dimuonPt > 10.)"]]
+  analyses += [["Jet0KDG0p7","nJets == 0 && dimuonPt > 10. && KD > 0.7"]]
+  analyses += [["Jet1KDG0p7","nJets == 1 && dimuonPt > 10. && KD > 0.7"]]
+
+  #analyses += [["VBFJustinHighJetPtPtMissL25DEtaJetsG3p7MJJG400",kindaFunJetCutString+" && deltaEtaJets > 3.7 && dijetMass>400. && ptMiss < 25."]]
+  #analyses += [["VBFJustinLowJetPtPtMissL25DEtaJetsG3p6MJJG450",funJetCutString+" && deltaEtaJets > 3.6 && dijetMass>450. && ptMiss < 25."]]
   combinations = []
+  combinations.append((
+    [
+      ["Jet2Pass","nJets >= 2 && deltaEtaJets>3. && dijetMass>750. && ptMiss < 100."],
+      ["Jet2Fail","nJets >= 2 && !(deltaEtaJets>3. && dijetMass>750.) && ptMiss < 100."]
+    ],"Jet2DEta3MJJ750PtSplit"
+  ))
+  combinations.append((
+    [
+      ["Jet1Pass","nJets == 1 && dimuonPt > 10."],
+      ["Jet1Fail","nJets == 1 && !(dimuonPt > 10.)"]
+    ],"Jet1Pt10Split"
+  ))
+  combinations.append((
+    [
+      ["Jet0Pass","nJets == 0 && dimuonPt > 10."],
+      ["Jet0Fail","nJets == 0 && !(dimuonPt > 10.)"]
+    ],"Jet0Pt10Split"
+  ))
+  combinations.append((
+    [
+      ["Jet2Pass","nJets >= 2 && deltaEtaJets>3. && dijetMass>750. && ptMiss < 100."],
+      ["Jet2Fail","nJets >= 2 && !(deltaEtaJets>3. && dijetMass>750.) && ptMiss < 100."],
+      ["Jet1Pass","nJets == 1 && dimuonPt > 10."],
+      ["Jet1Fail","nJets == 1 && !(dimuonPt > 10.)"],
+      ["Jet0Pass","nJets == 0 && dimuonPt > 10."],
+      ["Jet0Fail","nJets == 0 && !(dimuonPt > 10.)"],
+    ],"JetNOptSplit"
+  ))
+  combinations.append((
+    [
+      ["Jet2All","nJets >= 2 && ptMiss < 100."],
+      ["Jet1All","nJets == 1"],
+      ["Jet0All","nJets == 0"]
+    ],"JetNAll"
+  ))
   #combinations.append((
   #      [["IncPreselPtG10"+x] for x in categoriesInc],"IncPreselCat"
   #))
@@ -1396,50 +1453,61 @@ if __name__ == "__main__":
   # Multi-dimensional Optimization of Cuts
   # First two arguments are just like combinations
   # 3rd arg is a dictionary with the keys 
-  # that are variables to be cut on with "L","G", or "S" appended
-  # for cutting Less-than, Greater-then, or Splitting by
+  # that are variables to be cut on with "L" or "G" appended
+  # for cutting Less-than, or Greater-then.
+  # Finally the last argument specifies whether to "Split"
+  # events rather than cutting them.  If set to True,
+  # A category passing the cuts will be made and combined
+  # with a category failing the events.  If False, the
+  # fail events are discarded.
   combinationsCutOpt = []
+  #combinationsCutOpt.append((
+  #  [["Yay","nJets>=2"]],"Jets2SplitBDTOpt",{
+  #      'bdtVBFG':[11,-1,1],
+  #      },True
+  #))
+  #combinationsCutOpt.append((
+  #  [["Yay","nJets>=2"]],"Jets2SplitOpt",{
+  #      'deltaEtaJetsG':[9,2.0,6.0],
+  #      'dijetMassG':[15,200.,900.],
+  #      },True
+  #))
+  #combinationsCutOpt.append((
+  #  [["Yay","nJets>=2"]],"Jets2CutOpt",{
+  #      'deltaEtaJetsG':[5,3.0,4.0],
+  #      'dijetMassG':[6,300.,800.],
+  #      'ptMissL':[2,25.,100.],
+  #      },False
+  #))
   combinationsCutOpt.append((
-    [["Yay",funJetCutString+"&& ptMiss<100."]],"VBFLowJetPtOptPtMiss100",{
-        'deltaEtaJetsG':[11,3.0,4.0],
-        'dijetMassG':[7,300.,600.],
-        }
+    [["Yay","nJets==1"]],"Jets1SplitOpt",{
+        'dimuonPtG':[13,0.,60.],
+        },True
   ))
   combinationsCutOpt.append((
-    [["Yay",funJetCutString+"&& ptMiss<25."]],"VBFLowJetPtOptPtMiss25",{
-        'deltaEtaJetsG':[16,3.5,5.0],
-        'dijetMassG':[9,400.,800.],
-        }
-  ))
-  combinationsCutOpt.append((
-    [["Yay",kindaFunJetCutString+"&& ptMiss<100."]],"VBFHighJetPtOptPtMiss100",{
-        'deltaEtaJetsG':[11,3.0,4.0],
-        'dijetMassG':[7,300.,600.],
-        }
-  ))
-  combinationsCutOpt.append((
-    [["Yay",kindaFunJetCutString+"&& ptMiss<25."]],"VBFHighJetPtOptPtMiss25",{
-        'deltaEtaJetsG':[11,3.0,4.0],
-        'dijetMassG':[7,300.,600.],
-        }
-  ))
-  combinationsCutOpt.append((
-    [["Yay",oldJetCutString+"&& ptMiss<100."]],"VBFHighJetPtNoPUIDOptPtMiss100",{
-        'deltaEtaJetsG':[11,3.0,4.0],
-        'dijetMassG':[7,300.,600.],
-        }
-  ))
-  combinationsCutOpt.append((
-    [["Yay",oldJetCutString+"&& ptMiss<25."]],"VBFHighJetPtNoPUIDOptPtMiss25",{
-        'deltaEtaJetsG':[11,3.0,4.0],
-        'dijetMassG':[7,300.,600.],
-        }
+    [["Yay","nJets==0"]],"Jets0SplitOpt",{
+        'dimuonPtG':[13,0.,60.],
+        },True
   ))
   #combinationsCutOpt.append((
-  #  [["Yay"]],"PtKDCutOpt",{
-  #      'dimuonPtG':[11,0.,50.],
-  #      'KDG':[9,0.4,0.8],
-  #      }
+  #  [["Yay","nJets==1"]],"Jets1CutOpt",{
+  #      'dimuonPtG':[9,0.,40.],
+  #      },False
+  #))
+  #combinationsCutOpt.append((
+  #  [["Yay","nJets==0"]],"Jets0CutOpt",{
+  #      'dimuonPtG':[9,0.,40.],
+  #      },False
+  #))
+  #combinationsCutOpt.append((
+  #  [["Yay","nJets==0"]],"Jets0OptSplitTest",{
+  #      'dimuonPtG':[5,0.,100.],
+  #      },True
+  #))
+  #combinationsCutOpt.append((
+  #  [["Yay","nJets==0"]],"Jets0OptCutTest",{
+  #      'dimuonPtG':[5,0.,100.],
+  #      },False
   #))
 
   histPostFix="/mDiMu"
@@ -1588,25 +1656,23 @@ if __name__ == "__main__":
         cutDictKeyList = cutDict.keys()
         nCutVars = len(cutDictKeyList)
         cutPoints = []
+        cutPointsFail = []
+        doSplit=comb[3]
         for key,cutIndex in zip(cutDictKeyList,range(nCutVars)):
           cutIndex = str(cutIndex)
           cut = key[:-1]
           cutType = key[-1]
           cutOp = ''
-          if cutType == "S":
-            print("Cut Type Split not yet implemented...exiting.")
-            sys.exit(1)
-          elif cutType == "G":
+          cutOpFail = ''
+          if cutType == "G":
             cutOp = '>'
+            cutOpFail = '<='
           elif cutType == "L":
             cutOp = '<'
+            cutOpFail = '>='
           else:
             print("Cut Type Not Recognized...exiting.")
             sys.exit(1)
-          if cut == "KD":
-            cut = '(sigMEPdf*{0}/(bakMEPdf*{1}+sigMEPdf*{0}))'.format(
-                   MENormDict[p]["sigMEPdf"],MENormDict["8TeV"]["bakMEPdf"]
-                )
           cutBaseString += " && "+cut+" "+cutOp+" {"+cutIndex+"}"
           nameBaseString += "_"+key+"{"+cutIndex+"}"
           cutData = cutDict[key]
@@ -1625,21 +1691,38 @@ if __name__ == "__main__":
         while notDone:
             cutList = [cL[iC] for iC, cL in zip(indexList,cutPoints)]
             cutString = cutBaseString.format(*cutList)
+            cutStringFail = "!( "+cutString+" )"
             nameString = nameBaseString.format(*cutList)
             nameString = nameString.replace('.','p')
             print "cutString: "+cutString
+            if doSplit:
+              print "cutStringFail: "+cutStringFail
+            analysisNames = []
+            for ana in comb[0]:
+              anaName = ana[0]
+              anaCutsOrig = '1'
+              if len(ana)>1:
+                if ana[1] != "":
+                  anaCutsOrig = ana[1]
+              anaCuts = anaCutsOrig+" && "+cutString
+              analysisNames.append([anaName,anaCuts])
+              if doSplit:
+                anaCuts = anaCutsOrig+" && "+cutStringFail
+                analysisNames.append([anaName+"Fail",anaCuts])
+            
+            print("analysisNames: {0}".format(analysisNames))
             threads.append(
              ThreadedCardMaker(
                #__init__ args:
                directory,
-               comb[0],
+               analysisNames,
                appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
                controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
                controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,sigInjectMass=args.signalInjectMass,
                energyStr=p,
                #write args:
                outfilename=outDir+nameString+"_"+p+"_"+str(i)+".txt",lumi=i,
-               cutString=cutString
+               cutString=""
              )
             )
             for ind,iLen,iInd in reversed(zip(indexList,lenList,range(nCutVars))):

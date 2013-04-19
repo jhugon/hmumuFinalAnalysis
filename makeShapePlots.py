@@ -535,7 +535,11 @@ class ShapePlotter:
     tlatex.SetTextAlign(12)
     tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
     tlatex.SetTextAlign(32)
-    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.titleMap[channelName])
+
+    titleDrawName = channelName
+    if self.titleMap.has_key(titleDrawName):
+      titleDrawName = self.titleMap[titleDrawName]
+    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,titleDrawName)
     tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.875,"#sqrt{s}="+self.energyStr)
     tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.825,self.lumiStr)
     tlatex.SetTextAlign(12)
@@ -803,7 +807,10 @@ class ShapePlotter:
       tlatex.SetTextAlign(12)
       tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
       tlatex.SetTextAlign(32)
-      tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.titleMap[channelName])
+      titleDrawName = channelName
+      if self.titleMap.has_key(titleDrawName):
+        titleDrawName = self.titleMap[titleDrawName]
+      tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,titleDrawName)
       if isSignalMC:
         tlatex.SetTextAlign(12)
         #tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.80,self.lumiStr)
@@ -1031,8 +1038,8 @@ class ShapePlotter:
     modelGraph.SetFillStyle(1)
     modelPlusSigGraph.SetLineColor(root.kRed)
     sigGraph.SetLineColor(root.kRed)
-    print "{} sig Events: {:.2f} +/- {:.2f}".format(channelName,sigStrength.getVal(),sigStrength.getError())
-    print "{} bak Events: {:.2f} +/- {:.2f}".format(channelName,bakStrength.getVal(),bakStrength.getError())
+    print "{0} sig Events: {1:.2f} +/- {2:.2f}".format(channelName,sigStrength.getVal(),sigStrength.getError())
+    print "{0} bak Events: {1:.2f} +/- {2:.2f}".format(channelName,bakStrength.getVal(),bakStrength.getError())
 
     return dataGraph, modelGraph, modelPlusSigGraph, sigGraph, pullsGraph, chi2, fr.floatParsFinal().find("sigStrength")
 
@@ -1137,8 +1144,8 @@ if __name__ == "__main__":
 
   shapePlotterList = []
   #for fn in glob.glob(dataDir+"*20.root")+glob.glob(dataDir+"*5.05.root"):
-  #for fn in glob.glob(dataDir+"*.root"):
-  for fn in glob.glob(dataDir+"BDTCutCat*.root"):
+  #for fn in glob.glob(dataDir+"JetN*.root"):
+  for fn in glob.glob(dataDir+"*.root"):
     if re.search("P[\d.]+TeV",fn):
         continue
     s = ShapePlotter(fn,outDir,titleMap,rebin,xlimits=plotRange,normRange=normRange,signalInject=args.signalInject,plotSignalStrength=args.plotSignalStrength,plotSignalBottom=args.plotSignalBottom,rebinOverride=args.rebinOverride)

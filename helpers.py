@@ -1792,20 +1792,29 @@ class EfficiencyReader:
         graph.Draw("ape")
         canvas.SaveAs(fileNameOut)
         
-def treeCut(category,cutString,eventWeights=True,muonRequirements=True):
+def treeCut(category,cutString,eventWeights=True,muonRequirements=True,KDString="KD"):
+  global MENormDict
   result = cutString
+  if 'KD' in result:
+    result = result.replace("KD", KDString)
   if len(result)==0:
     result = "1"
   if len(category) > 0:
     mask = 0
-    if "VBF" in category and "Presel" in category:
+    if "VBFPresel" in category:
         result += " && ((1 & eventType) > 0)"
-    if "VBF" in category and "BDT" in category:
+    if "VBFBDT" in category:
         result += " && ((2 & eventType) > 0)"
-    if "Inc" in category and "Presel" in category:
+    if "IncPresel" in category:
         result += " && ((4 & eventType) > 0)"
-    if "Inc" in category and "BDT" in category:
+    if "IncBDT" in category:
         result += " && ((8 & eventType) > 0)"
+    if "Jets0" in category:
+        result += " && nJets == 0"
+    if "Jets1" in category:
+        result += " && nJets == 1"
+    if "Jets2" in category:
+        result += " && nJets >= 2"
     if "NotBB" in category:
         result += " && ((1024 & eventType) > 0)"
     elif "BB" in category:
