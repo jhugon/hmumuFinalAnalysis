@@ -1473,12 +1473,12 @@ if __name__ == "__main__":
   # fail events are discarded.
   combinationsCutOpt = []
   combinationsCutOpt.append((
-    [["Yay","nJets>=2"]],"Jets2BDTSplitOpt",{
+    [["Yay","nJets>=2 && ptMiss < 100."]],"Jets2BDTSplitOpt",{
         'bdtVBFG':[21,-0.5,0.5],
         },True
   ))
   combinationsCutOpt.append((
-    [["Yay","nJets>=2"]],"Jets2SplitOpt",{
+    [["Yay","nJets>=2 && ptMiss < 100."]],"Jets2SplitOpt",{
         'deltaEtaJetsG':[9,2.0,6.0],
         'dijetMassG':[15,200.,900.],
         },True

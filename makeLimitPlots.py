@@ -368,7 +368,7 @@ class CutOptPlots:
       match = re.match(r"([a-zA-Z0-9]+)_.*",f)
       assert(match)
       testName = match.group(1)
-      match = re.findall(r"_([a-zA-Z0-9]+[GLS])([0-9p]+)",f)
+      match = re.findall(r"_([a-zA-Z0-9]+[GLS])([0-9p-]+)",f)
       assert(match)
       limit = data[4]
       tmpDict= {}
