@@ -5,6 +5,7 @@ from ROOT import gStyle as gStyle
 import re
 import csv
 import glob
+from math import exp
 from math import sqrt
 from math import log10
 import math
@@ -17,6 +18,33 @@ import time
 #PRELIMINARYSTRING="CMS Internal"
 PRELIMINARYSTRING="CMS Preliminary"
 #PRELIMINARYSTRING="CMS"
+
+def doubleGauss(x,par):
+  meanG1  = par[0]
+  widthG1 = par[1]
+  meanG2  = par[2]
+  widthG2 = par[3]
+  mixGG   = par[4]
+  scale   = par[5]
+  
+  #if (par[1] != 0.0):
+  
+  arg1 = (x[0]-meanG1)/widthG1
+  arg2 = (x[0]-meanG2)/widthG2
+  
+  gauss1 = exp(-0.5*arg1*arg1)
+  gauss2 = exp(-0.5*arg2*arg2)
+  dgauss = (1-mixGG)*gauss1 + mixGG*gauss2 
+  
+  return scale*dgauss
+  #return meanG1 + widthG1*x[0]
+ 
+  
+def drange(start, stop, step):
+  r = start
+  while r < stop:
+    yield r
+    r += step
 
 def fit2DResHist(hist,color):
   histName = hist.GetName()

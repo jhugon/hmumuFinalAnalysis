@@ -1,0 +1,97 @@
+
+##################################################
+##################################################
+#
+# 8  T E V
+#
+##################################################
+##################################################
+
+
+## D O U B L E    G A U S S I A N
+
+
+python  extractRooFitSignalDG.py GluGlu 115   8TeV
+python  extractRooFitSignalDG.py GluGlu 120   8TeV
+python  extractRooFitSignalDG.py GluGlu 124p5 8TeV
+python  extractRooFitSignalDG.py GluGlu 124   8TeV
+python  extractRooFitSignalDG.py GluGlu 125p5 8TeV
+python  extractRooFitSignalDG.py GluGlu 125   8TeV
+python  extractRooFitSignalDG.py GluGlu 126p5 8TeV
+python  extractRooFitSignalDG.py GluGlu 126   8TeV
+#python  extractRooFitSignalDG.py GluGlu 127p5 8TeV
+python  extractRooFitSignalDG.py GluGlu 127   8TeV
+python  extractRooFitSignalDG.py GluGlu 128   8TeV
+python  extractRooFitSignalDG.py GluGlu 130   8TeV
+python  extractRooFitSignalDG.py GluGlu 135   8TeV
+#python  extractRooFitSignalDG.py GluGlu 140   8TeV
+python  extractRooFitSignalDG.py GluGlu 145   8TeV
+python  extractRooFitSignalDG.py GluGlu 150   8TeV
+
+
+python  extractRooFitSignalDG.py VBF 115   8TeV
+python  extractRooFitSignalDG.py VBF 120   8TeV
+#python  extractRooFitSignalDG.py VBF 124p5 8TeV
+python  extractRooFitSignalDG.py VBF 124   8TeV
+python  extractRooFitSignalDG.py VBF 125p5 8TeV
+python  extractRooFitSignalDG.py VBF 125   8TeV
+python  extractRooFitSignalDG.py VBF 126p5 8TeV
+python  extractRooFitSignalDG.py VBF 126   8TeV
+python  extractRooFitSignalDG.py VBF 127p5 8TeV
+python  extractRooFitSignalDG.py VBF 127   8TeV
+python  extractRooFitSignalDG.py VBF 128   8TeV
+#python  extractRooFitSignalDG.py VBF 130   8TeV
+python  extractRooFitSignalDG.py VBF 135   8TeV
+python  extractRooFitSignalDG.py VBF 140   8TeV
+python  extractRooFitSignalDG.py VBF 145   8TeV
+python  extractRooFitSignalDG.py VBF 150   8TeV
+
+
+
+# E X T R A P O L A T I O N
+
+python extrapolateSignalPars.py GluGlu 8TeV DG BB
+python extrapolateSignalPars.py GluGlu 8TeV DG BO
+python extrapolateSignalPars.py GluGlu 8TeV DG BE
+python extrapolateSignalPars.py GluGlu 8TeV DG OO
+python extrapolateSignalPars.py GluGlu 8TeV DG OE
+python extrapolateSignalPars.py GluGlu 8TeV DG EE
+
+python extrapolateSignalPars.py VBF 8TeV DG VBF
+python extrapolateSignalPars.py VBF 8TeV DG VBFCiCLoose
+python extrapolateSignalPars.py VBF 8TeV DG VBFCiCTight
+
+
+# D R A W   T H E   S I G N A L   T E M P L A T E S 
+
+python -i signalPars.py
+
+s = signalPars('fitresults', 'gg', '8TeV', 'BB')
+s.draw(5)
+
+s = signalPars('fitresults', 'gg', '8TeV', 'BO')
+s.draw(5)
+
+s = signalPars('fitresults', 'gg', '8TeV', 'BE')
+s.draw(5)
+
+s = signalPars('fitresults', 'gg', '8TeV', 'OO')
+s.draw(5)
+
+s = signalPars('fitresults', 'gg', '8TeV', 'OE')
+s.draw(5)
+
+s = signalPars('fitresults', 'gg', '8TeV', 'EE')
+s.draw(5)
+
+
+
+s = signalPars('fitresults', 'vbf', '8TeV', 'VBF')
+s.draw(5)
+
+s = signalPars('fitresults', 'vbf', '8TeV', 'VBFCiCLoose')
+s.draw(5)
+
+s = signalPars('fitresults', 'vbf', '8TeV', 'VBFCiCTight')
+s.draw(5)
+
