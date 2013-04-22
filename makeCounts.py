@@ -76,7 +76,7 @@ channelNameMap = {
   "IncPreselPtG10EE":"Non-VBF EE",
   "IncPreselPtG10":"Non-VBF",
   "BDTCutCatVBFBDTOnly": "VBF & Non-VBF Combination",
-  "all": "Inclusive"
+  "all": "Inclusive",
 }
 
 sampleNameMap = {
@@ -87,6 +87,7 @@ sampleNameMap = {
   "bakWide":"Data in Sidebands",
   "bakCheat":"Back Pred (Norm Cheat)",
   "bakErr":"Back Pred Diff",
+  "width":"68% Signal Width (GeV)",
   "sig":"Signal",
   "sob":"$S/B$",
   "sosqrtb":"$S/\sqrt{B}$",
@@ -109,18 +110,86 @@ sampleNameMap = {
 def getFormatName(map,cat):
   if map.has_key(cat):
     return map[cat]
+  elif "JetsL2" in cat:
+    return cat.replace("JetsL2","$\leq2$ Jets ")
+  elif "Jets2" in cat:
+    return cat.replace("Jets2","$\geq2$ Jets ")
+  elif "Jets1" in cat:
+    return cat.replace("Jets1","1 Jet ")
+  elif "Jets0" in cat:
+    return cat.replace("Jets0","0 Jet ")
   else:
     return cat
 
+def findMassBoundariesDG(fileNames,categories,cuts,level):
+  global GLOBALCOUNTER
+  massExtraCutString = " && dimuonMass > 110. && dimuonMass < 160."
+  treeList = []
+  rfList = []
+  for fName in fileNames:
+    rf = root.TFile(fName)
+    rfList += [rf]
+    tree = rf.Get("outtree")
+    treeList += [tree]
+  treesToUse = []
+  for cat,cut in zip(categories,cuts):
+    maxTree = None
+    maxN = -1
+    if cat != "":
+      cut += massExtraCutString
+    else:
+      cut += massExtraCutString[3:]
+    cutStr = treeCut(cat,cut)
+    #print cutStr
+    for tree in treeList:
+      tmpHistName = 'hist'+str(GLOBALCOUNTER)
+      GLOBALCOUNTER += 1
+      varToDraw = "dimuonMass"
+      drawStr = varToDraw+" >> "+tmpHistName
+      #print drawStr
+      tree.Draw(drawStr,cutStr)
+      tmp = root.gDirectory.Get(tmpHistName)
+      nEvents = getIntegralAll(tmp)
+      if nEvents > maxN:
+        maxTree = tree
+        maxN = nEvents
+    treesToUse += [maxTree]
+  results = []
+  for cat,cut,tree in zip(categories,cuts,treesToUse):
+      tmpHistName = 'hist'+str(GLOBALCOUNTER)
+      GLOBALCOUNTER += 1
+      varToDraw = "dimuonMass"
+      drawStr = varToDraw+" >> "+tmpHistName
+      #print cat
+      #print drawStr
+      if cat != "":
+        cut += massExtraCutString
+      else:
+        cut += massExtraCutString[3:]
+      cutStr = treeCut(cat,cut)
+      #print cutStr
+      tree.Draw(drawStr,cutStr)
+      tmp = root.gDirectory.Get(tmpHistName)
+      quantiles = fitDGFindQuantiles(tmp,level)
+      results += [[quantiles[0],quantiles[2]]]
+  return results
+
 class Counts:
-  def __init__(self,filenames,categories,cuts,massBoudaries):
+  def __init__(self,filenames,categories,cuts,massBoundaries):
     global GLOBALCOUNTER
-    assert(len(massBoudaries)==2)
-    massExtraCutString = " && {0} < dimuonMass && {1} > dimuonMass".format(*massBoudaries)
+    assert(type(massBoundaries)==list and len(massBoundaries)>0)
+    if type(massBoundaries[0]) != list:
+      massBoundariesBak = massBoundaries
+      massBoundaries = []
+      for i in categories:
+        massBoundaries += massBoundariesBak
+    assert(len(massBoundaries)==len(categories))
+    assert(len(categories)==len(cuts))
     data = {}
     self.filenames = filenames
     self.data = data
     self.categories = categories
+    self.massBoundaries = massBoundaries
     for f in filenames:
       rf = root.TFile(f)
       fDir = os.path.dirname(f)
@@ -146,11 +215,14 @@ class Counts:
         "lumi": lumiDict[energyStr]
             }
       tree = rf.Get("outtree")
-      for i,j in zip(categories,cuts):
+      for i,j,mb in zip(categories,cuts,massBoundaries):
         tmpHistName = 'hist'+str(GLOBALCOUNTER)
+
         GLOBALCOUNTER += 1
+        massExtraCutString = " && {0} < dimuonMass && {1} > dimuonMass".format(*mb)
         varToDraw = "dimuonMass"
         drawStr = varToDraw+" >> "+tmpHistName
+        #print i
         #print drawStr
         if j != "":
           j += massExtraCutString
@@ -165,6 +237,18 @@ class Counts:
         if i == '':
           i = "all"
         data[fNameKey][i] = nEvents
+
+  def getBoundariesDict(self):
+    result = {}
+    for cat,mb in zip(self.categories,self.massBoundaries):
+      result[cat] = mb
+    return result
+  def getWidthDict(self):
+    result = self.getBoundariesDict()
+    for cat in result:
+      w = result[cat][1]-result[cat][0]
+      result[cat] = w
+    return result
 
 def getBakPrediction(filenames,categories,massBoundaries,cheat=False):
   assert(len(massBoundaries)==4)
@@ -400,7 +484,7 @@ def cutFlow(sigFileNames,bakFileNames,channel,massBoundaries=[120.,130.]):
 
   return outString
 
-def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,cuts,massBoundaries=[120.,130.],bakPredBounds=[110.,120.,130.,160.]):
+def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,cuts,massBoundaries=None):
   data = {}
   data["bak"] = {}
   data["bakCheat"] = {}
@@ -415,6 +499,8 @@ def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,cuts,
 
   energyStr = ""
   lumi = ""
+  if massBoundaries == None:
+    massBoundaries = findMassBoundariesDG(sigFileNames,categories,cuts,0.68)
   sigCounts = Counts(sigFileNames,categories,cuts,massBoundaries)
   bakCounts = Counts(bakFileNames,categories,cuts,massBoundaries)
   datCounts = Counts(datFileNames,categories,cuts,massBoundaries)
@@ -466,13 +552,16 @@ def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,cuts,
 #  for cat in categories:
 #    data["bakErr"][cat] = (data["bak"][cat]-data["data"][cat])/data["data"][cat]
 
-  samples = ["sig","mcbak","data","sob","sosqrtsb"]
+  samples = ["sig","mcbak","data","sob","width"]
+  samples = ["width","sob"]
   #samples = sorted(datCounts.data.keys()) + ['data']
   #samples = ["ggHmumu125_8TeV","vbfHmumu125_8TeV","wHmumu125_8TeV","zHmumu125_8TeV","sig"]
   #samples += ["ggHmumu125_8TeV","vbfHmumu125_8TeV","wHmumu125_8TeV","zHmumu125_8TeV"]
   #samples += ["bakCheat"]
   #samples += ["bakErr"]
   ncols = len(samples)
+
+  widths = sigCounts.getWidthDict()
 
   outString = ""
   if True:
@@ -485,6 +574,10 @@ def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,cuts,
     for cat in categories:
       outString += getFormatName(channelNameMap,cat) +" &"
       for s in samples:
+        if s=="width":
+          n = widths[cat]
+          outString += " {0:.1f} &".format(n)
+          continue
         n = data[s][cat]
         if s=="sob" or s=="sosqrtb" or s=="sosqrtsb":
            outString += " {0:.2e} &".format(n)
@@ -496,7 +589,7 @@ def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,cuts,
           outString += " {0:.2f} &".format(n)
       outString = outString.rstrip(r"&")
       outString += r"\\ \hline" + '\n'
-  
+
     outString = r"\begin{tabular}{|l|"+'c|'*ncols+"} \hline"+"\n" + outString + r"\end{tabular}"+"\n"
     outString = outString.replace(r"%",r"\%")
   
@@ -506,7 +599,8 @@ def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,cuts,
     lumi = "$\\mathcal{{L}}$ = {0:.0f} fb$^{{-1}}$".format(float(lumi))
     energyStr = "$\\sqrt{s}$ = "+re.sub(r"TeV"," TeV",energyStr)
     massStr = r"{0} GeV $< m_{{\mu\mu}} <$ {1} GeV".format(*massBoundaries)
-    outString += r"\\ "+massStr+", "+energyStr + ", "+lumi+"\n"
+    #outString += r"\\ "+massStr+", "+energyStr + ", "+lumi+"\n"
+    outString += r"\\ "+energyStr + ", "+lumi+"\n"
   if True:
     firstLen = 4
     for i in samples:
@@ -527,6 +621,10 @@ def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,cuts,
     for cat in categories:
       printString += ("{0:<"+firstLen+"} ").format(getFormatName(channelNameMap,cat))
       for s,colLen in zip(samples,colWidths):
+        if s=="width":
+          n = widths[cat]
+          printString += ("{0:^"+colLen+".1f}").format(n)
+          continue
         n = data[s][cat]
         if s=="sob" or s=="sosqrtb" or s=="sosqrtsb":
            printString += ("{0:^"+colLen+".2e}").format(n)
@@ -537,10 +635,19 @@ def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,cuts,
         else:
           printString += ("{0:^"+colLen+".2f}").format(n)
       printString += '\n'
+
+    printString += '\n'
+
+    printString += ("{0:<"+firstLen+"}").format("")
+    printString += ("{0:^"+colLen+"}").format("Width (GeV)")
+    printString += '\n'
+    for cat in categories:
+      printString += ("{0:<"+firstLen+"} ").format(getFormatName(channelNameMap,cat))
+      printString += ("{0:^"+colLen+".2f}").format(widths[cat])
+      printString += '\n'
     print(printString)
 
   return outString
-
       
 if __name__ == "__main__":
   root.gROOT.SetBatch(True)
@@ -666,28 +773,43 @@ if __name__ == "__main__":
   cats = [""]
   cuts = [""]
 
-  cats += ["Jets2"]
-  cuts += ["nJets>=2"]
-  cats += ["Jets2PtMissL100"]
-  cuts += ["nJets>=2 && ptMiss<100."]
-  cats += ["Jets2CutPass"]
-  cuts += ["nJets>=2 && (deltaEtaJets>3. && dijetMass>750.) && ptMiss<100."]
-  cats += ["Jets2CutFail"]
-  cuts += ["nJets>=2 && !(deltaEtaJets>3. && dijetMass>750.) && ptMiss<100."]
+#  cats += ["Jets2"]
+#  cuts += ["nJets>=2"]
+#  cats += ["Jets2PtMissL100"]
+#  cuts += ["nJets>=2 && ptMiss<100."]
+#  cats += ["Jets2CutPass"]
+#  cuts += ["nJets>=2 && (deltaEtaJets>3. && dijetMass>750.) && ptMiss<100."]
+#  cats += ["Jets2CutFail"]
+#  cuts += ["nJets>=2 && !(deltaEtaJets>3. && dijetMass>750.) && ptMiss<100."]
 
-  cats += ["Jets0"]
-  cuts += ["nJets==0"]
-  cats += ["Jets0Pass"]
-  cuts += ["nJets==0 && dimuonPt>10"]
-  cats += ["Jets0Fail"]
-  cuts += ["nJets==0 && !(dimuonPt>10)"]
+#  cats += ["Jets0"]
+#  cuts += ["nJets==0"]
+#  cats += ["Jets0Pass"]
+#  cuts += ["nJets==0 && dimuonPt>10"]
+#  cats += ["Jets0Fail"]
+#  cuts += ["nJets==0 && !(dimuonPt>10)"]
+#
+#  cats += ["Jets1"]
+#  cuts += ["nJets==1"]
+#  cats += ["Jets1Pass"]
+#  cuts += ["nJets==1 && dimuonPt>10"]
+#  cats += ["Jets1Fail"]
+#  cuts += ["nJets==1 && !(dimuonPt>10)"]
 
-  cats += ["Jets1"]
-  cuts += ["nJets==1"]
-  cats += ["Jets1Pass"]
-  cuts += ["nJets==1 && dimuonPt>10"]
-  cats += ["Jets1Fail"]
-  cuts += ["nJets==1 && !(dimuonPt>10)"]
+  cats += ["JetsL2"]
+  cuts += ["nJets<2"]
+  cats += ["JetsL2BB"]
+  cuts += ["nJets<2"]
+  cats += ["JetsL2BO"]
+  cuts += ["nJets<2"]
+  cats += ["JetsL2BE"]
+  cuts += ["nJets<2"]
+  cats += ["JetsL2OO"]
+  cuts += ["nJets<2"]
+  cats += ["JetsL2OE"]
+  cuts += ["nJets<2"]
+  cats += ["JetsL2EE"]
+  cuts += ["nJets<2"]
 
   inMassWindowTable =  inMassWindowTableMkr(signames,baknames,datnames,cats,cuts)
   #inMassWindowTableFile.write(r" {\large Not-VBF BDT Cut} \\"+'\n')

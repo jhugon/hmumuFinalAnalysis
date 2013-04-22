@@ -427,7 +427,7 @@ def makePDFSigCBPlusGaus(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn
 
     if workspaceImportFn != None:
       workspaceImportFn(pdfMmumu)
-      workspaceImportFn(rooDataset)
+      #workspaceImportFn(rooDataset)
       workspaceImportFn(fr)
 
     ## Debug Time
@@ -437,7 +437,8 @@ def makePDFSigCBPlusGaus(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn
 #    pdfMmumu.plotOn(frame)
 #    canvas = root.TCanvas()
 #    frame.Draw()
-#    canvas.SaveAs("debug_"+name+".png")
+#    now = datetime.datetime.now().isoformat()
+#    canvas.SaveAs("debug_"+name+now+".png")
 
     for i in rooParamList:
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
@@ -505,7 +506,7 @@ def makePDFSigDG(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,channel
 
     if workspaceImportFn != None:
       workspaceImportFn(pdfMmumu)
-      workspaceImportFn(rooDataset)
+      #workspaceImportFn(rooDataset)
       workspaceImportFn(fr)
 
     ## Debug Time
@@ -515,7 +516,8 @@ def makePDFSigDG(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,channel
 #    pdfMmumu.plotOn(frame)
 #    canvas = root.TCanvas()
 #    frame.Draw()
-#    canvas.SaveAs("debug_"+name+".png")
+#    now = datetime.datetime.now().isoformat()
+#    canvas.SaveAs("debug_"+name+now+".png")
 
     for i in rooParamList:
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
@@ -1386,59 +1388,69 @@ if __name__ == "__main__":
   analyses += [["VBFCutBasedTight",oldJetCutString]]
   #analyses += [["IncPreselPtG10"]+ x for x in categoriesInc]
   analyses = []
-  analyses += [["Inclusive",""]]
-  analyses += [["Jet0All","nJets == 0"]]
-  analyses += [["Jet1All","nJets == 1"]]
-  analyses += [["Jet2All","nJets >= 2"]]
-  analyses += [["Jet2AllPtMissL25.","nJets >= 2 && ptMiss<25."]]
-  analyses += [["Jet2AllPtMissL100.","nJets >= 2 && ptMiss<100."]]
+  #analyses += [["Inclusive",""]]
+  #analyses += [["Jet0All","nJets == 0"]]
+  #analyses += [["Jet1All","nJets == 1"]]
+  #analyses += [["Jet2All","nJets >= 2"]]
+  #analyses += [["Jet2AllPtMissL25.","nJets >= 2 && ptMiss<25."]]
+  #analyses += [["Jet2AllPtMissL100.","nJets >= 2 && ptMiss<100."]]
 
-  analyses += [["Jet2Pass","nJets >= 2 && deltaEtaJets>3. && dijetMass>750. && ptMiss < 100."]]
-  analyses += [["Jet2Fail","nJets >= 2 && !(deltaEtaJets>3. && dijetMass>750.) && ptMiss < 100."]]
-  analyses += [["Jet1Pass","nJets == 1 && dimuonPt > 10."]]
-  analyses += [["Jet1Fail","nJets == 1 && !(dimuonPt > 10.)"]]
-  analyses += [["Jet0Pass","nJets == 0 && dimuonPt > 10."]]
-  analyses += [["Jet0Fail","nJets == 0 && !(dimuonPt > 10.)"]]
-  analyses += [["Jet0KDG0p7","nJets == 0 && dimuonPt > 10. && KD > 0.7"]]
-  analyses += [["Jet1KDG0p7","nJets == 1 && dimuonPt > 10. && KD > 0.7"]]
+  #analyses += [["Jet2Pass","nJets >= 2 && deltaEtaJets>3. && dijetMass>750. && ptMiss < 100."]]
+  #analyses += [["Jet2Fail","nJets >= 2 && !(deltaEtaJets>3. && dijetMass>750.) && ptMiss < 100."]]
+  #analyses += [["Jet1Pass","nJets == 1 && dimuonPt > 10."]]
+  #analyses += [["Jet1Fail","nJets == 1 && !(dimuonPt > 10.)"]]
+  #analyses += [["Jet0Pass","nJets == 0 && dimuonPt > 10."]]
+  #analyses += [["Jet0Fail","nJets == 0 && !(dimuonPt > 10.)"]]
+  #analyses += [["Jet0KDG0p7","nJets == 0 && dimuonPt > 10. && KD > 0.7"]]
+  #analyses += [["Jet1KDG0p7","nJets == 1 && dimuonPt > 10. && KD > 0.7"]]
 
   #analyses += [["VBFJustinHighJetPtPtMissL25DEtaJetsG3p7MJJG400",kindaFunJetCutString+" && deltaEtaJets > 3.7 && dijetMass>400. && ptMiss < 25."]]
   #analyses += [["VBFJustinLowJetPtPtMissL25DEtaJetsG3p6MJJG450",funJetCutString+" && deltaEtaJets > 3.6 && dijetMass>450. && ptMiss < 25."]]
   combinations = []
+  #combinations.append((
+  #  [
+  #    ["Jet2Pass","nJets >= 2 && deltaEtaJets>3. && dijetMass>750. && ptMiss < 100."],
+  #    ["Jet2Fail","nJets >= 2 && !(deltaEtaJets>3. && dijetMass>750.) && ptMiss < 100."]
+  #  ],"Jet2DEta3MJJ750PtSplit"
+  #))
+  #combinations.append((
+  #  [
+  #    ["Jet1Pass","nJets == 1 && dimuonPt > 10."],
+  #    ["Jet1Fail","nJets == 1 && !(dimuonPt > 10.)"]
+  #  ],"Jet1Pt10Split"
+  #))
+  #combinations.append((
+  #  [
+  #    ["Jet0Pass","nJets == 0 && dimuonPt > 10."],
+  #    ["Jet0Fail","nJets == 0 && !(dimuonPt > 10.)"]
+  #  ],"Jet0Pt10Split"
+  #))
+  #combinations.append((
+  #  [
+  #    ["Jet2Pass","nJets >= 2 && deltaEtaJets>3. && dijetMass>750. && ptMiss < 100."],
+  #    ["Jet2Fail","nJets >= 2 && !(deltaEtaJets>3. && dijetMass>750.) && ptMiss < 100."],
+  #    ["Jet1Pass","nJets == 1 && dimuonPt > 10."],
+  #    ["Jet1Fail","nJets == 1 && !(dimuonPt > 10.)"],
+  #    ["Jet0Pass","nJets == 0 && dimuonPt > 10."],
+  #    ["Jet0Fail","nJets == 0 && !(dimuonPt > 10.)"],
+  #  ],"JetNOptSplit"
+  #))
+  #combinations.append((
+  #  [
+  #    ["Jet2All","nJets >= 2 && ptMiss < 100."],
+  #    ["Jet1All","nJets == 1"],
+  #    ["Jet0All","nJets == 0"]
+  #  ],"JetNAll"
+  #))
   combinations.append((
     [
-      ["Jet2Pass","nJets >= 2 && deltaEtaJets>3. && dijetMass>750. && ptMiss < 100."],
-      ["Jet2Fail","nJets >= 2 && !(deltaEtaJets>3. && dijetMass>750.) && ptMiss < 100."]
-    ],"Jet2DEta3MJJ750PtSplit"
-  ))
-  combinations.append((
-    [
-      ["Jet1Pass","nJets == 1 && dimuonPt > 10."],
-      ["Jet1Fail","nJets == 1 && !(dimuonPt > 10.)"]
-    ],"Jet1Pt10Split"
-  ))
-  combinations.append((
-    [
-      ["Jet0Pass","nJets == 0 && dimuonPt > 10."],
-      ["Jet0Fail","nJets == 0 && !(dimuonPt > 10.)"]
-    ],"Jet0Pt10Split"
-  ))
-  combinations.append((
-    [
-      ["Jet2Pass","nJets >= 2 && deltaEtaJets>3. && dijetMass>750. && ptMiss < 100."],
-      ["Jet2Fail","nJets >= 2 && !(deltaEtaJets>3. && dijetMass>750.) && ptMiss < 100."],
-      ["Jet1Pass","nJets == 1 && dimuonPt > 10."],
-      ["Jet1Fail","nJets == 1 && !(dimuonPt > 10.)"],
-      ["Jet0Pass","nJets == 0 && dimuonPt > 10."],
-      ["Jet0Fail","nJets == 0 && !(dimuonPt > 10.)"],
-    ],"JetNOptSplit"
-  ))
-  combinations.append((
-    [
-      ["Jet2All","nJets >= 2 && ptMiss < 100."],
-      ["Jet1All","nJets == 1"],
-      ["Jet0All","nJets == 0"]
-    ],"JetNAll"
+      ["JetL2BB","nJets < 2"],
+      ["JetL2BO","nJets < 2"],
+      ["JetL2BE","nJets < 2"],
+      ["JetL2OO","nJets < 2"],
+      ["JetL2OE","nJets < 2"],
+      ["JetL2EE","nJets < 2"],
+    ],"JetNCat"
   ))
   #combinations.append((
   #      [["IncPreselPtG10"+x] for x in categoriesInc],"IncPreselCat"

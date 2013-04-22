@@ -13,6 +13,7 @@ import numpy
 import array
 import sys
 import time
+import datetime
 #import matplotlib.pyplot as mpl
 
 #PRELIMINARYSTRING="CMS Internal"
@@ -38,7 +39,6 @@ def doubleGauss(x,par):
   
   return scale*dgauss
   #return meanG1 + widthG1*x[0]
- 
   
 def drange(start, stop, step):
   r = start
@@ -1819,6 +1819,70 @@ class EfficiencyReader:
         graph.GetYaxis().SetRangeUser(ymin,ymax)
         graph.Draw("ape")
         canvas.SaveAs(fileNameOut)
+
+def fitDGFindQuantiles(hist,level):
+    if not hist.InheritsFrom("TH1"):
+      print("Error: fitDGFindQuantiles: input not TH1*. Exiting.")
+      sys.exit(1)
+    channelName = "silly"
+    name = "silly"
+    minMass = 110
+    maxMass = 160
+    mMuMu = root.RooRealVar("mMuMu","mMuMu",minMass,maxMass)
+    rooDataset = root.RooDataHist("DGDataSet","DGDataSet",root.RooArgList(mMuMu),hist)
+    
+    debug = ""
+    debug += "### makePDFSigDG: "+channelName+": "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
+    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
+
+    rooParamList = []
+
+    meanG1 = root.RooRealVar(channelName+"_"+name+"_MeanG1",
+                             channelName+"_"+name+"_MeanG1", 
+                             123.,100.,150.)
+    meanG2 = root.RooRealVar(channelName+"_"+name+"_MeanG2",
+                             channelName+"_"+name+"_MeanG2", 
+                             125.,100.,150.)
+    
+    widthG1 = root.RooRealVar(channelName+"_"+name+"_WidthG1",
+                             channelName+"_"+name+"_WidthG1", 
+                             5.,2.,10.)
+    widthG2 = root.RooRealVar(channelName+"_"+name+"_WidthG2",
+                              channelName+"_"+name+"_WidthG2", 
+                              1.,0.5,5.)
+    
+    mixGG = root.RooRealVar(channelName+"_"+name+"_mixGG",
+                            channelName+"_"+name+"_mixGG", 
+                            0.5,0.,1.)
+    gaus1 = root.RooGaussian(channelName+"_"+name+"_gaus1",
+                             channelName+"_"+name+"_gaus1",
+                             mMuMu,meanG1,widthG1)
+    gaus2 = root.RooGaussian(channelName+"_"+name+"_gaus2",
+                             channelName+"_"+name+"_gaus2",
+                             mMuMu,meanG2,widthG2)
+    pdfMmumu = root.RooAddPdf(name,
+                              name,
+                              gaus1,gaus2,mixGG)
+    #workspaceImportFn(pdfMmumu)
+    rooParamList += [meanG1,meanG2,widthG1,widthG2,mixGG]
+    
+    PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True),root.RooFit.Range("signalfit"))
+    fr.SetName(name+"_fitResult")
+
+    pdftf = pdfMmumu.asTF(root.RooArgList(mMuMu))
+
+
+    # Debugging
+    #canvas = root.TCanvas("sillyCanvas")
+    #pdftf.Draw()
+    #now = datetime.datetime.now().isoformat()
+    #canvas.SaveAs("debug_"+now+".png")
+
+    quants =  getMedianAndQuantileInterval(pdftf,level)
+    quants.reverse()
+    return quants
         
 def treeCut(category,cutString,eventWeights=True,muonRequirements=True,KDString="KD"):
   global MENormDict
@@ -1878,8 +1942,13 @@ def treeCut(category,cutString,eventWeights=True,muonRequirements=True,KDString=
 if __name__ == "__main__":
 
   root.gROOT.SetBatch(True)
-  print("Running helpers.py")
-  eff = EfficiencyReader()
-  print eff
-  eff.plot("output/eff_")
+  #print("Running helpers.py")
+  #eff = EfficiencyReader()
+  #print eff
+  #eff.plot("output/eff_")
   
+  f1 = root.TFile("input/V00-01-10/ggHmumu125_8TeV.root")
+  t1 = f1.Get("outtree")
+  t1.Draw("dimuonMass >> h1","dimuonMass > 110. && dimuonMass < 160. && dimuonPt > 10.")
+  h1 = root.gDirectory.Get("h1")
+  print fitDGFindQuantiles(h1,0.683)
