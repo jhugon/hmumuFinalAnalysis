@@ -147,6 +147,8 @@ if True:
     histNames["KD"] = {"xlabel":"MEKD","xlimits":[0.0,1.0],"nbins":20}#,"ylimits":[0.1,3e6]}
     histNames["KDPdf"] = {"xlabel":"MEKD","xlimits":[0.0,1.0],"nbins":20}#,"ylimits":[0.1,3e6]}
 
+    histNames["bdtVBF"] = {"xlabel":"2-Jet BDT","xlimits":[-0.5,0.5],"nbins":40}#,"ylimits":[0.1,3e6]}
+
 for key in histNames:
   if "BDTG" in dataDir and "BDT" in key:
     histNames[key]["xlimits"] = [-1,1]

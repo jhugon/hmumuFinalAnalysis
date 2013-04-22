@@ -4,8 +4,6 @@ import math
 from math import sqrt
 import ROOT as root
 from helpers import *
-import matplotlib.pyplot as mpl
-import numpy
 import random
 import glob
 import os.path
@@ -16,6 +14,8 @@ from xsec import *
 import makeCards
 
 root.gErrorIgnoreLevel = root.kWarning
+
+GLOBALCOUNTER = 0
 
 channelNameMap = {
   "AllCat":"All Cat. Comb.",
@@ -106,8 +106,17 @@ sampleNameMap = {
   "SingleMuRun2012Av1Recover":"Run2012A-recover-06Aug2012-v1",
 }
 
+def getFormatName(map,cat):
+  if map.has_key(cat):
+    return map[cat]
+  else:
+    return cat
+
 class Counts:
-  def __init__(self,filenames,categories,massBoudaries,chopDir=True,chopExt=True):
+  def __init__(self,filenames,categories,cuts,massBoudaries):
+    global GLOBALCOUNTER
+    assert(len(massBoudaries)==2)
+    massExtraCutString = " && {0} < dimuonMass && {1} > dimuonMass".format(*massBoudaries)
     data = {}
     self.filenames = filenames
     self.data = data
@@ -130,27 +139,28 @@ class Counts:
         if nEventsMap.has_key(fNameNoExt):
           scaleBy = xsec[fNameNoExt]/nEventsMap[fNameNoExt]*lumiDict[energyStr]*1000.
       fNameKey = fNameNoExt
-      if not chopDir:
-        fNameKey = fDir+'/'+fNameNoExt
-      if not chopExt:
-        fNameKey += fNameExt
       data[fNameKey] = {}
       data[fNameKey]["misc"] = {
         "scaleBy":scaleBy,
         "energyStr": energyStr,
         "lumi": lumiDict[energyStr]
             }
-      for i in categories:
-        strToGet = i + '/mDiMu'
-        strToGet = os.path.normpath(strToGet)
-        if strToGet[0] == '/':
-            strToGet = strToGet[1:]
-        tmpHist = rf.Get(strToGet)
-        try:
-          nEvents = getIntegralAll(tmpHist,massBoudaries)
-        except Exception, e:
-          print("Error trying to get: {0} {1}".format(f,strToGet))
-          raise e
+      tree = rf.Get("outtree")
+      for i,j in zip(categories,cuts):
+        tmpHistName = 'hist'+str(GLOBALCOUNTER)
+        GLOBALCOUNTER += 1
+        varToDraw = "dimuonMass"
+        drawStr = varToDraw+" >> "+tmpHistName
+        #print drawStr
+        if j != "":
+          j += massExtraCutString
+        else:
+          j += massExtraCutString[3:]
+        cutStr = treeCut(i,j)
+        #print cutStr
+        tree.Draw(drawStr,cutStr)
+        tmp = root.gDirectory.Get(tmpHistName)
+        nEvents = getIntegralAll(tmp)
         nEvents *= scaleBy
         if i == '':
           i = "all"
@@ -390,7 +400,7 @@ def cutFlow(sigFileNames,bakFileNames,channel,massBoundaries=[120.,130.]):
 
   return outString
 
-def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,massBoundaries=[120.,130.],bakPredBounds=[110.,120.,130.,160.]):
+def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,cuts,massBoundaries=[120.,130.],bakPredBounds=[110.,120.,130.,160.]):
   data = {}
   data["bak"] = {}
   data["bakCheat"] = {}
@@ -405,9 +415,9 @@ def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,massB
 
   energyStr = ""
   lumi = ""
-  sigCounts = Counts(sigFileNames,categories,massBoundaries)
-  bakCounts = Counts(bakFileNames,categories,massBoundaries)
-  datCounts = Counts(datFileNames,categories,massBoundaries)
+  sigCounts = Counts(sigFileNames,categories,cuts,massBoundaries)
+  bakCounts = Counts(bakFileNames,categories,cuts,massBoundaries)
+  datCounts = Counts(datFileNames,categories,cuts,massBoundaries)
   for key in sigCounts.data.keys()+datCounts.data.keys():
     data[key] = {}
   for cat in categories:
@@ -430,12 +440,20 @@ def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,massB
     data["data"][cat] = nDat
 
     data["sig"][cat] = nSig
-    data["sob"][cat] = float(nSig)/nBak
-    data["sosqrtb"][cat] = float(nSig)/sqrt(float(nBak))
-    data["sosqrtsb"][cat] = float(nSig)/sqrt(float(nBak+nSig))
+    if nBak>0:
+      data["sob"][cat] = float(nSig)/nBak
+      data["sosqrtb"][cat] = float(nSig)/sqrt(float(nBak))
+    else:
+      data["sob"][cat] = float('nan')
+      data["sosqrtb"][cat] = float('nan')
+    if nSig+nBak>0:
+      data["sosqrtsb"][cat] = float(nSig)/sqrt(float(nBak+nSig))
+    else:
+      data["sosqrtsb"][cat] = float('nan')
 
-  data["bak"] = getBakPrediction(datFileNames,categories,bakPredBounds)
-  data["bakCheat"] = getBakPrediction(datFileNames,categories,bakPredBounds,cheat=True)
+  #data["bak"] = getBakPrediction(datFileNames,categories,bakPredBounds)
+  #data["bakCheat"] = getBakPrediction(datFileNames,categories,bakPredBounds,cheat=True)
+
   if categories.count('')==1:
     allIndex = categories.index('')
     categories[allIndex] = "all"
@@ -445,11 +463,11 @@ def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,massB
 #    for bak in bakCounts.data:
 #      nBakWide += countsWide.data[bak][cat]
 #    data["bakWide"][cat] = nBakWide-data["bak"][cat]
-  for cat in categories:
-    data["bakErr"][cat] = (data["bak"][cat]-data["data"][cat])/data["data"][cat]
+#  for cat in categories:
+#    data["bakErr"][cat] = (data["bak"][cat]-data["data"][cat])/data["data"][cat]
 
-  #samples = ["sig","bak","data"]
-  samples = sorted(datCounts.data.keys()) + ['data']
+  samples = ["sig","mcbak","data","sob","sosqrtsb"]
+  #samples = sorted(datCounts.data.keys()) + ['data']
   #samples = ["ggHmumu125_8TeV","vbfHmumu125_8TeV","wHmumu125_8TeV","zHmumu125_8TeV","sig"]
   #samples += ["ggHmumu125_8TeV","vbfHmumu125_8TeV","wHmumu125_8TeV","zHmumu125_8TeV"]
   #samples += ["bakCheat"]
@@ -465,7 +483,7 @@ def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,massB
     outString += r"\\ \hline" + '\n'
   
     for cat in categories:
-      outString += channelNameMap[cat]+" &"
+      outString += getFormatName(channelNameMap,cat) +" &"
       for s in samples:
         n = data[s][cat]
         if s=="sob" or s=="sosqrtb" or s=="sosqrtsb":
@@ -507,7 +525,7 @@ def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,massB
       colWidths.append(colLen)
     printString += "\n"
     for cat in categories:
-      printString += ("{0:<"+firstLen+"} ").format(channelNameMap[cat])
+      printString += ("{0:<"+firstLen+"} ").format(getFormatName(channelNameMap,cat))
       for s,colLen in zip(samples,colWidths):
         n = data[s][cat]
         if s=="sob" or s=="sosqrtb" or s=="sosqrtsb":
@@ -589,7 +607,7 @@ if __name__ == "__main__":
 #
 #
 #  ######################################################
-  signames = ["ggHmumu125_8TeV.root","vbfHmumu125_8TeV.root","wHmumu125_8TeV.root","zHmumu125_8TeV.root"]
+  signames = ["ggHmumu125_8TeV.root","vbfHmumu125_8TeV.root"]
   baknames = [
     "DYJetsToLL_8TeV.root",
     "ttbar_8TeV.root"
@@ -602,36 +620,37 @@ if __name__ == "__main__":
     "SingleMuRun2012Cv2.root",
     "SingleMuRun2012D.root"
   ]
-  signames = ["input/preApproveSample/"+i for i in signames]
-  baknames = ["input/preApproveSample/"+i for i in baknames]
-  datnames = ["input/preApproveSample/"+i for i in datnames]
+  indir = "input/V00-01-10/"
+  signames = [indir+i for i in signames]
+  baknames = [indir+i for i in baknames]
+  datnames = [indir+i for i in datnames]
 
-  cutTableFile = open("cutTable.tex",'w')
-  cutTableFile.write( r"""
-\documentclass[12pt,a4paper]{article}
-\usepackage{lscape}
-\begin{document}
-%\tiny
-\small
-\begin{center}
-
-"""
-  )
-  cutTable =  cutFlow(signames,baknames,"Inc")
-  cutTableFile.write(r" {\large Not-VBF Category} \\"+'\n')
-  cutTableFile.write(cutTable)
-  cutTable =  cutFlow(signames,baknames,"VBF")
-  cutTableFile.write(r"\vspace {4em}\\ {\large VBF Category} \\"+'\n')
-  cutTableFile.write(cutTable)
-  cutTableFile.write(     r"""
-
-\end{center}
-\end{document}
-"""
-  )
-  cutTableFile.close()
-
-  #####################################################
+#  cutTableFile = open("cutTable.tex",'w')
+#  cutTableFile.write( r"""
+#\documentclass[12pt,a4paper]{article}
+#\usepackage{lscape}
+#\begin{document}
+#%\tiny
+#\small
+#\begin{center}
+#
+#"""
+#  )
+#  cutTable =  cutFlow(signames,baknames,"Inc")
+#  cutTableFile.write(r" {\large Not-VBF Category} \\"+'\n')
+#  cutTableFile.write(cutTable)
+#  cutTable =  cutFlow(signames,baknames,"VBF")
+#  cutTableFile.write(r"\vspace {4em}\\ {\large VBF Category} \\"+'\n')
+#  cutTableFile.write(cutTable)
+#  cutTableFile.write(     r"""
+#
+#\end{center}
+#\end{document}
+#"""
+#  )
+#  cutTableFile.close()
+#
+#  #####################################################
 
   inMassWindowTableFile = open("inMassWindowTable.tex",'w')
   inMassWindowTableFile.write( r"""
@@ -644,8 +663,33 @@ if __name__ == "__main__":
 
 """
   )
-  cats = ["","VBFPresel","IncPresel"]#+["IncPresel"+ i for i in ["BB","BO","BE","OO","OE","EE"]]
-  inMassWindowTable =  inMassWindowTableMkr(signames,baknames,datnames,cats)
+  cats = [""]
+  cuts = [""]
+
+  cats += ["Jets2"]
+  cuts += ["nJets>=2"]
+  cats += ["Jets2PtMissL100"]
+  cuts += ["nJets>=2 && ptMiss<100."]
+  cats += ["Jets2CutPass"]
+  cuts += ["nJets>=2 && (deltaEtaJets>3. && dijetMass>750.) && ptMiss<100."]
+  cats += ["Jets2CutFail"]
+  cuts += ["nJets>=2 && !(deltaEtaJets>3. && dijetMass>750.) && ptMiss<100."]
+
+  cats += ["Jets0"]
+  cuts += ["nJets==0"]
+  cats += ["Jets0Pass"]
+  cuts += ["nJets==0 && dimuonPt>10"]
+  cats += ["Jets0Fail"]
+  cuts += ["nJets==0 && !(dimuonPt>10)"]
+
+  cats += ["Jets1"]
+  cuts += ["nJets==1"]
+  cats += ["Jets1Pass"]
+  cuts += ["nJets==1 && dimuonPt>10"]
+  cats += ["Jets1Fail"]
+  cuts += ["nJets==1 && !(dimuonPt>10)"]
+
+  inMassWindowTable =  inMassWindowTableMkr(signames,baknames,datnames,cats,cuts)
   #inMassWindowTableFile.write(r" {\large Not-VBF BDT Cut} \\"+'\n')
   inMassWindowTableFile.write(inMassWindowTable)
   inMassWindowTableFile.write(     r"""

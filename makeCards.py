@@ -1353,7 +1353,7 @@ if __name__ == "__main__":
   print "Started makeCards.py"
   root.gROOT.SetBatch(True)
 
-  directory = "input/lowPtCuts/"
+  directory = "input/V00-01-10/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
   periods = ["8TeV"]
@@ -1461,17 +1461,17 @@ if __name__ == "__main__":
   # with a category failing the events.  If False, the
   # fail events are discarded.
   combinationsCutOpt = []
-  #combinationsCutOpt.append((
-  #  [["Yay","nJets>=2"]],"Jets2SplitBDTOpt",{
-  #      'bdtVBFG':[11,-1,1],
-  #      },True
-  #))
-  #combinationsCutOpt.append((
-  #  [["Yay","nJets>=2"]],"Jets2SplitOpt",{
-  #      'deltaEtaJetsG':[9,2.0,6.0],
-  #      'dijetMassG':[15,200.,900.],
-  #      },True
-  #))
+  combinationsCutOpt.append((
+    [["Yay","nJets>=2"]],"Jets2BDTSplitOpt",{
+        'bdtVBFG':[21,-0.5,0.5],
+        },True
+  ))
+  combinationsCutOpt.append((
+    [["Yay","nJets>=2"]],"Jets2SplitOpt",{
+        'deltaEtaJetsG':[9,2.0,6.0],
+        'dijetMassG':[15,200.,900.],
+        },True
+  ))
   #combinationsCutOpt.append((
   #  [["Yay","nJets>=2"]],"Jets2CutOpt",{
   #      'deltaEtaJetsG':[5,3.0,4.0],
