@@ -484,7 +484,6 @@ def makePDFSigDG(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,channel
     pdfMmumu = root.RooAddPdf(convertSigName(name),
                               name,
                               gaus1,gaus2,mixGG)
-    workspaceImportFn(pdfMmumu)
     rooParamList += [meanG1,meanG2,widthG1,widthG2,mixGG]
     
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True),root.RooFit.Range("signalfit"))
@@ -619,8 +618,8 @@ def makePDFSigNew(channelName,name,mMuMu,mass,workspaceImportFn,useDG=True):
 
     return debug
 
-makePDFSig = makePDFSigCBPlusGaus
-#makePDFSig = makePDFSigDG
+#makePDFSig = makePDFSigCBPlusGaus
+makePDFSig = makePDFSigDG
 makePDFBak = makePDFBakOld
 #makePDFBak = makePDFBakMOverSq
 #makePDFBak = makePDFBakExpMOverSq
@@ -1388,10 +1387,10 @@ if __name__ == "__main__":
   analyses += [["VBFCutBasedTight",oldJetCutString]]
   #analyses += [["IncPreselPtG10"]+ x for x in categoriesInc]
   analyses = []
-  #analyses += [["Inclusive",""]]
-  #analyses += [["Jet0All","nJets == 0"]]
-  #analyses += [["Jet1All","nJets == 1"]]
-  #analyses += [["Jet2All","nJets >= 2"]]
+  analyses += [["Inclusive",""]]
+  analyses += [["Jet0All","nJets == 0"]]
+  analyses += [["Jet1All","nJets == 1"]]
+  analyses += [["Jet2All","nJets >= 2"]]
   #analyses += [["Jet2AllPtMissL25.","nJets >= 2 && ptMiss<25."]]
   #analyses += [["Jet2AllPtMissL100.","nJets >= 2 && ptMiss<100."]]
 
@@ -1442,16 +1441,16 @@ if __name__ == "__main__":
   #    ["Jet0All","nJets == 0"]
   #  ],"JetNAll"
   #))
-  combinations.append((
-    [
-      ["JetL2BB","nJets < 2"],
-      ["JetL2BO","nJets < 2"],
-      ["JetL2BE","nJets < 2"],
-      ["JetL2OO","nJets < 2"],
-      ["JetL2OE","nJets < 2"],
-      ["JetL2EE","nJets < 2"],
-    ],"JetNCat"
-  ))
+  #combinations.append((
+  #  [
+  #    ["JetL2BB","nJets < 2"],
+  #    ["JetL2BO","nJets < 2"],
+  #    ["JetL2BE","nJets < 2"],
+  #    ["JetL2OO","nJets < 2"],
+  #    ["JetL2OE","nJets < 2"],
+  #    ["JetL2EE","nJets < 2"],
+  #  ],"JetNCat"
+  #))
   #combinations.append((
   #      [["IncPreselPtG10"+x] for x in categoriesInc],"IncPreselCat"
   #))
