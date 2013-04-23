@@ -1575,7 +1575,7 @@ if __name__ == "__main__":
   #))
   combinationsCutOpt.append((
     [["Yay","nJets==1"]],"Jets1SplitOpt",{
-        'dimuonPtG':[13,0.,60.],
+        'dimuonPtG':[16,0.,150.],
         },True
   ))
   combinationsCutOpt.append((

@@ -82,6 +82,7 @@ channelNameMap = {
 sampleNameMap = {
   "data_obs":"Data",
   "data":"Data",
+  "dataWide":"Data",
   "mcbak":"MC Background",
   "bak":"Background Prediction",
   "bakWide":"Data in Sidebands",
@@ -111,7 +112,7 @@ def getFormatName(map,cat):
   if map.has_key(cat):
     return map[cat]
   elif "JetsL2" in cat:
-    return cat.replace("JetsL2","$\leq2$ Jets ")
+    return cat.replace("JetsL2","$<2$ Jets ")
   elif "Jets2" in cat:
     return cat.replace("Jets2","$\geq2$ Jets ")
   elif "Jets1" in cat:
@@ -182,7 +183,7 @@ class Counts:
       massBoundariesBak = massBoundaries
       massBoundaries = []
       for i in categories:
-        massBoundaries += massBoundariesBak
+        massBoundaries += [massBoundariesBak]
     assert(len(massBoundaries)==len(categories))
     assert(len(categories)==len(cuts))
     data = {}
@@ -484,7 +485,7 @@ def cutFlow(sigFileNames,bakFileNames,channel,massBoundaries=[120.,130.]):
 
   return outString
 
-def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,cuts,massBoundaries=None):
+def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,cuts,massBoundaries=None,samples=None):
   data = {}
   data["bak"] = {}
   data["bakCheat"] = {}
@@ -496,6 +497,7 @@ def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,cuts,
   data["sosqrtsb"] = {}
   data["bakWide"] = {}
   data["data"] = {}
+  data["dataWide"] = {}
 
   energyStr = ""
   lumi = ""
@@ -504,6 +506,7 @@ def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,cuts,
   sigCounts = Counts(sigFileNames,categories,cuts,massBoundaries)
   bakCounts = Counts(bakFileNames,categories,cuts,massBoundaries)
   datCounts = Counts(datFileNames,categories,cuts,massBoundaries)
+  datCountsWide = Counts(datFileNames,categories,cuts,[110.,160.])
   for key in sigCounts.data.keys()+datCounts.data.keys():
     data[key] = {}
   for cat in categories:
@@ -524,6 +527,10 @@ def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,cuts,
       nDat += datCounts.data[dat][cat]
       data[dat][cat] = datCounts.data[dat][cat]
     data["data"][cat] = nDat
+    nDatWide = 0.0
+    for dat in datCountsWide.data:
+      nDatWide += datCountsWide.data[dat][cat]
+    data["dataWide"][cat] = nDatWide
 
     data["sig"][cat] = nSig
     if nBak>0:
@@ -552,13 +559,14 @@ def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,cuts,
 #  for cat in categories:
 #    data["bakErr"][cat] = (data["bak"][cat]-data["data"][cat])/data["data"][cat]
 
-  samples = ["sig","mcbak","data","sob","width"]
-  samples = ["width","sob"]
-  #samples = sorted(datCounts.data.keys()) + ['data']
-  #samples = ["ggHmumu125_8TeV","vbfHmumu125_8TeV","wHmumu125_8TeV","zHmumu125_8TeV","sig"]
-  #samples += ["ggHmumu125_8TeV","vbfHmumu125_8TeV","wHmumu125_8TeV","zHmumu125_8TeV"]
-  #samples += ["bakCheat"]
-  #samples += ["bakErr"]
+  if samples==None:
+    samples = ["sig","mcbak","data","sob","width"]
+    samples = ["width","sob"]
+    #samples = sorted(datCounts.data.keys()) + ['data']
+    #samples = ["ggHmumu125_8TeV","vbfHmumu125_8TeV","wHmumu125_8TeV","zHmumu125_8TeV","sig"]
+    #samples += ["ggHmumu125_8TeV","vbfHmumu125_8TeV","wHmumu125_8TeV","zHmumu125_8TeV"]
+    #samples += ["bakCheat"]
+    #samples += ["bakErr"]
   ncols = len(samples)
 
   widths = sigCounts.getWidthDict()
@@ -583,7 +591,7 @@ def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,cuts,
            outString += " {0:.2e} &".format(n)
         elif s=="bakErr":
            outString += " {0:.2%} &".format(n)
-        elif s=="data_obs" or s=="data" or ("SingleMuRun" in s):
+        elif s=="data_obs" or s=="data" or s=="dataWide" or ("SingleMuRun" in s):
           outString += " {0:.0f} &".format(n)
         else:
           outString += " {0:.2f} &".format(n)
@@ -630,7 +638,7 @@ def inMassWindowTableMkr(sigFileNames,bakFileNames,datFileNames,categories,cuts,
            printString += ("{0:^"+colLen+".2e}").format(n)
         elif s=="bakErr":
            printString += ("{0:"+colLen+".2%}").format(n)
-        elif s=="data_obs" or s=="data" or ("SingleMu" in s):
+        elif s=="data_obs" or s=="data" or s=="dataWide" or ("SingleMu" in s):
           printString += ("{0:^"+colLen+".0f}").format(n)
         else:
           printString += ("{0:^"+colLen+".2f}").format(n)
@@ -796,25 +804,60 @@ if __name__ == "__main__":
 #  cats += ["Jets1Fail"]
 #  cuts += ["nJets==1 && !(dimuonPt>10)"]
 
-  cats += ["JetsL2"]
-  cuts += ["nJets<2"]
-  cats += ["JetsL2BB"]
-  cuts += ["nJets<2"]
-  cats += ["JetsL2BO"]
-  cuts += ["nJets<2"]
-  cats += ["JetsL2BE"]
-  cuts += ["nJets<2"]
-  cats += ["JetsL2OO"]
-  cuts += ["nJets<2"]
-  cats += ["JetsL2OE"]
-  cuts += ["nJets<2"]
-  cats += ["JetsL2EE"]
-  cuts += ["nJets<2"]
+  #cats += ["JetsL2"]
+  #cuts += ["nJets<2"]
+  #cats += ["JetsL2BB"]
+  #cuts += ["nJets<2"]
+  #cats += ["JetsL2BO"]
+  #cuts += ["nJets<2"]
+  #cats += ["JetsL2BE"]
+  #cuts += ["nJets<2"]
+  #cats += ["JetsL2OO"]
+  #cuts += ["nJets<2"]
+  #cats += ["JetsL2OE"]
+  #cuts += ["nJets<2"]
+  #cats += ["JetsL2EE"]
+  #cuts += ["nJets<2"]
 
-  inMassWindowTable =  inMassWindowTableMkr(signames,baknames,datnames,cats,cuts)
+  cats += ["Jets0"]
+  cuts += ["nJets==0"]
+  cats += ["Jets0BB"]
+  cuts += ["nJets==0"]
+  cats += ["Jets0BO"]
+  cuts += ["nJets==0"]
+  cats += ["Jets0BE"]
+  cuts += ["nJets==0"]
+  cats += ["Jets0OO"]
+  cuts += ["nJets==0"]
+  cats += ["Jets0OE"]
+  cuts += ["nJets==0"]
+  cats += ["Jets0EE"]
+  cuts += ["nJets==0"]
+
+  #cats += ["Jets1"]
+  #cuts += ["nJets==1"]
+  #cats += ["Jets1BB"]
+  #cuts += ["nJets==1"]
+  #cats += ["Jets1BO"]
+  #cuts += ["nJets==1"]
+  #cats += ["Jets1BE"]
+  #cuts += ["nJets==1"]
+  #cats += ["Jets1OO"]
+  #cuts += ["nJets==1"]
+  #cats += ["Jets1OE"]
+  #cuts += ["nJets==1"]
+  #cats += ["Jets1EE"]
+  #cuts += ["nJets==1"]
+
+
+  samples=['width','sob','dataWide']
+
+  inMassWindowTable =  inMassWindowTableMkr(signames,baknames,datnames,cats,cuts,samples=samples)
   #inMassWindowTableFile.write(r" {\large Not-VBF BDT Cut} \\"+'\n')
   inMassWindowTableFile.write(inMassWindowTable)
+
   inMassWindowTableFile.write(     r"""
+
 \end{center}
 \end{document}
 """
