@@ -1357,7 +1357,6 @@ if __name__ == "__main__":
   directory = "input/V00-01-10/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  periods = ["8TeV"]
   analysesInc = ["IncPresel","IncBDTCut"]
   analysesVBF = ["VBFPresel","VBFBDTCut"]
   analyses = analysesInc + analysesVBF
@@ -1387,123 +1386,123 @@ if __name__ == "__main__":
   analyses += [["VBFCutBasedTight",oldJetCutString]]
   #analyses += [["IncPreselPtG10"]+ x for x in categoriesInc]
   analyses = []
-  analyses += [["Inclusive",""]]
-  analyses += [["Jet0All","nJets == 0"]]
-  analyses += [["Jet1All","nJets == 1"]]
-  analyses += [["Jet2All","nJets >= 2"]]
-  analyses += [["Jet2AllPtMissL100.","nJets >= 2 && ptMiss<100."]]
+  #analyses += [["Inclusive",""]]
+  #analyses += [["Jet0All","nJets == 0"]]
+  #analyses += [["Jet1All","nJets == 1"]]
+  #analyses += [["Jet2All","nJets >= 2"]]
+  #analyses += [["Jet2AllPtMissL100.","nJets >= 2 && ptMiss<100."]]
 
-  analyses += [["Jet2Pass","nJets >= 2 && deltaEtaJets>3.5 && dijetMass>650. && ptMiss < 100."]]
-  analyses += [["Jet2Fail","nJets >= 2 && !(deltaEtaJets>3.5 && dijetMass>650.) && ptMiss < 100."]]
-  analyses += [["Jet1Pass","nJets == 1 && dimuonPt > 55."]]
-  analyses += [["Jet1Fail","nJets == 1 && !(dimuonPt > 55.)"]]
-  analyses += [["Jet0Pass","nJets == 0 && dimuonPt > 10."]]
-  analyses += [["Jet0Fail","nJets == 0 && !(dimuonPt > 10.)"]]
+  #analyses += [["Jet2Pass","nJets >= 2 && deltaEtaJets>3.5 && dijetMass>650. && ptMiss < 100."]]
+  #analyses += [["Jet2Fail","nJets >= 2 && !(deltaEtaJets>3.5 && dijetMass>650.) && ptMiss < 100."]]
+  #analyses += [["Jet1Pass","nJets == 1 && dimuonPt > 55."]]
+  #analyses += [["Jet1Fail","nJets == 1 && !(dimuonPt > 55.)"]]
+  #analyses += [["Jet0Pass","nJets == 0 && dimuonPt > 10."]]
+  #analyses += [["Jet0Fail","nJets == 0 && !(dimuonPt > 10.)"]]
 
-  analyses += [["Jet0BB","nJets == 0"]]
-  analyses += [["Jet0BO","nJets == 0"]]
-  analyses += [["Jet0BE","nJets == 0"]]
-  analyses += [["Jet0OO","nJets == 0"]]
-  analyses += [["Jet0FF","nJets == 0"]]
-  analyses += [["Jet1BB","nJets == 1"]]
-  analyses += [["Jet1BO","nJets == 1"]]
-  analyses += [["Jet1BE","nJets == 1"]]
-  analyses += [["Jet1OO","nJets == 1"]]
-  analyses += [["Jet1FF","nJets == 1"]]
+  #analyses += [["Jet0BB","nJets == 0"]]
+  #analyses += [["Jet0BO","nJets == 0"]]
+  #analyses += [["Jet0BE","nJets == 0"]]
+  #analyses += [["Jet0OO","nJets == 0"]]
+  #analyses += [["Jet0FF","nJets == 0"]]
+  #analyses += [["Jet1BB","nJets == 1"]]
+  #analyses += [["Jet1BO","nJets == 1"]]
+  #analyses += [["Jet1BE","nJets == 1"]]
+  #analyses += [["Jet1OO","nJets == 1"]]
+  #analyses += [["Jet1FF","nJets == 1"]]
 
   #analyses += [["VBFJustinHighJetPtPtMissL25DEtaJetsG3p7MJJG400",kindaFunJetCutString+" && deltaEtaJets > 3.7 && dijetMass>400. && ptMiss < 25."]]
   #analyses += [["VBFJustinLowJetPtPtMissL25DEtaJetsG3p6MJJG450",funJetCutString+" && deltaEtaJets > 3.6 && dijetMass>450. && ptMiss < 25."]]
   combinations = []
-  combinations.append((
-    [
-      ["Jet2Pass","nJets >= 2 && deltaEtaJets>3.5 && dijetMass>650. && ptMiss < 100."],
-      ["Jet2Fail","nJets >= 2 && !(deltaEtaJets>3.5 && dijetMass>650.) && ptMiss < 100."]
-    ],"Jet2SplitPtMiss100"
-  ))
-  combinations.append((
-    [
-      ["Jet1Pass","nJets == 1 && dimuonPt > 55."],
-      ["Jet1Fail","nJets == 1 && !(dimuonPt > 55.)"]
-    ],"Jet1Split"
-  ))
-  combinations.append((
-    [
-      ["Jet0Pass","nJets == 0 && dimuonPt > 10."],
-      ["Jet0Fail","nJets == 0 && !(dimuonPt > 10.)"]
-    ],"Jet0Split"
-  ))
-  combinations.append((
-    [
-      ["Jet2Pass","nJets >= 2 && deltaEtaJets>3.5 && dijetMass>650. && ptMiss < 100."],
-      ["Jet2Fail","nJets >= 2 && !(deltaEtaJets>3.5 && dijetMass>650.) && ptMiss < 100."],
-      ["Jet1Pass","nJets == 1 && dimuonPt > 55."],
-      ["Jet1Fail","nJets == 1 && !(dimuonPt > 55.)"],
-      ["Jet0Pass","nJets == 0 && dimuonPt > 10."],
-      ["Jet0Fail","nJets == 0 && !(dimuonPt > 10.)"],
-    ],"JetNSplit"
-  ))
-  combinations.append((
-    [
-      ["Jet2All","nJets >= 2 && ptMiss < 100."],
-      ["Jet1All","nJets == 1"],
-      ["Jet0All","nJets == 0"]
-    ],"JetNAll"
-  ))
+  #combinations.append((
+  #  [
+  #    ["Jet2Pass","nJets >= 2 && deltaEtaJets>3.5 && dijetMass>650. && ptMiss < 100."],
+  #    ["Jet2Fail","nJets >= 2 && !(deltaEtaJets>3.5 && dijetMass>650.) && ptMiss < 100."]
+  #  ],"Jet2SplitPtMiss100"
+  #))
+  #combinations.append((
+  #  [
+  #    ["Jet1Pass","nJets == 1 && dimuonPt > 55."],
+  #    ["Jet1Fail","nJets == 1 && !(dimuonPt > 55.)"]
+  #  ],"Jet1Split"
+  #))
+  #combinations.append((
+  #  [
+  #    ["Jet0Pass","nJets == 0 && dimuonPt > 10."],
+  #    ["Jet0Fail","nJets == 0 && !(dimuonPt > 10.)"]
+  #  ],"Jet0Split"
+  #))
+  #combinations.append((
+  #  [
+  #    ["Jet2Pass","nJets >= 2 && deltaEtaJets>3.5 && dijetMass>650. && ptMiss < 100."],
+  #    ["Jet2Fail","nJets >= 2 && !(deltaEtaJets>3.5 && dijetMass>650.) && ptMiss < 100."],
+  #    ["Jet1Pass","nJets == 1 && dimuonPt > 55."],
+  #    ["Jet1Fail","nJets == 1 && !(dimuonPt > 55.)"],
+  #    ["Jet0Pass","nJets == 0 && dimuonPt > 10."],
+  #    ["Jet0Fail","nJets == 0 && !(dimuonPt > 10.)"],
+  #  ],"JetNSplit"
+  #))
+  #combinations.append((
+  #  [
+  #    ["Jet2All","nJets >= 2 && ptMiss < 100."],
+  #    ["Jet1All","nJets == 1"],
+  #    ["Jet0All","nJets == 0"]
+  #  ],"JetNAll"
+  #))
 
-  combinations.append((
-    [
-      ["Jet1PassBB","nJets == 1 && dimuonPt > 55."],
-      ["Jet1PassBO","nJets == 1 && dimuonPt > 55."],
-      ["Jet1PassBE","nJets == 1 && dimuonPt > 55."],
-      ["Jet1PassOO","nJets == 1 && dimuonPt > 55."],
-      ["Jet1PassFF","nJets == 1 && dimuonPt > 55."],
-      ["Jet1FailBB","nJets == 1 && !(dimuonPt > 55.)"],
-      ["Jet1FailBO","nJets == 1 && !(dimuonPt > 55.)"],
-      ["Jet1FailBE","nJets == 1 && !(dimuonPt > 55.)"],
-      ["Jet1FailOO","nJets == 1 && !(dimuonPt > 55.)"],
-      ["Jet1FailFF","nJets == 1 && !(dimuonPt > 55.)"],
-    ],"Jet1SplitCat"
-  ))
-  combinations.append((
-    [
-      ["Jet0PassBB","nJets == 0 && dimuonPt > 10."],
-      ["Jet0PassBO","nJets == 0 && dimuonPt > 10."],
-      ["Jet0PassBE","nJets == 0 && dimuonPt > 10."],
-      ["Jet0PassOO","nJets == 0 && dimuonPt > 10."],
-      ["Jet0PassFF","nJets == 0 && dimuonPt > 10."],
-      ["Jet0FailBB","nJets == 0 && !(dimuonPt > 10.)"],
-      ["Jet0FailBO","nJets == 0 && !(dimuonPt > 10.)"],
-      ["Jet0FailBE","nJets == 0 && !(dimuonPt > 10.)"],
-      ["Jet0FailOO","nJets == 0 && !(dimuonPt > 10.)"],
-      ["Jet0FailFF","nJets == 0 && !(dimuonPt > 10.)"],
-    ],"Jet0SplitCat"
-  ))
-  combinations.append((
-    [
-      ["Jet2Pass","nJets >= 2 && deltaEtaJets>3.5 && dijetMass>650. && ptMiss < 100."],
-      ["Jet2Fail","nJets >= 2 && !(deltaEtaJets>3.5 && dijetMass>650.) && ptMiss < 100."],
-      ["Jet1PassBB","nJets == 1 && dimuonPt > 55."],
-      ["Jet1PassBO","nJets == 1 && dimuonPt > 55."],
-      ["Jet1PassBE","nJets == 1 && dimuonPt > 55."],
-      ["Jet1PassOO","nJets == 1 && dimuonPt > 55."],
-      ["Jet1PassFF","nJets == 1 && dimuonPt > 55."],
-      ["Jet1FailBB","nJets == 1 && !(dimuonPt > 55.)"],
-      ["Jet1FailBO","nJets == 1 && !(dimuonPt > 55.)"],
-      ["Jet1FailBE","nJets == 1 && !(dimuonPt > 55.)"],
-      ["Jet1FailOO","nJets == 1 && !(dimuonPt > 55.)"],
-      ["Jet1FailFF","nJets == 1 && !(dimuonPt > 55.)"],
-      ["Jet0PassBB","nJets == 0 && dimuonPt > 10."],
-      ["Jet0PassBO","nJets == 0 && dimuonPt > 10."],
-      ["Jet0PassBE","nJets == 0 && dimuonPt > 10."],
-      ["Jet0PassOO","nJets == 0 && dimuonPt > 10."],
-      ["Jet0PassFF","nJets == 0 && dimuonPt > 10."],
-      ["Jet0FailBB","nJets == 0 && !(dimuonPt > 10.)"],
-      ["Jet0FailBO","nJets == 0 && !(dimuonPt > 10.)"],
-      ["Jet0FailBE","nJets == 0 && !(dimuonPt > 10.)"],
-      ["Jet0FailOO","nJets == 0 && !(dimuonPt > 10.)"],
-      ["Jet0FailFF","nJets == 0 && !(dimuonPt > 10.)"],
-    ],"JetNSplitCat"
-  ))
+  #combinations.append((
+  #  [
+  #    ["Jet1PassBB","nJets == 1 && dimuonPt > 55."],
+  #    ["Jet1PassBO","nJets == 1 && dimuonPt > 55."],
+  #    ["Jet1PassBE","nJets == 1 && dimuonPt > 55."],
+  #    ["Jet1PassOO","nJets == 1 && dimuonPt > 55."],
+  #    ["Jet1PassFF","nJets == 1 && dimuonPt > 55."],
+  #    ["Jet1FailBB","nJets == 1 && !(dimuonPt > 55.)"],
+  #    ["Jet1FailBO","nJets == 1 && !(dimuonPt > 55.)"],
+  #    ["Jet1FailBE","nJets == 1 && !(dimuonPt > 55.)"],
+  #    ["Jet1FailOO","nJets == 1 && !(dimuonPt > 55.)"],
+  #    ["Jet1FailFF","nJets == 1 && !(dimuonPt > 55.)"],
+  #  ],"Jet1SplitCat"
+  #))
+  #combinations.append((
+  #  [
+  #    ["Jet0PassBB","nJets == 0 && dimuonPt > 10."],
+  #    ["Jet0PassBO","nJets == 0 && dimuonPt > 10."],
+  #    ["Jet0PassBE","nJets == 0 && dimuonPt > 10."],
+  #    ["Jet0PassOO","nJets == 0 && dimuonPt > 10."],
+  #    ["Jet0PassFF","nJets == 0 && dimuonPt > 10."],
+  #    ["Jet0FailBB","nJets == 0 && !(dimuonPt > 10.)"],
+  #    ["Jet0FailBO","nJets == 0 && !(dimuonPt > 10.)"],
+  #    ["Jet0FailBE","nJets == 0 && !(dimuonPt > 10.)"],
+  #    ["Jet0FailOO","nJets == 0 && !(dimuonPt > 10.)"],
+  #    ["Jet0FailFF","nJets == 0 && !(dimuonPt > 10.)"],
+  #  ],"Jet0SplitCat"
+  #))
+  #combinations.append((
+  #  [
+  #    ["Jet2Pass","nJets >= 2 && deltaEtaJets>3.5 && dijetMass>650. && ptMiss < 100."],
+  #    ["Jet2Fail","nJets >= 2 && !(deltaEtaJets>3.5 && dijetMass>650.) && ptMiss < 100."],
+  #    ["Jet1PassBB","nJets == 1 && dimuonPt > 55."],
+  #    ["Jet1PassBO","nJets == 1 && dimuonPt > 55."],
+  #    ["Jet1PassBE","nJets == 1 && dimuonPt > 55."],
+  #    ["Jet1PassOO","nJets == 1 && dimuonPt > 55."],
+  #    ["Jet1PassFF","nJets == 1 && dimuonPt > 55."],
+  #    ["Jet1FailBB","nJets == 1 && !(dimuonPt > 55.)"],
+  #    ["Jet1FailBO","nJets == 1 && !(dimuonPt > 55.)"],
+  #    ["Jet1FailBE","nJets == 1 && !(dimuonPt > 55.)"],
+  #    ["Jet1FailOO","nJets == 1 && !(dimuonPt > 55.)"],
+  #    ["Jet1FailFF","nJets == 1 && !(dimuonPt > 55.)"],
+  #    ["Jet0PassBB","nJets == 0 && dimuonPt > 10."],
+  #    ["Jet0PassBO","nJets == 0 && dimuonPt > 10."],
+  #    ["Jet0PassBE","nJets == 0 && dimuonPt > 10."],
+  #    ["Jet0PassOO","nJets == 0 && dimuonPt > 10."],
+  #    ["Jet0PassFF","nJets == 0 && dimuonPt > 10."],
+  #    ["Jet0FailBB","nJets == 0 && !(dimuonPt > 10.)"],
+  #    ["Jet0FailBO","nJets == 0 && !(dimuonPt > 10.)"],
+  #    ["Jet0FailBE","nJets == 0 && !(dimuonPt > 10.)"],
+  #    ["Jet0FailOO","nJets == 0 && !(dimuonPt > 10.)"],
+  #    ["Jet0FailFF","nJets == 0 && !(dimuonPt > 10.)"],
+  #  ],"JetNSplitCat"
+  #))
   #combinations.append((
   #      [["IncPreselPtG10"+x] for x in categoriesInc],"IncPreselCat"
   #))
@@ -1525,23 +1524,54 @@ if __name__ == "__main__":
   # with a category failing the events.  If False, the
   # fail events are discarded.
   combinationsCutOpt = []
-  combinationsCutOpt.append((
-    [["Yay","nJets>=2 && ptMiss < 100."]],"Jets2BDTSplitOpt",{
-        'bdtVBFG':[21,-0.5,0.5],
-        },True
-  ))
-  combinationsCutOpt.append((
-    [["Yay","nJets>=2 && ptMiss < 100."]],"Jets2SplitOpt",{
-        'deltaEtaJetsG':[9,2.0,6.0],
-        'dijetMassG':[15,200.,900.],
-        },True
-  ))
   #combinationsCutOpt.append((
-  #  [["Yay","nJets>=2"]],"Jets2CutOpt",{
-  #      'deltaEtaJetsG':[5,3.0,4.0],
-  #      'dijetMassG':[6,300.,800.],
-  #      'ptMissL':[2,25.,100.],
-  #      },False
+  #  [["Yay","nJets>=2 && ptMiss < 100."]],"Jets2BDTSplitOptPtMiss100",{
+  #      'bdtVBFG':[21,-0.5,0.5],
+  #      },True
+  #))
+  #combinationsCutOpt.append((
+  #  [["Yay","nJets>=2 && ptMiss < 50."]],"Jets2BDTSplitOptPtMiss50",{
+  #      'bdtVBFG':[21,-0.5,0.5],
+  #      },True
+  #))
+  #combinationsCutOpt.append((
+  #  [["Yay","nJets>=2 && ptMiss < 40."]],"Jets2BDTSplitOptPtMissL40",{
+  #      'bdtVBFG':[21,-0.5,0.5],
+  #      },True
+  #))
+  #combinationsCutOpt.append((
+  #  [["Yay","nJets>=2 && ptMiss < 30."]],"Jets2BDTSplitOptPtMissL30",{
+  #      'bdtVBFG':[21,-0.5,0.5],
+  #      },True
+  #))
+  #combinationsCutOpt.append((
+  #  [["Yay","nJets>=2 && ptMiss < 25."]],"Jets2BDTSplitOptPtMissL25",{
+  #      'bdtVBFG':[21,-0.5,0.5],
+  #      },True
+  #))
+  #combinationsCutOpt.append((
+  #  [["Yay","nJets>=2 && ptMiss < 100."]],"Jets2SplitOptPtMiss100",{
+  #      'deltaEtaJetsG':[9,2.0,6.0],
+  #      'dijetMassG':[15,200.,900.],
+  #      },True
+  #))
+  #combinationsCutOpt.append((
+  #  [["Yay","nJets>=2 && ptMiss < 50."]],"Jets2SplitOptPtMiss50",{
+  #      'deltaEtaJetsG':[9,2.0,6.0],
+  #      'dijetMassG':[15,200.,900.],
+  #      },True
+  #))
+  #combinationsCutOpt.append((
+  #  [["Yay","nJets>=2 && ptMiss < 30."]],"Jets2SplitOptPtMiss25",{
+  #      'deltaEtaJetsG':[9,2.0,6.0],
+  #      'dijetMassG':[15,200.,900.],
+  #      },True
+  #))
+  #combinationsCutOpt.append((
+  #  [["Yay","nJets>=2 && ptMiss < 25."]],"Jets2SplitOptPtMiss25",{
+  #      'deltaEtaJetsG':[9,2.0,6.0],
+  #      'dijetMassG':[15,200.,900.],
+  #      },True
   #))
   combinationsCutOpt.append((
     [["Yay","nJets==1"]],"Jets1SplitOpt",{

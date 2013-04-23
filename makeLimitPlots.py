@@ -395,7 +395,48 @@ class CutOptPlots:
           printStr += " "+key +' {'+key+':.1f}'
         print(printStr.format(**d))
 
-  def plot(self,dataName,xName,yName,holdConstDict,rootHistParamList):
+  def plot1D(self,dataName,xName,holdConstDict,rootHistParamList):
+    self.goodDrawn = False
+    try:
+      self.canvas.cd()
+      hist = root.TH1F(*rootHistParamList)
+      #hist.SetMarkerColor(0)
+      #hist.SetMarkerSize(2*hist.GetMarkerSize())
+      data = self.data[dataName]
+      for d in data:
+        doContinue = False
+        for sliceVar in holdConstDict:
+          if not d.has_key(sliceVar):
+            break
+          if d[sliceVar] != holdConstDict[sliceVar]:
+            doContinue = True
+            break
+        if doContinue:
+          break
+        x = d[xName]+0.00001
+        limit = d['limit']
+        ix = hist.GetXaxis().FindBin(x)
+        hist.SetBinContent(ix,limit)
+        #hist.Fill(x,y)
+        #print x,y,limit, d['ptMissL']
+      xTitle = xName
+      yTitle = "Median Expected Limit on #sigma/#sigma_{SM}"
+      if xTitle[-1] == 'G':
+          xTitle = xTitle[:-1]+" > X"
+      elif xTitle[-1] == 'L':
+          xTitle = xTitle[:-1]+" < X"
+      else:
+          raise
+      setHistTitles(hist,xTitle,yTitle)
+      hist.Draw('C')
+      self.histList += [hist]
+      self.tlatex.SetTextAlign(12)
+      self.tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+      self.goodDrawn = True
+    except LookupError as e:
+      print("Warning: could not draw {0}, because key not found".format(e))
+
+  def plot2D(self,dataName,xName,yName,holdConstDict,rootHistParamList):
     self.goodDrawn = False
     try:
       self.canvas.cd()
@@ -466,13 +507,40 @@ if __name__ == "__main__":
     optPlots.printBest(10)
     tlatex = root.TLatex()
 
+    # 1D
+    dataName = 'Jets1SplitOpt'
+    xName = 'dimuonPtG'
+    holdConstDict = {}
+    rootHistParamList = [dataName,'',12,0.,60.]
+    optPlots.plot1D(dataName,xName,holdConstDict,rootHistParamList)
+    optPlots.annotatePlot("1 Jets")
+    optPlots.save(outDir+dataName)
+
+    dataName = 'Jets0SplitOpt'
+    xName = 'dimuonPtG'
+    holdConstDict = {}
+    rootHistParamList = [dataName,'',12,0.,60.]
+    optPlots.plot1D(dataName,xName,holdConstDict,rootHistParamList)
+    optPlots.annotatePlot("0 Jets")
+    optPlots.save(outDir+dataName)
+
+    for ptmiss in ['25','30','50','100']:
+      dataName = 'Jets2BDTSplitOptPtMissL'+ptmiss
+      xName = 'bdtVBFG'
+      holdConstDict = {}
+      rootHistParamList = [dataName,'',20,-0.5,0.5]
+      optPlots.plot1D(dataName,xName,holdConstDict,rootHistParamList)
+      optPlots.annotatePlot("#geq 2 Jets, p_{T}^{Miss}<"+ptmiss+" GeV")
+      optPlots.save(outDir+dataName)
+
+    # 2D
     dataName = 'Jets2SplitOpt'
     xName = 'dijetMassG'
     yName = 'deltaEtaJetsG'
     #holdConstDict = {'ptMissL':25.0}
     holdConstDict = {}
     rootHistParamList = [dataName,'',14,200.,900.,8,2.,6.]
-    optPlots.plot(dataName,xName,yName,holdConstDict,rootHistParamList)
+    optPlots.plot2D(dataName,xName,yName,holdConstDict,rootHistParamList)
     #optPlots.annotatePlot("#geq 2 Jets, Split p_{T}^{Miss} at 25 GeV")
     optPlots.annotatePlot("#geq 2 Jets, Split")
     optPlots.save(outDir+dataName)
@@ -482,7 +550,7 @@ if __name__ == "__main__":
     yName = 'deltaEtaJetsG'
     holdConstDict = {'ptMissL':50.0}
     rootHistParamList = [dataName,'',10,300.,800.,8,3.0,5.]
-    optPlots.plot(dataName,xName,yName,holdConstDict,rootHistParamList)
+    optPlots.plot2D(dataName,xName,yName,holdConstDict,rootHistParamList)
     optPlots.annotatePlot("#geq 2 Jets, Split p_{T}^{Miss} at 50 GeV")
     optPlots.save(outDir+dataName+"PtM50")
 
@@ -491,36 +559,9 @@ if __name__ == "__main__":
     yName = 'deltaEtaJetsG'
     holdConstDict = {'ptMissL':100.0}
     rootHistParamList = [dataName,'',10,300.,800.,8,3.0,5.]
-    optPlots.plot(dataName,xName,yName,holdConstDict,rootHistParamList)
+    optPlots.plot2D(dataName,xName,yName,holdConstDict,rootHistParamList)
     optPlots.annotatePlot("#geq 2 Jets, Split p_{T}^{Miss} at 100 GeV")
     optPlots.save(outDir+dataName+"PtM100")
-
-    dataName = 'Jets1SplitOpt'
-    xName = 'dimuonPtG'
-    yName = 'KDG'
-    holdConstDict = {}
-    rootHistParamList = [dataName,'',8,0.,40.,8,0.4,0.8]
-    optPlots.plot(dataName,xName,yName,holdConstDict,rootHistParamList)
-    optPlots.annotatePlot("1 Jet Split")
-    optPlots.save(outDir+dataName)
-
-    dataName = 'Jets0SplitOpt'
-    xName = 'dimuonPtG'
-    yName = 'KDG'
-    holdConstDict = {}
-    rootHistParamList = [dataName,'',8,0.,40.,8,0.4,0.8]
-    optPlots.plot(dataName,xName,yName,holdConstDict,rootHistParamList)
-    optPlots.annotatePlot("0 Jets Split")
-    optPlots.save(outDir+dataName)
-
-    dataName = 'Jets2CutOpt'
-    xName = 'dijetMassG'
-    yName = 'deltaEtaJetsG'
-    holdConstDict = {'ptMissL':100.0}
-    rootHistParamList = [dataName,'',6,300.,600.,10,3.0,4.]
-    optPlots.plot(dataName,xName,yName,holdConstDict,rootHistParamList)
-    optPlots.annotatePlot("#geq 2 Jets Cut, p_{T}^{Miss} < 25 GeV")
-    optPlots.save(outDir+dataName)
 
     sys.exit(0)
 
