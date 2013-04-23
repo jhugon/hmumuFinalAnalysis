@@ -1921,6 +1921,8 @@ def treeCut(category,cutString,eventWeights=True,muonRequirements=True,KDString=
         result += " && ((256 & eventType) > 0)"
     if "EE" in category:
         result += " && ((512 & eventType) > 0)"
+    if "FF" in category:
+        result += " && ((512 & eventType) > 0 || (256 & eventType) > 0)"
     if "PtG10" in category:
         result += " && (dimuonPt > 10.)"
     if "PtG20" in category:

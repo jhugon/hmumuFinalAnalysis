@@ -1144,8 +1144,8 @@ if __name__ == "__main__":
 
   shapePlotterList = []
   #for fn in glob.glob(dataDir+"*20.root")+glob.glob(dataDir+"*5.05.root"):
-  #for fn in glob.glob(dataDir+"JetN*.root"):
-  for fn in glob.glob(dataDir+"*.root"):
+  for fn in glob.glob(dataDir+"JetN*.root"):
+  #for fn in glob.glob(dataDir+"*.root"):
     if re.search("P[\d.]+TeV",fn):
         continue
     s = ShapePlotter(fn,outDir,titleMap,rebin,xlimits=plotRange,normRange=normRange,signalInject=args.signalInject,plotSignalStrength=args.plotSignalStrength,plotSignalBottom=args.plotSignalBottom,rebinOverride=args.rebinOverride)
