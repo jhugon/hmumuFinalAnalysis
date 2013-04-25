@@ -37,8 +37,8 @@ anotateText = "110 GeV < m_{#mu#mu} < 150 GeV"
 anotateText2 = ""
 
 categoryAnotations ={}
-categoryAnotations['Jets0/'] = "0 Jets"
-categoryAnotations['Jets1/'] = "1 Jets"
+categoryAnotations['Jets0/'] = "0 Jet"
+categoryAnotations['Jets1/'] = "1 Jet"
 categoryAnotations['Jets2/'] = "#geq2 Jets"
 
 urLegendPos = [0.70,0.67,0.9,0.9]

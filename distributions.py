@@ -5,16 +5,12 @@ from helpers import *
 import ROOT as root
 import os
 
-dataDir = "input/lowPtCuts/"
+dataDir = "input/V00-01-10/"
 caption1= "110 GeV < m_{#mu#mu} < 150 GeV"
 outDir = "output/"
+caption2=""
 
 CUTS="dimuonMass < 150. && dimuonMass > 110."
-#CUTS += " && ((jetLead_pt > 25.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.4))"
-#CUTS += " && ((jetSub_pt > 25.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.4))"
-
-# Old Jet Pt Cuts
-CUTS += " && jetLead_pt > 30. && jetSub_pt > 30."
 
 RUNPERIOD="8TeV"
 LUMI=lumiDict[RUNPERIOD]
@@ -26,6 +22,12 @@ drawString="HIST"
 LEGDRAWSTRING="l"
 
 histDirs = [""]
+histDirs = ["Jets0/","Jets1/","Jets2/"]
+
+categoryAnotations ={}
+categoryAnotations['Jets0/'] = "0 Jet"
+categoryAnotations['Jets1/'] = "1 Jet"
+categoryAnotations['Jets2/'] = "#geq2 Jets"
 
 backgroundList = [
 "DYJetsToLL"#,
@@ -33,8 +35,8 @@ backgroundList = [
 ]
 
 signalList = [
-#"ggHmumu125",
-"vbfHmumu125"
+"ggHmumu125",
+#"vbfHmumu125"
 ]
 
 #colors["DYJetsToLL"] = root.kBlue
@@ -255,6 +257,7 @@ for ds in bkgDatasetList:
 for histName in bkgDatasetList[0].hists:
   canvas.Clear()
   histBaseName = re.sub(r".*/","",histName)
+  histCategoryName = re.sub(r"/.*","",histName)+'/'
   print("Making Histo: %s" % histName)
   bkgHistList = []
   for ds in bkgDatasetList:
@@ -315,6 +318,10 @@ for histName in bkgDatasetList[0].hists:
     setLegPos(leg,(stdLegendPos))
   leg.Draw()
 
+  caption2ToDraw = caption2
+  if categoryAnotations.has_key(histCategoryName):
+    caption2ToDraw += categoryAnotations[histCategoryName]
+
   tlatex = root.TLatex()
   tlatex.SetNDC()
   tlatex.SetTextFont(root.gStyle.GetLabelFont())
@@ -326,9 +333,11 @@ for histName in bkgDatasetList[0].hists:
   if histNames[histBaseName].has_key("leg") and histNames[histBaseName]["leg"] == ulLegendPos:
     tlatex.SetTextAlign(33)
     tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin()-0.03,1.0-gStyle.GetPadTopMargin()-0.04,caption1)
+    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin()-0.03,1.0-gStyle.GetPadTopMargin()-0.09,caption2ToDraw)
   else:
     tlatex.SetTextAlign(13)
     tlatex.DrawLatex(gStyle.GetPadLeftMargin()+0.03,1.0-gStyle.GetPadTopMargin()-0.04,caption1)
+    tlatex.DrawLatex(gStyle.GetPadLeftMargin()+0.03,1.0-gStyle.GetPadTopMargin()-0.09,caption2ToDraw)
 
   saveName = histName.replace("(","")
   saveName = saveName.replace(")","")
