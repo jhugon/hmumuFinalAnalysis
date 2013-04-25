@@ -1881,7 +1881,6 @@ def fitDGFindQuantiles(hist,level):
     #canvas.SaveAs("debug_"+now+".png")
 
     quants =  getMedianAndQuantileInterval(pdftf,level)
-    quants.reverse()
     return quants
         
 def treeCut(category,cutString,eventWeights=True,muonRequirements=True,KDString="KD"):

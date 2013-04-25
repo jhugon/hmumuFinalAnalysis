@@ -537,7 +537,7 @@ def makePDFSigNew(channelName,name,mMuMu,mass,workspaceImportFn,useDG=True):
     category = matchChannel.group(1)
     energy = matchChannel.group(2)
     massStr = "{0:.0f}".format(mass)
-    if mass*10 % 1 > 0.0:
+    if mass % 1 > 0.0:
       massStr = "{0:.1f}".format(mass)
     fitTypeString = "CBG"
     if useDG:
@@ -832,7 +832,7 @@ class Analysis:
     if USEGPANNA:
       for name in signalNames:
         higgsMassStr = "{0:.0f}".format(self.higgsMass)
-        if self.higgsMass*10 % 1 > 0.0:
+        if self.higgsMass % 1 > 0.0:
           higgsMassStr = "{0:.1f}".format(self.higgsMass)
         nameMatch = re.match(r"(.+)Hmumu[\d.]+_[\d]+TeV",name)
         assert(nameMatch)

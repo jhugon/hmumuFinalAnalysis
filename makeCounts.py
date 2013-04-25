@@ -122,7 +122,7 @@ def getFormatName(map,cat):
   else:
     return cat
 
-def findMassBoundariesDG(fileNames,categories,cuts,level):
+def findMassBoundariesDG(fileNames,categories,cuts,level,useDG=True):
   global GLOBALCOUNTER
   massExtraCutString = " && dimuonMass > 110. && dimuonMass < 160."
   treeList = []
@@ -171,8 +171,12 @@ def findMassBoundariesDG(fileNames,categories,cuts,level):
       #print cutStr
       tree.Draw(drawStr,cutStr)
       tmp = root.gDirectory.Get(tmpHistName)
-      quantiles = fitDGFindQuantiles(tmp,level)
-      results += [[quantiles[0],quantiles[2]]]
+      quantiles = None
+      if useDG:
+        quantiles = fitDGFindQuantiles(tmp,level)
+      else:
+        quantiles = getMedianAndQuantileInterval(tmp,level)
+      results += [[quantiles[2],quantiles[0]]]
   return results
 
 class Counts:
