@@ -355,7 +355,7 @@ class CutOptPlots:
     #root.gStyle.SetPaintTextFormat(".2f")
     root.gStyle.SetPaintTextFormat(".1f")
     files = glob.glob(globName)
-    self.energyStr = None
+    self.energyStr = ""
     self.data = {}
     for f in sorted(files):
       data =  getData(f)
@@ -366,6 +366,9 @@ class CutOptPlots:
       metamatch = re.search(r"_([0-9P]+TeV)_",f)
       if metamatch:
         self.energyStr = metamatch.group(1)
+        #print("Energy Str "+self.energyStr)
+      else:
+        print("Error: couldn't match energy string: "+f)
       f = re.sub(".*/","",f)
       f = re.sub("_8TeV.*","",f)
       f = re.sub("_7TeV.*","",f)
@@ -421,7 +424,6 @@ class CutOptPlots:
       data = self.data[dataName]
       iPoint = 0
       data.sort(key=lambda x: x[xName])
-      print data
       for d in data:
         doContinue = False
         for sliceVar in holdConstDict:
@@ -436,7 +438,7 @@ class CutOptPlots:
         limit = d['limit']
         yMax = max(limit,yMax)
         yMin = min(limit,yMin)
-        print("{0}: {1:4.0f} limit: {2:4.1f}".format(xName,x,limit))
+        #print("{0}: {1:4.0f} limit: {2:4.1f}".format(xName,x,limit))
         graph.SetPoint(iPoint,x,limit)
         iPoint += 1
       xTitle = xName
@@ -480,7 +482,7 @@ class CutOptPlots:
       #hist.SetMarkerColor(0)
       #hist.SetMarkerSize(2*hist.GetMarkerSize())
       data = self.data[dataName]
-      print data
+      #print data
       for d in data:
         doContinue = False
         for sliceVar in holdConstDict:
@@ -518,9 +520,10 @@ class CutOptPlots:
       self.histList += [hist]
       self.tlatex.SetTextAlign(12)
       self.tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
-      self.tlatex.SetTextAlign(13)
-      self.tlatex.DrawLatex(gStyle.GetPadLeftMargin()+0.03,1.0-gStyle.GetPadTopMargin()-0.02,self.energyStrWrite)
-      self.tlatex.DrawLatex(gStyle.GetPadLeftMargin()+0.03,1.0-gStyle.GetPadTopMargin()-0.06,"L = {0:.1f} fb^{{-1}}".format(float(lumiDict[self.energyStr])))
+      self.tlatex.DrawLatex(gStyle.GetPadLeftMargin(),
+            gStyle.GetPadBottomMargin()*0.3,
+            self.energyStrWrite+", "+"L = {0:.1f} fb^{{-1}}".format(float(lumiDict[self.energyStr]))
+            )
       self.goodDrawn = True
     except LookupError as e:
       print("Warning: could not draw {0}, because key not found".format(e))
@@ -565,7 +568,7 @@ if __name__ == "__main__":
       optPlots.annotatePlot("0 Jets")
       optPlots.save(outDir+dataName+"_"+period)
 
-      for ptmiss in ['25','30','50','100']:
+      for ptmiss in ['25','30','40','50','100']:
         dataName = 'Jets2BDTSplitOptPtMissL'+ptmiss
         xName = 'bdtVBFG'
         holdConstDict = {}
@@ -575,34 +578,16 @@ if __name__ == "__main__":
         optPlots.save(outDir+dataName+"_"+period)
 
       # 2D
-      dataName = 'Jets2SplitOpt'
-      xName = 'dijetMassG'
-      yName = 'deltaEtaJetsG'
-      #holdConstDict = {'ptMissL':25.0}
-      holdConstDict = {}
-      rootHistParamList = [dataName,'',14,200.,900.,8,2.,6.]
-      optPlots.plot2D(dataName,xName,yName,holdConstDict,rootHistParamList)
-      #optPlots.annotatePlot("#geq 2 Jets, Split p_{T}^{Miss} at 25 GeV")
-      optPlots.annotatePlot("#geq 2 Jets, Split")
-      optPlots.save(outDir+dataName+"_"+period)
-
-      dataName = 'Jets2SplitOpt'
-      xName = 'dijetMassG'
-      yName = 'deltaEtaJetsG'
-      holdConstDict = {'ptMissL':50.0}
-      rootHistParamList = [dataName,'',10,300.,800.,8,3.0,5.]
-      optPlots.plot2D(dataName,xName,yName,holdConstDict,rootHistParamList)
-      optPlots.annotatePlot("#geq 2 Jets, Split p_{T}^{Miss} at 50 GeV")
-      optPlots.save(outDir+dataName+"_"+period)
-
-      dataName = 'Jets2SplitOpt'
-      xName = 'dijetMassG'
-      yName = 'deltaEtaJetsG'
-      holdConstDict = {'ptMissL':100.0}
-      rootHistParamList = [dataName,'',10,300.,800.,8,3.0,5.]
-      optPlots.plot2D(dataName,xName,yName,holdConstDict,rootHistParamList)
-      optPlots.annotatePlot("#geq 2 Jets, Split p_{T}^{Miss} at 100 GeV")
-      optPlots.save(outDir+dataName+"_"+period)
+      for ptmiss in ['25','30','40','50','100']:
+        dataName = 'Jets2SplitOptPtMissL'+ptmiss
+        xName = 'dijetMassG'
+        yName = 'deltaEtaJetsG'
+        holdConstDict = {}
+        rootHistParamList = [dataName,'',10,300.,800.,6,2.,5.]
+        optPlots.plot2D(dataName,xName,yName,holdConstDict,rootHistParamList)
+        #optPlots.annotatePlot("#geq 2 Jets, Split p_{T}^{Miss} at 25 GeV")
+        optPlots.annotatePlot("#geq 2 Jets, p_{T}^{Miss}<"+ptmiss+" GeV")
+        optPlots.save(outDir+dataName+"_"+period)
 
     sys.exit(0)
 
@@ -634,7 +619,7 @@ if __name__ == "__main__":
       data = [float(x) for x in data]
       f = re.sub(".*/","",f)
       f += ":"
-      print(("{0:"+maxLen+"}  {1:4.1f}  {2:4.1f}  {3:4.1f} {4:4.1f} {5:4.1f} {6:4.1f}").format(f,data[1],data[4],data[3],data[5],data[2],data[6]))
+      print(("{0:"+maxLen+"}  {1:4.1f}  {2:4.2f}  {3:4.1f} {4:4.1f} {5:4.1f} {6:4.1f}").format(f,data[1],data[4],data[3],data[5],data[2],data[6]))
     print
     sys.exit(0)
   
