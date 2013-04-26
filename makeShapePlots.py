@@ -109,13 +109,7 @@ class ShapePlotter:
       data_obs = channelWS.data("data_obs")
       rooDataTitle = data_obs.GetTitle()
       tmpRebin = rebin
-      if "VBF" in channelName:
-        if "BDT" in channelName:
-          if self.energyStr == "7TeV":
-            tmpRebin *= 5
-          else:
-            tmpRebin *= 5
-        else:
+      if "Jet2" in channelName or "VBF" in channelName:
           tmpRebin *= 5
       elif "BO" in channelName:
           tmpRebin *= 4
@@ -126,6 +120,10 @@ class ShapePlotter:
       elif "OE" in channelName:
           tmpRebin *= 5
       elif "EE" in channelName:
+          tmpRebin *= 5
+      elif "FF" in channelName:
+          tmpRebin *= 5
+      elif "CC" in channelName:
           tmpRebin *= 5
       elif "BB" in channelName:
           tmpRebin *= 2
@@ -1144,8 +1142,8 @@ if __name__ == "__main__":
 
   shapePlotterList = []
   #for fn in glob.glob(dataDir+"*20.root")+glob.glob(dataDir+"*5.05.root"):
-  for fn in glob.glob(dataDir+"JetN*.root"):
-  #for fn in glob.glob(dataDir+"*.root"):
+  #for fn in glob.glob(dataDir+"JetN*.root"):
+  for fn in glob.glob(dataDir+"*.root"):
     if re.search("P[\d.]+TeV",fn):
         continue
     s = ShapePlotter(fn,outDir,titleMap,rebin,xlimits=plotRange,normRange=normRange,signalInject=args.signalInject,plotSignalStrength=args.plotSignalStrength,plotSignalBottom=args.plotSignalBottom,rebinOverride=args.rebinOverride)
