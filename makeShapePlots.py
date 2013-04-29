@@ -124,6 +124,12 @@ class ShapePlotter:
                     signalLegEntry=signalLegEntry
                 )
       rmp.draw(saveName)
+
+      #Pull Distribution Time
+      saveNameSplit = os.path.split(saveName)
+      saveNamePulls = saveNameSplit[0]+"/"+"pulls_"+saveNameSplit[1]
+      rmp.drawPulls(saveNamePulls)
+
       self.rmpList.append(rmp)
 
   def readCard(self,fn):

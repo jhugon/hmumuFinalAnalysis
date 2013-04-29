@@ -2169,6 +2169,56 @@ class RooModelPlotter:
 
     saveAs(self.canvas,filenameNoExt)
 
+  def drawPulls(self,filenameNoExt):
+    self.canvas.cd()
+    xMin = -5.
+    xMax = 5.
+    nBins = 20
+    self.pullDistHist = root.TH1F("pullDist"+self.nowStr,"",nBins,xMin,xMax)
+    setHistTitles(self.pullDistHist,"(Data-Fit)/#sqrt{Fit}","Events/%s" % (getBinWidthStr(self.pullDistHist)))
+    self.pullDistHist.Sumw2()
+    self.pullDistHist.SetMarkerColor(1)
+    self.pullDistHist.SetLineColor(1)
+
+    for i in range(1,self.pullsHist.GetXaxis().GetNbins()+1):
+      self.pullDistHist.Fill(self.pullsHist.GetBinContent(i))
+
+    fitFunc = root.TF1("fitFunc"+self.nowStr,"gaus",xMin,xMax)
+    fitFunc.SetLineColor(root.kBlue)
+    fitResult = self.pullDistHist.Fit(fitFunc,"LEMSQ")
+    chi2 = fitFunc.GetChisquare()
+    ndf = fitFunc.GetNDF()
+    #print("chi2: {0:.2g}/{1}".format(chi2,ndf))
+    #nParams =  fitFunc.GetNumberFreeParameters()
+    #for i in range(nParams):
+    #    parName = fitFunc.GetParName(i)
+    #    val = fitFunc.GetParameter(i)
+    #    err = fitFunc.GetParError(i)
+    #    print("name: {}, value: {}, error: {}".format(parName,val,err))
+
+    mean = fitFunc.GetParameter(1)
+    meanErr = fitFunc.GetParError(1)
+    sigma = fitFunc.GetParameter(2)
+    sigmaErr = fitFunc.GetParError(2)
+    
+    self.pullDistHist.Draw()
+
+    tlatex = root.TLatex()
+    tlatex.SetNDC()
+    tlatex.SetTextFont(root.gStyle.GetLabelFont())
+    tlatex.SetTextSize(root.gStyle.GetLabelSize())
+    tlatex.SetTextAlign(12)
+    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+    tlatex.SetTextAlign(32)
+    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
+    tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.875,"#sqrt{s} = "+self.energyStr)
+    tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.825,self.lumiStr)
+    tlatex.SetTextAlign(12)
+    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.875,"#chi^{{2}}/NDF = {0:.2g}".format(float(chi2)/ndf))
+    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.825,"#mu = {0:.2f} #pm {1:.2f}".format(mean,meanErr))
+    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.775,"#sigma = {0:.2f} #pm {1:.2f}".format(sigma,sigmaErr))
+    saveAs(self.canvas,filenameNoExt)
+
   def getProperSigPdfAndComponent(self,var,data,pdf,n):
     nData = data.sumEntries()
     nDummy = nData-n
@@ -2180,6 +2230,7 @@ class RooModelPlotter:
     self.dummySigPdfE = root.RooExtendPdf("dummySigPdfE"+nowStr,"",pdf,self.nDumbSig)
     self.dummyPdf = root.RooAddPdf("dummyPdf"+nowStr,"dummyPdf",root.RooArgList(self.dummySigPdfE,self.dummyUnifPdfE))
     return self.dummyPdf, root.RooFit.Components(pdf.GetName())
+
 
 if __name__ == "__main__":
 
