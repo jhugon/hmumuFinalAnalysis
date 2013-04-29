@@ -1438,6 +1438,16 @@ if __name__ == "__main__":
   #  ],"JetNSplitBDT"
   #))
 
+  ################## Higher Jet Pt Cuts ##############################
+
+  combinations.append((
+    [
+      ["Jet2CutsPassTightJets","deltaEtaJets>3.5 && dijetMass>650. && ptMiss < 40. && jetLead_pt>55. && jetSub_pt>45."],
+      ["Jet2CutsPassLooseJets","deltaEtaJets>3.5 && dijetMass>650. && ptMiss < 40. && !(jetLead_pt>55. && jetSub_pt>45.)"],
+      ["Jet2CutsFail","!(deltaEtaJets>3.5 && dijetMass>650.) && ptMiss < 40."]
+    ],"Jet2CutsSplit"
+  ))
+
   ##################### Categories Time ##############################
 
   #combinations.append((
@@ -1501,25 +1511,25 @@ if __name__ == "__main__":
   #  ,"Jet1CatFC"
   #))
 
-  combinations.append((
-      [ ["Jet0Pass"+i,"dimuonPt > 10."] for i in categoriesAll]+
-      [ ["Jet0Fail"+i,"!(dimuonPt > 10.)"] for i in categoriesAll]+
-      [["Jet1"+i,""] for i in categoriesAll]+
-    [
-      ["Jet2CutsPass","deltaEtaJets>3.5 && dijetMass>650. && ptMiss < 40."],
-      ["Jet2CutsFail","!(deltaEtaJets>3.5 && dijetMass>650.) && ptMiss < 40."],
-    ],"JetNSplitCutsCatAll"
-  ))
+  #combinations.append((
+  #    [ ["Jet0Pass"+i,"dimuonPt > 10."] for i in categoriesAll]+
+  #    [ ["Jet0Fail"+i,"!(dimuonPt > 10.)"] for i in categoriesAll]+
+  #    [["Jet1"+i,""] for i in categoriesAll]+
+  #  [
+  #    ["Jet2CutsPass","deltaEtaJets>3.5 && dijetMass>650. && ptMiss < 40."],
+  #    ["Jet2CutsFail","!(deltaEtaJets>3.5 && dijetMass>650.) && ptMiss < 40."],
+  #  ],"JetNSplitCutsCatAll"
+  #))
 
-  combinations.append((
-      [ ["Jet0Pass"+i,"dimuonPt > 10."] for i in categoriesAll]+
-      [ ["Jet0Fail"+i,"!(dimuonPt > 10.)"] for i in categoriesAll]+
-      [["Jet1"+i,""] for i in categoriesAll]+
-    [
-      ["Jet2BDTPass","bdtVBF>0.05 && ptMiss < 40."],
-      ["Jet2BDTFail","!(bdtVBF>0.05) && ptMiss < 40."],
-    ],"JetNSplitBDTCatAll"
-  ))
+  #combinations.append((
+  #    [ ["Jet0Pass"+i,"dimuonPt > 10."] for i in categoriesAll]+
+  #    [ ["Jet0Fail"+i,"!(dimuonPt > 10.)"] for i in categoriesAll]+
+  #    [["Jet1"+i,""] for i in categoriesAll]+
+  #  [
+  #    ["Jet2BDTPass","bdtVBF>0.05 && ptMiss < 40."],
+  #    ["Jet2BDTFail","!(bdtVBF>0.05) && ptMiss < 40."],
+  #  ],"JetNSplitBDTCatAll"
+  #))
 
   #combinations.append((
   #    [ ["Jet0Pass"+i,"dimuonPt > 10."] for i in categoriesFF]+

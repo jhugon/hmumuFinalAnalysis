@@ -11,6 +11,36 @@ outDir = "output/"
 caption2=""
 
 CUTS="dimuonMass < 150. && dimuonMass > 110."
+#CUTS+= "&& nJets>=2 && ptMiss<40. && dijetMass > 650."
+#caption2="#geq2 Jets, p_{T}^{Miss}<40 GeV, m_{jj}>650 GeV"
+#CUTS+= "&& nJets>=2 && ptMiss<40. && dijetMass > 650. && deltaEtaJets > 3.5"
+#caption2="#geq2 Jets, p_{T}^{Miss}<40 GeV, 2-Jet Cuts"
+CUTS+= "&& nJets>=2 && ptMiss<40. && dijetMass > 500."
+caption2="#geq2 Jets, p_{T}^{Miss}<40 GeV, m_{jj}>500"
+
+#CUTS+= "&& nJets>=2 && ptMiss<40. && deltaEtaJets>3.0"
+#caption2="#geq2 Jets, p_{T}^{Miss}<40 GeV,|#Delta#eta|>3, p_{T}(j_{1},j_{2})> 30,30 GeV"
+
+#CUTS+= "&& nJets>=2 && ptMiss<40. && jetLead_pt>60. && jetSub_pt>50."
+#caption2="#geq2 Jets, p_{T}^{Miss}<40 GeV, p_{T}(j_{1},j_{2})> 60,50 GeV"
+
+#CUTS+= "&& nJets>=2 && ptMiss<40. && jetLead_pt>60. && jetSub_pt<50."
+#caption2="#geq2 Jets, p_{T}^{Miss}<40 GeV, p_{T}(j_{1},j_{2})< 60,50 GeV"
+
+#CUTS+= "&& nJets>=2 && ptMiss<40. && deltaEtaJets>3.5"
+#caption2="#geq2 Jets, p_{T}^{Miss}<40 GeV, |#Delta#eta_{jj}|>3.5"
+
+#CUTS+= "&& nJets>=2 && ptMiss<40. && deltaEtaJets<3.5"
+#caption2="#geq2 Jets, p_{T}^{Miss}<40 GeV, |#Delta#eta_{jj}|<3.5"
+
+#CUTS+= "&& nJets>=2 && ptMiss<40. && jetLead_pt>60. && jetSub_pt>50. && deltaEtaJets>3.5"
+#caption1+= ", |#Delta#eta_{jj}|>3.5"
+#caption2="#geq2 Jets, p_{T}^{Miss}<40 GeV, p_{T}(j_{1},j_{2})> 60,50 GeV"
+
+#CUTS+= "&& nJets>=2 && ptMiss<40. && jetLead_pt<60. && jetSub_pt<50. && deltaEtaJets>3.5"
+#caption1+= ", |#Delta#eta_{jj}|>3.5"
+#caption2="#geq2 Jets, p_{T}^{Miss}<40 GeV, p_{T}(j_{1},j_{2})< 60,50 GeV"
+
 
 RUNPERIOD="8TeV"
 LUMI=lumiDict[RUNPERIOD]
@@ -20,9 +50,11 @@ reverse=False
 allHiggsTogether = False
 drawString="HIST"
 LEGDRAWSTRING="l"
+drawString="PE"
+LEGDRAWSTRING="lep"
 
 histDirs = [""]
-histDirs = ["Jets0/","Jets1/","Jets2/"]
+#histDirs = ["Jets0/","Jets1/","Jets2/"]
 
 categoryAnotations ={}
 categoryAnotations['Jets0/'] = "0 Jet"
@@ -36,7 +68,7 @@ backgroundList = [
 
 signalList = [
 "ggHmumu125",
-#"vbfHmumu125"
+"vbfHmumu125"
 ]
 
 #colors["DYJetsToLL"] = root.kBlue
@@ -49,41 +81,44 @@ stdLegendPos = urLegendPos
 
 histNames = {}
 if True:
-    histNames["dimuonMass"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,150.],"nbins":40}#,"ylimits":[0.1,5e5]}
-    histNames["dimuonPt"] = {"xlabel":"p_{T,#mu#mu} [GeV/c]","xlimits":[0.0,200.0],"nbins":20}#,"ylimits":[0.1,1e5]}
-    histNames["dimuonY"] = {"xlabel":"y_{#mu#mu}","xlimits":[-2.2,2.2],"nbins":10}#,"ylimits":[0.1,3e6]}
-    histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-2.2,2.2],"nbins":10}#,"ylimits":[0.1,3e6]}
-    histNames["muonLead_pt"] = {"xlabel":"Leading Muon p_{T} [GeV/c]","xlimits":[25.,150.],"nbins":25}#,"ylimits":[0.1,3e6]}
-    histNames["muonSub_pt"] = {"xlabel":"Sub-Leading Muon p_{T} [GeV/c]","xlimits":[25.,150.],"nbins":25}#,"ylimits":[0.1,3e6]}
-    histNames["muonLead_eta"] = {"xlabel":"Leading Muon #eta","xlimits":[-2.1,2.1],"nbins":25}#,"ylimits":[0.1,3e6]}
-    histNames["muonSub_eta"] = {"xlabel":"Sub-Leading Muon #eta","xlimits":[-2.1,2.1],"nbins":10}#,"ylimits":[0.1,3e6]}
+    #histNames["dimuonMass"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,150.],"nbins":40}#,"ylimits":[0.1,5e5]}
+    #histNames["dimuonPt"] = {"xlabel":"p_{T,#mu#mu} [GeV/c]","xlimits":[0.0,200.0],"nbins":20}#,"ylimits":[0.1,1e5]}
+    #histNames["dimuonY"] = {"xlabel":"y_{#mu#mu}","xlimits":[-2.2,2.2],"nbins":10}#,"ylimits":[0.1,3e6]}
+    #histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-2.2,2.2],"nbins":10}#,"ylimits":[0.1,3e6]}
+    #histNames["muonLead_pt"] = {"xlabel":"Leading Muon p_{T} [GeV/c]","xlimits":[25.,150.],"nbins":25}#,"ylimits":[0.1,3e6]}
+    #histNames["muonSub_pt"] = {"xlabel":"Sub-Leading Muon p_{T} [GeV/c]","xlimits":[25.,150.],"nbins":25}#,"ylimits":[0.1,3e6]}
+    #histNames["muonLead_eta"] = {"xlabel":"Leading Muon #eta","xlimits":[-2.1,2.1],"nbins":25}#,"ylimits":[0.1,3e6]}
+    #histNames["muonSub_eta"] = {"xlabel":"Sub-Leading Muon #eta","xlimits":[-2.1,2.1],"nbins":10}#,"ylimits":[0.1,3e6]}
 
-    histNames["nJets"] = {"xlabel":"N_{jets}","xlimits":[-0.5,5.5],"nbins":6}#,"ylimits":[0.1,3e6]}
-    histNames["ptMiss"] = {"xlabel":"Missing p_{T} [GeV/c]","xlimits":[0.0,300.0],"nbins":12}#,"ylimits":[0.1,3e6]}
+    #histNames["nJets"] = {"xlabel":"N_{jets}","xlimits":[-0.5,5.5],"nbins":6}#,"ylimits":[0.1,3e6]}
+    #histNames["ptMiss"] = {"xlabel":"Missing p_{T} [GeV/c]","xlimits":[0.0,300.0],"nbins":12}#,"ylimits":[0.1,3e6]}
     histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta(j_{1},j_{2})","xlimits":[0.0,7.0],"nbins":14}#,"ylimits":[0.1,3e6]}
+    histNames["dijetMass"] = {"xlabel":"m_{jj} [GeV/c^{2}]","xlimits":[0.0,1000.],"nbins":20}#,"ylimits":[0.1,3e6]}
+    histNames["dijetYabs"] = {"xlabel":"|Y_{jj}|","xlimits":[0,2.5],"nbins":5}#,"ylimits":[0.1,3e6]}
+    histNames["dijetPt"] = {"xlabel":"p_{T,jj} [GeV/c]","xlimits":[0,500.],"nbins":25}#,"ylimits":[0.1,3e6]}
 
-    histNames["jetLead_pt"] = {"xlabel":"Leading Jet p_{T} [GeV/c]","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
-    histNames["jetSub_pt"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c]","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
-    histNames["jetLead_eta"] = {"xlabel":"Leading Jet #eta","xlimits":[-5,5],"nbins":20}#,"ylimits":[0.1,3e6]}
-    histNames["jetSub_eta"] = {"xlabel":"Sub-Leading Jet #eta","xlimits":[-5,5],"nbins":20}#,"ylimits":[0.1,3e6]}
-    histNames["jetLead_PUIDDisc"] = {"xlabel":"Leading Jet PUID","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
-    histNames["jetSub_PUIDDisc"] = {"xlabel":"Sub-Leading Jet PUID","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
-    histNames["jetLead_PUIDDisc_Forward"] = {"xlabel":"Leading Jet PUID (|#eta|>2.4)","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
-    histNames["jetSub_PUIDDisc_Forward"] = {"xlabel":"Sub-Leading Jet PUID (|#eta|>2.4)","xlimits":[-1,1],"nbins":20,"leg":urLegendPos}#,"ylimits":[0.1,3e6]}
+    #histNames["jetLead_pt"] = {"xlabel":"Leading Jet p_{T} [GeV/c]","xlimits":[30.,150.],"nbins":12}#,"ylimits":[0.1,3e6]}
+    #histNames["jetSub_pt"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c]","xlimits":[30.,150.],"nbins":12}#,"ylimits":[0.1,3e6]}
+    #histNames["jetLead_eta"] = {"xlabel":"Leading Jet #eta","xlimits":[-5,5],"nbins":20}#,"ylimits":[0.1,3e6]}
+    #histNames["jetSub_eta"] = {"xlabel":"Sub-Leading Jet #eta","xlimits":[-5,5],"nbins":20}#,"ylimits":[0.1,3e6]}
+    #histNames["jetLead_PUIDDisc"] = {"xlabel":"Leading Jet PUID","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
+    #histNames["jetSub_PUIDDisc"] = {"xlabel":"Sub-Leading Jet PUID","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
+    #histNames["jetLead_PUIDDisc_Forward"] = {"xlabel":"Leading Jet PUID (|#eta|>2.4)","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
+    #histNames["jetSub_PUIDDisc_Forward"] = {"xlabel":"Sub-Leading Jet PUID (|#eta|>2.4)","xlimits":[-1,1],"nbins":20,"leg":urLegendPos}#,"ylimits":[0.1,3e6]}
 
-    histNames["jetLead_PUIDDisc_Central"] = {"xlabel":"Leading Jet PUID (|#eta|<2.4)","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
-    histNames["jetSub_PUIDDisc_Central"] = {"xlabel":"Sub-Leading Jet PUID (|#eta|<2.4)","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
+    #histNames["jetLead_PUIDDisc_Central"] = {"xlabel":"Leading Jet PUID (|#eta|<2.4)","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
+    #histNames["jetSub_PUIDDisc_Central"] = {"xlabel":"Sub-Leading Jet PUID (|#eta|<2.4)","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
 
-    histNames["KD"] = {"xlabel":"MEKD","xlimits":[0.0,1.0],"nbins":20,'leg':ulLegendPos}#,"ylimits":[0.1,3e6]}
-    histNames["KDPdf"] = {"xlabel":"MEKD","xlimits":[0.0,1.0],"nbins":20,'leg':ulLegendPos}#,"ylimits":[0.1,3e6]}
-    histNames["sigME"] = {"xlabel":"Signal |M|^2","xlimits":[0.0,1e-3],"nbins":40}#,"ylimits":[0.1,3e6]}
-    histNames["sigMEPdf"] = {"xlabel":"Signal |M|^2 (Including PDF Info)","xlimits":[0.0,120.0],"nbins":30}#,"ylimits":[0.1,3e6]}
-    histNames["bakME"] = {"xlabel":"Drell-Yan |M|^2","xlimits":[0.0,0.05],"nbins":30}#,"ylimits":[0.1,3e6]}
-    histNames["bakMEPdf"] = {"xlabel":"Drell-Yan |M|^2 (Including PDF Info)","xlimits":[0.0,120.0],"nbins":30}#,"ylimits":[0.1,3e6]}
-    histNames["sigMENorm"] = {"xlabel":"Signal |M|^2","xlimits":[0.0,1.],"nbins":20}#,"ylimits":[0.1,3e6]}
-    histNames["sigMEPdfNorm"] = {"xlabel":"Signal |M|^2 (Including PDF Info)","xlimits":[0.0,1.0],"nbins":20}#,"ylimits":[0.1,3e6]}
-    histNames["bakMENorm"] = {"xlabel":"Drell-Yan |M|^2","xlimits":[0.0,1.],"nbins":20}#,"ylimits":[0.1,3e6]}
-    histNames["bakMEPdfNorm"] = {"xlabel":"Drell-Yan |M|^2 (Including PDF Info)","xlimits":[0.0,1.0],"nbins":20}#,"ylimits":[0.1,3e6]}
+    #histNames["KD"] = {"xlabel":"MEKD","xlimits":[0.0,1.0],"nbins":20,'leg':ulLegendPos}#,"ylimits":[0.1,3e6]}
+    #histNames["KDPdf"] = {"xlabel":"MEKD","xlimits":[0.0,1.0],"nbins":20,'leg':ulLegendPos}#,"ylimits":[0.1,3e6]}
+    #histNames["sigME"] = {"xlabel":"Signal |M|^2","xlimits":[0.0,1e-3],"nbins":40}#,"ylimits":[0.1,3e6]}
+    #histNames["sigMEPdf"] = {"xlabel":"Signal |M|^2 (Including PDF Info)","xlimits":[0.0,120.0],"nbins":30}#,"ylimits":[0.1,3e6]}
+    #histNames["bakME"] = {"xlabel":"Drell-Yan |M|^2","xlimits":[0.0,0.05],"nbins":30}#,"ylimits":[0.1,3e6]}
+    #histNames["bakMEPdf"] = {"xlabel":"Drell-Yan |M|^2 (Including PDF Info)","xlimits":[0.0,120.0],"nbins":30}#,"ylimits":[0.1,3e6]}
+    #histNames["sigMENorm"] = {"xlabel":"Signal |M|^2","xlimits":[0.0,1.],"nbins":20}#,"ylimits":[0.1,3e6]}
+    #histNames["sigMEPdfNorm"] = {"xlabel":"Signal |M|^2 (Including PDF Info)","xlimits":[0.0,1.0],"nbins":20}#,"ylimits":[0.1,3e6]}
+    #histNames["bakMENorm"] = {"xlabel":"Drell-Yan |M|^2","xlimits":[0.0,1.],"nbins":20}#,"ylimits":[0.1,3e6]}
+    #histNames["bakMEPdfNorm"] = {"xlabel":"Drell-Yan |M|^2 (Including PDF Info)","xlimits":[0.0,1.0],"nbins":20}#,"ylimits":[0.1,3e6]}
 
 #######################################
 root.gROOT.SetBatch(True)
@@ -155,6 +190,9 @@ class Dataset:
         sigNorm = MENormDict[RUNPERIOD]["sigMEPdf"]
         bakNorm = MENormDict[RUNPERIOD]["bakMEPdf"]
         varToDraw = "sigMEPdf*%f/(bakMEPdf*%f+sigMEPdf*%f)" %(sigNorm,bakNorm,sigNorm)
+      if "abs" in name:
+        varToDraw = varToDraw.replace("abs","")
+        varToDraw = "abs("+varToDraw+")"
       drawStr = varToDraw+" >> "+tmpHistName+"("+str(nbins)+","+str(xlimits[0])+","+str(xlimits[1])+")"
       #print drawStr
       cutStr = treeCut(prefix,tmpCUTS)
@@ -171,6 +209,7 @@ class Dataset:
       tmp.SetFillStyle(1)
       tmp.SetLineColor(self.color)
       tmp.SetMarkerColor(self.color)
+      tmp.Sumw2()
       tmp.Scale(self.scaleFactor)
       self.hists[prefix+name] = tmp
   def eatOtherDatasets(self,listOfOthers):
@@ -190,6 +229,21 @@ class Dataset:
           self.hists[key].Add(ds.hists[key])
 
 #######################################
+
+dataDatasetList = []
+for i in dataDict[RUNPERIOD]:
+      print("looking at data: " + i)
+      filename = dataDir+i+".root"
+      if not os.path.exists(filename):
+          continue
+      tmp = Dataset(filename,i,1,1.0)
+      if tmp.isZombie():
+        print ("Warning: file for dataset {0} is Zombie!!".format(i))
+        continue
+      #print("Loading Dataset: {0}".format(i))
+      for hDir in histDirs:
+        tmp.loadHistos(histNames,prefix=hDir)
+      dataDatasetList.append(tmp)
 
 bkgDatasetList = []
 for i in backgroundList:
@@ -231,6 +285,11 @@ if allHiggsTogether:
   allHiggsDataset = Dataset("","H #rightarrow #mu#mu",root.kRed,1.0)
   allHiggsDataset.eatOtherDatasets(sigDatasetList)
   sigDatasetList = [allHiggsDataset]
+
+oldDataDatasetList = dataDatasetList
+allDataDataset = Dataset("","Data",root.kBlack,1.0)
+allDataDataset.eatOtherDatasets(dataDatasetList)
+bkgDatasetList = [allDataDataset]
 
 bkgDatasetList += sigDatasetList
 

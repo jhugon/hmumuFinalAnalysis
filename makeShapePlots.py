@@ -4,8 +4,8 @@
 import optparse
 parser = optparse.OptionParser(description="Makes Shape Diagnostic Plots from Datacards")
 parser.add_option("--signalInject", help="Sets a caption saying that signal was injected with strength",type=float,default=0.0)
-parser.add_option("--plotSignalStrength", help="Plots a signal bump with this strength",type=float,default=0.0)
-parser.add_option("--plotSignalBottom", help="Plots a signal bump on the bottom (bool)",action="store_true",default=False)
+parser.add_option("--plotSignalStrength", help="Plots a signal bump with this strength",type=float,default=5.0)
+parser.add_option("--plotSignalBottom", help="Plots a signal bump on the bottom (bool)",action="store_true",default=True)
 parser.add_option("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
 parser.add_option("-r","--rebinOverride", help="Rebin All plots with this rebinning, overriding all internal configuration",type=int,default=0)
 args, fakeargs = parser.parse_args()
