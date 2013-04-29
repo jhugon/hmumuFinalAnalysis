@@ -1949,7 +1949,7 @@ def treeCut(category,cutString,eventWeights=True,muonRequirements=True,KDString=
   return result
 
 class RooModelPlotter:
-  def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0):
+  def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None):
     self.xVar = xVar
     self.pdf = pdf
     self.data = data
@@ -2064,22 +2064,22 @@ class RooModelPlotter:
     self.pullsHist.GetYaxis().SetLabelSize(0.097)
     self.pullsHist.GetYaxis().SetTitleOffset(0.70*0.9)
 
-    if signalPDFName != None:
-        sigPdf = None
+    if signalPDFName != None and signalPdf == None:
         pdfList = pdf.pdfList()
         for i in range(pdfList.getSize()):
           tmp = pdfList[i]
           if tmp.GetName() == signalPDFName:
-            sigPdf = tmp
+            signalPdf = tmp
             break
           elif tmp.InheritsFrom("RooExtendPdf"):
             srvr = tmp.findServer(signalPDFName)
             if srvr:
-                sigPdf = srvr
+                signalPdf = srvr
                 break
-        self.sigPdf = sigPdf
+        self.signalPdf = signalPdf
+    if signalPdf != None:
         sigPdfToDraw, componentToDraw = self.getProperSigPdfAndComponent(
-                            mMuMu,data,sigPdf,self.nSignal
+                            xVar,data,signalPdf,self.nSignal
                     )
         sigPdfToDraw.plotOn(frame,lineDrawOptArg,sigLineColorArg,lineWidthArg,componentToDraw)
 
@@ -2098,16 +2098,19 @@ class RooModelPlotter:
     self.phonySigLegHist.SetLineColor(root.kRed)
     self.phonySigLegHist.SetLineWidth(2)
     
-    #legPos = [0.65,0.65,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
-    legPos = [0.73,0.65,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
+    legPos = [0.65,0.65,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
+    #legPos = [0.73,0.65,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
     self.legPos = legPos
     self.leg = root.TLegend(*legPos)
     self.leg.SetFillColor(0)
     self.leg.SetLineColor(0)
     self.leg.AddEntry(self.phonyDatLegHist,"Data","lep")
     self.leg.AddEntry(self.phonyFitLegHist,"Fit","lf")
-    if signalPDFName != None:
-      self.leg.AddEntry(self.phonySigLegHist,"Signal","l")
+    if signalPdf != None:
+      if signalLegEntry != None:
+        self.leg.AddEntry(self.phonySigLegHist,signalLegEntry,"l")
+      else:
+        self.leg.AddEntry(self.phonySigLegHist,"Signal","l")
 
   def draw(self,filenameNoExt):
     nowStr = self.nowStr

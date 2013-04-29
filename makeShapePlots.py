@@ -29,12 +29,13 @@ root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.ERROR)
 PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 
 class ShapePlotter:
-  def __init__(self,filename,outDir,titleMap,signalInject=20.,binWidthOverride=0):
+  def __init__(self,filename,outDir,fitDir,titleMap,signalInject=20.,binWidthOverride=0):
     self.signalInject=signalInject
     self.rmpList = []
     self.titleMap = titleMap
     self.filename = filename
     self.textFileName = os.path.splitext(filename)[0]+".txt"
+    self.fitFileName = fitDir+"/"+os.path.split(self.textFileName)[1]+".root"
     self.processNameMap, self.params, self.normErrMap = getattr(self,"readCard")(self.textFileName)
 
     self.lumi = -1
@@ -59,6 +60,7 @@ class ShapePlotter:
       channelWS = channelKey.ReadObj()
       mMuMu = channelWS.var("mMuMu")
       bakPDF = channelWS.pdf("bak")
+      sigPDF = channelWS.pdf("ggH")
       data_obs = channelWS.data("data_obs")
       rooDataTitle = data_obs.GetTitle()
       binWidth = 1
@@ -93,13 +95,33 @@ class ShapePlotter:
       saveName = outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName
       saveName = re.sub(r"([\d]+)\.[\d]+",r"\1",saveName)
 
-      # Testing Fit
-      fr = bakPDF.fitTo(data_obs,root.RooFit.Save(True),root.RooFit.PrintLevel(-1))
+      # Get Fit Result
+      fr = None
+      try:
+        rf = root.TFile(self.fitFileName)
+        if rf.IsZombie() or not rf.IsOpen():
+          raise IOError("ROOT File not open or Zombie")
+        self.fitFile = rf
+        #fr = rf.Get("fit_s")
+        fr = rf.Get("fit_b")
+      except Exception as e:
+        print("Warning, Couldn't find ML fit file: {0}\n{1}".format(self.fitFileName,e))
+        # Backup Fit
+        fr = bakPDF.fitTo(data_obs,root.RooFit.Save(True),root.RooFit.PrintLevel(-1))
+
+      # Signal Stuff
+      nSignal = 0.
+      for key in self.processNameMap[channelNameOrig]:
+        if key != "bak":
+          nSignal += self.processNameMap[channelNameOrig][key]
+      nSignal *= signalInject
+      signalLegEntry = "SM Higgs#times{0:.0f}".format(signalInject)
 
       #Plot Time
-      mMuMu.Print()
       rmp = RooModelPlotter(mMuMu,bakPDF,data_obs,fr,
-                    channelTitle,self.energyStr,self.lumi
+                    channelTitle,self.energyStr,self.lumi,
+                    nSignal=nSignal,signalPdf=sigPDF,
+                    signalLegEntry=signalLegEntry
                 )
       rmp.draw(saveName)
       self.rmpList.append(rmp)
@@ -207,6 +229,7 @@ if __name__ == "__main__":
 
   dataDir = "statsCards/"
   outDir = "shapes/"
+  fitDir = "statsInput/"
 
   plotRange= [110.,160]
   #plotRange= []
@@ -221,5 +244,5 @@ if __name__ == "__main__":
     if re.search("P[\d.]+TeV",fn):
         continue
 
-    s = ShapePlotter(fn,outDir,titleMap,signalInject=args.signalInject,binWidthOverride=0)
+    s = ShapePlotter(fn,outDir,fitDir,titleMap,signalInject=args.signalInject,binWidthOverride=0)
     shapePlotterList.append(s)
