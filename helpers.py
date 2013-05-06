@@ -957,7 +957,7 @@ class DataMCStack:
     setYLimitsAuto(rangesNDC,yNDCLimits,newYMax)
 
 class CompareTwoHists:
-  def __init__(self, hist1,hist2, canvas, xtitle, ytitle="Events",nDivX=7,nDivPullY=5,xlimits=[],ylimits=[],pullHistRangeY=[0.0,2.0],isPreliminary=True,is7TeV=False,lumi=5.0):
+  def __init__(self, hist1,hist2, canvas, xtitle, ytitle="Events",nDivX=7,nDivPullY=5,xlimits=[],ylimits=[],pullHistRangeY=[0.0,2.0],energyStr="8TeV",lumi=19.4):
     nBinsX = hist1.GetNbinsX()
     assert(nBinsX == hist2.GetNbinsX())
     self.nBinsX = nBinsX
@@ -978,6 +978,7 @@ class CompareTwoHists:
     self.pullHist = hist1.Clone("pullHist"+hist1.GetName())
     self.pullHist.Reset()
     self.pullHist.SetLineColor(hist2.GetLineColor())
+    self.pullHist.SetMarkerColor(hist2.GetMarkerColor())
     self.pullErrorBand = root.TGraphAsymmErrors()
     self.pullErrorBand.SetFillColor(856)
     self.pullErrorBand.SetFillStyle(1001)
@@ -997,8 +998,11 @@ class CompareTwoHists:
       self.pullHist.SetBinError(i,ratioErr)
       tmpAxis = hist1.GetXaxis()
       self.pullErrorBand.SetPoint(i,tmpAxis.GetBinCenter(i),1.0)
-      self.pullErrorBand.SetPointError(i,tmpAxis.GetBinLowEdge(i),tmpAxis.GetBinUpEdge(i),
+      if nhist1 != 0.0:
+        self.pullErrorBand.SetPointError(i,tmpAxis.GetBinLowEdge(i),tmpAxis.GetBinUpEdge(i),
                                                             nhist1Err/nhist1,nhist1Err/nhist1)
+      else:
+        self.pullErrorBand.SetPointError(i,tmpAxis.GetBinLowEdge(i),tmpAxis.GetBinUpEdge(i),0.,0.)
       #print("nData: %f, nMC: %f, error: %f, pull: %f" % (nData,nMC,error,pull))
 
     firstVizBin = self.pullHist.GetXaxis().GetFirst()
@@ -1029,6 +1033,8 @@ class CompareTwoHists:
     canvas.Clear()
     pad1 = root.TPad("pad1"+hist1.GetName(),"",0.02,0.30,0.98,0.98,0)
     pad2 = root.TPad("pad2"+hist1.GetName(),"",0.02,0.01,0.98,0.29,0)
+    self.pad1 = pad1
+    self.pad2 = pad2
   
     pad1.SetBottomMargin(0.005);
     pad2.SetTopMargin   (0.005);
@@ -1086,14 +1092,14 @@ class CompareTwoHists:
     #self.pullErrorBandLine.SetFillStyle(0)
     #self.pullErrorBandLine.Draw("same HIST L")
     self.pullHist.Draw("same")
-    pad2.Update()
-    pad2.GetFrame().DrawClone()
+
+    pad1.RedrawAxis() # Updates Axis Lines
+    pad2.RedrawAxis() # Updates Axis Lines
   
-    canvas.cd()
-    if isPreliminary:
-      self.tlatex.DrawLatex(0.33,0.96,"CMS Preliminary")
-    if is7TeV:
-      self.tlatex.DrawLatex(0.75,0.96,"#sqrt{s}=8 TeV, L=%.2f fb^{-1}" % lumi)
+    #canvas.cd()
+    pad1.cd()
+    self.tlatex.DrawLatex(0.33,0.96,PRELIMINARYSTRING)
+    self.tlatex.DrawLatex(0.75,0.96,"#sqrt{s}=%s, L=%.1f fb^{-1}" % (energyStr,lumi))
 
 class CompareTwoHistsAndData:
   def __init__(self, hist1,hist2, data, canvas, xtitle, ytitle="Events",nDivX=7,nDivPullY=5,xlimits=[],ylimits=[],pullHistRangeY=[0.0,2.0],isPreliminary=True,is7TeV=False,lumi=5.0,logy=False,integralPlot=False,energyStr="8TeV"):
@@ -2230,7 +2236,6 @@ class RooModelPlotter:
     self.dummySigPdfE = root.RooExtendPdf("dummySigPdfE"+nowStr,"",pdf,self.nDumbSig)
     self.dummyPdf = root.RooAddPdf("dummyPdf"+nowStr,"dummyPdf",root.RooArgList(self.dummySigPdfE,self.dummyUnifPdfE))
     return self.dummyPdf, root.RooFit.Components(pdf.GetName())
-
 
 if __name__ == "__main__":
 

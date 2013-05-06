@@ -589,6 +589,34 @@ if __name__ == "__main__":
         optPlots.annotatePlot("#geq 2 Jets, p_{T}^{Miss}<"+ptmiss+" GeV")
         optPlots.save(outDir+dataName+"_"+period)
 
+      dataName = 'Jets2SplitOptPtMissL40HighJetPt'
+      xName = 'dijetMassG'
+      yName = 'deltaEtaJetsG'
+      holdConstDict = {}
+      rootHistParamList = [dataName,'',10,300.,800.,5,2.5,5.]
+      optPlots.plot2D(dataName,xName,yName,holdConstDict,rootHistParamList)
+      #optPlots.annotatePlot("#geq 2 Jets, Split p_{T}^{Miss} at 25 GeV")
+      optPlots.annotatePlot("#geq 2 Jets, p_{T}^{Miss}<40 GeV, Leading Jet p_{T}>40 GeV")
+      optPlots.save(outDir+dataName+"_"+period)
+
+      dataName = 'Jets2BDTSplitOptPtMissL40HighJetPt'
+      xName = 'bdtVBFG'
+      holdConstDict = {}
+      rootHistParamList = [dataName,'',20,-0.5,0.5]
+      optPlots.plot1D(dataName,xName,holdConstDict,rootHistParamList)
+      optPlots.annotatePlot("#geq 2 Jets, p_{T}^{Miss}<40 GeV, Jet p_{T}>40 GeV")
+      optPlots.save(outDir+dataName+"_"+period)
+
+      dataName = 'Jets2SplitOptVBFFail'
+      xName = 'dijetMassG'
+      yName = 'dimuonPtG'
+      holdConstDict = {}
+      rootHistParamList = [dataName,'',7,0.,350.,10,0,250.]
+      optPlots.plot2D(dataName,xName,yName,holdConstDict,rootHistParamList)
+      #optPlots.annotatePlot("#geq 2 Jets, Split p_{T}^{Miss} at 25 GeV")
+      optPlots.annotatePlot("#geq 2 Jets, VBF Fail")
+      optPlots.save(outDir+dataName+"_"+period)
+
     sys.exit(0)
 
   canvas = root.TCanvas()

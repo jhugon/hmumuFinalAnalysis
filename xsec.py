@@ -170,8 +170,8 @@ backgroundList = [
 signalList = [
 "ggHmumu125",
 "vbfHmumu125",
-#"wHmumu125",
-#"zHmumu125"
+"wHmumu125",
+"zHmumu125"
 ]
 
 dataDict = {}

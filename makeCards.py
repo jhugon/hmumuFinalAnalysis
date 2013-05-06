@@ -1356,6 +1356,7 @@ if __name__ == "__main__":
 
   directory = "input/V00-01-10/"
   outDir = "statsCards/"
+  periods = ["7TeV","8TeV"]
   periods = ["8TeV"]
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
   categoriesFF = ["BB","BO","BE","OO","FF"]
@@ -1419,6 +1420,7 @@ if __name__ == "__main__":
   #    ["Jet0Fail","!(dimuonPt > 10.)"]
   #  ],"Jet0Split"
   #))
+
   #combinations.append((
   #  [
   #    ["Jet2CutsPass","deltaEtaJets>3.5 && dijetMass>650. && ptMiss < 40."],
@@ -1440,13 +1442,31 @@ if __name__ == "__main__":
 
   ################## Higher Jet Pt Cuts ##############################
 
-  combinations.append((
-    [
-      ["Jet2CutsPassTightJets","deltaEtaJets>3.5 && dijetMass>650. && ptMiss < 40. && jetLead_pt>55. && jetSub_pt>45."],
-      ["Jet2CutsPassLooseJets","deltaEtaJets>3.5 && dijetMass>650. && ptMiss < 40. && !(jetLead_pt>55. && jetSub_pt>45.)"],
-      ["Jet2CutsFail","!(deltaEtaJets>3.5 && dijetMass>650.) && ptMiss < 40."]
-    ],"Jet2CutsSplit"
-  ))
+  #combinations.append((
+  #  [
+  #    ["Jet2CutsPassHighJetPt","deltaEtaJets>3.5 && dijetMass>650. && ptMiss < 40. && jetLead_pt > 40."],
+  #    ["Jet2CutsFailHighJetPt","!(deltaEtaJets>3.5 && dijetMass>650.) && ptMiss < 40. && jetLead_pt > 40."],
+  #    ["Jet2LowJetPt","ptMiss < 40. && !(jetLead_pt > 40.)"]
+  #  ],"Jet2CutsSplitHighJetPt"
+  #))
+
+  #analyses.append(
+  #    ["Jet2CutsPassHighJetPt","deltaEtaJets>3.5 && dijetMass>650. && ptMiss < 40. && jetLead_pt > 40."]
+  #  )
+  #analyses.append(
+  #    ["Jet2CutsFailHighJetPt","!(deltaEtaJets>3.5 && dijetMass>650.) && ptMiss < 40. && jetLead_pt > 40."]
+  #  )
+  #analyses.append(
+  #    ["Jet2LowJetPt","ptMiss < 40. && !(jetLead_pt > 40.)"]
+  #  )
+
+  #combinations.append((
+  #  [
+  #    ["Jet2BDTPass","bdtVBF>0.05 && ptMiss < 40. && jetLead_pt > 40."],
+  #    ["Jet2BDTFail","!(bdtVBF>0.05) && ptMiss < 40. && jetLead_pt > 40."],
+  #    ["Jet2LowJetPt","ptMiss < 40. && !(jetLead_pt > 40.)"]
+  #  ],"Jet2BDTSplitHighJetPt"
+  #))
 
   ##################### Categories Time ##############################
 
@@ -1531,6 +1551,29 @@ if __name__ == "__main__":
   #  ],"JetNSplitBDTCatAll"
   #))
 
+  combinations.append((
+      [ ["Jet0Pass"+i,"dimuonPt > 10."] for i in categoriesAll]+
+      [ ["Jet0Fail"+i,"!(dimuonPt > 10.)"] for i in categoriesAll]+
+      [["Jet1"+i,""] for i in categoriesAll]+
+    [
+      ["Jet2CutsPassHighJetPt","deltaEtaJets>3.5 && dijetMass>650. && ptMiss < 40. && jetLead_pt > 40."],
+      ["Jet2CutsFailHighJetPt","!(deltaEtaJets>3.5 && dijetMass>650.) && ptMiss < 40. && jetLead_pt > 40."],
+      ["Jet2LowJetPt","ptMiss < 40. && !(jetLead_pt > 40.)"]
+    ],"JetNSplitCutsCatAllHighJetPt"
+  ))
+
+  #combinations.append((
+  #    [ ["Jet0Pass"+i,"dimuonPt > 10."] for i in categoriesAll]+
+  #    [ ["Jet0Fail"+i,"!(dimuonPt > 10.)"] for i in categoriesAll]+
+  #    [["Jet1"+i,""] for i in categoriesAll]+
+  #  [
+  #    ["Jet2CutsVBFPassHighJetPt","deltaEtaJets>3.5 && dijetMass>650. && ptMiss < 40. && jetLead_pt > 40."],
+  #    ["Jet2CutsGFPassHighJetPt","!(deltaEtaJets>3.5 && dijetMass>650.) && ptMiss < 40. && jetLead_pt > 40. && (dijetMass>250. && dimuonPt>50.)"],
+  #    ["Jet2CutsFailHighJetPt","!(deltaEtaJets>3.5 && dijetMass>650.) && ptMiss < 40. && jetLead_pt > 40. && !(dijetMass>250. && dimuonPt>50.)"],
+  #    ["Jet2LowJetPt","ptMiss < 40. && !(jetLead_pt > 40.)"]
+  #  ],"JetNSplitCutsCatAllHighJetPt2JGFSplit"
+  #))
+
   #combinations.append((
   #    [ ["Jet0Pass"+i,"dimuonPt > 10."] for i in categoriesFF]+
   #    [ ["Jet0Fail"+i,"!(dimuonPt > 10.)"] for i in categoriesFF]+
@@ -1610,6 +1653,11 @@ if __name__ == "__main__":
   #      },True
   #))
   #combinationsCutOpt.append((
+  #  [["Yay","nJets>=2 && ptMiss < 40."]],"Jets2BDTSplitOptPtMissL40",{
+  #      'bdtVBFG':[21,-0.5,0.5],
+  #      },True
+  #))
+  #combinationsCutOpt.append((
   #  [["Yay","nJets>=2 && ptMiss < 30."]],"Jets2BDTSplitOptPtMissL30",{
   #      'bdtVBFG':[21,-0.5,0.5],
   #      },True
@@ -1625,18 +1673,24 @@ if __name__ == "__main__":
   #      'dijetMassG':[11,300.,800.],
   #      },True
   #))
-  combinationsCutOpt.append((
-    [["Yay","nJets>=2 && ptMiss < 50."]],"Jets2SplitOptPtMissL50",{
-        'deltaEtaJetsG':[7,2.0,5.0],
-        'dijetMassG':[11,300.,800.],
-        },True
-  ))
-  combinationsCutOpt.append((
-    [["Yay","nJets>=2 && ptMiss < 30."]],"Jets2SplitOptPtMissL30",{
-        'deltaEtaJetsG':[7,2.0,5.0],
-        'dijetMassG':[11,300.,800.],
-        },True
-  ))
+  #combinationsCutOpt.append((
+  #  [["Yay","nJets>=2 && ptMiss < 50."]],"Jets2SplitOptPtMissL50",{
+  #      'deltaEtaJetsG':[7,2.0,5.0],
+  #      'dijetMassG':[11,300.,800.],
+  #      },True
+  #))
+  #combinationsCutOpt.append((
+  #  [["Yay","nJets>=2 && ptMiss < 40. && jetLead_pt>40."]],"Jets2SplitOptPtMissL40HighJetPt",{
+  #      'deltaEtaJetsG':[6,2.5,5.0],
+  #      'dijetMassG':[11,300.,800.],
+  #      },True
+  #))
+  #combinationsCutOpt.append((
+  #  [["Yay","nJets>=2 && ptMiss < 30."]],"Jets2SplitOptPtMissL30",{
+  #      'deltaEtaJetsG':[7,2.0,5.0],
+  #      'dijetMassG':[11,300.,800.],
+  #      },True
+  #))
   #combinationsCutOpt.append((
   #  [["Yay","nJets>=2 && ptMiss < 40."]],"Jets2SplitOptPtMissL40",{
   #      'deltaEtaJetsG':[7,2.0,5.0],
@@ -1673,10 +1727,15 @@ if __name__ == "__main__":
   #      'dimuonPtG':[5,0.,100.],
   #      },False
   #))
+  combinationsCutOpt.append((
+    [["Yay","nJets>=2 && ptMiss < 40. && jetLead_pt>40. && !(dijetMass>650. && deltaEtaJets>3.5)"]],"Jets2SplitOptVBFFail",{
+        'dijetMassG':[8,0,350],
+        'dimuonPtG':[11,0,250],
+        },True
+  ))
 
   histPostFix="/mDiMu"
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
-  signalNames=["ggHmumu125","vbfHmumu125"]
   #backgroundNames= ["DYJetsToLL","ttbar"]
   backgroundNames= []
   dataDict = {}
