@@ -97,11 +97,6 @@ xsec["ttbar_14TeV"] =   964.6 #LHC Higgs XS WG: European Strat Group
 
 nEventsMap = {}
 
-nEventsMap["ggHmumu123_8TeV"] = 9998
-nEventsMap["ggHmumu127_8TeV"] = 9999
-nEventsMap["vbfHmumu123_8TeV"] = 9988
-nEventsMap["vbfHmumu127_8TeV"] = 9988
-
 #nEventsMap["ggHmumu125_8TeV"] = 9998
 #nEventsMap["vbfHmumu125_8TeV"] = 9990
 
@@ -112,8 +107,8 @@ nEventsMap["vbfHmumu127_8TeV"] = 9988
 #nEventsMap["vbfHmumu125ChangeEvents_8TeV"] = 7992
 
 # For different large check samples
-nEventsMap["ggHmumu125_8TeV"] = 49996
-nEventsMap["vbfHmumu125_8TeV"] = 37955
+nEventsMap["ggHmumu125_8TeV"] = 49994
+nEventsMap["vbfHmumu125_8TeV"] = 49894
 
 nEventsMap["zHmumu125_8TeV"] = 10000
 nEventsMap["wHmumu125_8TeV"] = 10000

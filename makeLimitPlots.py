@@ -599,6 +599,15 @@ if __name__ == "__main__":
       optPlots.annotatePlot("#geq 2 Jets, p_{T}^{Miss}<40 GeV, Leading Jet p_{T}>40 GeV")
       optPlots.save(outDir+dataName+"_"+period)
 
+      dataName = 'Jets2PtCutOptM650'
+      xName = 'jetLeadptG'
+      yName = 'jetSubptG'
+      holdConstDict = {}
+      rootHistParamList = [dataName,'',8,20.,60.,8,20,60]
+      optPlots.plot2D(dataName,xName,yName,holdConstDict,rootHistParamList)
+      optPlots.annotatePlot("#geq 2 Jets, Pass+Fail VBF Cuts")
+      optPlots.save(outDir+dataName+"_"+period)
+
       dataName = 'Jets2BDTSplitOptPtMissL40HighJetPt'
       xName = 'bdtVBFG'
       holdConstDict = {}

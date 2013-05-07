@@ -1727,12 +1727,29 @@ if __name__ == "__main__":
   #      'dimuonPtG':[5,0.,100.],
   #      },False
   #))
+  #combinationsCutOpt.append((
+  #  [["Yay","nJets>=2 && ptMiss < 40. && jetLead_pt>40. && !(dijetMass>650. && deltaEtaJets>3.5)"]],"Jets2SplitOptVBFFail",{
+  #      'dijetMassG':[8,0,350],
+  #      'dimuonPtG':[11,0,250],
+  #      },True
+  #))
+
   combinationsCutOpt.append((
-    [["Yay","nJets>=2 && ptMiss < 40. && jetLead_pt>40. && !(dijetMass>650. && deltaEtaJets>3.5)"]],"Jets2SplitOptVBFFail",{
-        'dijetMassG':[8,0,350],
-        'dimuonPtG':[11,0,250],
-        },True
+    [
+        ["Pass","jetLead_FullPUIDFlag >= 7 && jetSub_FullPUIDFlag >= 7 && ptMiss < 40. && (dijetMass>650. && deltaEtaJets>3.5)"],
+        ["Fail","jetLead_FullPUIDFlag >= 7 && jetSub_FullPUIDFlag >= 7 && ptMiss < 40. && !(dijetMass>650. && deltaEtaJets>3.5)"]
+
+    ],"Jets2PtCutOptM650",{
+        'jetLead_ptG':[9,20.,60.],
+        'jetSub_ptG':[9,20.,60.],
+        },False
   ))
+  #combinationsCutOpt.append((
+  #  [["Yay","jetLead_FullPUIDFlag >= 7 && jetSub_FullPUIDFlag >= 7 && ptMiss < 40. && (dijetMass>500. && deltaEtaJets>3.5)"]],"Jets2PtCutOptM500",{
+  #      'jetLead_ptG':[7,20.,50.],
+  #      'jetSub_ptG':[7,20.,50.],
+  #      },False
+  #))
 
   histPostFix="/mDiMu"
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
