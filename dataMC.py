@@ -100,10 +100,6 @@ CUTS="dimuonMass < 150. && dimuonMass > 110."
 
 ## My VBF Split
 #CUTS += " && deltaEtaJets > 3.5 && dijetMass > 650. && ptMiss < 40."
-#anotateText2 += "VBF Sel+p_{T}^{Miss}<40 GeV"
-
-CUTS += " && deltaEtaJets > 3 && dijetMass > 300. && ptMiss < 40."
-anotateText2 += "p_{T}^{Miss}<40 GeV"
 
 root.gErrorIgnoreLevel = root.kWarning
 GLOBALCOUNTER=0
@@ -129,7 +125,6 @@ if True:
 
     histNames["jetLead_pt"] = {"xlabel":"Leading Jet p_{T} [GeV/c]","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
     histNames["jetSub_pt"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c]","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
-    histNames["jet3_pt"] = {"xlabel":"3rd Leading Jet p_{T} [GeV/c]","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
     histNames["jetLead_pt_Central"] = {"xlabel":"Leading Jet p_{T} [GeV/c] (|#eta|<2.4)","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
     histNames["jetSub_pt_Central"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c] (|#eta|<2.4)","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
     histNames["jetLead_pt_lowpt_Forward"] = {"xlabel":"Leading Jet p_{T} [GeV/c] (|#eta|>2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
@@ -142,9 +137,6 @@ if True:
     histNames["jetSub_eta"] = {"xlabel":"Sub-Leading Jet #eta","xlimits":[-5,5],"nbins":20}#,"ylimits":[0.1,3e6]}
     histNames["jetLead_abseta"] = {"xlabel":"Leading Jet |#eta|","xlimits":[0,5],"nbins":25}#,"ylimits":[0.1,3e6]}
     histNames["jetSub_abseta"] = {"xlabel":"Sub-Leading Jet |#eta|","xlimits":[0,5],"nbins":25}#,"ylimits":[0.1,3e6]}
-    histNames["jet3_abseta"] = {"xlabel":"3rd Leading Jet |#eta|","xlimits":[0,5],"nbins":25}#,"ylimits":[0.1,3e6]}
-
-    histNames["jetRapidityGapLead_pt"] = {"xlabel":"Leading Jet in Rapidity Gap p_{T} [GeV/c]","xlimits":[20,100],"nbins":16}#,"ylimits":[0.1,3e6]}
     #histNames["jetLead_PUIDDisc"] = {"xlabel":"Leading Jet PUID","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
     #histNames["jetSub_PUIDDisc"] = {"xlabel":"Sub-Leading Jet PUID","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
 

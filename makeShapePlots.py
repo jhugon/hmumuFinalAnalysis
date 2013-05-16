@@ -133,30 +133,6 @@ class ShapePlotter:
 
       self.rmpList.append(rmp)
 
-      ### Silly stuff
-      mMuMu.Print()
-      sigma = 1.54
-      if "BO" in channelName:
-        sigma = 1.76
-      mean = 125.0
-      #sigma = 0.5
-      #mean = 125.5
-      mMuMu.setRange("mysignal",mean-sigma,mean+sigma)
-      mMuMuArgSet = root.RooArgSet(mMuMu)
-      normSet = root.RooFit.NormSet(mMuMuArgSet)
-      bakIntVar = bakPDF.createIntegral(mMuMuArgSet,normSet,
-                        root.RooFit.Range("mysignal")
-                )
-      bakInt = bakIntVar.getVal()
-      print
-      print channelName
-      print "sigma"
-      print sigma
-      print "Background Integral:"
-      print bakInt
-      print "Background Events:"
-      print bakInt*data_obs.sumEntries()
-
   def readCard(self,fn):
     f = open(fn)
     foundBin = False

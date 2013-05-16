@@ -626,22 +626,6 @@ if __name__ == "__main__":
       optPlots.annotatePlot("#geq 2 Jets, VBF Fail")
       optPlots.save(outDir+dataName+"_"+period)
 
-      dataName = 'Jets2VetoOptLowPtJets'
-      xName = 'jetRapidityGapLeadptL'
-      holdConstDict = {}
-      rootHistParamList = [dataName,'',6,20,50]
-      optPlots.plot1D(dataName,xName,holdConstDict,rootHistParamList)
-      optPlots.annotatePlot("2-Jet VBF Pass")
-      optPlots.save(outDir+dataName+"_"+period)
-
-      dataName = 'Jets2VetoOptMyPtJets'
-      xName = 'jetRapidityGapLeadptL'
-      holdConstDict = {}
-      rootHistParamList = [dataName,'',6,20,50]
-      optPlots.plot1D(dataName,xName,holdConstDict,rootHistParamList)
-      optPlots.annotatePlot("2-Jet VBF Pass")
-      optPlots.save(outDir+dataName+"_"+period)
-
     sys.exit(0)
 
   canvas = root.TCanvas()
