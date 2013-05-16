@@ -1889,71 +1889,6 @@ def fitDGFindQuantiles(hist,level):
     quants =  getMedianAndQuantileInterval(pdftf,level)
     return quants
         
-def treeCut(category,cutString,eventWeights=True,muonRequirements=True,KDString="KD"):
-  global MENormDict
-  result = cutString
-  if 'KD' in result:
-    result = result.replace("KD", KDString)
-  if len(result)==0:
-    result = "1"
-  if len(category) > 0:
-    mask = 0
-    if "VBFPresel" in category:
-        result += " && ((1 & eventType) > 0)"
-    if "VBFBDT" in category:
-        result += " && ((2 & eventType) > 0)"
-    if "IncPresel" in category:
-        result += " && ((4 & eventType) > 0)"
-    if "IncBDT" in category:
-        result += " && ((8 & eventType) > 0)"
-    if "Jet0" in category:
-        result += " && nJets == 0"
-    if "Jet1" in category:
-        result += " && nJets == 1"
-    if "Jet2" in category:
-        result += " && nJets >= 2"
-    if "NotBB" in category:
-        result += " && ((1024 & eventType) > 0)"
-    elif "BB" in category:
-        result += " && ((16 & eventType) > 0)"
-    if "BO" in category:
-        result += " && ((32 & eventType) > 0)"
-    if "BE" in category:
-        result += " && ((64 & eventType) > 0)"
-    if "OO" in category:
-        result += " && ((128 & eventType) > 0)"
-    if "OE" in category:
-        result += " && ((256 & eventType) > 0)"
-    if "EE" in category:
-        result += " && ((512 & eventType) > 0)"
-    if "FF" in category:
-        result += " && ((512 & eventType) > 0 || (256 & eventType) > 0)"
-    if "CC" in category:
-        result += " && ((128 & eventType) > 0 || (64 & eventType) > 0)"
-    if "FC" in category:
-        result += " && ((128 & eventType) > 0 || (64 & eventType) > 0 || (512 & eventType) > 0 || (256 & eventType) > 0)"
-    if "PtG10" in category:
-        result += " && (dimuonPt > 10.)"
-    if "PtG20" in category:
-        result += " && (dimuonPt > 20.)"
-    if "PtG50" in category:
-        result += " && (dimuonPt > 50.)"
-    if "PtL10" in category:
-        result += " && (dimuonPt <= 10.)"
-    if "PtL20" in category:
-        result += " && (dimuonPt <= 20.)"
-    if "PtL50" in category:
-        result += " && (dimuonPt <= 50.)"
-    if "VBFCutBasedLoose" in category:
-        result += " && deltaEtaJets>3.5 && dijetMass>550. && ptMiss<100"
-    if "VBFCutBasedTight" in category:
-        result += " && deltaEtaJets>3.4 && dijetMass>500. && ptMiss<25"
-  if muonRequirements:
-    result += " && muonLead_passPFRelIso && muonSub_passPFRelIso && (muonLead_isHltMatched || muonSub_isHltMatched)"
-  if eventWeights:
-    result = "("+result+")*puWeight"
-  return result
-
 class RooModelPlotter:
   def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None):
     self.xVar = xVar
@@ -2236,6 +2171,71 @@ class RooModelPlotter:
     self.dummySigPdfE = root.RooExtendPdf("dummySigPdfE"+nowStr,"",pdf,self.nDumbSig)
     self.dummyPdf = root.RooAddPdf("dummyPdf"+nowStr,"dummyPdf",root.RooArgList(self.dummySigPdfE,self.dummyUnifPdfE))
     return self.dummyPdf, root.RooFit.Components(pdf.GetName())
+
+def treeCut(category,cutString,eventWeights=True,muonRequirements=True,KDString="KD"):
+  global MENormDict
+  result = cutString
+  if 'KD' in result:
+    result = result.replace("KD", KDString)
+  if len(result)==0:
+    result = "1"
+  if len(category) > 0:
+    mask = 0
+    if "VBFPresel" in category:
+        result += " && ((1 & eventType) > 0) && ptMiss < 40."
+    if "VBFBDT" in category:
+        result += " && ((2 & eventType) > 0)"
+    if "IncPresel" in category:
+        result += " && ((4 & eventType) > 0)"
+    if "IncBDT" in category:
+        result += " && ((8 & eventType) > 0)"
+    if "Jet0" in category:
+        result += " && nJets == 0"
+    if "Jet1" in category:
+        result += " && nJets == 1"
+    if "Jet2" in category:
+        result += " && nJets >= 2"
+    if "NotBB" in category:
+        result += " && ((1024 & eventType) > 0)"
+    elif "BB" in category:
+        result += " && ((16 & eventType) > 0)"
+    if "BO" in category:
+        result += " && ((32 & eventType) > 0)"
+    if "BE" in category:
+        result += " && ((64 & eventType) > 0)"
+    if "OO" in category:
+        result += " && ((128 & eventType) > 0)"
+    if "OE" in category:
+        result += " && ((256 & eventType) > 0)"
+    if "EE" in category:
+        result += " && ((512 & eventType) > 0)"
+    #if "FF" in category:
+    #    result += " && ((512 & eventType) > 0 || (256 & eventType) > 0)"
+    #if "CC" in category:
+    #    result += " && ((128 & eventType) > 0 || (64 & eventType) > 0)"
+    #if "FC" in category:
+    #    result += " && ((128 & eventType) > 0 || (64 & eventType) > 0 || (512 & eventType) > 0 || (256 & eventType) > 0)"
+    if "PtG10" in category:
+        result += " && (dimuonPt > 10.)"
+    #if "PtG20" in category:
+    #    result += " && (dimuonPt > 20.)"
+    #if "PtG50" in category:
+    #    result += " && (dimuonPt > 50.)"
+    #if "PtL10" in category:
+    #    result += " && (dimuonPt <= 10.)"
+    #if "PtL20" in category:
+    #    result += " && (dimuonPt <= 20.)"
+    #if "PtL50" in category:
+    #    result += " && (dimuonPt <= 50.)"
+    if "VBFCutBased" in category:
+        result += " && deltaEtaJets>3.5 && dijetMass>500."
+  if muonRequirements:
+    result += " && muonLead_pt>25. && muonSub_pt>25."
+    result += " && muonLead_passPFRelIso && muonSub_passPFRelIso && (muonLead_isHltMatched || muonSub_isHltMatched)"
+  if eventWeights:
+    result = "("+result+")*puWeight"
+  return result
+
 
 if __name__ == "__main__":
 
