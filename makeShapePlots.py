@@ -4,6 +4,7 @@
 import optparse
 parser = optparse.OptionParser(description="Makes Shape Diagnostic Plots from Datacards")
 parser.add_option("--signalInject", help="Sets a caption saying that signal was injected with strength",type=float,default=20.0)
+parser.add_option("-b","--binWidthOverride", help="Overrides the default bin widths and sets all binning to this widht [GeV]",type=float,default=0.0)
 #parser.add_option("--plotSignalStrength", help="Plots a signal bump with this strength",type=float,default=5.0)
 #parser.add_option("--plotSignalBottom", help="Plots a signal bump on the bottom (bool)",action="store_true",default=True)
 #parser.add_option("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
@@ -132,6 +133,30 @@ class ShapePlotter:
 
       self.rmpList.append(rmp)
 
+      ### Silly stuff
+      mMuMu.Print()
+      sigma = 1.54
+      if "BO" in channelName:
+        sigma = 1.76
+      mean = 125.0
+      #sigma = 0.5
+      #mean = 125.5
+      mMuMu.setRange("mysignal",mean-sigma,mean+sigma)
+      mMuMuArgSet = root.RooArgSet(mMuMu)
+      normSet = root.RooFit.NormSet(mMuMuArgSet)
+      bakIntVar = bakPDF.createIntegral(mMuMuArgSet,normSet,
+                        root.RooFit.Range("mysignal")
+                )
+      bakInt = bakIntVar.getVal()
+      print
+      print channelName
+      print "sigma"
+      print sigma
+      print "Background Integral:"
+      print bakInt
+      print "Background Events:"
+      print bakInt*data_obs.sumEntries()
+
   def readCard(self,fn):
     f = open(fn)
     foundBin = False
@@ -250,5 +275,5 @@ if __name__ == "__main__":
     if re.search("P[\d.]+TeV",fn):
         continue
 
-    s = ShapePlotter(fn,outDir,fitDir,titleMap,signalInject=args.signalInject,binWidthOverride=0)
+    s = ShapePlotter(fn,outDir,fitDir,titleMap,signalInject=args.signalInject,binWidthOverride=args.binWidthOverride)
     shapePlotterList.append(s)

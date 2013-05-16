@@ -6,6 +6,7 @@ import ROOT as root
 import os
 
 dataDir = "input/V00-01-10/"
+dataDir = "input/JetPt2025/"
 caption1= "110 GeV < m_{#mu#mu} < 150 GeV"
 outDir = "output/"
 caption2=""
@@ -15,8 +16,13 @@ CUTS="dimuonMass < 150. && dimuonMass > 110."
 #caption2="#geq2 Jets, p_{T}^{Miss}<40 GeV, m_{jj}>650 GeV"
 #CUTS+= "&& nJets>=2 && ptMiss<40. && dijetMass > 650. && deltaEtaJets > 3.5"
 #caption2="#geq2 Jets, p_{T}^{Miss}<40 GeV, 2-Jet Cuts"
-CUTS+= "&& nJets>=2 && ptMiss<40. && dijetMass > 500."
-caption2="#geq2 Jets, p_{T}^{Miss}<40 GeV, m_{jj}>500"
+#CUTS+= "&& nJets>=2 && ptMiss<40. && dijetMass > 500."
+#caption2="#geq2 Jets, p_{T}^{Miss}<40 GeV, m_{jj}>500"
+
+
+CUTS+= "&& dijetMass > 300. && deltaEtaJets>3.5 && ptMiss<40."
+caption2="p_{T}^{Miss}<40 GeV"
+#CUTS+= "&& dijetMass > 300. && deltaEtaJets>3.5"
 
 #CUTS+= "&& nJets>=2 && ptMiss<40. && deltaEtaJets>3.0"
 #caption2="#geq2 Jets, p_{T}^{Miss}<40 GeV,|#Delta#eta|>3, p_{T}(j_{1},j_{2})> 30,30 GeV"
@@ -62,8 +68,8 @@ categoryAnotations['Jets1/'] = "1 Jet"
 categoryAnotations['Jets2/'] = "#geq2 Jets"
 
 backgroundList = [
-"DYJetsToLL"#,
-#"ttbar"
+"DYJetsToLL",
+"ttbar"
 ]
 
 signalList = [
@@ -96,6 +102,9 @@ if True:
     histNames["dijetMass"] = {"xlabel":"m_{jj} [GeV/c^{2}]","xlimits":[0.0,1000.],"nbins":20}#,"ylimits":[0.1,3e6]}
     histNames["dijetYabs"] = {"xlabel":"|Y_{jj}|","xlimits":[0,2.5],"nbins":5}#,"ylimits":[0.1,3e6]}
     histNames["dijetPt"] = {"xlabel":"p_{T,jj} [GeV/c]","xlimits":[0,500.],"nbins":25}#,"ylimits":[0.1,3e6]}
+
+    histNames["jetRapidityGapLead_pt"] = {"xlabel":"Jet in Rapidity Gap p_{T} [GeV/c]","xlimits":[20,100],"nbins":8}#,"ylimits":[0.1,3e6]}
+    histNames["jet3_pt"] = {"xlabel":"3rd Leading Jet p_{T} [GeV/c]","xlimits":[20.,100.],"nbins":8}#,"ylimits":[0.1,3e6]}
 
     #histNames["jetLead_pt"] = {"xlabel":"Leading Jet p_{T} [GeV/c]","xlimits":[30.,150.],"nbins":12}#,"ylimits":[0.1,3e6]}
     #histNames["jetSub_pt"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c]","xlimits":[30.,150.],"nbins":12}#,"ylimits":[0.1,3e6]}

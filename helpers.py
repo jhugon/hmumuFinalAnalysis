@@ -1906,12 +1906,12 @@ def treeCut(category,cutString,eventWeights=True,muonRequirements=True,KDString=
         result += " && ((4 & eventType) > 0)"
     if "IncBDT" in category:
         result += " && ((8 & eventType) > 0)"
-    if "Jet0" in category:
-        result += " && nJets == 0"
-    if "Jet1" in category:
-        result += " && nJets == 1"
-    if "Jet2" in category:
-        result += " && nJets >= 2"
+    ##if "Jet0" in category:
+    ##    result += " && nJets == 0"
+    ##if "Jet1" in category:
+    ##    result += " && nJets == 1"
+    ##if "Jet2" in category:
+    ##    result += " && nJets >= 2"
     if "NotBB" in category:
         result += " && ((1024 & eventType) > 0)"
     elif "BB" in category:
@@ -1926,26 +1926,26 @@ def treeCut(category,cutString,eventWeights=True,muonRequirements=True,KDString=
         result += " && ((256 & eventType) > 0)"
     if "EE" in category:
         result += " && ((512 & eventType) > 0)"
-    if "FF" in category:
-        result += " && ((512 & eventType) > 0 || (256 & eventType) > 0)"
-    if "CC" in category:
-        result += " && ((128 & eventType) > 0 || (64 & eventType) > 0)"
-    if "FC" in category:
-        result += " && ((128 & eventType) > 0 || (64 & eventType) > 0 || (512 & eventType) > 0 || (256 & eventType) > 0)"
+    #if "FF" in category:
+    #    result += " && ((512 & eventType) > 0 || (256 & eventType) > 0)"
+    #if "CC" in category:
+    #    result += " && ((128 & eventType) > 0 || (64 & eventType) > 0)"
+    #if "FC" in category:
+    #    result += " && ((128 & eventType) > 0 || (64 & eventType) > 0 || (512 & eventType) > 0 || (256 & eventType) > 0)"
     if "PtG10" in category:
         result += " && (dimuonPt > 10.)"
-    if "PtG20" in category:
-        result += " && (dimuonPt > 20.)"
-    if "PtG50" in category:
-        result += " && (dimuonPt > 50.)"
-    if "PtL10" in category:
-        result += " && (dimuonPt <= 10.)"
-    if "PtL20" in category:
-        result += " && (dimuonPt <= 20.)"
-    if "PtL50" in category:
-        result += " && (dimuonPt <= 50.)"
-    if "VBFCutBasedLoose" in category:
-        result += " && deltaEtaJets>3.5 && dijetMass>550. && ptMiss<100"
+    #if "PtG20" in category:
+    #    result += " && (dimuonPt > 20.)"
+    #if "PtG50" in category:
+    #    result += " && (dimuonPt > 50.)"
+    #if "PtL10" in category:
+    #    result += " && (dimuonPt <= 10.)"
+    #if "PtL20" in category:
+    #    result += " && (dimuonPt <= 20.)"
+    #if "PtL50" in category:
+    #    result += " && (dimuonPt <= 50.)"
+    #if "VBFCutBasedLoose" in category:
+    #    result += " && deltaEtaJets>3.5 && dijetMass>550. && ptMiss<100"
     if "VBFCutBasedTight" in category:
         result += " && deltaEtaJets>3.4 && dijetMass>500. && ptMiss<25"
   if muonRequirements:
