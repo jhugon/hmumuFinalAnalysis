@@ -1368,10 +1368,13 @@ if __name__ == "__main__":
   combinations = []
 
   combinations.append((
-        [["IncPreselPtG10"+x] for x in categoriesAll],"IncPreselCat"
+        [["IncPresel"+x] for x in categoriesAll],"IncPreselCat"
   ))
   combinations.append((
-        [["VBFPresel"],["IncPreselPtG10"]],"CombPresel"
+        [["IncPreselPtG10"+x] for x in categoriesAll],"IncCutCat"
+  ))
+  combinations.append((
+        [["VBFPresel"],["IncPresel"]],"CombPresel"
   ))
   combinations.append((
         [["VBFCutBased"],["IncPreselPtG10"]],"CombCuts"
@@ -1402,17 +1405,17 @@ if __name__ == "__main__":
         'bdtVBFG':[21,-0.5,0.5],
         },False
   ))
-  #combinationsCutOpt.append((
-  #  [["VBFPreselPlus","ptMiss < 40."]],"VBFCutBasedOptPtMissL40",{
-  #      'deltaEtaJetsG':[5,3.0,5.0],
-  #      'dijetMassG':[9,300.,700.],
-  #      },False
-  #))
-  #combinationsCutOpt.append((
-  #  [["IncPreselPlus",""]],"NonVBFCutOpt",{
-  #      'dimuonPtG':[16,0.,75.],
-  #      },True
-  #))
+  combinationsCutOpt.append((
+    [["VBFPreselPlus","ptMiss < 40."]],"VBFCutBasedOptPtMissL40",{
+        'deltaEtaJetsG':[5,3.0,5.0],
+        'dijetMassG':[9,300.,700.],
+        },False
+  ))
+  combinationsCutOpt.append((
+    [["IncPreselPlus",""]],"NonVBFCutOpt",{
+        'dimuonPtG':[16,0.,75.],
+        },True
+  ))
 
   ################################################################
 
