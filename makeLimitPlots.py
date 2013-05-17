@@ -551,79 +551,30 @@ if __name__ == "__main__":
       optPlots.printBest(10)
       tlatex = root.TLatex()
 
-      # 1D
-      dataName = 'Jets1SplitOpt'
+      dataName = 'NonVBFCutOpt'
       xName = 'dimuonPtG'
       holdConstDict = {}
-      rootHistParamList = [dataName,'',12,0.,60.]
+      rootHistParamList = [dataName,'',15,0.,75.]
       optPlots.plot1D(dataName,xName,holdConstDict,rootHistParamList)
-      optPlots.annotatePlot("1 Jets")
+      optPlots.annotatePlot("Non-VBF")
       optPlots.save(outDir+dataName+"_"+period)
 
-      dataName = 'Jets0SplitOpt'
-      xName = 'dimuonPtG'
-      holdConstDict = {}
-      rootHistParamList = [dataName,'',12,0.,60.]
-      optPlots.plot1D(dataName,xName,holdConstDict,rootHistParamList)
-      optPlots.annotatePlot("0 Jets")
-      optPlots.save(outDir+dataName+"_"+period)
 
-      for ptmiss in ['25','30','40','50','100']:
-        dataName = 'Jets2BDTSplitOptPtMissL'+ptmiss
-        xName = 'bdtVBFG'
-        holdConstDict = {}
-        rootHistParamList = [dataName,'',20,-0.5,0.5]
-        optPlots.plot1D(dataName,xName,holdConstDict,rootHistParamList)
-        optPlots.annotatePlot("#geq 2 Jets, p_{T}^{Miss}<"+ptmiss+" GeV")
-        optPlots.save(outDir+dataName+"_"+period)
-
-      # 2D
-      for ptmiss in ['25','30','40','50','100']:
-        dataName = 'Jets2SplitOptPtMissL'+ptmiss
-        xName = 'dijetMassG'
-        yName = 'deltaEtaJetsG'
-        holdConstDict = {}
-        rootHistParamList = [dataName,'',10,300.,800.,6,2.,5.]
-        optPlots.plot2D(dataName,xName,yName,holdConstDict,rootHistParamList)
-        #optPlots.annotatePlot("#geq 2 Jets, Split p_{T}^{Miss} at 25 GeV")
-        optPlots.annotatePlot("#geq 2 Jets, p_{T}^{Miss}<"+ptmiss+" GeV")
-        optPlots.save(outDir+dataName+"_"+period)
-
-      dataName = 'Jets2SplitOptPtMissL40HighJetPt'
-      xName = 'dijetMassG'
-      yName = 'deltaEtaJetsG'
-      holdConstDict = {}
-      rootHistParamList = [dataName,'',10,300.,800.,5,2.5,5.]
-      optPlots.plot2D(dataName,xName,yName,holdConstDict,rootHistParamList)
-      #optPlots.annotatePlot("#geq 2 Jets, Split p_{T}^{Miss} at 25 GeV")
-      optPlots.annotatePlot("#geq 2 Jets, p_{T}^{Miss}<40 GeV, Leading Jet p_{T}>40 GeV")
-      optPlots.save(outDir+dataName+"_"+period)
-
-      dataName = 'Jets2PtCutOptM650'
-      xName = 'jetLeadptG'
-      yName = 'jetSubptG'
-      holdConstDict = {}
-      rootHistParamList = [dataName,'',8,20.,60.,8,20,60]
-      optPlots.plot2D(dataName,xName,yName,holdConstDict,rootHistParamList)
-      optPlots.annotatePlot("#geq 2 Jets, Pass+Fail VBF Cuts")
-      optPlots.save(outDir+dataName+"_"+period)
-
-      dataName = 'Jets2BDTSplitOptPtMissL40HighJetPt'
+      dataName = 'BDTCutOptPtMissL40'
       xName = 'bdtVBFG'
       holdConstDict = {}
       rootHistParamList = [dataName,'',20,-0.5,0.5]
       optPlots.plot1D(dataName,xName,holdConstDict,rootHistParamList)
-      optPlots.annotatePlot("#geq 2 Jets, p_{T}^{Miss}<40 GeV, Jet p_{T}>40 GeV")
+      optPlots.annotatePlot("VBF BDT p_{T}^{Miss}<40 GeV")
       optPlots.save(outDir+dataName+"_"+period)
 
-      dataName = 'Jets2SplitOptVBFFail'
+      dataName = 'VBFCutBasedOptPtMissL40'
       xName = 'dijetMassG'
-      yName = 'dimuonPtG'
+      yName = 'deltaEtaJetsG'
       holdConstDict = {}
-      rootHistParamList = [dataName,'',7,0.,350.,10,0,250.]
+      rootHistParamList = [dataName,'',8,300.,700.,4,3.,5.]
       optPlots.plot2D(dataName,xName,yName,holdConstDict,rootHistParamList)
-      #optPlots.annotatePlot("#geq 2 Jets, Split p_{T}^{Miss} at 25 GeV")
-      optPlots.annotatePlot("#geq 2 Jets, VBF Fail")
+      optPlots.annotatePlot("VBF Cut Based, p_{T}^{Miss}<40 GeV/c")
       optPlots.save(outDir+dataName+"_"+period)
 
     sys.exit(0)

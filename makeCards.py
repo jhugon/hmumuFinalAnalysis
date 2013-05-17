@@ -1345,10 +1345,9 @@ if __name__ == "__main__":
   print "Started makeCards.py"
   root.gROOT.SetBatch(True)
 
-  directory = "input/V00-01-10/backupData/"
+  directory = "input/V00-01-10/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  periods = ["8TeV"]
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
   categoriesFF = ["BB","BO","BE","OO","FF"]
   categoriesCC = ["BB","BO","CC","OE","EE"]
@@ -1364,7 +1363,7 @@ if __name__ == "__main__":
 
   analyses += [["VBFPresel",""]]
   analyses += [["VBFCutBased",""]]
-  #analyses += [["VBFBDTCut",""]]
+  analyses += [["VBFBDTCut",""]]
 
   combinations = []
 
@@ -1380,12 +1379,12 @@ if __name__ == "__main__":
   combinations.append((
         [["VBFCutBased"]]+[["IncPreselPtG10"+x] for x in categoriesAll],"CombCutsCat"
   ))
-  #combinations.append((
-  #      [["VBFBDTCut"],["IncPreselPtG10"]],"CombBDT"
-  #))
-  #combinations.append((
-  #      [["VBFBDTCut"]]+[["IncPreselPtG10"+x] for x in categoriesAll],"CombBDTCat"
-  #))
+  combinations.append((
+        [["VBFBDTCut"],["IncPreselPtG10"]],"CombBDT"
+  ))
+  combinations.append((
+        [["VBFBDTCut"]]+[["IncPreselPtG10"+x] for x in categoriesAll],"CombBDTCat"
+  ))
 
   # Multi-dimensional Optimization of Cuts
   # First two arguments are just like combinations
@@ -1403,17 +1402,19 @@ if __name__ == "__main__":
         'bdtVBFG':[21,-0.5,0.5],
         },False
   ))
-  combinationsCutOpt.append((
-    [["VBFPreselPlus","ptMiss < 40."]],"VBFCutBasedOptPtMissL40",{
-        'deltaEtaJetsG':[5,3.0,5.0],
-        'dijetMassG':[9,300.,700.],
-        },False
-  ))
-  combinationsCutOpt.append((
-    [["IncPreselPlus",""]],"NonVBFCutOpt",{
-        'dimuonPtG':[16,0.,75.],
-        },True
-  ))
+  #combinationsCutOpt.append((
+  #  [["VBFPreselPlus","ptMiss < 40."]],"VBFCutBasedOptPtMissL40",{
+  #      'deltaEtaJetsG':[5,3.0,5.0],
+  #      'dijetMassG':[9,300.,700.],
+  #      },False
+  #))
+  #combinationsCutOpt.append((
+  #  [["IncPreselPlus",""]],"NonVBFCutOpt",{
+  #      'dimuonPtG':[16,0.,75.],
+  #      },True
+  #))
+
+  ################################################################
 
   histPostFix="/mDiMu"
   signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]

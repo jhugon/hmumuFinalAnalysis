@@ -2184,7 +2184,7 @@ def treeCut(category,cutString,eventWeights=True,muonRequirements=True,KDString=
     if "VBFPresel" in category:
         result += " && ((1 & eventType) > 0) && ptMiss < 40."
     if "VBFBDT" in category:
-        result += " && ((2 & eventType) > 0)"
+        result += " && ((1 & eventType) > 0) && ptMiss < 40. && bdtVBF>0.0"
     if "IncPresel" in category:
         result += " && ((4 & eventType) > 0)"
     if "IncBDT" in category:
@@ -2228,7 +2228,7 @@ def treeCut(category,cutString,eventWeights=True,muonRequirements=True,KDString=
     #if "PtL50" in category:
     #    result += " && (dimuonPt <= 50.)"
     if "VBFCutBased" in category:
-        result += " && deltaEtaJets>3.5 && dijetMass>500."
+        result += " && ((1 & eventType) > 0) && deltaEtaJets>3.5 && dijetMass>500. && ptMiss<40."
   if muonRequirements:
     result += " && muonLead_pt>25. && muonSub_pt>25."
     result += " && muonLead_passPFRelIso && muonSub_passPFRelIso && (muonLead_isHltMatched || muonSub_isHltMatched)"
