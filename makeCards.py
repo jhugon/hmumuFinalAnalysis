@@ -1357,36 +1357,88 @@ if __name__ == "__main__":
   analyses = []
 
   analyses += [["Inclusive",""]]
-  analyses += [["IncPresel",""]]
-  analyses += [["IncPreselPtG10",""]]
-  analyses += [["IncPreselPtG10"+i,""] for i in categoriesAll]
-
-  analyses += [["VBFPresel",""]]
-  analyses += [["VBFCutBased",""]]
-  analyses += [["VBFBDTCut",""]]
+#  analyses += [["IncPresel",""]]
+#  analyses += [["IncPreselPtG10",""]]
+#  analyses += [["IncPreselPtG10"+i,""] for i in categoriesAll]
+#
+#  analyses += [["VBFPresel",""]]
+#  analyses += [["VBFCutBased",""]]
+#  analyses += [["VBFBDTCut",""]]
 
   combinations = []
 
+#  combinations.append((
+#        [["IncPresel"+x] for x in categoriesAll],"IncPreselCat"
+#  ))
+#  combinations.append((
+#        [["IncPreselPtG10"+x] for x in categoriesAll],"IncCutCat"
+#  ))
+#  combinations.append((
+#        [["VBFPresel"],["IncPresel"]],"CombPresel"
+#  ))
+#  combinations.append((
+#        [["VBFCutBased"],["IncPreselPtG10"]],"CombCuts"
+#  ))
+#  combinations.append((
+#        [["VBFCutBased"]]+[["IncPreselPtG10"+x] for x in categoriesAll],"CombCutsCat"
+#  ))
+#  combinations.append((
+#        [["VBFBDTCut"],["IncPreselPtG10"]],"CombBDT"
+#  ))
+#  combinations.append((
+#        [["VBFBDTCut"]]+[["IncPreselPtG10"+x] for x in categoriesAll],"CombBDTCat"
+#  ))
+
+  #####################################################
+  #####################################################
+  ## Baseline++2
+  #####################################################
+  #####################################################
+
+  jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
+  jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
+
+  analyses += [["Jets01Pass","dimuonPt>10."+jet01PtCuts]]
+  analyses += [["Jets01Fail","!(dimuonPt>10.)"+jet01PtCuts]]
+
   combinations.append((
-        [["IncPresel"+x] for x in categoriesAll],"IncPreselCat"
+    [["Jets01Pass"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
+    [["Jets01Fail"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+    ,"Jets01SplitCat"
   ))
+  
   combinations.append((
-        [["IncPreselPtG10"+x] for x in categoriesAll],"IncCutCat"
+    [
+      ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+      ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+      ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+    ],"Jet2SplitCutsGFSplit"
   ))
+
   combinations.append((
-        [["VBFPresel"],["IncPresel"]],"CombPresel"
+    [
+      ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+      ["Jet2CutsFailVBF","!(deltaEtaJets>3.5 && dijetMass>650.)"+jet2PtCuts],
+    ],"Jet2SplitCutsNoGFSplit"
   ))
+
   combinations.append((
-        [["VBFCutBased"],["IncPreselPtG10"]],"CombCuts"
+    [["Jets01Pass"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
+    [["Jets01Fail"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]+
+    [
+      ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+      ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+      ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+    ],"CombGFSplit"
   ))
+
   combinations.append((
-        [["VBFCutBased"]]+[["IncPreselPtG10"+x] for x in categoriesAll],"CombCutsCat"
-  ))
-  combinations.append((
-        [["VBFBDTCut"],["IncPreselPtG10"]],"CombBDT"
-  ))
-  combinations.append((
-        [["VBFBDTCut"]]+[["IncPreselPtG10"+x] for x in categoriesAll],"CombBDTCat"
+    [["Jets01"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
+    [["Jets01Fail"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]+
+    [
+      ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+      ["Jet2CutsFailVBF","!(deltaEtaJets>3.5 && dijetMass>650.)"+jet2PtCuts],
+    ],"CombNoGFSplit"
   ))
 
   # Multi-dimensional Optimization of Cuts
