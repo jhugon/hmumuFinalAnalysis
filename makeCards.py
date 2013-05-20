@@ -44,6 +44,9 @@ USEGPANNA = False
 SIGNALFIT = [110.,140.]
 FREEBAKPARAMS = True
 
+USETREES=True
+HISTNAME="mDiMu"
+
 if args.cutOpt:
   USEGPANNA = False
 
@@ -632,7 +635,7 @@ class Analysis:
     self.treeList = []
     self.origHistList = []
     self.binSize = 0.5
-    
+
     higgsPeakMean = args.higgsMass - 0.3
     self.higgsMass = 125.
     if args.higgsMass > 0.0:
@@ -958,11 +961,6 @@ class Analysis:
   def getRooDataSample(self,name,observables,aroundZ=False):
     tmpFLoc = self.directory+name+".root"
     tmpF = root.TFile(tmpFLoc)
-    tmpTree = tmpF.Get(self.treename)
-    tmpTree.SetCacheSize(10000000);
-    tmpTree.AddBranchToCache("*");
-    #self.treeList.append(tmpTree)
-    #self.fileList.append(tmpF)
     minMass = self.minMass
     maxMass = self.maxMass
     mMuMu = self.mMuMu
@@ -970,21 +968,24 @@ class Analysis:
       minMass = self.minMassZ
       maxMass = self.maxMassZ
       mMuMu = self.mMuMuZ
-    if False:
-      #tmpSelTree = tmpTree.CopyTree(self.fullCutString)
-      tmpSelTree = tmpTree
-      print("Error: getRooDataSample RooDataSet Selection is broken!!!")
-      tmpH = root.RooDataSet(name,name,tmpSelTree,
-            observables, "",
-            self.weightName
-            )
-      return tmpH
-    else:
+    if USETREES:
+      tmpTree = tmpF.Get(self.treename)
+      tmpTree.SetCacheSize(10000000);
+      tmpTree.AddBranchToCache("*");
       histName = "hist{0:f}".format(time.time()).replace('.','')
       nBins = int((maxMass-minMass)/self.binSize)
       tmpHist = root.TH1F(histName,"",nBins,minMass,maxMass)
       drawString = "dimuonMass >> {0}".format(histName)
       tmpTree.Draw(drawString,self.fullCutString)
+      self.origHistList.append(tmpHist)
+      tmpH = root.RooDataHist(name,name,root.RooArgList(mMuMu),tmpHist)
+      return tmpH
+    else:
+      histName = self.analysis+"/"+HISTNAME
+      tmpHist = tmpF.Get(histName)
+      tmpHist.GetNbinsX()
+      tmpHist = shrinkTH1(tmpHist,minMass,maxMass,True)
+      tmpHist.GetNbinsX()
       self.origHistList.append(tmpHist)
       tmpH = root.RooDataHist(name,name,root.RooArgList(mMuMu),tmpHist)
       return tmpH
