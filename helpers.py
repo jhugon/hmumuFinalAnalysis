@@ -20,6 +20,122 @@ import datetime
 PRELIMINARYSTRING="CMS Preliminary"
 #PRELIMINARYSTRING="CMS"
 
+#fr stands for FitResults
+def setAddPDFfromFR(fr,PDF,data):
+
+  # print it for debugging
+  #fr.Print()
+
+  fitpars = {}
+  fiterrs = {}
+
+  for i in range(0,fr.floatParsFinal().getSize()):
+    
+    parName = fr.floatParsFinal().at(i).GetName()
+    parValue= fr.floatParsFinal().at(i).getVal()
+    parErr  = fr.floatParsFinal().at(i).getError()
+    
+    # print it for debugging
+    #print i, parName, parValue, parErr 
+
+    fitpars[parName] = float(parValue)
+    fiterrs[parName] = float(parErr)
+
+    # print it for debugging
+    #print  fitpars
+
+    pdfList  =  PDF.pdfList()
+    coefList =  PDF.coefList()
+    
+    # print it for debugging
+    #print "pdfSize  = ", pdfList.getSize() 
+    #print "coefSize = ", coefList.getSize()
+    
+    for c in range(0,coefList.getSize()):
+        coefName = coefList[0].GetName()
+        print coefName
+        if (coefName in fitpars.keys()):
+            coefList[0].setVal  ( fitpars[coefName] )
+            coefList[0].setError( fiterrs[coefName] )
+        else:
+            print "Potential Problem: No Coefficient Matching Found"
+    
+    
+    for p in range(0,pdfList.getSize()):
+        pdfName = pdfList[p].GetName()
+        print pdfName
+    
+        # get the parameters
+        parameters = pdfList[p].getParameters(data)
+    
+        # get the iterator
+        iterator =  parameters.createIterator()
+    
+        cond = True
+    
+        while (cond):
+            par = iterator.Next()
+    
+            if (par == None):
+                cond = False
+    
+            else:
+                parName = par.GetName()
+                print 'the parameter is ', parName
+                if (parName in fitpars.keys()):
+                    par.setVal  ( fitpars[parName] )
+                    par.setError( fiterrs[parName] )
+                else:
+                    print "Potential Problem: No Coefficient Matching Found"
+
+
+def setPDFfromFR(fr,PDF,data):
+
+  # print it for debugging
+  #fr.Print()
+
+  fitpars = {}
+  fiterrs = {}
+
+  for i in range(0,fr.floatParsFinal().getSize()):
+    
+    parName = fr.floatParsFinal().at(i).GetName()
+    parValue= fr.floatParsFinal().at(i).getVal()
+    parErr  = fr.floatParsFinal().at(i).getError()
+    
+    # print it for debugging
+    #print i, parName, parValue, parErr 
+
+    fitpars[parName] = float(parValue)
+    fiterrs[parName] = float(parErr)
+
+    # print it for debugging
+    #print  fitpars
+
+    # get the parameters
+    parameters = PDF.getParameters(data)
+    
+    # get the iterator
+    iterator =  parameters.createIterator()
+    
+    cond = True
+    
+    while (cond):
+        par = iterator.Next()
+    
+        if (par == None):
+            cond = False
+    
+        else:
+            parName = par.GetName()
+            #print 'the parameter is ', parName
+            if (parName in fitpars.keys()):
+                par.setVal  ( fitpars[parName] )
+                par.setError( fiterrs[parName] )
+            #else:
+                #print "Potential Problem: No Coefficient Matching Found"
+
+
 def doubleGauss(x,par):
   meanG1  = par[0]
   widthG1 = par[1]
@@ -1788,14 +1904,14 @@ class EfficiencyReader:
     return result
   def __repr__(self):
     return str(self)
-  def plot(self,fileNameBase):
+  def plot(self,folderBase):
     canvas = root.TCanvas("canvas")
     for energy in self.data:
      for mode in self.data[energy]:
       sortedCats = sorted(self.data[energy][mode].keys())
       for cat in sortedCats:
         sortedMasses = sorted(self.data[energy][mode][cat].keys())
-        fileNameOut = fileNameBase+mode+energy+"_"+cat+".png"
+        fileNameOut = folderBase+"/png/eff_"+mode+energy+"_"+cat
         graph = root.TGraphErrors()
         iPoint = 0
         eff = None
@@ -1815,6 +1931,14 @@ class EfficiencyReader:
             ymin = eff+err
         setHistTitles(graph,"m_{H} [GeV/c^{2}]","Efficiency #times Acceptance")
         graph.SetTitle("%s %s %s:\n" % (mode,energy,cat))
+        fitListPol=[0.1,0.,0.]
+        #polim = root.TF1("polim","pol2",fitListPol[0],fitListPol[1], fitListPol[2])
+        polim = root.TF1("polim","pol2")
+        polim.SetLineColor(root.kBlack)
+        self.polim = polim
+        #graph.Fit(polim,"WLMEIQ","",fitListPol[0],fitListPol[1], fitListPol[2])
+        graph.Fit(polim,"LE")
+
         graph.Draw("ape")
         ywidth = 1.0 * (ymax-ymin)
         ymax = ywidth+ymax
@@ -1824,7 +1948,29 @@ class EfficiencyReader:
         ymin = 0.0
         graph.GetYaxis().SetRangeUser(ymin,ymax)
         graph.Draw("ape")
-        canvas.SaveAs(fileNameOut)
+        canvas.SaveAs(fileNameOut+".png")
+        canvas.SaveAs(fileNameOut+".pdf")
+        canvas.SaveAs(fileNameOut+".root")
+
+        # save the output of the fit
+        outputfile = folderBase + '/effExtrapolation_' + mode + '_' + energy + '_' +  cat + '.txt' 
+        outfile = open(outputfile,'w')
+
+        outfile.write('#par0 err_par0 par1 err_par1 par2 err_par2 chisquare ndf\n')  
+        outfile.write('{0:.10g} {1:.10g} {2:.10g} {3:.10g} {4:.10g} {5:.10g} {6:.4g} {7}\n'.format(polim.GetParameter(0),
+                                                                                                   polim.GetParError(0),
+                                                                                                   polim.GetParameter(1),
+                                                                                                   polim.GetParError(1),
+                                                                                                   polim.GetParameter(2),
+                                                                                                   polim.GetParError(2),
+                                                                                                   polim.GetChisquare(),
+                                                                                                   polim.GetNDF()
+                                                                                                   )
+                      ) 
+        
+        outfile.close()
+        
+        
 
 def fitDGFindQuantiles(hist,level):
     if not hist.InheritsFrom("TH1"):
@@ -1833,7 +1979,7 @@ def fitDGFindQuantiles(hist,level):
     channelName = "silly"
     name = "silly"
     minMass = 110
-    maxMass = 160
+    maxMass = 170
     mMuMu = root.RooRealVar("mMuMu","mMuMu",minMass,maxMass)
     rooDataset = root.RooDataHist("DGDataSet","DGDataSet",root.RooArgList(mMuMu),hist)
     
@@ -1905,7 +2051,12 @@ class RooModelPlotter:
     self.nowStr = nowStr
 
     self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(lumi)
-    
+
+
+    #Set the PDF pars value from the FitResults
+    setPDFfromFR(self.fr,self.pdf,self.data)
+    #setAddPDFfromFR(self.fr,self.pdf,self.data)
+
     xtitle = xVar.GetTitle()
 
     binning = xVar.getBinning()
@@ -1942,6 +2093,7 @@ class RooModelPlotter:
 
     data.plotOn(frame,graphDrawOptArg,binningArg)
 
+    #print "backgroundPDFName=", backgroundPDFName 
     if backgroundPDFName != None:
       bakCompArg = root.RooFit.Components(backgroundPDFName)
       pdf.plotOn(frame,errVisArg,errColorArg,bakCompArg,rangeArg)
@@ -2245,13 +2397,13 @@ def treeCut(category,cutString,eventWeights=True,muonRequirements=True,KDString=
 if __name__ == "__main__":
 
   root.gROOT.SetBatch(True)
-  #print("Running helpers.py")
-  #eff = EfficiencyReader()
-  #print eff
-  #eff.plot("output/eff_")
+  print("Running helpers.py")
+  eff = EfficiencyReader()
+  print eff
+  eff.plot("fitresults")
   
-  f1 = root.TFile("input/V00-01-10/ggHmumu125_8TeV.root")
-  t1 = f1.Get("outtree")
-  t1.Draw("dimuonMass >> h1","dimuonMass > 110. && dimuonMass < 160. && dimuonPt > 10.")
-  h1 = root.gDirectory.Get("h1")
-  print fitDGFindQuantiles(h1,0.683)
+  #f1 = root.TFile("input/V00-01-10/ggHmumu125_8TeV.root")
+  #t1 = f1.Get("outtree")
+  #t1.Draw("dimuonMass >> h1","dimuonMass > 110. && dimuonMass < 170. && dimuonPt > 10.")
+  #h1 = root.gDirectory.Get("h1")
+  #print fitDGFindQuantiles(h1,0.683)

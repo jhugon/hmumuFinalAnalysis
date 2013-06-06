@@ -57,34 +57,66 @@ if (process == 'GluGlu' and 'VBF' in cat):
    sys.exit()
 
 
-if (cat == "BB"):
-   baseName = "IncPreselPtG10BB"
-   title = "gg, Barrel - Barrel (%s)" % benergy
-if (cat == "BO"):
-   baseName = "IncPreselPtG10BO"
-   title = "gg, Barrel - Overlap (%s)" % benergy
-if (cat == "BE"):
-   baseName = "IncPreselPtG10BE"
-   title = "gg, Barrel - Endcap (%s)" % benergy
-if (cat == "OO"):
-   baseName = "IncPreselPtG10OO"
-   title = "gg, Overlap - Overlap (%s)" % benergy
-if (cat == "OE"):
-   baseName = "IncPreselPtG10OE"
-   title = "gg, Overlap - Endcap (%s)" % benergy
-if (cat == "EE"):
-   baseName = "IncPreselPtG10EE"
-   title = "gg, Endcap - Endcap (%s)" % benergy
+if (cat == "Jets01PassPtG10BB"):
+   baseName = "Jets01PassPtG10BB"
+   title = "Jet 0+1 cat p_{T}(#mu#mu)>10 GeV/c, Barrel - Barrel (%s)" % benergy
+if (cat == "Jets01PassPtG10BO"):
+   baseName = "Jets01PassPtG10BO"
+   title = "Jet 0+1 cat p_{T}(#mu#mu)>10 GeV/c, Barrel - Overlap (%s)" % benergy
+if (cat == "Jets01PassPtG10BE"):
+   baseName = "Jets01PassPtG10BE"
+   title = "Jet 0+1 cat p_{T}(#mu#mu)>10 GeV/c, Barrel - Endcap (%s)" % benergy
+if (cat == "Jets01PassPtG10OO"):
+   baseName = "Jets01PassPtG10OO"
+   title = "Jet 0+1 cat p_{T}(#mu#mu)>10 GeV/c, Overlap - Overlap (%s)" % benergy
+if (cat == "Jets01PassPtG10OE"):
+   baseName = "Jets01PassPtG10OE"
+   title = "Jet 0+1 cat p_{T}(#mu#mu)>10 GeV/c, Overlap - Endcap (%s)" % benergy
+if (cat == "Jets01PassPtG10EE"):
+   baseName = "Jets01PassPtG10EE"
+   title = "Jet 0+1 cat p_{T}(#mu#mu)>10 GeV/c, Endcap - Endcap (%s)" % benergy
+if (cat == "Jets01PassPtG10CC"):
+   baseName = "Jets01PassPtG10CC"
+   title = "Jet 0+1 cat p_{T}(#mu#mu)>10 GeV/c, BE+OO (%s)" % benergy
+if (cat == "Jets01PassPtG10FF"):
+   baseName = "Jets01PassPtG10FF"
+   title = "Jet 0+1 cat p_{T}(#mu#mu)>10 GeV/c, OE+EE (%s)" % benergy
       
-if (cat == "VBF"):
-   baseName = "VBFBDTCut"
-   title = "VBF (%s)" % benergy
-if (cat == "VBFCiCLoose"):
-   baseName = "histsVBFDeJJG3p5MJJG550pTmissL100"
-   title = "VBF CiC Loose (%s)" % benergy
-if (cat == "VBFCiCTight"):
-   baseName = "histsVBFDeJJG3p4MJJG500pTmissL25"
-   title = "VBF CiC Tight (%s)" % benergy
+if (cat == "Jets01FailPtG10BB"):
+   baseName = "Jets01FailPtG10BB"
+   title = "Jet 0+1 cat p_{T}(#mu#mu)<10 GeV/c, Barrel - Barrel (%s)" % benergy
+if (cat == "Jets01FailPtG10BO"):
+   baseName = "Jets01FailPtG10BO"
+   title = "Jet 0+1 cat p_{T}(#mu#mu)<10 GeV/c, Barrel - Overlap (%s)" % benergy
+if (cat == "Jets01FailPtG10BE"):
+   baseName = "Jets01FailPtG10BE"
+   title = "Jet 0+1 cat p_{T}(#mu#mu)<10 GeV/c, Barrel - Endcap (%s)" % benergy
+if (cat == "Jets01FailPtG10OO"):
+   baseName = "Jets01FailPtG10OO"
+   title = "Jet 0+1 cat p_{T}(#mu#mu)<10 GeV/c, Overlap - Overlap (%s)" % benergy
+if (cat == "Jets01FailPtG10OE"):
+   baseName = "Jets01FailPtG10OE"
+   title = "Jet 0+1 cat p_{T}(#mu#mu)<10 GeV/c, Overlap - Endcap (%s)" % benergy
+if (cat == "Jets01FailPtG10EE"):
+   baseName = "Jets01FailPtG10EE"
+   title = "Jet 0+1 cat p_{T}(#mu#mu)<10 GeV/c, Endcap - Endcap (%s)" % benergy
+if (cat == "Jets01FailPtG10CC"):
+   baseName = "Jets01FailPtG10CC"
+   title = "Jet 0+1 cat p_{T}(#mu#mu)<10 GeV/c, BE+OO (%s)" % benergy
+if (cat == "Jets01FailPtG10FF"):
+   baseName = "Jets01FailPtG10FF"
+   title = "Jet 0+1 cat p_{T}(#mu#mu)<10 GeV/c, OE+EE (%s)" % benergy
+
+
+if (cat == "Jet2CutsVBFPass"):
+   baseName = "Jet2CutsVBFPass"
+   title = ">=2 Jets, VBF Pass (%s)" % benergy
+if (cat == "Jet2CutsGFPass"):
+   baseName = "Jet2CutsGFPass"
+   title = ">=2 Jets, VBF Fail, GG+VH Pass (%s)" % benergy
+if (cat == "Jet2CutsFailVBFGF"):
+   baseName = "Jet2CutsFailVBFGF"
+   title = ">=2 Jets, VBF Fail, GG+VH Fail (%s)" % benergy
 
 if (baseName == None):
    print "No category defined -> exiting...\n"
@@ -125,11 +157,16 @@ for file in listOfFiles:
          process = line[0]
          mass    = line[1]
 
+         #print index
+         print line[2+(2*(len(varNames)-1))]
+         if ( float(line[2+(2*(len(varNames)-1))]) > 0.9 or float(line[2+(2*(len(varNames)-1))]) < 0.05):
+            continue
+         
          for id in range(0,len(varNames)):
             parValue = line[2+(2*id)]
             parError = line[2+(2*id)+1]
             
-            #print index, mass, 
+            #print  parValue,parError
             graphs[id].SetPoint(int(index),float(mass),float(parValue))
             graphs[id].SetPointError(int(index),float(0),float(parError))
             
@@ -145,7 +182,27 @@ for id in range(0,len(varNames)):
    graphs[id].SetTitle(title)
    graphs[id].Draw("AP")
 
-   fitFunc = root.TF1("fitFunc","pol1",120.,140.)
+   fitFunc = root.TF1("fitFunc","pol1",110.,160.)
+   #fitFunc = root.TF1("fitFunc","[0]*x",110.,160.)
+   #fitFunc.FixParameter(0,0)
+   #fitFunc.SetParLimits(0,1,0)
+   #fitFunc.SetParameter(1,0.1)
+
+   # The "Fail" categories unfortunately need some hacking...
+   #if ("Fail" in cat and id==len(varNames)-1):
+   #
+   #   fitFunc.SetParameter(0,0.1)
+   #   if ("BE" in cat or "OO" in cat or "OE" in cat or "FF" in cat):
+   #      fitFunc.SetParLimits(0,3,2)
+   #
+   #   if ("EE" in cat):
+   #      fitFunc.SetParameter(0,1)
+   #      fitFunc.SetParLimits(0,3,2)
+   #      
+   #   fitFunc.SetParameter(1,0)
+   #   fitFunc.SetParLimits(1,3,2)
+      
+      
    graphs[id].Fit("fitFunc")
 
    legend = root.TLegend(0.56,0.76,0.66,0.87)

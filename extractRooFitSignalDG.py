@@ -39,9 +39,15 @@ process = sys.argv[1]
 mass    = sys.argv[2]
 benergy = sys.argv[3]
 
-inputfile  = "/afs/cern.ch/work/d/digiovan/HToMM/officialMC/submit%s/root/" % benergy
+#inputfile  = "/afs/cern.ch/work/d/digiovan/HToMM/officialMC/submit%s/root/" % benergy
+inputfile  = "/afs/cern.ch/work/d/digiovan/HToMM/baselinePP/submit%s/root/" % benergy
 inputfile += "%sHmumu%s_%s.root" % (process,mass,benergy)
 
+if (process == 'GluGlu'):
+   process = 'gg'
+if (process == 'VBF'):
+   process = 'vbf'
+   
 outputfile = 'fitresults/fitresults_%sHmumu%s_%s' % (process,mass,benergy)
 savefile   = 'fitresults/png/fitresults_%sHmumu%s_%s' % (process,mass,benergy)
 
@@ -58,18 +64,19 @@ print '----------------------------------------------------------------------\n'
 # define the dimuon mass variable
 #minMass = 110.
 #maxMass = 135.
-minMass = float(mass)-10.0
-maxMass = float(mass)+10.0
+minMass = float(mass.replace("p","."))-20.0
+maxMass = float(mass.replace("p","."))+10.0
 mMuMu = root.RooRealVar("mMuMu","mMuMu",minMass,maxMass)
 
 #####################################################################
 # define the Double Gaussian
-meanG1 = root.RooRealVar("MeanG1","MeanG1", float(mass)-4.0, 100.,170.)
-meanG2 = root.RooRealVar("MeanG2","MeanG2", float(mass), 100.,170.)
+meanG1 = root.RooRealVar("MeanG1","MeanG1", float(mass.replace("p",".")), float(mass.replace("p","."))-10, float(mass.replace("p","."))+3 )
+meanG2 = root.RooRealVar("MeanG2","MeanG2", float(mass.replace("p",".")), float(mass.replace("p","."))-3,  float(mass.replace("p","."))+3 )
  
-widthG1 = root.RooRealVar("WidthG1","WidthG1", 5.049779267, 0.1,20.0)
-widthG2 = root.RooRealVar("WidthG2","WidthG2", 1.830513636, 0.1,5.0)
+widthG1 = root.RooRealVar("WidthG1","WidthG1", 7.049779267, 0.0,50.0)
+widthG2 = root.RooRealVar("WidthG2","WidthG2", 1.830513636, 0.0, 4.0)
  
+#mixGG = root.RooRealVar("mixGG","mixGG", 0.1140210709, 0.0,0.5)
 mixGG = root.RooRealVar("mixGG","mixGG", 0.1140210709, 0.0,1.0)
 
 gaus1 = root.RooGaussian("gaus1","gaus1",mMuMu,meanG1,widthG1)
@@ -79,7 +86,7 @@ pdfMmumuGG = root.RooAddPdf("pdfMmumuGG","pdfMmumuGG",gaus1,gaus2,mixGG)
 
 
 # define the Single Gaussian for the EE category
-meanSG  = root.RooRealVar("MeanSG", "MeanSG", float(mass),110.,140.)
+meanSG  = root.RooRealVar("MeanSG", "MeanSG", float(mass.replace("p",".")),110.,140.)
 widthSG = root.RooRealVar("WidthSG","WidthSG", 1.839226054,0.1,20.0)
  
 pdfMmumuSG = root.RooGaussian("sgaus","sgaus",mMuMu,meanSG,widthSG)
@@ -89,10 +96,15 @@ pdfMmumuSG = root.RooGaussian("sgaus","sgaus",mMuMu,meanSG,widthSG)
 
 
 def doFit(f,baseName,canvas,outputfile,saveName):
+   
+  widthG1.setVal(7.049779267)
+  widthG2.setVal(1.830513636)
+  mixGG  .setVal(0.01140210709)
 
   mDiMu = f.Get( baseName + "/mDiMu")
 
-  #mDiMu.Rebin(2)
+  #if ("EE" in baseName):
+  #   mDiMu.Rebin(4)
   
   mMuMuRooDataHist = root.RooDataHist("template","template",root.RooArgList(mMuMu),mDiMu)
 
@@ -102,6 +114,7 @@ def doFit(f,baseName,canvas,outputfile,saveName):
 #  else:
   pdfMmumu = pdfMmumuGG
     
+
     
   pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.SumW2Error(False),PRINTLEVEL)
   
@@ -113,8 +126,11 @@ def doFit(f,baseName,canvas,outputfile,saveName):
   mMuMuRooDataHist.plotOn(plotMmumu)
   
   pdfMmumu .plotOn(plotMmumu,root.RooFit.LineColor(root.kAzure+2))
-  
+
   plotMmumu.SetTitle(baseName)
+  if ('hists' in baseName):
+     plotMmumu.SetTitle(baseName[5:])
+     
   plotMmumu.Draw()
 
 ##  chi2ondf =  plotMmumu.chiSquare()
@@ -149,35 +165,96 @@ def doFit(f,baseName,canvas,outputfile,saveName):
   for i in [meanG1,meanG2,widthG1,widthG2,mixGG]:
      print("{0}: {1:.10g}".format(i.GetName(),i.getVal()))
 
+  mean_narrow      = meanG2.getVal()
+  err_mean_narrow  = meanG2.getError()
+  width_narrow     = widthG2.getVal()
+  err_width_narrow = widthG2.getError()
+
+  mean_wide        = meanG1.getVal()
+  err_mean_wide    = meanG1.getError()
+  width_wide       = widthG1.getVal()
+  err_width_wide   = widthG1.getError()
+
+  mixing           = mixGG.getVal()
+  err_mixing       = mixGG.getError()
+
+  if (widthG1.getVal()<widthG2.getVal()):
+
+     mean_narrow      = meanG1.getVal()
+     err_mean_narrow  = meanG1.getError()
+     width_narrow     = widthG1.getVal()
+     err_width_narrow = widthG1.getError()
+
+     mean_wide        = meanG2.getVal()
+     err_mean_wide    = meanG2.getError()
+     width_wide       = widthG2.getVal()
+     err_width_wide   = widthG2.getError()
+
+     mixing           = (1-mixGG.getVal())
+     err_mixing       = mixGG.getError()
+     
+     
   outfile.write('#process mass meanG1 err widthG1 err meanG2 err widthG2 err mixGG err\n')  
   outfile.write('%s %s %s %s %s %s %s %s %s %s %s %s\n'
-                % (process,mass,
-                   meanG1.getVal(),  meanG1.getError(), 
-                   widthG1.getVal(), widthG1.getError(),
-                   meanG2.getVal(),  meanG2.getError(),
-                   widthG2.getVal(), widthG2.getError(),
-                   mixGG.getVal(),   mixGG.getError()
+                % (process,mass.replace("p","."),
+                   mean_narrow,  err_mean_narrow,
+                   width_narrow, err_width_narrow,
+                   mean_wide,    err_mean_wide,
+                   width_wide,   err_width_wide,
+                   mixing,       err_mixing
                    )
                 ) 
+
+  #outfile.write('%s %s %s %s %s %s %s %s %s %s %s %s\n'
+  #              % (process,mass.replace("p","."),
+  #                 meanG1.getVal(),  meanG1.getError(), 
+  #                 widthG1.getVal(), widthG1.getError(),
+  #                 meanG2.getVal(),  meanG2.getError(),
+  #                 widthG2.getVal(), widthG2.getError(),
+  #                 mixGG.getVal(),   mixGG.getError()
+  #                 )
+  #              ) 
 
   
 #####################################################################
 
 f = root.TFile(inputfile)
 
-baseNamesGG = ["IncPreselPtG10BB",
-               "IncPreselPtG10BO",
-               "IncPreselPtG10BE",
-               "IncPreselPtG10OO",
-               "IncPreselPtG10OE",
-               "IncPreselPtG10EE"
+# baseline
+#baseNamesGG = ["IncPreselPtG10BB",
+#               "IncPreselPtG10BO",
+#               "IncPreselPtG10BE",
+#               "IncPreselPtG10OO",
+#               "IncPreselPtG10OE",
+#               "IncPreselPtG10EE"
+#               ]
+#
+#baseNamesVBF = ["VBFBDTCut",
+#                "histsVBFDeJJG3p5MJJG550pTmissL100",
+#                "histsVBFDeJJG3p4MJJG500pTmissL25"
+#                ]
+            
+# baseline++
+
+baseNamesGG = ["Jets01PassPtG10BB",
+               "Jets01PassPtG10BO",
+               "Jets01PassPtG10BE",
+               "Jets01PassPtG10OO",
+               "Jets01PassPtG10OE",
+               "Jets01PassPtG10EE",
+
+               "Jets01FailPtG10BB",
+               "Jets01FailPtG10BO",
+               "Jets01FailPtG10BE",
+               "Jets01FailPtG10OO",
+               "Jets01FailPtG10OE",
+               "Jets01FailPtG10EE",               
                ]
 
-baseNamesVBF = ["VBFBDTCut",
-                "histsVBFDeJJG3p5MJJG550pTmissL100",
-                "histsVBFDeJJG3p4MJJG500pTmissL25"
+baseNamesVBF = ["Jet2CutsVBFPass",  
+                "Jet2CutsGFPass",   
+                "Jet2CutsFailVBFGF"
                 ]
-            
 
 baseNames = None
 if ("GluGluHmumu" in f.GetName()):
@@ -199,4 +276,7 @@ for baseName in baseNames:
   iStep += 100
   
 for id in range(0,len(baseNames)):
-  doFit(f,baseNames[id],canvases[id],outputfile+'_'+baseNames[id],savefile+'_'+baseNames[id]+'.png')
+   if ('hists' in baseNames[id]):
+      doFit(f,baseNames[id],canvases[id],outputfile+'_'+baseNames[id][5:],savefile+'_'+baseNames[id][5:]+'.png')
+   else:
+      doFit(f,baseNames[id],canvases[id],outputfile+'_'+baseNames[id],savefile+'_'+baseNames[id]+'.png')

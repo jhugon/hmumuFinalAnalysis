@@ -18,7 +18,7 @@ from helpers import *
 
 class signalPars:
    
-   def __init__(self,folder,process,benergy,cat,massLow=115.,massHigh=150.):
+   def __init__(self,folder,process,benergy,cat,massLow=115.,massHigh=160.):
       # this is the folder where all the extrapolation
       # parameters are contained
       self.folder   = folder
@@ -27,10 +27,10 @@ class signalPars:
 
       # this is to match Justin's definitions without
       # obliging him to rewrite his code
-      if (process == 'gg'):
-         self.process = 'GluGlu'
-      if (process == 'vbf'):
-         self.process = 'VBF'
+      if (process == 'GluGlu'):
+         self.process = 'gg'
+      if (process == 'VBF'):
+         self.process = 'vbf'
 
       # benergy should be 7TeV or 8TeV
       self.benergy  = benergy
@@ -168,7 +168,7 @@ class signalPars:
       
       for mass in massrange:
 
-         #if (mass != self.massLow):
+         #if (mass < 140):
          #   continue
       
          #####################################################################
@@ -179,10 +179,11 @@ class signalPars:
          widthG1 = root.RooRealVar("WidthG1_%s"%mass,"WidthG1_%s"%mass, par_widthG1['%s'%mass], 0.1,20.0)
          widthG2 = root.RooRealVar("WidthG2_%s"%mass,"WidthG2_%s"%mass, par_widthG2['%s'%mass], 0.1,5.0)
  
-         mixGG = root.RooRealVar("mixGG_%s"%mass,"mixGG_%s"%mass, par_mixGG['%s'%mass], 0.0,1.0)
+         mixGG = root.RooRealVar("mixGG_%s"%mass,"mixGG_%s"%mass, 1-par_mixGG['%s'%mass], 0.0,1.0)
          
          gaus1 = root.RooGaussian("gaus1_%s"%mass,"gaus1_%s"%mass,mMuMu,meanG1,widthG1)
-         gaus2 = root.RooGaussian("gaus2_%s"%mass,"gaus2_%s"%mass,mMuMu,meanG2,widthG2)
+         #gaus2 = root.RooGaussian("gaus2_%s"%mass,"gaus2_%s"%mass,mMuMu,meanG2,widthG2)
+         gaus2 = root.RooGaussian("gaus2_%s"%mass,"gaus2_%s"%mass,mMuMu,meanG1,widthG2)
  
          pdfMmumuGG = root.RooAddPdf("pdfMmumuGG_%s"%mass,"pdfMmumuGG_%s"%mass,gaus1,gaus2,mixGG)
 
@@ -204,21 +205,52 @@ class signalPars:
       
 #######################################
 
-# s = signalPars('fitresults',
-#                'gg',
-#                '8TeV',
-#                'BB')
+if __name__ == "__main__":
 
-# example with one parameter
-#parameter = s.getPar('meanG1')
-#for mass in parameter.keys():
-#   print mass, parameter[mass]
+   s = signalPars('fitresults',
+                  'gg',
+                  '8TeV',
+                  'Jets01PassPtG10BB')
+                  #'Jets01PassPtG10BO')
+                  #'Jets01PassPtG10BE')
+                  #'Jets01FailPtG10BB')
+                  #'Jets01FailPtG10BO')
+                  #'Jets01FailPtG10BE')
+                  #'Jets01PassPtG10EE')
+                  #'Jets01FailPtG10EE')
 
-# example with all the parameters
-#par_meanG1, par_widthG1, par_meanG2, par_widthG2, par_mixGG = s.getPars()
-#for mass in par_meanG1.keys():
-#   print mass, par_meanG1[mass], par_widthG1[mass], par_meanG2[mass], par_widthG2[mass], par_mixGG[mass] 
+   #example with one parameter
+   #parameter = s.getPar('meanG1')
+   #massrange = drange(115.0, 150.5, 0.5)
+   #for mass in massrange:
+   #   print mass, parameter[ '%s' % mass ]
+      
+   # example with all the parameters
+   #par_meanG1, par_widthG1, par_meanG2, par_widthG2, par_mixGG = s.getPars()
+   #for mass in par_meanG1.keys():
+   #   print mass, par_meanG1[mass], par_widthG1[mass], par_meanG2[mass], par_widthG2[mass], par_mixGG[mass] 
 
-# example to draw signal templates every 5 GeV/c2
-#s.draw(5)
+   # example to draw signal templates every 5 GeV/c2
+   s.draw(5)
+
+
+#
+#   s = signalPars('fitresults',
+#                  'gg',
+#                  '8TeV',
+#                  'IncPreselPtG10BB')
+#
+#   #example with one parameter
+#   parameter = s.getPar('meanG1')
+#   massrange = drange(115.0, 150.5, 0.5)
+#   for mass in massrange:
+#      print mass, parameter[ '%s' % mass ]
+#      
+#   # example with all the parameters
+#   #par_meanG1, par_widthG1, par_meanG2, par_widthG2, par_mixGG = s.getPars()
+#   #for mass in par_meanG1.keys():
+#   #   print mass, par_meanG1[mass], par_widthG1[mass], par_meanG2[mass], par_widthG2[mass], par_mixGG[mass] 
+#
+#   # example to draw signal templates every 5 GeV/c2
+#   s.draw(5)
 

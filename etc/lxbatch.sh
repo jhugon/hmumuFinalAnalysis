@@ -1,8 +1,8 @@
 #!/bin/bash
 echo "Sourcing cmsset_default.sh"
-cd /afs/cern.ch/cms/sw
+cd /afs/cern.ch/cms
 source cmsset_default.sh
-export SCRAM_ARCH=slc5_amd64_gcc462
+export SCRAM_ARCH=slc5_amd64_gcc472
 echo "SCRAM_ARCH is $SCRAM_ARCH"
 cd $LS_SUBCWD
 echo "In Directory: "
@@ -16,14 +16,22 @@ FILENAME=$1
 DIRNAME="Dir"$1"Dir"
 ROOTFILENAME=${1%$TXTSUFFIX}.root
 
-mkdir $DIRNAME
+echo "create directory $DIRNAME"
+mkdir -p $DIRNAME
+# check the directory exist
+if [ ! -d $DIRNAME ]; then
+    echo "folder $DIRNAME does not exist"
+    echo "exiting..."
+    exit
+fi;
+
 cp $FILENAME $DIRNAME/
 cp $ROOTFILENAME $DIRNAME/
 cd $DIRNAME
 
-echo "executing combine -M Asymptotic $FILENAME >& $FILENAME.out"
+echo "executing combine -M Asymptotic --rMax 50 $FILENAME >& $FILENAME.out"
 
-combine -M Asymptotic $FILENAME >& $FILENAME.out
+combine -M Asymptotic --rMax 50 $FILENAME >& $FILENAME.out
 
 echo "executing combine -M ProfileLikelihood -d $FILENAME --signif --usePLC >& $FILENAME.sig"
 
@@ -59,9 +67,9 @@ cp $FILENAME.out ..
 cp $FILENAME.mu ..
 cp $FILENAME.sig ..
 cp mlfit.root ../$FILENAME.root
-for subname in *_fit_s.png; do
-  cp $subname ../${FILENAME%$TXTSUFFIX}_$subname
-done
+#for subname in *_fit_s.png; do
+#  cp $subname ../${FILENAME%$TXTSUFFIX}_$subname
+#done
 #cp $FILENAME.expsig ..
 
 echo "done"

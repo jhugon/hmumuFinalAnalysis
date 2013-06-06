@@ -22,7 +22,7 @@ from ROOT import gSystem
 gSystem.Load('libRooFit')
 
 root.gErrorIgnoreLevel = root.kWarning
-root.gROOT.SetBatch(True)
+#root.gROOT.SetBatch(True)
 root.gStyle.SetOptStat(0)
 
 #root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.WARNING)
@@ -44,10 +44,15 @@ class ShapePlotter:
     self.energyStr = ""
     tmpMatch = re.search(r"([\w]*)_(.+)_([.0-9]+)\.root",filename)
     if tmpMatch:
-      self.lumi = float(tmpMatch.group(3))
-      self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(self.lumi)
       self.energyStr = tmpMatch.group(2)
-
+      if   (self.energyStr == "8TeV"):
+        self.lumi = float(19.39)
+      elif (self.energyStr == "7TeV"):
+        self.lumi = float(5.05)
+        
+      #self.lumi = float(tmpMatch.group(3))
+      self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(self.lumi)
+      
     self.data = {}
     self.f = root.TFile(filename)
     for channelKey in self.f.GetListOfKeys():
@@ -68,7 +73,7 @@ class ShapePlotter:
       if "Jet2" in channelName or "VBF" in channelName:
           binWidth *= 2.5
       elif "BO" in channelName:
-          binWidth *= 2
+          binWidth *= 1
       elif "BE" in channelName:
           binWidth *= 2.5
       elif "OO" in channelName:
@@ -118,12 +123,15 @@ class ShapePlotter:
       nSignal *= signalInject
       signalLegEntry = "SM Higgs#times{0:.0f}".format(signalInject)
 
+      #Set the PDF pars value from the FitResults
+      #setPDFfromFR(fr,bakPDF,data_obs)
+
       #Plot Time
       rmp = RooModelPlotter(mMuMu,bakPDF,data_obs,fr,
-                    channelTitle,self.energyStr,self.lumi,
-                    nSignal=nSignal,signalPdf=sigPDF,
-                    signalLegEntry=signalLegEntry
-                )
+                            channelTitle,self.energyStr,self.lumi,
+                            nSignal=nSignal,signalPdf=sigPDF,
+                            signalLegEntry=signalLegEntry
+                            )
       rmp.draw(saveName)
 
       #Pull Distribution Time
@@ -229,7 +237,34 @@ titleMap = {
   "IncPreselPtG10EE":"Non-VBF EE",
   "IncPreselPtG10NotBB":"Non-VBF !BB",
 
-  "IncPreselPtG":"Non-VBF Not Combined"
+  "IncPreselPtG":"Non-VBF Not Combined",
+
+  "Jets01PassPtG10BB": "Jet 0+1, p_{T}(#mu#mu)>10 GeV BB",
+  "Jets01PassPtG10BO": "Jet 0+1, p_{T}(#mu#mu)>10 GeV BO",
+  "Jets01PassPtG10BE": "Jet 0+1, p_{T}(#mu#mu)>10 GeV BE",
+  "Jets01PassPtG10OO": "Jet 0+1, p_{T}(#mu#mu)>10 GeV OO",
+  "Jets01PassPtG10OE": "Jet 0+1, p_{T}(#mu#mu)>10 GeV OE",
+  "Jets01PassPtG10EE": "Jet 0+1, p_{T}(#mu#mu)>10 GeV EE",
+  "Jets01PassCatAll" : "Jet 0+1, p_{T}(#mu#mu)>10 GeV",
+
+  "Jets01FailPtG10BB": "Jet 0+1, p_{T}(#mu#mu)<10 GeV BB",
+  "Jets01FailPtG10BO": "Jet 0+1, p_{T}(#mu#mu)<10 GeV BO",
+  "Jets01FailPtG10BE": "Jet 0+1, p_{T}(#mu#mu)<10 GeV BE",
+  "Jets01FailPtG10OO": "Jet 0+1, p_{T}(#mu#mu)<10 GeV OO",
+  "Jets01FailPtG10OE": "Jet 0+1, p_{T}(#mu#mu)<10 GeV OE",
+  "Jets01FailPtG10EE": "Jet 0+1, p_{T}(#mu#mu)<10 GeV EE",
+  "Jets01FailCatAll" : "Jet 0+1, p_{T}(#mu#mu)<10 GeV",
+
+  "Jets01SplitCatAll": "Jet 0+1 Category",
+
+
+  "Jet2CutsVBFPass":"Jet >=2, VBF Optim.",
+  "Jet2CutsGFPass":"Jet >=2, GG+VH Optim.",
+  "Jet2CutsFailVBFGF":"Jet >=2, !VBF & !GG+VH Optim.",
+
+  "Jet2SplitCutsGFSplit" : "Jet >=2 Category",
+  "CombSplitAll" : "Combination",
+
 }
         
 if __name__ == "__main__":
@@ -251,5 +286,29 @@ if __name__ == "__main__":
     if re.search("P[\d.]+TeV",fn):
         continue
 
+    if ("125" not in fn):
+    #if ("148" not in fn):
+    #if ("145" not in fn):
+    #if ("147" not in fn):
+        continue
+
+    skip = True
+    #if ("Jets01FailPtG10BB" in fn):
+    #  skip = False
+    #if ("Jets01PassPtG10BB" in fn):
+    #  skip = False
+    #if ("Jets01PassPtG10BO" in fn):
+    #  skip = False
+    #if ("Jet2CutsVBFPass"in fn):
+    #  skip = False
+    #if ("Jet2CutsGFPass" in fn):
+    #  skip = False
+    if ("CombSplitAll" in fn):
+      skip = False
+
+    if (skip):
+      continue
+    
+    print fn
     s = ShapePlotter(fn,outDir,fitDir,titleMap,signalInject=args.signalInject,binWidthOverride=args.binWidthOverride)
     shapePlotterList.append(s)

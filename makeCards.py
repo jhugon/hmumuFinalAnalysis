@@ -28,18 +28,22 @@ myThread = multiprocessing.Process
 from ROOT import gSystem
 gSystem.Load('libRooFit')
 
+from effReaderFromFile import *
+from signalPars import *
+#from signalParsCB import *
+
 root.gErrorIgnoreLevel = root.kWarning
 #root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.WARNING)
 root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.ERROR)
 PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 
-from signalfits import getRooFitSignalPars as sigFits
+#from signalfits import getRooFitSignalPars as sigFits
 #from signalfitsNoMuScle import getRooFitSignalPars as sigFits
-effReader = EfficiencyReader()
+#effReader = EfficiencyReader()
 
-NPROCS = 8
-RUNSIMPLELIMITS = True
-USEGPANNA = False
+NPROCS = 4
+RUNSIMPLELIMITS = False
+USEGPANNA = True
 
 SIGNALFIT = [110.,140.]
 FREEBAKPARAMS = True
@@ -522,6 +526,7 @@ def makePDFSigDG(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,channel
     return paramList, debug, sigInjectDataset
 
 def makePDFSigNew(channelName,name,mMuMu,mass,workspaceImportFn,useDG=True):
+#def makePDFSigNew(channelName,name,mMuMu,mass,workspaceImportFn,useDG=False):
 
     debug = ""
     debug += "### makePDFSigNew: "+channelName+": "+name+"\n"
@@ -530,80 +535,118 @@ def makePDFSigNew(channelName,name,mMuMu,mass,workspaceImportFn,useDG=True):
     assert(matchChannel)
     category = matchChannel.group(1)
     energy = matchChannel.group(2)
-    massStr = "{0:.0f}".format(mass)
-    if mass % 1 > 0.0:
-      massStr = "{0:.1f}".format(mass)
+    #massStr = "{0:.0f}".format(mass)
+    #if mass % 1 > 0.0:
+    massStr = "{0:.1f}".format(mass)
     fitTypeString = "CBG"
     if useDG:
       fitTypeString = "DG"
-    params = sigFits.parameters[energy][massStr][category][fitTypeString]
+    #params = sigFits.parameters[energy][massStr][category][fitTypeString]
+    prodMode = 'gg'
+    if ('VBF' in category or 'Jet2' in category):
+      prodMode = 'vbf'
+
+    #print ' ####### prodMode = %s' % prodMode 
+    #print ' ####### energy   = %s' % energy
+    #print ' ####### category = %s' % category
+    #print ' ####### massStr  = %s' % massStr
+    sigFits = signalPars('fitresults',
+                         prodMode,
+                         energy,
+                         category)
+    
+    par_meanG1, par_widthG1, par_meanG2, par_widthG2, par_mixGG = sigFits.getPars()
+    if (par_widthG2>par_widthG1):
+      par_meanG2, par_widthG2, par_meanG1, par_widthG1, par_mixGG = sigFits.getPars()
+      
+
+
+    #sigFitsCB = signalParsCB('fitresults',
+    #                         prodMode,
+    #                         energy,
+    #                         category)
+    #
+    #par_mean, par_width, par_alpha, par_n = sigFitsCB.getPars()
+
 
     rooParamList = []
     if useDG:
-      if len(params.keys())>4:
-        # define the Double Gaussian
-        meanG1 = root.RooRealVar(channelName+"_"+name+"_MeanG1",
-                                 channelName+"_"+name+"_MeanG1", 
-                                 params['meanG1'])
-        meanG2 = root.RooRealVar(channelName+"_"+name+"_MeanG2",
-                                 channelName+"_"+name+"_MeanG2", 
-                                 params['meanG2'])
+      #if len(params.keys())>4:
+      # define the Double Gaussian
+      meanG1 = root.RooRealVar(channelName+"_"+name+"_MeanG1",
+                               channelName+"_"+name+"_MeanG1", 
+                               par_meanG1[massStr])
+      #params['meanG1'])
+      meanG2 = root.RooRealVar(channelName+"_"+name+"_MeanG2",
+                               channelName+"_"+name+"_MeanG2", 
+                               par_meanG2[massStr])
+                               ##par_meanG1[massStr])
+      #params['meanG2'])
+      
+      widthG1 = root.RooRealVar(channelName+"_"+name+"_WidthG1",
+                                channelName+"_"+name+"_WidthG1", 
+                                par_widthG1[massStr])
+      #params['widthG1'])
+      widthG2 = root.RooRealVar(channelName+"_"+name+"_WidthG2",
+                                channelName+"_"+name+"_WidthG2", 
+                                par_widthG2[massStr])
+      #params['widthG2'])
         
-        widthG1 = root.RooRealVar(channelName+"_"+name+"_WidthG1",
-                                 channelName+"_"+name+"_WidthG1", 
-                                 params['widthG1'])
-        widthG2 = root.RooRealVar(channelName+"_"+name+"_WidthG2",
-                                  channelName+"_"+name+"_WidthG2", 
-                                  params['widthG2'])
-        
-        mixGG = root.RooRealVar(channelName+"_"+name+"_mixGG",
-                                channelName+"_"+name+"_mixGG", 
-                                params['mixGG'])
-        gaus1 = root.RooGaussian(channelName+"_"+name+"_gaus1",
-                                 channelName+"_"+name+"_gaus1",
-                                 mMuMu,meanG1,widthG1)
-        gaus2 = root.RooGaussian(channelName+"_"+name+"_gaus2",
-                                 channelName+"_"+name+"_gaus2",
-                                 mMuMu,meanG2,widthG2)
-        pdfMmumu = root.RooAddPdf(convertSigName(name),
-                                  name,
-                                  gaus1,gaus2,mixGG)
-        workspaceImportFn(pdfMmumu)
-        rooParamList += [meanG1,meanG2,widthG1,widthG2,mixGG]
-      else:
-        # define the Single Gaussian for the EE category
-        meanSG  = root.RooRealVar(channelName+"_"+name+"_MeanSG", 
-                                  "MeanSG", 
-                                  params['meanSG'])
-        widthSG = root.RooRealVar(channelName+"_"+name+"_WidthSG",
-                                  channelName+"_"+name+"_WidthSG", 
-                                  params['widthSG'])
-        pdfMmumu = root.RooGaussian(convertSigName(name),name,mMuMu,meanSG,widthSG)
-        workspaceImportFn(pdfMmumu)
-        rooParamList += [meanSG,widthSG]
-        debug += "#    using Single Gaussian (Probably for EE)"
+      mixGG = root.RooRealVar(channelName+"_"+name+"_mixGG",
+                              channelName+"_"+name+"_mixGG", 
+                              par_mixGG[massStr])
+      #params['mixGG'])
+      gaus1 = root.RooGaussian(channelName+"_"+name+"_gaus1",
+                               channelName+"_"+name+"_gaus1",
+                               mMuMu,meanG1,widthG1)
+      gaus2 = root.RooGaussian(channelName+"_"+name+"_gaus2",
+                               channelName+"_"+name+"_gaus2",
+                               mMuMu,meanG2,widthG2)
+      pdfMmumu = root.RooAddPdf(convertSigName(name),
+                                name,
+                                gaus1,gaus2,mixGG)
+      workspaceImportFn(pdfMmumu)
+      rooParamList += [meanG1,meanG2,widthG1,widthG2,mixGG]
+      #else:
+      #  # define the Single Gaussian for the EE category
+      #  meanSG  = root.RooRealVar(channelName+"_"+name+"_MeanSG", 
+      #                            "MeanSG", 
+      #                            params['meanSG'])
+      #  widthSG = root.RooRealVar(channelName+"_"+name+"_WidthSG",
+      #                            channelName+"_"+name+"_WidthSG", 
+      #                            params['widthSG'])
+      #  pdfMmumu = root.RooGaussian(convertSigName(name),name,mMuMu,meanSG,widthSG)
+      #  workspaceImportFn(pdfMmumu)
+      #  rooParamList += [meanSG,widthSG]
+      #  debug += "#    using Single Gaussian (Probably for EE)"
     else:
       mean = root.RooRealVar(channelName+"_"+name+"_Mean",
                              channelName+"_"+name+"_Mean",
-                             params['mean'])
+                             par_mean[massStr])
+                             #params['mean'])
       width = root.RooRealVar(channelName+"_"+name+"_Width",
                               channelName+"_"+name+"_Width",
-                              params['width1'])
-      width2 = root.RooRealVar(channelName+"_"+name+"_Width2",
-                               channelName+"_"+name+"_Width2",
-                               params['width2'])
+                              par_width[massStr])
+                              #params['width1'])
+      #width2 = root.RooRealVar(channelName+"_"+name+"_Width2",
+      #                         channelName+"_"+name+"_Width2",
+      #                         params['width2'])
       alpha = root.RooRealVar(channelName+"_"+name+"_Alpha",
-                               channelName+"_"+name+"_Alpha",
-                               params['Alpha'])
+                              channelName+"_"+name+"_Alpha",
+                              par_alpha[massStr])
+                              #params['Alpha'])
       n = root.RooRealVar(channelName+"_"+name+"_n",
-                               channelName+"_"+name+"_n",
-                               params['n'])
-      mix = root.RooRealVar(channelName+"_"+name+"_mix",
-                               channelName+"_"+name+"_mix",
-                               params['mix'])
-      cb = root.RooCBShape(name+"_CB",name+"_CB",mMuMu,mean,width,alpha,n)
-      gaus = root.RooGaussian(name+"_Gaus",name+"_Gaus",mMuMu,mean,width2)
-      pdfMmumu = root.RooAddPdf(convertSigName(name),name,cb,gaus,mix)
+                          channelName+"_"+name+"_n",
+                          par_n[massStr])
+                          #params['n'])
+      #mix = root.RooRealVar(channelName+"_"+name+"_mix",
+      #                         channelName+"_"+name+"_mix",
+      #                         params['mix'])
+      #cb = root.RooCBShape(name+"_CB",name+"_CB",mMuMu,mean,width,alpha,n)
+      #gaus = root.RooGaussian(name+"_Gaus",name+"_Gaus",mMuMu,mean,width2)
+      #pdfMmumu = root.RooAddPdf(convertSigName(name),name,cb,gaus,mix)
+      pdfMmumu = root.RooCBShape(convertSigName(name),name,mMuMu,mean,width,alpha,n)
+      #pdfMmumu = root.RooAddPdf(convertSigName(name),name,cb,gaus,mix)
       workspaceImportFn(pdfMmumu)
       rooParamList += [mean,width,alpha,n]
 
@@ -614,9 +657,9 @@ def makePDFSigNew(channelName,name,mMuMu,mass,workspaceImportFn,useDG=True):
 
 #makePDFSig = makePDFSigCBPlusGaus
 makePDFSig = makePDFSigDG
-makePDFBak = makePDFBakOld
+## makePDFBak = makePDFBakOld
 #makePDFBak = makePDFBakMOverSq
-#makePDFBak = makePDFBakExpMOverSq
+makePDFBak = makePDFBakExpMOverSq
 #makePDFBak = makePDFBakExpLog
 
 ###################################################################################
@@ -831,8 +874,24 @@ class Analysis:
         nameMatch = re.match(r"(.+)Hmumu[\d.]+_[\d]+TeV",name)
         assert(nameMatch)
         prodMode = nameMatch.group(1)
-        eff, effErr = effReader(self.energyStr,prodMode,analysis,higgsMassStr)
+        #eff, effErr = effReader(self.energyStr,prodMode,analysis,higgsMassStr)
+        #print ' ******* EFFICIENCY READER ******* ' 
+        #print ' ####### prodMode = %s' % prodMode 
+        #print ' ####### energy   = %s' % self.energyStr
+        #print ' ####### category = %s' % analysis
+        #print ' ####### mass     = {0:.1f}'.format(self.higgsMass) 
+        
+        effReader = effReaderFromFile('fitresults',
+                                      prodMode,
+                                      self.energyStr,
+                                      analysis)
+        efficiencies = effReader.getEff()
+        eff = efficiencies[ '{0:.1f}'.format(self.higgsMass) ]
+        effErr = 0 #error is not used (syst. dominated)
+
+        #print ' ####### higgsMassStr = %s' % higgsMassStr 
         tmpName = name.replace("125",higgsMassStr)
+        #print ' #######  tmpName = %s' % tmpName
         xs = eff*xsec[tmpName]
         self.xsecSigTotal += xs
         self.xsecSigList.append(xs)
@@ -1346,9 +1405,10 @@ if __name__ == "__main__":
   print "Started makeCards.py"
   root.gROOT.SetBatch(True)
 
-  directory = "input/V00-01-10/"
+  directory = "input/ptM15GeV/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
+  #periods = ["8TeV"]
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
   categoriesFF = ["BB","BO","BE","OO","FF"]
   categoriesCC = ["BB","BO","CC","OE","EE"]
@@ -1357,7 +1417,7 @@ if __name__ == "__main__":
   categoriesAllCCFF = ["BB","BO","BE","OO","OE","EE","CC","FF"]
   analyses = []
 
-  analyses += [["Inclusive",""]]
+#  analyses += [["Inclusive",""]]
 #  analyses += [["IncPresel",""]]
 #  analyses += [["IncPreselPtG10",""]]
 #  analyses += [["IncPreselPtG10"+i,""] for i in categoriesAll]
@@ -1399,48 +1459,113 @@ if __name__ == "__main__":
   jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
-  analyses += [["Jets01Pass","dimuonPt>10."+jet01PtCuts]]
-  analyses += [["Jets01Fail","!(dimuonPt>10.)"+jet01PtCuts]]
+  ## analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  analyses += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
+  analyses += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+  analyses += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  analyses += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  analyses += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
+
+  # Jet 0+1 Pass All Cats
   combinations.append((
-    [["Jets01Pass"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
-    [["Jets01Fail"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-    ,"Jets01SplitCat"
+    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]
+    ,"Jets01PassCatAll"
   ))
-  
+ 
+  # Jet 0+1 Fail All Cats
   combinations.append((
-    [
-      ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
-      ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-      ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+    ,"Jets01FailCatAll"
+  ))
+ 
+  # Jet 0+1 Pass BB,BO,CC,FF Cats
+  #combinations.append((
+  #  [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesCCFF]
+  #  ,"Jets01PassCatCCFF"
+  #))
+ 
+  # Jet 0+1 Fail BB,BO,CC,FF Cats
+  #combinations.append((
+  #  [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesCCFF]
+  #  ,"Jets01FailCatCCFF"
+  #))
+ 
+ 
+ 
+  # Jet 0+1 Pass All Cats
+  combinations.append((
+    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
+    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+    ,"Jets01SplitCatAll"
+  ))
+  # Jet 0+1 Pass BB,BO,CC,FF Cats
+  #combinations.append((
+  #  [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesCCFF]+
+  #  [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesCCFF]
+  #  ,"Jets01SplitCatCCFF"
+  #))
+ 
+  # Jets >=2 Pass + Fail
+  combinations.append((
+    [  
+     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
     ],"Jet2SplitCutsGFSplit"
   ))
-
+ 
+  
+  # Jets 0,1,>=2 Pass + Fail All
   combinations.append((
+    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
+    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]+
     [
-      ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
-      ["Jet2CutsFailVBF","!(deltaEtaJets>3.5 && dijetMass>650.)"+jet2PtCuts],
-    ],"Jet2SplitCutsNoGFSplit"
+     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+    ],"CombSplitAll"
   ))
+ 
+  ## combinations = []
 
-  combinations.append((
-    [["Jets01Pass"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
-    [["Jets01Fail"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]+
-    [
-      ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
-      ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-      ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-    ],"CombGFSplit"
-  ))
+  # Jets 0,1,>=2 Pass + Fail CC FF
+  #combinations.append((
+  #  [["Jets01Pass"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesCCFF]+
+  #  [["Jets01Fail"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesCCFF]+
+  #  [
+  #   ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+  #   ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+  #   ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+  #  ],"CombSplitAll"
+  #))
 
-  combinations.append((
-    [["Jets01"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
-    [["Jets01Fail"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]+
-    [
-      ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
-      ["Jet2CutsFailVBF","!(deltaEtaJets>3.5 && dijetMass>650.)"+jet2PtCuts],
-    ],"CombNoGFSplit"
-  ))
+ 
+## GP   combinations.append((
+## GP     [
+## GP       ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+## GP       ["Jet2CutsFailVBF","!(deltaEtaJets>3.5 && dijetMass>650.)"+jet2PtCuts],
+## GP     ],"Jet2SplitCutsNoGFSplit"
+## GP   ))
+## GP 
+## GP   combinations.append((
+## GP     [["Jets01Pass"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
+## GP     [["Jets01Fail"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]+
+## GP     [
+## GP       ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+## GP       ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+## GP       ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+## GP     ],"CombGFSplit"
+## GP   ))
+## GP 
+## GP   combinations.append((
+## GP     [["Jets01"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
+## GP     [["Jets01Fail"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]+
+## GP     [
+## GP       ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+## GP       ["Jet2CutsFailVBF","!(deltaEtaJets>3.5 && dijetMass>650.)"+jet2PtCuts],
+## GP     ],"CombNoGFSplit"
+## GP   ))
 
   # Multi-dimensional Optimization of Cuts
   # First two arguments are just like combinations
@@ -1473,7 +1598,8 @@ if __name__ == "__main__":
   ################################################################
 
   histPostFix="/mDiMu"
-  signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
+  #signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
+  signalNames=["ggHmumu125","vbfHmumu125"]
   #backgroundNames= ["DYJetsToLL","ttbar"]
   backgroundNames= []
   dataDict = {}
@@ -1497,10 +1623,10 @@ if __name__ == "__main__":
 
   controlRegionVeryLow=[60,110]
   controlRegionLow=[110,120]
-  controlRegionHigh=[130,160]
+  controlRegionHigh=[130,170]
   if args.higgsMass > 0.0:
     controlRegionLow=[110,args.higgsMass-5.0]
-    controlRegionHigh=[args.higgsMass+5.0,160]
+    controlRegionHigh=[args.higgsMass+5.0,170]
 
   shape=True
   toyData=args.toyData

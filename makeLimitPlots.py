@@ -100,7 +100,34 @@ titleMap = {
   "IncPreselPtG10OE":"Non-VBF OE",
   "IncPreselPtG10EE":"Non-VBF EE",
   "IncPreselPtG10":"Non-VBF",
-  "BDTCutCatVBFBDTOnly": "VBF & Non-VBF Combination"
+  "BDTCutCatVBFBDTOnly": "VBF & Non-VBF Combination",
+
+  "Jets01PassPtG10BB": "Jet 0+1, p_{T}(#mu#mu)>10 GeV BB",
+  "Jets01PassPtG10BO": "Jet 0+1, p_{T}(#mu#mu)>10 GeV BO",
+  "Jets01PassPtG10BE": "Jet 0+1, p_{T}(#mu#mu)>10 GeV BE",
+  "Jets01PassPtG10OO": "Jet 0+1, p_{T}(#mu#mu)>10 GeV OO",
+  "Jets01PassPtG10OE": "Jet 0+1, p_{T}(#mu#mu)>10 GeV OE",
+  "Jets01PassPtG10EE": "Jet 0+1, p_{T}(#mu#mu)>10 GeV EE",
+  "Jets01PassCatAll" : "Jet 0+1, p_{T}(#mu#mu)>10 GeV",
+
+  "Jets01FailPtG10BB": "Jet 0+1, p_{T}(#mu#mu)<10 GeV BB",
+  "Jets01FailPtG10BO": "Jet 0+1, p_{T}(#mu#mu)<10 GeV BO",
+  "Jets01FailPtG10BE": "Jet 0+1, p_{T}(#mu#mu)<10 GeV BE",
+  "Jets01FailPtG10OO": "Jet 0+1, p_{T}(#mu#mu)<10 GeV OO",
+  "Jets01FailPtG10OE": "Jet 0+1, p_{T}(#mu#mu)<10 GeV OE",
+  "Jets01FailPtG10EE": "Jet 0+1, p_{T}(#mu#mu)<10 GeV EE",
+  "Jets01FailCatAll" : "Jet 0+1, p_{T}(#mu#mu)<10 GeV",
+
+  "Jets01SplitCatAll": "Jet 0+1 Category",
+
+
+  "Jet2CutsVBFPass":"Jet >=2, VBF Optim.",
+  "Jet2CutsGFPass":"Jet >=2, GG+VH Optim.",
+  "Jet2CutsFailVBFGF":"Jet >=2, !VBF & !GG+VH Optim.",
+
+  "Jet2SplitCutsGFSplit" : "Jet >=2 Category",
+  "CombSplitAll" : "Combination",
+
 }
 
 comparisonMap = {
@@ -304,7 +331,7 @@ class RelativePlot:
     expGraph.Draw("p")
     if showObs:
       obsGraph.Draw("l")
-      obsGraph.Draw("P")
+      obsGraph.Draw("p")
 
     tlatex = root.TLatex()
     tlatex.SetNDC()
@@ -461,8 +488,8 @@ class CutOptPlots:
       setHistTitles(graph,xTitle,yTitle)
       setHistTitles(hist,xTitle,yTitle)
       hist.Draw()
-      graph.Draw('L')
-      graph.Draw('P')
+      graph.Draw('C')
+      #graph.Draw('P')
       self.graphList += [graph]
       self.histList += [hist]
       self.tlatex.SetTextAlign(12)
