@@ -1,0 +1,244 @@
+#! /usr/bin/env python
+
+from ROOT import gSystem
+
+import sys
+import os
+import re
+import math
+import commands
+from ROOT import *
+gSystem.Load('libRooFit')
+import ROOT as root
+from helpers import *
+
+
+
+#######################################
+
+class signalParsCB:
+   
+   def __init__(self,folder,process,benergy,cat,massLow=115.,massHigh=150.):
+      # this is the folder where all the extrapolation
+      # parameters are contained
+      self.folder   = folder
+      # process should be GluGlu or VBF
+      self.process  = process
+
+      # this is to match Justin's definitions without
+      # obliging him to rewrite his code
+      if (process == 'GluGlu'):
+         self.process = 'gg'
+      if (process == 'VBF'):
+         self.process = 'vbf'
+
+      # benergy should be 7TeV or 8TeV
+      self.benergy  = benergy
+      # the current categories available are:
+      # need to list them
+      self.category = cat
+
+      self.fitFuncs = {}
+      self.fitFuncs ['mean' ]  = root.TF1("mean_%s"  % cat, "pol1",massLow,massHigh)
+      self.fitFuncs ['width']  = root.TF1("width_%s" % cat, "pol1",massLow,massHigh)
+      self.fitFuncs ['alpha' ] = root.TF1("alpha_%s" % cat, "pol1",massLow,massHigh)
+      self.fitFuncs ['n']      = root.TF1("n_%s"     % cat, "pol1",massLow,massHigh)
+
+      self.massLow  = massLow
+      self.massHigh = massHigh
+
+      # useful members to draw the signal templates
+      self.canvas = None
+      self.sigTemplates = {}
+
+      # title and savename for the signal templates
+      self.title = "CMS Simulation "
+      self.savename  = folder + '/png/sigTemplates_'
+      self.savename += process + '_'
+      self.savename += benergy + '_'
+      self.savename += cat + '_CB.png'
+
+      if (process == 'gg' or process == 'GluGlu'):
+         self.title += 'gg #rightarrow H #rightarrow #mu#mu at 8 TeV'
+
+         if self.category == 'BB':
+            self.title += ', Barrel-Barrel'
+         if self.category == 'BO':
+            self.title += ', Barrel-Overlap'
+         if self.category == 'BE':
+            self.title += ', Barrel-Endcap'
+         if self.category == 'OO':
+            self.title += ', Overlap-Overlap'
+         if self.category == 'OE':
+            self.title += ', Overlap-Endcap'
+         if self.category == 'EE':
+            self.title += ', Endcap-Endcap'
+
+      if (process == 'vbf' or process == 'VBF'):
+          self.title += 'VBF H #rightarrow #mu#mu at 8 TeV'
+          
+          if self.category == 'VBF':
+             self.title += ', BDT'
+          if self.category == 'VBFCiCLoose':
+             self.title += ', Loose'
+          if self.category == 'VBFCiCTight':
+             self.title += ', Tight'
+
+      
+   def initPol1(self,function,process,benergy,category,par):
+
+      filename = self.folder + "/extrapolation_" + par + '_' + process + '_' + benergy + '_' + category + '_CB.txt'
+
+      file = open(filename)
+      for line in file:
+         if ('#' in line):
+            continue
+         else:
+            line = line.split('\n')[0]
+            line = line.split(' ')
+            #print line
+
+            # the function is a pol1 
+            for id in range(0,2):
+               parValue = line[(2*id)]
+               parError = line[(2*id)+1]
+               
+               function.SetParameter( int(id),float(parValue) )
+               function.SetParError ( int(id),float(parError) )
+                                     
+      
+   def initFunctions(self):
+
+      # for the extrapolations we used pol1 functions and the parameters
+      # of the double Gaussian are 5
+      self.initPol1(self.fitFuncs['mean' ],  self.process,self.benergy,self.category, 'mean' )
+      self.initPol1(self.fitFuncs['width'],  self.process,self.benergy,self.category, 'width')
+      self.initPol1(self.fitFuncs['alpha' ], self.process,self.benergy,self.category, 'alpha')
+      self.initPol1(self.fitFuncs['n'],      self.process,self.benergy,self.category, 'n')
+
+
+   def getPar(self,parname):
+
+      self.initPol1(self.fitFuncs[parname], self.process,self.benergy,self.category, parname )
+      func = self.fitFuncs[parname]
+      
+      parameter = {}
+
+      massrange = drange(self.massLow, self.massHigh+0.5, 0.5)
+      for mass in massrange:
+         parValue = func.Eval(mass)
+         #print parname, mass, parValue
+         parameter['%s' % mass] = float(parValue)
+
+      return parameter
+
+
+   # this method returns all the parameters
+   def getPars(self):
+
+      par_mean  = self.getPar( 'mean')
+      par_width = self.getPar('width')
+      par_alpha = self.getPar('alpha')
+      par_n     = self.getPar(    'n')
+
+      return par_mean, par_width, par_alpha, par_n
+
+
+   # draw the points every X GeV step
+   def draw(self, step):
+
+      minMass   = self.massLow -10.0
+      maxMass   = self.massHigh+10.0
+      mMuMu     = root.RooRealVar("mMuMu","mMuMu",minMass,maxMass)
+
+
+      # get the parameters
+      par_mean, par_width, par_alpha, par_n = self.getPars()
+      
+      massrange = drange(self.massLow, self.massHigh+0.5, step)
+      #workspace = root.RooWorkspace("w")
+      #wImport = getattr(workspace,"import")
+      self.canvas = root.TCanvas("canvas","",0,0,1100,650)
+      self.canvas.cd()
+      plotMmumu = mMuMu.frame(minMass,maxMass)
+      
+      for mass in massrange:
+
+         if (mass < 140):
+            continue
+      
+         #####################################################################
+         # define the Double Gaussian
+         mean  = root.RooRealVar("Mean_%s"%mass,"Mean_%s"%mass, par_mean['%s'%mass], 100.,170.)
+         width = root.RooRealVar("Width_%s"%mass,"Width_%s"%mass, par_width['%s'%mass], 0.1,20.0)
+         alpha = root.RooRealVar("Alpha_%s"%mass,"Alpha_%s"%mass, par_alpha['%s'%mass], -10.0,10.0)
+ 
+         n = root.RooRealVar("N_%s"%mass,"N_%s"%mass, par_n['%s'%mass], -50.0,50.0)
+
+         pdfMmumuCB = root.RooCBShape ("pdfMmumuCB%s"%mass,"pdfMmumuCB%s"%mass,mMuMu,mean,width,alpha,n)
+
+         print mass
+         self.sigTemplates['%s' % mass] = pdfMmumuCB
+
+         plotMmumu.GetXaxis().SetTitle("M(#mu#mu) [GeV/c^{2}]")
+         plotMmumu.GetYaxis().SetTitle("a.u.")
+         plotMmumu.SetTitle(self.title)
+         pdfMmumuCB.plotOn(plotMmumu,root.RooFit.LineColor(root.kAzure+2))
+         plotMmumu.Draw()
+
+         self.canvas.Update()
+
+      self.canvas.SaveAs(self.savename)
+      
+      
+#######################################
+
+if __name__ == "__main__":
+
+   s = signalPars('fitresults',
+                  'gg',
+                  '8TeV',
+                  #'Jets01PassPtG10BB')
+                  #'Jets01PassPtG10BO')
+                  #'Jets01PassPtG10BE')
+                  'Jets01FailPtG10BB')
+                  #'Jets01FailPtG10BO')
+                  #'Jets01FailPtG10BE')
+                  #'Jets01PassPtG10EE')
+                  #'Jets01FailPtG10EE')
+
+   #example with one parameter
+   #parameter = s.getPar('meanG1')
+   #massrange = drange(115.0, 150.5, 0.5)
+   #for mass in massrange:
+   #   print mass, parameter[ '%s' % mass ]
+      
+   # example with all the parameters
+   #par_meanG1, par_widthG1, par_meanG2, par_widthG2, par_mixGG = s.getPars()
+   #for mass in par_meanG1.keys():
+   #   print mass, par_meanG1[mass], par_widthG1[mass], par_meanG2[mass], par_widthG2[mass], par_mixGG[mass] 
+
+   # example to draw signal templates every 5 GeV/c2
+   s.draw(5)
+
+
+#
+#   s = signalPars('fitresults',
+#                  'gg',
+#                  '8TeV',
+#                  'IncPreselPtG10BB')
+#
+#   #example with one parameter
+#   parameter = s.getPar('meanG1')
+#   massrange = drange(115.0, 150.5, 0.5)
+#   for mass in massrange:
+#      print mass, parameter[ '%s' % mass ]
+#      
+#   # example with all the parameters
+#   #par_meanG1, par_widthG1, par_meanG2, par_widthG2, par_mixGG = s.getPars()
+#   #for mass in par_meanG1.keys():
+#   #   print mass, par_meanG1[mass], par_widthG1[mass], par_meanG2[mass], par_widthG2[mass], par_mixGG[mass] 
+#
+#   # example to draw signal templates every 5 GeV/c2
+#   s.draw(5)
+

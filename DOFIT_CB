@@ -1,0 +1,108 @@
+
+##################################################
+##################################################
+#
+# 8  T E V
+#
+##################################################
+##################################################
+
+
+## C R Y S T A L    B A L L 
+
+
+python  extractRooFitSignalCB.py GluGlu 115   8TeV
+python  extractRooFitSignalCB.py GluGlu 120   8TeV
+python  extractRooFitSignalCB.py GluGlu 125   8TeV
+python  extractRooFitSignalCB.py GluGlu 130   8TeV
+python  extractRooFitSignalCB.py GluGlu 135   8TeV
+python  extractRooFitSignalCB.py GluGlu 140   8TeV
+python  extractRooFitSignalCB.py GluGlu 145   8TeV
+python  extractRooFitSignalCB.py GluGlu 150   8TeV
+
+
+python  extractRooFitSignalCB.py VBF 115   8TeV
+python  extractRooFitSignalCB.py VBF 120   8TeV
+python  extractRooFitSignalCB.py VBF 125   8TeV
+python  extractRooFitSignalCB.py VBF 130   8TeV
+python  extractRooFitSignalCB.py VBF 135   8TeV
+python  extractRooFitSignalCB.py VBF 140   8TeV
+python  extractRooFitSignalCB.py VBF 145   8TeV
+python  extractRooFitSignalCB.py VBF 150   8TeV
+
+
+
+
+python  extractRooFitSignalCB.py GluGlu 115   7TeV
+python  extractRooFitSignalCB.py GluGlu 120   7TeV
+python  extractRooFitSignalCB.py GluGlu 125   7TeV
+python  extractRooFitSignalCB.py GluGlu 130   7TeV
+python  extractRooFitSignalCB.py GluGlu 135   7TeV
+python  extractRooFitSignalCB.py GluGlu 140   7TeV
+python  extractRooFitSignalCB.py GluGlu 145   7TeV
+python  extractRooFitSignalCB.py GluGlu 150   7TeV
+
+
+python  extractRooFitSignalCB.py VBF 115   7TeV
+python  extractRooFitSignalCB.py VBF 120   7TeV
+python  extractRooFitSignalCB.py VBF 125   7TeV
+python  extractRooFitSignalCB.py VBF 130   7TeV
+python  extractRooFitSignalCB.py VBF 135   7TeV
+python  extractRooFitSignalCB.py VBF 140   7TeV
+python  extractRooFitSignalCB.py VBF 145   7TeV
+python  extractRooFitSignalCB.py VBF 150   7TeV
+
+
+
+# E X T R A P O L A T I O N
+
+python extrapolateSignalParsCB.py gg 8TeV CB Jets01PassPtG10BB
+python extrapolateSignalParsCB.py gg 8TeV CB Jets01PassPtG10BO
+python extrapolateSignalParsCB.py gg 8TeV CB Jets01PassPtG10BE
+python extrapolateSignalParsCB.py gg 8TeV CB Jets01PassPtG10OO
+python extrapolateSignalParsCB.py gg 8TeV CB Jets01PassPtG10OE
+python extrapolateSignalParsCB.py gg 8TeV CB Jets01PassPtG10EE
+
+python extrapolateSignalParsCB.py gg 8TeV CB Jets01FailPtG10BB
+python extrapolateSignalParsCB.py gg 8TeV CB Jets01FailPtG10BO
+python extrapolateSignalParsCB.py gg 8TeV CB Jets01FailPtG10BE
+python extrapolateSignalParsCB.py gg 8TeV CB Jets01FailPtG10OO
+python extrapolateSignalParsCB.py gg 8TeV CB Jets01FailPtG10OE
+python extrapolateSignalParsCB.py gg 8TeV CB Jets01FailPtG10EE
+
+python extrapolateSignalParsCB.py vbf 8TeV CB Jet2CutsVBFPass
+python extrapolateSignalParsCB.py vbf 8TeV CB Jet2CutsGFPass 
+python extrapolateSignalParsCB.py vbf 8TeV CB Jet2CutsFailVBFGF
+
+
+python extrapolateSignalParsCB.py gg 7TeV CB Jets01PassPtG10BB
+python extrapolateSignalParsCB.py gg 7TeV CB Jets01PassPtG10BO
+python extrapolateSignalParsCB.py gg 7TeV CB Jets01PassPtG10BE
+python extrapolateSignalParsCB.py gg 7TeV CB Jets01PassPtG10OO
+python extrapolateSignalParsCB.py gg 7TeV CB Jets01PassPtG10OE
+python extrapolateSignalParsCB.py gg 7TeV CB Jets01PassPtG10EE
+                                   
+python extrapolateSignalParsCB.py gg 7TeV CB Jets01FailPtG10BB
+python extrapolateSignalParsCB.py gg 7TeV CB Jets01FailPtG10BO
+python extrapolateSignalParsCB.py gg 7TeV CB Jets01FailPtG10BE
+python extrapolateSignalParsCB.py gg 7TeV CB Jets01FailPtG10OO
+python extrapolateSignalParsCB.py gg 7TeV CB Jets01FailPtG10OE
+python extrapolateSignalParsCB.py gg 7TeV CB Jets01FailPtG10EE
+python extrapolateSignalParsCB.py gg 7TeV CB Jets01FailPtG10CC
+python extrapolateSignalParsCB.py gg 7TeV CB Jets01FailPtG10FF
+
+python extrapolateSignalParsCB.py vbf 7TeV CB Jet2CutsVBFPass
+python extrapolateSignalParsCB.py vbf 7TeV CB Jet2CutsGFPass 
+python extrapolateSignalParsCB.py vbf 7TeV CB Jet2CutsFailVBFGF
+
+
+
+
+# D R A W   T H E   S I G N A L   T E M P L A T E S 
+
+#python -i signalPars.py
+#
+#s = signalPars('fitresults', 'gg', '8TeV', 'IncPreselPtG10BB')
+#s.draw(5)
+
+
