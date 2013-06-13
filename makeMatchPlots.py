@@ -29,6 +29,20 @@ def getHist(tree,var,cuts,name,nbins=50,minX=110,maxX=160):
    tmp = root.gDirectory.Get(name)
    if type(tmp) != root.TH1F:
      print("Warning: loading histogram: %s from var %s: Object type is not TH1F!!" % (name,var))
+     print("  Draw string: '%s'" % drawStr)
+     print("  cut string: '%s'" % cuts)
+   tmp.UseCurrentStyle()
+   tmp.Sumw2()
+   tmp.SetTitle("")
+   return tmp
+def getHist2D(tree,varx,vary,cuts,name,nbinsY,minY,maxY,nbinsX=50,minX=110,maxX=160):
+   drawStr = varx+":"+vary+" >> "+name+"("+str(nbinsX)+","+str(minX)+","+str(maxX)+","+str(nbinsY)+","+str(minY)+","+str(maxY)+")"
+   tree.Draw(drawStr,cuts)
+   tmp = root.gDirectory.Get(name)
+   if type(tmp) != root.TH2F:
+     print("Warning: loading histogram: %s from varx %s, vary %s: Object type is not TH2F!!" % (name,varx,vary))
+     print("  Draw string: '%s'" % drawStr)
+     print("  cut string: '%s'" % cuts)
    tmp.UseCurrentStyle()
    tmp.Sumw2()
    tmp.SetTitle("")
@@ -220,7 +234,38 @@ for case in ["","BB"]:
   print "Rereco Match 125 126: %.1f" % massDiffAllHist.Integral()
   saveAs(canvas,outdir+name)
 
+  name = "massDiffPromptOnly125126"+case
+  massDiffAllHist = getHist(matchTree,"dimuonMass1-dimuonMass_noMuscle1",CUTS+caseCutStr+" && dimuonMass1>=125. && dimuonMass1<126.",name,nBinsDiff,minDiff,maxDiff)
+  setHistTitles(massDiffAllHist,"m_{#mu#mu}(Prompt MuScle)-m_{#mu#mu}(Prompt) GeV/c^{2}","Events / 0.5 GeV/c^{2}")
+  setHistColor(massDiffAllHist,root.kBlack)
+  massDiffAllHist.Draw()
+  tlatex.SetTextAlign(11)
+  tlatex.DrawLatex(root.gStyle.GetPadLeftMargin(),1.02-root.gStyle.GetPadTopMargin(),"125 GeV < m_{#mu#mu}^{Prompt} < 126 GeV")
+  tlatex.SetTextAlign(31)
+  tlatex.DrawLatex(1.0-root.gStyle.GetPadRightMargin(),1.02-root.gStyle.GetPadTopMargin(),title)
+  tlatex.SetTextAlign(33)
+  tlatex.SetTextSize(latexSize*1.5)
+  tlatex.DrawLatex(0.97-root.gStyle.GetPadRightMargin(),0.96-root.gStyle.GetPadTopMargin(),"RMS: %.2f" % massDiffAllHist.GetRMS())
+  tlatex.SetTextSize(latexSize)
+  saveAs(canvas,outdir+name)
 
+  name = "massDiffPromptOnly125126"+case
+  massDiffAllHist = getHist(matchTree,"dimuonMass1-dimuonMass_noMuscle1",CUTS+caseCutStr+" && dimuonMass1>=125. && dimuonMass1<126.",name,nBinsDiff,minDiff,maxDiff)
+  setHistTitles(massDiffAllHist,"m_{#mu#mu}(Prompt MuScle)-m_{#mu#mu}(Prompt) GeV/c^{2}","Events / 0.5 GeV/c^{2}")
+  setHistColor(massDiffAllHist,root.kBlack)
+  massDiffAllHist.Draw()
+  tlatex.SetTextAlign(11)
+  tlatex.DrawLatex(root.gStyle.GetPadLeftMargin(),1.02-root.gStyle.GetPadTopMargin(),"125 GeV < m_{#mu#mu}^{Prompt} < 126 GeV")
+  tlatex.SetTextAlign(31)
+  tlatex.DrawLatex(1.0-root.gStyle.GetPadRightMargin(),1.02-root.gStyle.GetPadTopMargin(),title)
+  tlatex.SetTextAlign(33)
+  tlatex.SetTextSize(latexSize*1.5)
+  tlatex.DrawLatex(0.97-root.gStyle.GetPadRightMargin(),0.96-root.gStyle.GetPadTopMargin(),"RMS: %.2f" % massDiffAllHist.GetRMS())
+  tlatex.SetTextSize(latexSize)
+  saveAs(canvas,outdir+name)
+
+
+#################################################
 # pt, Eta, and Phi for Prompt 125-126
 
   name = "ptLeadDiffPrompt125126"+case
@@ -343,5 +388,31 @@ for case in ["","BB"]:
   tlatex.SetTextSize(latexSize*1.25)
   tlatex.DrawLatex(0.97-root.gStyle.GetPadRightMargin(),0.96-root.gStyle.GetPadTopMargin(),"RMS: %.2e" % massDiffAllHist.GetRMS())
   tlatex.SetTextSize(latexSize)
+  saveAs(canvas,outdir+name)
+
+#######################################################################################
+
+  name = "massDiffvMPrompt"+case
+  massDiffAllHist = getHist2D(matchTree,"dimuonMass_noMuscle2-dimuonMass1","dimuonMass1",CUTS+caseCutStr,name,nBinsDiff,minDiff,maxDiff,10,110,160)
+  massDiffAllHist = massDiffAllHist.ProfileX("_pfx",1,-1,'s')
+  setHistTitles(massDiffAllHist,"m_{#mu#mu}(Prompt MuScle) GeV/c^{2}","m_{#mu#mu}(ReReco)-m_{#mu#mu}(Prompt MuScle) GeV/c^{2}")
+  setHistColor(massDiffAllHist,root.kBlack)
+  massDiffAllHist.Draw()
+  tlatex.SetTextAlign(31)
+  tlatex.DrawLatex(1.0-root.gStyle.GetPadRightMargin(),1.02-root.gStyle.GetPadTopMargin(),title)
+  saveAs(canvas,outdir+name)
+
+  name = "ptDiffvPhiPrompt125126"+case
+  massDiffAllHist = getHist2D(matchTree,"muonLead_pt_noMuscle2-muonLead_pt1","muonLead_phi2",CUTS+caseCutStr,name,100,-5,5,10,-3.2,3.2)
+  massDiffAllHist = massDiffAllHist.ProfileX("_pfx",1,-1,'s')
+  newHist = root.TH1F("newHist"+name+case,"",10,-3.2,3.2)
+  setHistTitles(newHist,"Leading Muon #phi","RMS of Leading Muon (p_{T}^{ReReco}-p_{T}^{Prompt MuScle})/p_{T}^{ReReco}")
+  setHistColor(newHist,root.kBlack)
+  newHist.SetFillStyle(0)
+  for i in range(massDiffAllHist.GetNbinsX()):
+    newHist.SetBinContent(i,massDiffAllHist.GetBinError(i))
+  newHist.Draw()
+  tlatex.SetTextAlign(31)
+  tlatex.DrawLatex(1.0-root.gStyle.GetPadRightMargin(),1.02-root.gStyle.GetPadTopMargin(),title)
   saveAs(canvas,outdir+name)
 
