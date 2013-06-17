@@ -120,9 +120,9 @@ if __name__ == "__main__":
   categoryDict = {
     "Jets01PassPtG10": massCut+jet01Cuts+" && dimuonPt>10.",
     "Jets01FailPtG10": massCut+jet01Cuts+" && !(dimuonPt>10.)",
-    "Jets2CutsVBFPass": massCut+jet2Cuts+" && dijetMass > 650. && deltaEtaJets>3.5",
-    "Jets2CutsGFPass": massCut+jet2Cuts+" && !(dijetMass > 650. && deltaEtaJets>3.5) && dijetMass>250. && dimuonPt>50.",
-    "Jets2CutsFailVBFGF": massCut+jet2Cuts+" && !(dijetMass > 650. && deltaEtaJets>3.5) && !(dijetMass>250. && dimuonPt>50.)"
+    "Jet2CutsVBFPass": massCut+jet2Cuts+" && dijetMass > 650. && deltaEtaJets>3.5",
+    "Jet2CutsGFPass": massCut+jet2Cuts+" && !(dijetMass > 650. && deltaEtaJets>3.5) && dijetMass>250. && dimuonPt>50.",
+    "Jet2CutsFailVBFGF": massCut+jet2Cuts+" && !(dijetMass > 650. && deltaEtaJets>3.5) && !(dijetMass>250. && dimuonPt>50.)"
   }
   errors = ["JES","JER"]
 
@@ -187,9 +187,13 @@ if __name__ == "__main__":
           for mass in masses:
             relErr = dataDict[dsName][energy][mass][key][error]
             maxErr = absMax(maxErr,relErr)
-          if maxErr < THRESHOLD:
+          if abs(maxErr) < THRESHOLD:
             print "          '"+key+"' : None,"
           else:
+            if maxErr>0.:
+              maxErr += 1.
+            else:
+              maxErr -= 1.
             print "          '"+key+"' : {0:.4f},".format(maxErr)
         print("          },")
       print("        },")

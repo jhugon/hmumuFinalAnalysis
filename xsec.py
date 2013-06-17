@@ -283,135 +283,136 @@ class NuisanceMap:
     self.JES = {
       'gg' : {
         '7TeV' : {
+          'Jet2CutsFailVBFGF' : 1.0832,
+          'Jet2CutsGFPass' : 1.0585,
+          'Jet2CutsVBFPass' : 1.0759,
           'Jets01FailPtG10' : None,
-          'Jets01PassPtG10' : None,
-          'Jets2CutsFailVBFGF' : 0.0832,
-          'Jets2CutsGFPass' : 0.0585,
-          'Jets2CutsVBFPass' : 0.0759,
+          'Jets01PassPtG10' : -1.0054,
           },
         '8TeV' : {
+          'Jet2CutsFailVBFGF' : 1.0799,
+          'Jet2CutsGFPass' : 1.0477,
+          'Jet2CutsVBFPass' : 1.0606,
           'Jets01FailPtG10' : None,
-          'Jets01PassPtG10' : None,
-          'Jets2CutsFailVBFGF' : 0.0799,
-          'Jets2CutsGFPass' : 0.0477,
-          'Jets2CutsVBFPass' : 0.0606,
+          'Jets01PassPtG10' : -1.0060,
           },
         },
       'vbf' : {
         '7TeV' : {
-          'Jets01FailPtG10' : None,
-          'Jets01PassPtG10' : None,
-          'Jets2CutsFailVBFGF' : 0.0572,
-          'Jets2CutsGFPass' : 0.0381,
-          'Jets2CutsVBFPass' : 0.0358,
+          'Jet2CutsFailVBFGF' : 1.0572,
+          'Jet2CutsGFPass' : 1.0381,
+          'Jet2CutsVBFPass' : 1.0358,
+          'Jets01FailPtG10' : -1.0321,
+          'Jets01PassPtG10' : -1.0308,
           },
         '8TeV' : {
-          'Jets01FailPtG10' : None,
-          'Jets01PassPtG10' : None,
-          'Jets2CutsFailVBFGF' : 0.0482,
-          'Jets2CutsGFPass' : 0.0249,
-          'Jets2CutsVBFPass' : 0.0185,
+          'Jet2CutsFailVBFGF' : 1.0482,
+          'Jet2CutsGFPass' : 1.0249,
+          'Jet2CutsVBFPass' : 1.0185,
+          'Jets01FailPtG10' : -1.0278,
+          'Jets01PassPtG10' : -1.0250,
           },
         },
       'w' : {
         '7TeV' : {
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
           'Jets01FailPtG10' : None,
           'Jets01PassPtG10' : None,
-          'Jets2CutsFailVBFGF' : None,
-          'Jets2CutsGFPass' : None,
-          'Jets2CutsVBFPass' : None,
           },
         '8TeV' : {
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
           'Jets01FailPtG10' : None,
           'Jets01PassPtG10' : None,
-          'Jets2CutsFailVBFGF' : None,
-          'Jets2CutsGFPass' : None,
-          'Jets2CutsVBFPass' : None,
           },
         },
       'z' : {
         '7TeV' : {
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
           'Jets01FailPtG10' : None,
           'Jets01PassPtG10' : None,
-          'Jets2CutsFailVBFGF' : None,
-          'Jets2CutsGFPass' : None,
-          'Jets2CutsVBFPass' : None,
           },
         '8TeV' : {
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
           'Jets01FailPtG10' : None,
           'Jets01PassPtG10' : None,
-          'Jets2CutsFailVBFGF' : None,
-          'Jets2CutsGFPass' : None,
-          'Jets2CutsVBFPass' : None,
           },
         },
       }
     self.JER = {
       'gg' : {
         '7TeV' : {
+          'Jet2CutsFailVBFGF' : -1.0166,
+          'Jet2CutsGFPass' : -1.0126,
+          'Jet2CutsVBFPass' : 1.0321,
           'Jets01FailPtG10' : None,
-          'Jets01PassPtG10' : 0.0012,
-          'Jets2CutsFailVBFGF' : None,
-          'Jets2CutsGFPass' : None,
-          'Jets2CutsVBFPass' : 0.0321,
+          'Jets01PassPtG10' : 1.0012,
           },
         '8TeV' : {
+          'Jet2CutsFailVBFGF' : -1.0131,
+          'Jet2CutsGFPass' : -1.0101,
+          'Jet2CutsVBFPass' : -1.0273,
           'Jets01FailPtG10' : None,
           'Jets01PassPtG10' : None,
-          'Jets2CutsFailVBFGF' : None,
-          'Jets2CutsGFPass' : None,
-          'Jets2CutsVBFPass' : None,
           },
         },
       'vbf' : {
         '7TeV' : {
-          'Jets01FailPtG10' : None,
-          'Jets01PassPtG10' : 0.0049,
-          'Jets2CutsFailVBFGF' : None,
-          'Jets2CutsGFPass' : None,
-          'Jets2CutsVBFPass' : None,
+          'Jet2CutsFailVBFGF' : -1.0111,
+          'Jet2CutsGFPass' : -1.0074,
+          'Jet2CutsVBFPass' : -1.0074,
+          'Jets01FailPtG10' : -1.0167,
+          'Jets01PassPtG10' : 1.0049,
           },
         '8TeV' : {
-          'Jets01FailPtG10' : None,
-          'Jets01PassPtG10' : 0.0052,
-          'Jets2CutsFailVBFGF' : None,
-          'Jets2CutsGFPass' : None,
-          'Jets2CutsVBFPass' : None,
+          'Jet2CutsFailVBFGF' : -1.0081,
+          'Jet2CutsGFPass' : -1.0063,
+          'Jet2CutsVBFPass' : -1.0054,
+          'Jets01FailPtG10' : -1.0162,
+          'Jets01PassPtG10' : 1.0052,
           },
         },
       'w' : {
         '7TeV' : {
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
           'Jets01FailPtG10' : None,
           'Jets01PassPtG10' : None,
-          'Jets2CutsFailVBFGF' : None,
-          'Jets2CutsGFPass' : None,
-          'Jets2CutsVBFPass' : None,
           },
         '8TeV' : {
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
           'Jets01FailPtG10' : None,
           'Jets01PassPtG10' : None,
-          'Jets2CutsFailVBFGF' : None,
-          'Jets2CutsGFPass' : None,
-          'Jets2CutsVBFPass' : None,
           },
         },
       'z' : {
         '7TeV' : {
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
           'Jets01FailPtG10' : None,
           'Jets01PassPtG10' : None,
-          'Jets2CutsFailVBFGF' : None,
-          'Jets2CutsGFPass' : None,
-          'Jets2CutsVBFPass' : None,
           },
         '8TeV' : {
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
           'Jets01FailPtG10' : None,
           'Jets01PassPtG10' : None,
-          'Jets2CutsFailVBFGF' : None,
-          'Jets2CutsGFPass' : None,
-          'Jets2CutsVBFPass' : None,
           },
         },
       }
+
 
     self._keys = ["xs_ggH","xs_vbfH","xs_wH","xs_zH","br_Hmm","lumi","PDF","JES","JER"]
   def keys(self):
@@ -423,10 +424,12 @@ class NuisanceMap:
       if ds in self.data[nu]:
         return self.data[nu][ds]
     match = re.match(r"([a-z]+)Hmumu([\d.]+)_([\d]+TeV)",ds)
+    if not match:
+      return None
+    prodMode = match.group(1)
+    mass = match.group(2)
+    energy = match.group(3)
     if re.match(r"^xs_.*",nu) and match:
-      prodMode = match.group(1)
-      mass = match.group(2)
-      energy = match.group(3)
       result = None
       if prodMode not in nu:
         return None
@@ -448,10 +451,17 @@ class NuisanceMap:
     if nu == "PDF" and match:
       return self.PDF[match.group(1)]
     if nu == "JES" and match:
+      category = self.getBaseCat(category)
       return self.JES[match.group(1)][energy][category]
     if nu == "JER" and match:
+      category = self.getBaseCat(category)
       return self.JER[match.group(1)][energy][category]
-    return None
+  def getBaseCat(self,cat):
+    categoriesAllCCFF = ["BB","BO","BE","OO","OE","EE","CC","FF"]
+    for i in categoriesAllCCFF:
+      if cat[-2:] == i:
+        return cat[:-2]
+    return cat
 
 nuisanceMap = NuisanceMap()
 
