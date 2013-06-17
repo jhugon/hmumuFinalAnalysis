@@ -59,7 +59,7 @@ for mass in massrange:
 
   # write the jobs to resubmit
   for card in diffList:
-    resubScript.write("bsub -q cmscaf1nh -o /dev/null lxbatch.sh %s\n" % card )
+    resubScript.write("bsub -q cmscaf1nd -o /dev/null lxbatch.sh %s\n" % card )
 
 
 resubScript.close()

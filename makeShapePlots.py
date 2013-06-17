@@ -64,7 +64,7 @@ class ShapePlotter:
       if titleMap.has_key(channelName):
         channelTitle = titleMap[channelName]
       channelWS = channelKey.ReadObj()
-      mMuMu = channelWS.var("mMuMu")
+      mMuMu = channelWS.var("dimuonMass")
       bakPDF = channelWS.pdf("bak")
       sigPDF = channelWS.pdf("ggH")
       data_obs = channelWS.data("data_obs")
