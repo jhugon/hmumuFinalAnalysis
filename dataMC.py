@@ -14,7 +14,7 @@ LUMI=lumiDict[RUNPERIOD]
 
 scaleHiggsBy = 1000.
 
-JETErrors=False
+JETErrors=True
 LOGY=False
 integralPlot=False
 MCErrors=True

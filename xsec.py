@@ -281,23 +281,144 @@ class NuisanceMap:
       "z": None,
       }
     self.JES = {
-      "gg": 1.01,
-      "vbf": 1.05,
-      "w": None,
-      "z": None,
+      'gg' : {
+        '7TeV' : {
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          'Jets2CutsFailVBFGF' : 0.0832,
+          'Jets2CutsGFPass' : 0.0585,
+          'Jets2CutsVBFPass' : 0.0759,
+          },
+        '8TeV' : {
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          'Jets2CutsFailVBFGF' : 0.0799,
+          'Jets2CutsGFPass' : 0.0477,
+          'Jets2CutsVBFPass' : 0.0606,
+          },
+        },
+      'vbf' : {
+        '7TeV' : {
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          'Jets2CutsFailVBFGF' : 0.0572,
+          'Jets2CutsGFPass' : 0.0381,
+          'Jets2CutsVBFPass' : 0.0358,
+          },
+        '8TeV' : {
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          'Jets2CutsFailVBFGF' : 0.0482,
+          'Jets2CutsGFPass' : 0.0249,
+          'Jets2CutsVBFPass' : 0.0185,
+          },
+        },
+      'w' : {
+        '7TeV' : {
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          'Jets2CutsFailVBFGF' : None,
+          'Jets2CutsGFPass' : None,
+          'Jets2CutsVBFPass' : None,
+          },
+        '8TeV' : {
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          'Jets2CutsFailVBFGF' : None,
+          'Jets2CutsGFPass' : None,
+          'Jets2CutsVBFPass' : None,
+          },
+        },
+      'z' : {
+        '7TeV' : {
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          'Jets2CutsFailVBFGF' : None,
+          'Jets2CutsGFPass' : None,
+          'Jets2CutsVBFPass' : None,
+          },
+        '8TeV' : {
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          'Jets2CutsFailVBFGF' : None,
+          'Jets2CutsGFPass' : None,
+          'Jets2CutsVBFPass' : None,
+          },
+        },
       }
     self.JER = {
-      "gg": 1.03,
-      "vbf": 1.045,
-      "w": None,
-      "z": None,
+      'gg' : {
+        '7TeV' : {
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : 0.0012,
+          'Jets2CutsFailVBFGF' : None,
+          'Jets2CutsGFPass' : None,
+          'Jets2CutsVBFPass' : 0.0321,
+          },
+        '8TeV' : {
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          'Jets2CutsFailVBFGF' : None,
+          'Jets2CutsGFPass' : None,
+          'Jets2CutsVBFPass' : None,
+          },
+        },
+      'vbf' : {
+        '7TeV' : {
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : 0.0049,
+          'Jets2CutsFailVBFGF' : None,
+          'Jets2CutsGFPass' : None,
+          'Jets2CutsVBFPass' : None,
+          },
+        '8TeV' : {
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : 0.0052,
+          'Jets2CutsFailVBFGF' : None,
+          'Jets2CutsGFPass' : None,
+          'Jets2CutsVBFPass' : None,
+          },
+        },
+      'w' : {
+        '7TeV' : {
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          'Jets2CutsFailVBFGF' : None,
+          'Jets2CutsGFPass' : None,
+          'Jets2CutsVBFPass' : None,
+          },
+        '8TeV' : {
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          'Jets2CutsFailVBFGF' : None,
+          'Jets2CutsGFPass' : None,
+          'Jets2CutsVBFPass' : None,
+          },
+        },
+      'z' : {
+        '7TeV' : {
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          'Jets2CutsFailVBFGF' : None,
+          'Jets2CutsGFPass' : None,
+          'Jets2CutsVBFPass' : None,
+          },
+        '8TeV' : {
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          'Jets2CutsFailVBFGF' : None,
+          'Jets2CutsGFPass' : None,
+          'Jets2CutsVBFPass' : None,
+          },
+        },
       }
+
     self._keys = ["xs_ggH","xs_vbfH","xs_wH","xs_zH","br_Hmm","lumi","PDF","JES","JER"]
   def keys(self):
     return self.data.keys() + self._keys
   def __setitem__(self,key,value):
     self.data[key] = value
-  def __call__(self,nu,ds):
+  def __call__(self,nu,ds,category):
     if nu in self.data:
       if ds in self.data[nu]:
         return self.data[nu][ds]
@@ -327,9 +448,9 @@ class NuisanceMap:
     if nu == "PDF" and match:
       return self.PDF[match.group(1)]
     if nu == "JES" and match:
-      return self.JES[match.group(1)]
+      return self.JES[match.group(1)][energy][category]
     if nu == "JER" and match:
-      return self.JER[match.group(1)]
+      return self.JER[match.group(1)][energy][category]
     return None
 
 nuisanceMap = NuisanceMap()
