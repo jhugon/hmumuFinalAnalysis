@@ -287,14 +287,14 @@ class NuisanceMap:
           'Jet2CutsGFPass' : 1.0585,
           'Jet2CutsVBFPass' : 1.0759,
           'Jets01FailPtG10' : None,
-          'Jets01PassPtG10' : -1.0054,
+          'Jets01PassPtG10' : None,
           },
         '8TeV' : {
           'Jet2CutsFailVBFGF' : 1.0799,
           'Jet2CutsGFPass' : 1.0477,
           'Jet2CutsVBFPass' : 1.0606,
           'Jets01FailPtG10' : None,
-          'Jets01PassPtG10' : -1.0060,
+          'Jets01PassPtG10' : None,
           },
         },
       'vbf' : {
@@ -353,7 +353,7 @@ class NuisanceMap:
           'Jet2CutsGFPass' : -1.0126,
           'Jet2CutsVBFPass' : 1.0321,
           'Jets01FailPtG10' : None,
-          'Jets01PassPtG10' : 1.0012,
+          'Jets01PassPtG10' : None,
           },
         '8TeV' : {
           'Jet2CutsFailVBFGF' : -1.0131,
@@ -366,17 +366,17 @@ class NuisanceMap:
       'vbf' : {
         '7TeV' : {
           'Jet2CutsFailVBFGF' : -1.0111,
-          'Jet2CutsGFPass' : -1.0074,
-          'Jet2CutsVBFPass' : -1.0074,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
           'Jets01FailPtG10' : -1.0167,
-          'Jets01PassPtG10' : 1.0049,
+          'Jets01PassPtG10' : None,
           },
         '8TeV' : {
-          'Jet2CutsFailVBFGF' : -1.0081,
-          'Jet2CutsGFPass' : -1.0063,
-          'Jet2CutsVBFPass' : -1.0054,
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
           'Jets01FailPtG10' : -1.0162,
-          'Jets01PassPtG10' : 1.0052,
+          'Jets01PassPtG10' : None,
           },
         },
       'w' : {

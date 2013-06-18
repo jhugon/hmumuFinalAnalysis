@@ -97,7 +97,7 @@ if __name__ == "__main__":
 
   teff = root.TEfficiency()
 
-  THRESHOLD = 0.001
+  THRESHOLD = 0.01
 
   datasetNames = [
   "ggHmumu",
