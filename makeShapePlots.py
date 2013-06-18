@@ -239,32 +239,31 @@ titleMap = {
 
   "IncPreselPtG":"Non-VBF Not Combined",
 
-  "Jets01PassPtG10BB": "Jet 0+1, p_{T}(#mu#mu)>10 GeV BB",
-  "Jets01PassPtG10BO": "Jet 0+1, p_{T}(#mu#mu)>10 GeV BO",
-  "Jets01PassPtG10BE": "Jet 0+1, p_{T}(#mu#mu)>10 GeV BE",
-  "Jets01PassPtG10OO": "Jet 0+1, p_{T}(#mu#mu)>10 GeV OO",
-  "Jets01PassPtG10OE": "Jet 0+1, p_{T}(#mu#mu)>10 GeV OE",
-  "Jets01PassPtG10EE": "Jet 0+1, p_{T}(#mu#mu)>10 GeV EE",
-  "Jets01PassCatAll" : "Jet 0+1, p_{T}(#mu#mu)>10 GeV",
+  "Jets01PassPtG10BB": "Non-VBF Presel, Tight BB",
+  "Jets01PassPtG10BO": "Non-VBF Presel, Tight BO",
+  "Jets01PassPtG10BE": "Non-VBF Presel, Tight BE",
+  "Jets01PassPtG10OO": "Non-VBF Presel, Tight OO",
+  "Jets01PassPtG10OE": "Non-VBF Presel, Tight OE",
+  "Jets01PassPtG10EE": "Non-VBF Presel, Tight EE",
+  "Jets01PassCatAll" : "Non-VBF Preselection, Tight",
+                                      
+  "Jets01FailPtG10BB": "Non-VBF Presel, Loose BB",
+  "Jets01FailPtG10BO": "Non-VBF Presel, Loose BO",
+  "Jets01FailPtG10BE": "Non-VBF Presel, Loose BE",
+  "Jets01FailPtG10OO": "Non-VBF Presel, Loose OO",
+  "Jets01FailPtG10OE": "Non-VBF Presel, Loose OE",
+  "Jets01FailPtG10EE": "Non-VBF Presel, Loose EE",
+  "Jets01FailCatAll" : "Non-VBF Preselection, Loose",
+                                      
+  "Jets01SplitCatAll": "Non-VBF Preselection",
 
-  "Jets01FailPtG10BB": "Jet 0+1, p_{T}(#mu#mu)<10 GeV BB",
-  "Jets01FailPtG10BO": "Jet 0+1, p_{T}(#mu#mu)<10 GeV BO",
-  "Jets01FailPtG10BE": "Jet 0+1, p_{T}(#mu#mu)<10 GeV BE",
-  "Jets01FailPtG10OO": "Jet 0+1, p_{T}(#mu#mu)<10 GeV OO",
-  "Jets01FailPtG10OE": "Jet 0+1, p_{T}(#mu#mu)<10 GeV OE",
-  "Jets01FailPtG10EE": "Jet 0+1, p_{T}(#mu#mu)<10 GeV EE",
-  "Jets01FailCatAll" : "Jet 0+1, p_{T}(#mu#mu)<10 GeV",
 
-  "Jets01SplitCatAll": "Jet 0+1 Category",
+  "Jet2CutsVBFPass":"VBF Preselection, VBF Tight",
+  "Jet2CutsGFPass":"VBF Preselection, GF Tight",
+  "Jet2CutsFailVBFGF":"VBF Preselection, Loose",
 
-
-  "Jet2CutsVBFPass":"Jet >=2, VBF Optim.",
-  "Jet2CutsGFPass":"Jet >=2, GG+VH Optim.",
-  "Jet2CutsFailVBFGF":"Jet >=2, !VBF & !GG+VH Optim.",
-
-  "Jet2SplitCutsGFSplit" : "Jet >=2 Category",
+  "Jet2SplitCutsGFSplit" : "VBF Preselection",
   "CombSplitAll" : "Combination",
-
 }
         
 if __name__ == "__main__":

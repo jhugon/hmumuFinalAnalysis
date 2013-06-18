@@ -1,0 +1,11 @@
+
+
+display statsOutput/CombSplitAll_7P8TeV.png &
+display statsOutput/Jets01PassCatAll_7P8TeV.png &
+display statsOutput/Jets01FailCatAll_7P8TeV.png &
+display statsOutput/Jet2CutsVBFPass_7P8TeV.png &
+display statsOutput/Jet2CutsGFPass_7P8TeV.png &
+display statsOutput/Jet2CutsFailVBFGF_7P8TeV.png &
+display statsOutput/Jet2SplitCutsGFSplit_7P8TeV.png &
+
+
