@@ -10,7 +10,7 @@ from ROOT import *
 gSystem.Load('libRooFit')
 import ROOT as root
 
-#from helpers import *
+from helpers import *
 
 #root.gErrorIgnoreLevel = root.kWarning
 #root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.WARNING)
@@ -64,9 +64,10 @@ print '----------------------------------------------------------------------\n'
 # define the dimuon mass variable
 #minMass = 110.
 #maxMass = 135.
-minMass = float(mass.replace("p","."))-20.0
+minMass = float(mass.replace("p","."))-10.0
 maxMass = float(mass.replace("p","."))+10.0
-mMuMu = root.RooRealVar("mMuMu","mMuMu",minMass,maxMass)
+mMuMu = root.RooRealVar("mMuMu","M(#mu#mu) [GeV/c^{2}]",minMass,maxMass)
+
 
 #####################################################################
 # define the Double Gaussian
@@ -91,12 +92,11 @@ widthSG = root.RooRealVar("WidthSG","WidthSG", 1.839226054,0.1,20.0)
  
 pdfMmumuSG = root.RooGaussian("sgaus","sgaus",mMuMu,meanSG,widthSG)
 
-
 #####################################################################
 
 
-def doFit(f,baseName,canvas,outputfile,saveName):
-   
+def doFit(f,baseName,benergy,canvas,outputfile,saveName):
+ 
   widthG1.setVal(7.049779267)
   widthG2.setVal(1.830513636)
   mixGG  .setVal(0.01140210709)
@@ -127,9 +127,49 @@ def doFit(f,baseName,canvas,outputfile,saveName):
   
   pdfMmumu .plotOn(plotMmumu,root.RooFit.LineColor(root.kAzure+2))
 
-  plotMmumu.SetTitle(baseName)
-  if ('hists' in baseName):
-     plotMmumu.SetTitle(baseName[5:])
+  title = ''
+  if (baseName == "Jets01PassPtG10BB"):
+     title = "Non-VBF Presel. Tight, Barrel - Barrel (%s)" % benergy
+  if (baseName == "Jets01PassPtG10BO"):
+     title = "Non-VBF Presel. Tight, Barrel - Overlap (%s)" % benergy
+  if (baseName == "Jets01PassPtG10BE"):
+     title = "Non-VBF Presel. Tight, Barrel - Endcap (%s)" % benergy
+  if (baseName == "Jets01PassPtG10OO"):
+     title = "Non-VBF Presel. Tight, Overlap - Overlap (%s)" % benergy
+  if (baseName == "Jets01PassPtG10OE"):
+     title = "Non-VBF Presel. Tight, Overlap - Endcap (%s)" % benergy
+  if (baseName == "Jets01PassPtG10EE"):
+     title = "Non-VBF Presel. Tight, Endcap - Endcap (%s)" % benergy
+      
+  if (baseName == "Jets01FailPtG10BB"):
+     title = "Non-VBF Presel. Loose, Barrel - Barrel (%s)" % benergy
+  if (baseName == "Jets01FailPtG10BO"):
+     title = "Non-VBF Presel. Loose, Barrel - Overlap (%s)" % benergy
+  if (baseName == "Jets01FailPtG10BE"):
+     title = "Non-VBF Presel. Loose, Barrel - Endcap (%s)" % benergy
+  if (baseName == "Jets01FailPtG10OO"):
+     title = "Non-VBF Presel. Loose, Overlap - Overlap (%s)" % benergy
+  if (baseName == "Jets01FailPtG10OE"):
+     title = "Non-VBF Presel. Loose, Overlap - Endcap (%s)" % benergy
+  if (baseName == "Jets01FailPtG10EE"):
+     title = "Non-VBF Presel. Loose, Endcap - Endcap (%s)" % benergy
+  if (baseName == "Jets01FailPtG10CC"):
+     title = "Non-VBF Presel. Loose, BE+OO (%s)" % benergy
+  if (baseName == "Jets01FailPtG10FF"):
+     title = "Non-VBF Presel. Loose, OE+EE (%s)" % benergy
+  
+  if (baseName == "Jet2CutsVBFPass"):
+     title = "VBF Presel, VBF Tight (%s)" % benergy
+  if (baseName == "Jet2CutsGFPass"):
+     title = "VBF Presel, GF Tight (%s)" % benergy
+  if (baseName == "Jet2CutsFailVBFGF"):
+     title = "VBF Presel, Loose (%s)" % benergy
+
+  plotMmumu.SetTitle(title)
+
+  #plotMmumu.SetTitle(baseName)
+  #if ('hists' in baseName):
+  #   plotMmumu.SetTitle(baseName[5:])
      
   plotMmumu.Draw()
 
@@ -143,7 +183,9 @@ def doFit(f,baseName,canvas,outputfile,saveName):
 
   canvas.Update()
   if saveName != "":
-     canvas.SaveAs(saveName)
+     canvas.SaveAs(saveName+'.png')
+     canvas.SaveAs(saveName+'.pdf')
+     canvas.SaveAs(saveName+'.root')
  
   outfile = open(outputfile+'_DG','w')
           
@@ -205,6 +247,20 @@ def doFit(f,baseName,canvas,outputfile,saveName):
                    )
                 ) 
 
+  # calculate the FWHM
+  #bin1 = mDiMu.FindFirstBinAbove(mDiMu.GetMaximum()/2)
+  #bin2 = mDiMu.FindLastBinAbove (mDiMu.GetMaximum()/2)
+  #print mDiMu.GetBinCenter(bin2), mDiMu.GetBinCenter(bin1)
+  #fwhm = float (mDiMu.GetBinCenter(bin2) - mDiMu.GetBinCenter(bin1));
+  #print fwhm
+  #
+  #print width_narrow
+  #print 2.35482*width_narrow
+
+  print "latex %s & %s & %s & %s \\\\" % (title, width_narrow, 2.35482*width_narrow, calcFWHM(pdfMmumu,mMuMu,115,135,0.01))
+  print "latex \\\\hline" 
+
+   
   #outfile.write('%s %s %s %s %s %s %s %s %s %s %s %s\n'
   #              % (process,mass.replace("p","."),
   #                 meanG1.getVal(),  meanG1.getError(), 
@@ -242,7 +298,7 @@ baseNamesGG = ["Jets01PassPtG10BB",
                "Jets01PassPtG10OO",
                "Jets01PassPtG10OE",
                "Jets01PassPtG10EE",
-
+               
                "Jets01FailPtG10BB",
                "Jets01FailPtG10BO",
                "Jets01FailPtG10BE",
@@ -277,6 +333,6 @@ for baseName in baseNames:
   
 for id in range(0,len(baseNames)):
    if ('hists' in baseNames[id]):
-      doFit(f,baseNames[id],canvases[id],outputfile+'_'+baseNames[id][5:],savefile+'_'+baseNames[id][5:]+'.png')
+      doFit(f,baseNames[id],benergy,canvases[id],outputfile+'_'+baseNames[id][5:],savefile+'_'+baseNames[id][5:])
    else:
-      doFit(f,baseNames[id],canvases[id],outputfile+'_'+baseNames[id],savefile+'_'+baseNames[id]+'.png')
+      doFit(f,baseNames[id],benergy,canvases[id],outputfile+'_'+baseNames[id],savefile+'_'+baseNames[id])
