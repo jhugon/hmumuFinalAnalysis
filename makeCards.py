@@ -176,8 +176,13 @@ def makePDFBakExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
     #ExpMass = root.RooRealVar(channelName+"_ExpMass","ExpMass", 0.0, -1., 1.)
 
     # new values from Anna 13 Jun 2013
-    InvPolMass = root.RooRealVar(channelName+"_InvPolMass","InvPolMass", 91., 30., 105.)
+    InvPolMass = root.RooRealVar(channelName+"_InvPolMass","InvPolMass", 91.187, 30., 105.)
     ExpMass = root.RooRealVar(channelName+"_ExpMass","ExpMass", 0.0, -2., 2.)
+  
+    if ('Jet2CutsVBFPass' in name ):
+      debug += "###  fixing InvPolMass to Z pdg value\n"
+      InvPolMass.setConstant(True)
+
     pdfMmumu = root.RooGenericPdf("bak","TMath::Exp(@0*@2)/(@0-@1)/(@0-@1)",root.RooArgList(dimuonMass,InvPolMass,ExpMass))
 
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
@@ -189,6 +194,8 @@ def makePDFBakExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
 
     for param in rooParamList:
         param.setConstant(not FREEBAKPARAMS)
+        if ('Jet2CutsVBFPass' in name ):
+          InvPolMass.setConstant(True)
 
     if workspaceImportFn != None:
       workspaceImportFn(pdfMmumu)
@@ -1596,20 +1603,20 @@ if __name__ == "__main__":
   #backgroundNames= ["DYJetsToLL","ttbar"]
   backgroundNames= []
   dataDict = {}
-  dataDict["8TeV"] = [
-    "SingleMuRun2012Av1",
-    "SingleMuRun2012Av1Recover",
-    "SingleMuRun2012Bv1",
-    "SingleMuRun2012Cv1",
-    "SingleMuRun2012Cv2",
-    "SingleMuRun2012D",
-  ]
   #dataDict["8TeV"] = [
-  #  "SingleMuRun2012A_22Jan2013v1",
-  #  "SingleMuRun2012B_22Jan2013v1",
-  #  "SingleMuRun2012C_22Jan2013v1",
-  #  "SingleMuRun2012D_22Jan2013v1",
+  #  "SingleMuRun2012Av1",
+  #  "SingleMuRun2012Av1Recover",
+  #  "SingleMuRun2012Bv1",
+  #  "SingleMuRun2012Cv1",
+  #  "SingleMuRun2012Cv2",
+  #  "SingleMuRun2012D",
   #]
+  dataDict["8TeV"] = [
+    "SingleMuRun2012A_22Jan2013v1",
+    "SingleMuRun2012B_22Jan2013v1",
+    "SingleMuRun2012C_22Jan2013v1",
+    "SingleMuRun2012D_22Jan2013v1",
+  ]
   #dataDict["8TeV"] = []
   dataDict["7TeV"] = [
     "SingleMuRun2011Av1",

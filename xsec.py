@@ -3,8 +3,8 @@ import ROOT as root
 import helpers
 
 lumiDict={}
-lumiDict["8TeV"] = 19.39 #2012AARecovBCD
-#lumiDict["8TeV"] = 19.79 #2012ABCD 22Jan2013
+#lumiDict["8TeV"] = 19.39 #2012AARecovBCD
+lumiDict["8TeV"] = 19.79 #2012ABCD 22Jan2013
 lumiDict["7TeV"] = 5.05 #2011AB
 
 #LUMI=0.807 #2012A
