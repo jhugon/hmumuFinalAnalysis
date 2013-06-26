@@ -604,8 +604,74 @@ class NuisanceMap:
           },
         },
       }
+    self.PU = {
+      'gg' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : 1.0222,
+          'Jet2CutsGFPass' : 1.0103,
+          'Jet2CutsFailVBFGF' : 1.0112,
+          },
+        '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : 1.0222,
+          'Jet2CutsGFPass' : 1.0103,
+          'Jet2CutsFailVBFGF' : 1.0112,
+          },
+        },
+      'vbf' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : 1.0207,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : 1.0207,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        },
+      'w' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        },
+      'z' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        },
+      }
 
-    self._keys = ["xs_ggH","xs_vbfH","xs_wH","xs_zH","br_Hmm","lumi","PDF","JES","JER","PUID","MCStat"]
+    self._keys = ["xs_ggH","xs_vbfH","xs_wH","xs_zH","br_Hmm","lumi","PDF","JES","JER","PUID","MCStat","PU"]
   def keys(self):
     return self.data.keys() + self._keys
   def __setitem__(self,key,value):

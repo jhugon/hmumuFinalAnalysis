@@ -335,5 +335,5 @@ if __name__ == "__main__":
           dsLabel = "VBF"
         captionStr = r"%s %s" % (dsLabel,energy.replace("TeV"," TeV"))
         tlatex.DrawLatex(0.04+gStyle.GetPadLeftMargin(),0.88,captionStr)
-        canvas.SaveAs("JetVarVMass_"+error+"_"+dsName+"_"+energy+".png")
+        saveAs(canvas,outDir+"Syst_"+error+"_"+dsName+"_"+energy)
   
