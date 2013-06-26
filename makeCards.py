@@ -48,7 +48,7 @@ USEGPANNA = True
 SIGNALFIT = [110.,140.]
 FREEBAKPARAMS = True
 
-USETREES=True
+USETREES=False
 HISTNAME="mDiMu"
 
 if args.cutOpt:
@@ -1288,9 +1288,10 @@ class DataCardMaker:
       formatList = [nu,"lnN"]
       iParam = 2
       for channel,channelName in zip(self.channels,self.channelNames):
+          channelNameNoEnergy = re.sub(r"[\d]TeV$","",channelName)
           for sigName in channel.sigNames:
             formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-            value = nuisance(nu,sigName)
+            value = nuisance(nu,sigName,channelNameNoEnergy)
             if value == None:
               value = "-"
             formatList.append(value)
@@ -1298,7 +1299,7 @@ class DataCardMaker:
           if True:
               bakName="bak"
               formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-              value = nuisance(nu,bakName)
+              value = nuisance(nu,bakName,channelNameNoEnergy)
               if value == None:
                 value = "-"
               formatList.append(value)
@@ -1306,7 +1307,7 @@ class DataCardMaker:
           else:
             for bakName in self.bakNames:
               formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-              value = nuisance(nu,bakName)
+              value = nuisance(nu,bakName,channelNameNoEnergy)
               if value == None:
                 value = "-"
               formatList.append(value)
@@ -1406,6 +1407,7 @@ if __name__ == "__main__":
   root.gROOT.SetBatch(True)
 
   directory = "input/ptM15GeV/"
+  directory = "/data/uftrig01b/digiovan/baselinePP/input/ptM15GeV_outtree_LoosePUID/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
   #periods = ["8TeV"]
@@ -1465,6 +1467,7 @@ if __name__ == "__main__":
   analyses += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   analyses += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   analyses += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  """
 
 
   # Jet 0+1 Pass All Cats
@@ -1516,6 +1519,7 @@ if __name__ == "__main__":
   ))
  
   
+  """
   # Jets 0,1,>=2 Pass + Fail All
   combinations.append((
     [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+

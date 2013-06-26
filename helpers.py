@@ -714,6 +714,7 @@ class DataMCStack:
     self.tlatex.SetTextFont(root.gStyle.GetLabelFont())
     self.tlatex.SetTextSize(0.05)
     self.tlatex.SetTextAlign(22)
+    self.mcVarHist = None
     setYLimitsAuto = getattr(self,"setYLimitsAuto")
     if ytitle=="":
       ytitle="Events/%s" % (getBinWidthStr(dataHist))
@@ -1042,7 +1043,11 @@ class DataMCStack:
       for i in range(1,xAxis.GetNbins()+1):
         if xAxis.GetBinUpEdge(i) >= r[0] and xAxis.GetBinLowEdge(i) <= r[1]:
           y = self.mcSumHist.GetBinContent(i)
-          y += self.mcSumHist.GetBinError(i)
+          yErrTmp = self.mcSumHist.GetBinError(i)
+          yErr2Tmp = 0.
+          if self.mcVarHist != None:
+            yErr2Tmp = self.mcVarHist.GetBinError(i)
+          y += max(yErrTmp,yErr2Tmp)
           maxY = max(y,maxY)
       maxPoints += [maxY]
     rescale = 0.0
@@ -1061,7 +1066,7 @@ class DataMCStack:
         if rescaleTmp > rescale:
           rescale = rescaleTmp
     if rescale == 0.0:
-        self.ymax = yMaxCurrent
+        self.ymax = yMaxCurrent*1.1
         return
     if self.logy:
       rescale = 10**rescale*5.

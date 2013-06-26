@@ -5,6 +5,7 @@ from helpers import *
 import ROOT as root
 import os
 import sys
+from math import ceil
 
 GLOBALCOUNTER=0
 
@@ -31,7 +32,7 @@ class Dataset:
   def isZombie(self):
     return self.rootFile.IsZombie()
 
-  def getYield(self,cuts,error=""):
+  def getYield(self,cuts,error="",extraWeight=None):
     """
     cuts is the cut string
     error is the string for the error, including the 'Up' or 'Down'
@@ -80,6 +81,8 @@ class Dataset:
     drawStr = varToDraw+" >> "+tmpHistName
     #print drawStr
     cutStr = treeCut("",tmpCUTS)
+    if extraWeight:
+      cutStr = "("+cutStr+")*"+extraWeight
     #print cutStr
     self.tree.Draw(drawStr,cutStr)
     tmp = root.gDirectory.Get(tmpHistName)
@@ -124,7 +127,16 @@ if __name__ == "__main__":
     "Jet2CutsGFPass": massCut+jet2Cuts+" && !(dijetMass > 650. && deltaEtaJets>3.5) && dijetMass>250. && dimuonPt>50.",
     "Jet2CutsFailVBFGF": massCut+jet2Cuts+" && !(dijetMass > 650. && deltaEtaJets>3.5) && !(dijetMass>250. && dimuonPt>50.)"
   }
-  errors = ["JES","JER"]
+  labelsDict = {
+    "Jets01PassPtG10": "Non-VBF Presel. Tight",
+    "Jets01FailPtG10": "Non-VBF Presel. Loose",
+    "Jet2CutsVBFPass": "VBF Presel. VBF Tight",
+    "Jet2CutsGFPass": "VBF Presel. GF Tight",
+    "Jet2CutsFailVBFGF": "VBF Presel. Loose"
+  }
+  errors = ["JES","JER","PUID","MCStat"]
+
+  effReader = EfficiencyReader()
 
   dataDict = {}
   for dsName in datasetNames:
@@ -142,11 +154,24 @@ if __name__ == "__main__":
           cuts = categoryDict[key]
           nominal = ds.getYield(cuts)
           for error in errors:
+            if error == "MCStat":
+              dsNameForReader = dsName.replace("Hmumu","")
+              nomEff, nomErr = effReader(energy,dsNameForReader,key,mass)
+              relStatErr = nomErr/nomEff
+              dataDict[dsName][energy][mass][key][error] = relStatErr
+              continue
             maxDiff = 0.0
             negative = False
             for eSign in ["Up","Down"]:
               e = error+eSign
-              varied = ds.getYield(cuts,e)
+              varied = 0.
+              if error == "PUID":
+                if eSign=="Up":
+                  varied = ds.getYield(cuts,extraWeight="puidUncWeight")
+                else:
+                  continue
+              else:
+                varied = ds.getYield(cuts,e)
               diff = abs(varied-nominal)
               if diff > maxDiff:
                 maxDiff = diff
@@ -158,8 +183,6 @@ if __name__ == "__main__":
 #            print("    {0:20} Nom: {1:>7.2e} Stat Err: {2:>7.2%} {3:>10} Err: {4:<10.2%}".format(key,nominal,1./sqrt(nominal),error,relErr))
             dataDict[dsName][energy][mass][key][error] = relErr
 
-  scriptString = ""
-  
   for energy in energies:
     for dsName in datasetNames:
       print(dsName+" "+energy)
@@ -171,6 +194,40 @@ if __name__ == "__main__":
             relErr = dataDict[dsName][energy][mass][key][error]
             maxErr = absMax(maxErr,relErr)
           print("    {0:20}  Err: {1:<10.2%}".format(error,maxErr))
+
+  print "########################################\n"*3 + "\n"
+
+  for error in errors:
+    tableStr = ""
+    extraCols = len(datasetNames)*len(energies)
+    tableStr += r"\begin{tabular}{|l|"+"c|"*extraCols+r"} \hline" + "\n"
+    tableStr += r"Category &"
+    for ds in datasetNames:
+      dsLabel = "GF"
+      if "vbf" in ds:
+        dsLabel = "VBF"
+      for energy in energies:
+        tableStr += r" %s %s &" % (dsLabel,energy.replace("TeV"," TeV"))
+    tableStr = tableStr[:-1] + r"\\ \hline \hline" + "\n"
+    for cat in sorted(categoryDict.keys()):
+      label = labelsDict[cat]
+      tableStr += label + " &"
+      for ds in datasetNames:
+        for energy in energies:
+          yMax = 0.
+          for mass in masses:
+            y = dataDict[ds][energy][mass][cat][error]
+            yMax = absMax(y,yMax)
+          tableStr +=  " %.2f%% &" % (yMax*100.)
+      tableStr = tableStr[:-1] + r" \\ \hline "+ "\n"
+    tableStr += r"\end{tabular}" + "\n"
+
+    tableStr = tableStr.replace(r"%",r"\%")
+    print
+    print error
+    print
+    print tableStr
+    print
 
   print "########################################\n"*3 + "\n"
 
@@ -213,26 +270,70 @@ if __name__ == "__main__":
 
   canvas = root.TCanvas("c1")
   #canvas.SetLogy(1)
-  axes = root.TH2F("axesHist","",1,100.,160.,1,0.,10.)
-  setHistTitles(axes,"m_{H} [GeV/c^{2}]","Error on Signal Yield [%]")
+  tlatex = root.TLatex()
+  tlatex.SetNDC()
+  tlatex.SetTextFont(root.gStyle.GetLabelFont())
+  tlatex.SetTextSize(0.04)
+  tlatex.SetTextAlign(12)
 
-  graphs = []
   for dsName in datasetNames:
     for energy in energies:
-      axes.Draw()
-      for key,color in zip(sorted(categoryDict.keys()),[1,root.kRed,root.kBlue,root.kGreen]):
-        for error,lineStyle in zip(errors,[1,2]):
-          graph = root.TGraph()
-          graph.SetLineColor(color)
-          graph.SetLineStyle(lineStyle)
-          graph.SetMarkerStyle(0)
-          iPoint = 0
-          for mass in sorted(masses,key=float):
-            relErr = dataDict[dsName][energy][mass][key][error]
-            graph.SetPoint(iPoint,float(mass),relErr*100.)
-            iPoint += 1
-          graph.Draw("l")
-          graphs.append(graph)
-  
-      canvas.SaveAs("JetVarVMass_"+dsName+"_"+energy+".png")
+      for error in errors:
+        maxErr = 0.
+        graphs = []
+        #leg = root.TLegend(0.75,0.66,0.9,0.9)
+        leg = root.TLegend(0.5,0.66,0.9,0.9)
+        leg.SetFillColor(0)
+        leg.SetLineColor(0)
+        for key,color in zip(sorted(categoryDict.keys()),[1,root.kRed,root.kBlue,root.kGreen,root.kOrange+4]):
+            label = labelsDict[key]
+            graph = root.TGraphErrors()
+            graph.SetLineColor(color)
+            graph.SetMarkerColor(color)
+            #graph.SetMarkerStyle(0)
+            iPoint = 0
+            for mass in sorted(masses,key=float):
+              relErr = dataDict[dsName][energy][mass][key][error]
+              graph.SetPoint(iPoint,float(mass),relErr*100.)
+              maxErr = max(maxErr,relErr*100.)
+              #relStatErr = dataDict[dsName][energy][mass][key]["MCStat"]
+              #graph.SetPointError(iPoint,0.,relStatErr*relErr*100.)
+              iPoint += 1
+            graph.Draw("al")
+            leg.AddEntry(graph,label,"ep")
+            graphs.append(graph)
+        maxErr = maxErr*1.8
+        if maxErr > 30.:
+          maxErr = ceil(maxErr/10) * 10
+        elif maxErr > 16.:
+          maxErr = ceil(maxErr/5) * 5
+        elif maxErr > 6.:
+          maxErr = ceil(maxErr/2) * 2
+        elif maxErr > 1.6:
+          maxErr = ceil(maxErr)
+        elif maxErr > 0.6:
+          maxErr = ceil(maxErr*5) / 5.
+        elif maxErr > 0.2:
+          maxErr = ceil(maxErr*10) / 10.
+        elif maxErr > 0.03:
+          maxErr = ceil(maxErr*100) / 100.
+        axes = root.TH2F("axesHist"+dsName+energy+error,"",1,110.,160.,1,0.,maxErr)
+        setHistTitles(axes,"m_{H} [GeV/c^{2}]","Error on Signal Yield [%]")
+        axes.Draw()
+        for graph in graphs:
+          graph.Draw('elp')
+        leg.Draw()
+        tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+        tlatex.SetTextAlign(32)
+        errorLabel = error
+        if errorLabel=="MCStat":
+          errorLabel = "MC Statistics"
+        tlatex.DrawLatex(1.02-gStyle.GetPadRightMargin(),0.96,errorLabel)
+        tlatex.SetTextAlign(12)
+        dsLabel = "GF"
+        if "vbf" in dsName:
+          dsLabel = "VBF"
+        captionStr = r"%s %s" % (dsLabel,energy.replace("TeV"," TeV"))
+        tlatex.DrawLatex(0.04+gStyle.GetPadLeftMargin(),0.88,captionStr)
+        canvas.SaveAs("JetVarVMass_"+error+"_"+dsName+"_"+energy+".png")
   
