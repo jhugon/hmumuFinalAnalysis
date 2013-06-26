@@ -689,18 +689,18 @@ class NuisanceMap:
         },
       'vbf' : {
         '8TeV' : {
-          'Jets01PassPtG10' : None,
-          'Jets01FailPtG10' : None,
-          'Jet2CutsVBFPass' : None,
-          'Jet2CutsGFPass' : None,
-          'Jet2CutsFailVBFGF' : None,
+          'Jets01PassPtG10' : -1.0139,
+          'Jets01FailPtG10' : -1.1585,
+          'Jet2CutsVBFPass' : 1.0313,
+          'Jet2CutsGFPass' : 1.0302,
+          'Jet2CutsFailVBFGF' : -1.0422,
           },
         '7TeV' : {
           'Jets01PassPtG10' : None,
-          'Jets01FailPtG10' : None,
-          'Jet2CutsVBFPass' : None,
-          'Jet2CutsGFPass' : None,
-          'Jet2CutsFailVBFGF' : None,
+          'Jets01FailPtG10' : 1.0552,
+          'Jet2CutsVBFPass' : -1.0487,
+          'Jet2CutsGFPass' : -1.0381,
+          'Jet2CutsFailVBFGF' : 1.0654,
           },
         },
       'w' : {
