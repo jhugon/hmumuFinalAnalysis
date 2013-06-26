@@ -670,8 +670,151 @@ class NuisanceMap:
           },
         },
       }
+    self.QCDScale = {
+      'gg' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : -1.0119,
+          'Jets01FailPtG10' : 1.0438,
+          'Jet2CutsVBFPass' : -1.1585,
+          'Jet2CutsGFPass' : 1.1550,
+          'Jet2CutsFailVBFGF' : -1.0658,
+          },
+        '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : -1.0281,
+          'Jet2CutsVBFPass' : -1.2424,
+          'Jet2CutsGFPass' : -1.1608,
+          'Jet2CutsFailVBFGF' : 1.0615,
+          },
+        },
+      'vbf' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        },
+      'w' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        },
+      'z' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        },
+      }
+    self.UE = {
+      'gg' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : -1.0619,
+          'Jets01FailPtG10' : 1.1687,
+          'Jet2CutsVBFPass' : 1.4228,
+          'Jet2CutsGFPass' : 1.2317,
+          'Jet2CutsFailVBFGF' : -1.0847,
+          },
+        '7TeV' : {
+          'Jets01PassPtG10' : -1.0660,
+          'Jets01FailPtG10' : 1.1588,
+          'Jet2CutsVBFPass' : 1.5915,
+          'Jet2CutsGFPass' : -1.1856,
+          'Jet2CutsFailVBFGF' : -1.0698,
+          },
+        },
+      'vbf' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : -1.0199,
+          'Jets01FailPtG10' : 1.0622,
+          'Jet2CutsVBFPass' : -1.1030,
+          'Jet2CutsGFPass' : -1.0396,
+          'Jet2CutsFailVBFGF' : 1.0429,
+          },
+        '7TeV' : {
+          'Jets01PassPtG10' : -1.0519,
+          'Jets01FailPtG10' : 1.0642,
+          'Jet2CutsVBFPass' : -1.1420,
+          'Jet2CutsGFPass' : -1.1004,
+          'Jet2CutsFailVBFGF' : 1.0762,
+          },
+        },
+      'w' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        },
+      'z' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        },
+      }
 
-    self._keys = ["xs_ggH","xs_vbfH","xs_wH","xs_zH","br_Hmm","lumi","PDF","JES","JER","PUID","MCStat","PU"]
+    # The list of systematics to be applied
+    self._keys = ["xs_ggH","xs_vbfH","xs_wH","xs_zH","br_Hmm","lumi","PDF","JES","JER","PUID","MCStat","PU","UE","QCDScale"]
+    # The list of systematics which are correlated between energies
+    self.keysEnergyCorr = ["xs_ggH","xs_vbfH","xs_wH","xs_zH","br_Hmm","PDF","JER","UE","QCDScale"]
+    # The list of systematics which are not correlated between energies or categories
+    self.keysNotCatCorr = ["MCStat"]
+    # The list of systematics which are not correlated between energies, but correlated w/ categories 
+    # (everything else)
+    self.keysNotEnergyCorr = []
+    for i in self._keys:
+      if not i in self.keysEnergyCorr and not i in self.keysNotCatCorr:
+        self.keysNotEnergyCorr.append(i)
   def keys(self):
     return self.data.keys() + self._keys
   def __setitem__(self,key,value):
@@ -686,6 +829,7 @@ class NuisanceMap:
     prodMode = match.group(1)
     mass = match.group(2)
     energy = match.group(3)
+    goodCorr =  self.goodCorr
     if re.match(r"^xs_.*",nu) and match:
       result = None
       if prodMode not in nu:
@@ -707,25 +851,39 @@ class NuisanceMap:
       return self.lumi[match.group(3)]
     if nu == "PDF" and match:
       category = self.getBaseCat(category)
-      return self.pdf[match.group(1)][energy][category]
+      return goodCorr(self.PDF[match.group(1)][energy][category])
     if nu == "JES" and match:
       category = self.getBaseCat(category)
-      return self.JES[match.group(1)][energy][category]
+      return goodCorr(self.JES[match.group(1)][energy][category])
     if nu == "JER" and match:
       category = self.getBaseCat(category)
-      return self.JER[match.group(1)][energy][category]
+      return goodCorr(self.JER[match.group(1)][energy][category])
     if nu == "MCStat" and match:
       category = self.getBaseCat(category)
-      return self.MCStat[match.group(1)][energy][category]
+      return goodCorr(self.MCStat[match.group(1)][energy][category])
+    if nu == "PU" and match:
+      category = self.getBaseCat(category)
+      return goodCorr(self.PU[match.group(1)][energy][category])
     if nu == "PUID" and match:
       category = self.getBaseCat(category)
-      return self.PUID[match.group(1)][energy][category]
+      return goodCorr(self.PUID[match.group(1)][energy][category])
+    if nu == "QCDScale" and match:
+      category = self.getBaseCat(category)
+      return goodCorr(self.QCDScale[match.group(1)][energy][category])
+    if nu == "UE" and match:
+      category = self.getBaseCat(category)
+      return goodCorr(self.UE[match.group(1)][energy][category])
   def getBaseCat(self,cat):
     categoriesAllCCFF = ["BB","BO","BE","OO","OE","EE","CC","FF"]
     for i in categoriesAllCCFF:
       if cat[-2:] == i:
         return cat[:-2]
     return cat
+  def goodCorr(self,value):
+    if value == None or value > 0.:
+      return value
+    return 2.0 + value
+    #return abs(value)
 
 nuisanceMap = NuisanceMap()
 

@@ -1282,8 +1282,9 @@ class DataCardMaker:
     outfile.write("------------\n")
     outfile.write("# Uncertainties:\n")
 
-    # lnN Uncertainties
-    for nu in nuisance.keys():
+    # lnN Uncertainties:
+    # Correlated between everything:
+    for nu in nuisance.keysEnergyCorr:
       formatString = "{0:<8} {1:^4} "
       formatList = [nu,"lnN"]
       iParam = 2
@@ -1294,28 +1295,84 @@ class DataCardMaker:
             value = nuisance(nu,sigName,channelNameNoEnergy)
             if value == None:
               value = "-"
+            else:
+              value = abs(value)
             formatList.append(value)
             iParam += 1
-          if True:
-              bakName="bak"
-              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-              value = nuisance(nu,bakName,channelNameNoEnergy)
-              if value == None:
-                value = "-"
-              formatList.append(value)
-              iParam += 1
-          else:
-            for bakName in self.bakNames:
-              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-              value = nuisance(nu,bakName,channelNameNoEnergy)
-              if value == None:
-                value = "-"
-              formatList.append(value)
-              iParam += 1
+          # For background
+          formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+          value = "-"
+          formatList.append(value)
+          iParam += 1
       formatString += "\n"
       #print formatString
       #print formatList
       outfile.write(formatString.format(*formatList))
+    # Not Correlated between Energies:
+    for nu in nuisance.keysNotEnergyCorr:
+      energyList = energyStr
+      if type(energyStr) != list:
+        energyList = [energyStr]
+      for energy in energyList:
+        formatString = "{0:<8} {1:^4} "
+        formatList = [nu+"_"+energy,"lnN"]
+        iParam = 2
+        for channel,channelName in zip(self.channels,self.channelNames):
+            channelEnergyMatch = re.search(r"[\d]TeV$",channelName)
+            assert(channelEnergyMatch)
+            channelEnergy = channelEnergyMatch.group(0)
+            print("channelEnergy: %s" % channelEnergy)
+            channelNameNoEnergy = re.sub(r"[\d]TeV$","",channelName)
+            for sigName in channel.sigNames:
+              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+              value = nuisance(nu,sigName,channelNameNoEnergy)
+              if value == None:
+                value = "-"
+              else:
+                value = abs(value)
+              if channelEnergy != energy:
+                value = "-"
+              formatList.append(value)
+              iParam += 1
+            # For background
+            formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+            value = "-"
+            formatList.append(value)
+            iParam += 1
+        formatString += "\n"
+        #print formatString
+        #print formatList
+        outfile.write(formatString.format(*formatList))
+    # Not Correlated between Energies or categories:
+    for nu in nuisance.keysNotCatCorr:
+      for channel,channelName in zip(self.channels,self.channelNames):
+        for sigName in channel.sigNames:
+          formatString = "{0:<8} {1:^4} "
+          formatList = [nu+"_"+channelName,"lnN"]
+          iParam = 2
+          for channel2,channelName2 in zip(self.channels,self.channelNames):
+            channelNameNoEnergy = re.sub(r"[\d]TeV$","",channelName)
+            value = "-"
+            for sigName2 in channel.sigNames:
+              value = "-"
+              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+              if channelName == channelName2 and sigName == sigName2:
+                value = nuisance(nu,sigName,channelNameNoEnergy)
+                if value == None:
+                  value = "-"
+                else:
+                  value = abs(value)
+              formatList.append(value)
+              iParam += 1
+            # For background
+            formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+            value = "-"
+            formatList.append(value)
+            iParam += 1
+          formatString += "\n"
+          #print formatString
+          #print formatList
+          outfile.write(formatString.format(*formatList))
 
     # Bak norm uncertainty
     for channel1,channel1Name in zip(self.channels,self.channelNames):
@@ -1462,13 +1519,14 @@ if __name__ == "__main__":
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
   ## analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  """
   analyses += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   analyses += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   analyses += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   analyses += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  """
   analyses += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   """
-
 
   # Jet 0+1 Pass All Cats
   combinations.append((
@@ -1519,7 +1577,6 @@ if __name__ == "__main__":
   ))
  
   
-  """
   # Jets 0,1,>=2 Pass + Fail All
   combinations.append((
     [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
@@ -1530,6 +1587,7 @@ if __name__ == "__main__":
      ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
     ],"CombSplitAll"
   ))
+  """
  
   ## combinations = []
 
