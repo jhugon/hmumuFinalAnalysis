@@ -539,7 +539,7 @@ class NuisanceMap:
         },
       }
     self.PDF = {
-      'vbf' : {
+      'gg' : {
         '8TeV' : {
           'Jets01PassPtG10' : 1.0799,
           'Jets01FailPtG10' : 1.0844,
