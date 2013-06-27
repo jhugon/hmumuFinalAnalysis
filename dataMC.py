@@ -6,15 +6,15 @@ import ROOT as root
 import os
 import sys
 
-dataDir = "input/V00-01-10/"
-dataDir = "input/JetPt2025/"
+dataDir = "input/ptM15GeV/"
 outDir = "output/"
 
 RUNPERIOD="8TeV"
 LUMI=lumiDict[RUNPERIOD]
 
-scaleHiggsBy = 1000.
+scaleHiggsBy = 500.
 
+JETErrors=True
 LOGY=False
 integralPlot=False
 MCErrors=True
@@ -27,12 +27,12 @@ if PULLTYPE=="adrian1":
 elif PULLTYPE=="ratio":
   ylimitsRatio = [0.5,1.5]
 
+anotateText2 = ""
+
 #anotateText = "80 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"
 #anotateText = "110 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"
-anotateText = "110 GeV < m_{#mu#mu} < 150 GeV"
 #anotateText = "80 GeV < m_{#mu#mu} < 160 GeV"
-#anotateText = "VBF Preselection"
-anotateText2 = ""
+anotateText = "110 GeV < m_{#mu#mu} < 170 GeV"
 
 categoryAnotations ={}
 categoryAnotations['Jets0/'] = "0 Jet"
@@ -57,86 +57,63 @@ histDirs = ["VBFPreselDiMuPtL20/","IncPreselDiMuPtL20/"]
 #histDirs = ["VBFBDTCut/"]
 histDirs = ["","BB/","IncPreselBB/","VBFPresel/"]
 histDirs = ["Jets0/","Jets1/","Jets2/"]
-histDirs = [""]
+histDirs = ["nonVBFPresel/"]
 
-CUTS="dimuonMass < 150. && dimuonMass > 110."
+CUTS="dimuonMass < 170. && dimuonMass > 110."
 
-## New Jet Pt Cuts Justin-Special
-#CUTS += " && ((jetLead_pt > 25.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.4))"
-#CUTS += " && ((jetSub_pt > 25.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.4))"
-#CUTS += " && (abs(jetLead_eta) < 2.4 || jetLead_PUIDDisc > -0.5)"
-#CUTS += " && (abs(jetSub_eta) < 2.4 || jetSub_PUIDDisc > -0.5)"
+anotateText2 = "VBF Preselection"
+CUTS+=" && jetLead_pt>40. && jetSub_pt>30. && ptMiss<40."
+#CUTS+=" && jetLead_pt>40. && jetSub_pt>30."
 
-# New Jet Pt Cuts
-#CUTS += " && ((jetLead_pt > 25.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.4))"
-#CUTS += " && ((jetSub_pt > 25.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.4))"
-#CUTS += " && ((jetLead_pt > 30.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.4))"
-#CUTS += " && ((jetSub_pt > 30.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.4))"
-#CUTS += " && ((jetLead_pt > 25.) || (jetLead_pt > 20. && abs(jetLead_eta)<2.6))"
-#CUTS += " && ((jetSub_pt > 25.) || (jetSub_pt > 20. && abs(jetSub_eta)<2.6))"
-#CUTS += " && jetLead_pt > 30."
-#CUTS += " && jetSub_pt > 30."
-#CUTS += " && jetLead_pt > 20."
-#CUTS += " && jetSub_pt > 20."
-# New Jet Pt Cuts PUID Tight
-#CUTS += " && (jetLead_FullPUIDFlag >= 7)"
-#CUTS += " && (jetSub_FullPUIDFlag >= 7)"
-# New Jet Pt Cuts PUID Medium
-#CUTS += " && (abs(jetLead_eta) < 2.4 || jetLead_FullPUIDFlag >= 6)"
-#CUTS += " && (abs(jetSub_eta) < 2.4 || jetSub_FullPUIDFlag >= 6)"
-# New Jet Pt Cuts PUID Loose
-#CUTS += " && (abs(jetLead_eta) < 2.4 || jetLead_FullPUIDFlag >= 4)"
-#CUTS += " && (abs(jetSub_eta) < 2.4 || jetSub_FullPUIDFlag >= 4)"
+#anotateText2 = "VBF Presel. VBF Tight"
+#CUTS+=" && jetLead_pt>40. && jetSub_pt>30. && ptMiss<40. && dijetMass > 650. && deltaEtaJets>3.5"
 
-## Old Jet Pt Cuts
-#CUTS += " && jetLead_pt > 30. && jetSub_pt > 30."
+#anotateText2 = "VBF Presel. GF Tight"
+#CUTS+=" && jetLead_pt>40. && jetSub_pt>30. && ptMiss<40. && !(dijetMass > 650. && deltaEtaJets>3.5) && dijetMass>250. && dimuonPt>50."
 
-## VBF Presel
-#CUTS += " && deltaEtaJets > 3. && dijetMass > 300."
-## VBF Cut Based 1
-#CUTS += " && deltaEtaJets > 3.5 && dijetMass > 550. && ptMiss < 100."
-## VBF Cut Based 2
-#CUTS += " && deltaEtaJets > 3.4 && dijetMass > 500. && ptMiss < 25."
+#anotateText2 = "VBF Presel. Loose"
+#CUTS+=" && jetLead_pt>40. && jetSub_pt>30. && ptMiss<40. && !(dijetMass > 650. && deltaEtaJets>3.5) && !(dijetMass>250. && dimuonPt>50.)"
 
-## My VBF Split
-#CUTS += " && deltaEtaJets > 3.5 && dijetMass > 650. && ptMiss < 40."
+#anotateText2 = "Non-VBF Preselection"
+#CUTS+=" && !(jetLead_pt>40. && jetSub_pt>30. && ptMiss<40.)"
 
 root.gErrorIgnoreLevel = root.kWarning
 GLOBALCOUNTER=0
 
 histNames = {}
 if True:
-    histNames["dimuonMass"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,150.],"nbins":40}#,"ylimits":[0.1,5e5]}
-    #histNames["dimuonPt"] = {"xlabel":"p_{T,#mu#mu} [GeV/c]","xlimits":[0.0,200.0],"nbins":20}#,"ylimits":[0.1,1e5]}
-    #histNames["dimuonY"] = {"xlabel":"y_{#mu#mu}","xlimits":[-2.2,2.2],"nbins":10}#,"ylimits":[0.1,3e6]}
-    #histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-2.2,2.2],"nbins":10}#,"ylimits":[0.1,3e6]}
+    histNames["dimuonMass"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,170.],"nbins":60}#,"ylimits":[0.1,5e5]}
+    #histNames["dimuonMass"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,170.],"nbins":24}#,"ylimits":[0.1,5e5]}
+    histNames["dimuonPt"] = {"xlabel":"p_{T,#mu#mu} [GeV/c]","xlimits":[0.0,200.0],"nbins":20}#,"ylimits":[0.1,1e5]}
+#    histNames["dimuonY"] = {"xlabel":"y_{#mu#mu}","xlimits":[-2.2,2.2],"nbins":22}#,"ylimits":[0.1,3e6]}
+#    histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1,1],"nbins":20}#,"ylimits":[0.1,3e6]}
     #histNames["muonLead_pt"] = {"xlabel":"Leading Muon p_{T} [GeV/c]","xlimits":[25.,150.],"nbins":25}#,"ylimits":[0.1,3e6]}
     #histNames["muonSub_pt"] = {"xlabel":"Sub-Leading Muon p_{T} [GeV/c]","xlimits":[25.,150.],"nbins":25}#,"ylimits":[0.1,3e6]}
     #histNames["muonLead_eta"] = {"xlabel":"Leading Muon #eta","xlimits":[-2.1,2.1],"nbins":25}#,"ylimits":[0.1,3e6]}
     #histNames["muonSub_eta"] = {"xlabel":"Sub-Leading Muon #eta","xlimits":[-2.1,2.1],"nbins":10}#,"ylimits":[0.1,3e6]}
 
     #histNames["nJets"] = {"xlabel":"N_{jets}","xlimits":[-0.5,5.5],"nbins":6}#,"ylimits":[0.1,3e6]}
-    #histNames["ptMiss"] = {"xlabel":"Missing p_{T} [GeV/c]","xlimits":[0.0,300.0],"nbins":12}#,"ylimits":[0.1,3e6]}
+    histNames["ptMiss"] = {"xlabel":"Missing p_{T} [GeV/c]","xlimits":[0.0,300.0],"nbins":12}#,"ylimits":[0.1,3e6]}
     histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta(j_{1},j_{2})","xlimits":[0.0,7.0],"nbins":14}#,"ylimits":[0.1,3e6]}
 
-    histNames["dijetMass"] = {"xlabel":"m_{jj} [GeV/c^{2}]","xlimits":[0.,1500.],"nbins":30}#,"ylimits":[0.1,5e5]}
+    histNames["dijetMass"] = {"xlabel":"m_{jj} [GeV/c^{2}]","xlimits":[0.,1000.],"nbins":20}#,"ylimits":[0.1,5e5]}
     #histNames["dijetPt"] = {"xlabel":"p_{T,jj} [GeV/c]","xlimits":[0.0,1000.0],"nbins":50}#,"ylimits":[0.1,1e5]}
     #histNames["dijetY"] = {"xlabel":"y_{jj}","xlimits":[-5.0,5.0],"nbins":20}#,"ylimits":[0.1,3e6]}
 
-    histNames["jetLead_pt"] = {"xlabel":"Leading Jet p_{T} [GeV/c]","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
-    histNames["jetSub_pt"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c]","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
-    histNames["jetLead_pt_Central"] = {"xlabel":"Leading Jet p_{T} [GeV/c] (|#eta|<2.4)","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
-    histNames["jetSub_pt_Central"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c] (|#eta|<2.4)","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
-    histNames["jetLead_pt_lowpt_Forward"] = {"xlabel":"Leading Jet p_{T} [GeV/c] (|#eta|>2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
-    histNames["jetSub_pt_lowpt_Forward"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c] (|#eta|>2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
-    histNames["jetLead_pt_lowpt_Forward"] = {"xlabel":"Leading Jet p_{T} [GeV/c] (|#eta|>2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
-    histNames["jetSub_pt_lowpt_Forward"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c] (|#eta|>2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
-    histNames["jetLead_pt_lowpt_Central"] = {"xlabel":"Leading Jet p_{T} [GeV/c] (|#eta|<2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
-    histNames["jetSub_pt_lowpt_Central"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c] (|#eta|<2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
-    histNames["jetLead_eta"] = {"xlabel":"Leading Jet #eta","xlimits":[-5,5],"nbins":20}#,"ylimits":[0.1,3e6]}
-    histNames["jetSub_eta"] = {"xlabel":"Sub-Leading Jet #eta","xlimits":[-5,5],"nbins":20}#,"ylimits":[0.1,3e6]}
-    histNames["jetLead_abseta"] = {"xlabel":"Leading Jet |#eta|","xlimits":[0,5],"nbins":25}#,"ylimits":[0.1,3e6]}
-    histNames["jetSub_abseta"] = {"xlabel":"Sub-Leading Jet |#eta|","xlimits":[0,5],"nbins":25}#,"ylimits":[0.1,3e6]}
+    #histNames["jetLead_pt"] = {"xlabel":"Leading Jet p_{T} [GeV/c]","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
+    #histNames["jetSub_pt"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c]","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
+    #histNames["jetLead_pt_Central"] = {"xlabel":"Leading Jet p_{T} [GeV/c] (|#eta|<2.4)","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
+    #histNames["jetSub_pt_Central"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c] (|#eta|<2.4)","xlimits":[20.,400.],"nbins":19}#,"ylimits":[0.1,3e6]}
+    #histNames["jetLead_pt_lowpt_Forward"] = {"xlabel":"Leading Jet p_{T} [GeV/c] (|#eta|>2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
+    #histNames["jetSub_pt_lowpt_Forward"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c] (|#eta|>2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
+    #histNames["jetLead_pt_lowpt_Forward"] = {"xlabel":"Leading Jet p_{T} [GeV/c] (|#eta|>2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
+    #histNames["jetSub_pt_lowpt_Forward"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c] (|#eta|>2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
+    #histNames["jetLead_pt_lowpt_Central"] = {"xlabel":"Leading Jet p_{T} [GeV/c] (|#eta|<2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
+    #histNames["jetSub_pt_lowpt_Central"] = {"xlabel":"Sub-Leading Jet p_{T} [GeV/c] (|#eta|<2.4)","xlimits":[20.,100.],"nbins":16}#,"ylimits":[0.1,3e6]}
+    #histNames["jetLead_eta"] = {"xlabel":"Leading Jet #eta","xlimits":[-5,5],"nbins":20}#,"ylimits":[0.1,3e6]}
+    #histNames["jetSub_eta"] = {"xlabel":"Sub-Leading Jet #eta","xlimits":[-5,5],"nbins":20}#,"ylimits":[0.1,3e6]}
+    #histNames["jetLead_abseta"] = {"xlabel":"Leading Jet |#eta|","xlimits":[0,5],"nbins":25}#,"ylimits":[0.1,3e6]}
+    #histNames["jetSub_abseta"] = {"xlabel":"Sub-Leading Jet |#eta|","xlimits":[0,5],"nbins":25}#,"ylimits":[0.1,3e6]}
     #histNames["jetLead_PUIDDisc"] = {"xlabel":"Leading Jet PUID","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
     #histNames["jetSub_PUIDDisc"] = {"xlabel":"Sub-Leading Jet PUID","xlimits":[-1,1],"nbins":20,"leg":ulLegendPos}#,"ylimits":[0.1,3e6]}
 
@@ -195,12 +172,14 @@ for i in nEventsMap:
 #######################################
 
 class Dataset:
-  def __init__(self,filename,legendEntry,color,scaleFactor,isData=False,isSignal=False):
+  def __init__(self,filename,legendEntry,color,scaleFactor,isData=False,isSignal=False,error=None):
     self.filename = filename
     self.legendEntry = legendEntry
     self.color = color
     self.scaleFactor = scaleFactor
+    self.error=error
 
+    print "filename: {0}".format(filename)
     if filename != "":
       self.rootFile = root.TFile(filename)
       self.tree = self.rootFile.Get("outtree")
@@ -252,10 +231,45 @@ class Dataset:
         sigNorm = MENormDict[RUNPERIOD]["sigMEPdf"]
         bakNorm = MENormDict[RUNPERIOD]["bakMEPdf"]
         varToDraw = "sigMEPdf*%f/(bakMEPdf*%f+sigMEPdf*%f)" %(sigNorm,bakNorm,sigNorm)
+
+      if self.error!= None:
+       cutList = re.split('\W+', tmpCUTS)
+       varList = re.split('\W+', varToDraw)
+       cutSet = set()
+       varSet = set()
+       for i in cutList:
+         if (not re.match(r'\d+',i)) and (not i==''):
+            if not (i in cutSet):
+              cutSet.add(i)
+       for i in varList:
+         if (not re.match(r'\d+',i)) and (not i==''):
+            if not (i in varSet):
+              varSet.add(i)
+       cutList = list(cutSet)
+       varList = list(varSet)
+       newCutList = [i + "_"+self.error for i in cutList]
+       newVarList = [i + "_"+self.error for i in varList]
+       branchNameList = [i.GetName() for i in self.tree.GetListOfBranches()]
+       for i in reversed(range(len(newCutList))):
+         newVarTmp = newCutList[i]
+         if not (newVarTmp in branchNameList):
+            newCutList.pop(i)
+            cutList.pop(i)
+       for i in reversed(range(len(newVarList))):
+         newVarTmp = newVarList[i]
+         if not (newVarTmp in branchNameList):
+            newVarList.pop(i)
+            varList.pop(i)
+
+       for i,iNew in zip(cutList,newCutList):
+         tmpCUTS = tmpCUTS.replace(i,iNew)
+       for i,iNew in zip(varList,newVarList):
+         varToDraw = varToDraw.replace(i,iNew)
+
       drawStr = varToDraw+" >> "+tmpHistName+"("+str(nbins)+","+str(xlimits[0])+","+str(xlimits[1])+")"
-      print drawStr
+      #print drawStr
       cutStr = treeCut(prefix,tmpCUTS)
-      print cutStr
+      #print cutStr
       self.tree.Draw(drawStr,cutStr)
       tmp = root.gDirectory.Get(tmpHistName)
       if type(tmp) != root.TH1F:
@@ -349,6 +363,28 @@ for i in dataDict[RUNPERIOD]:
         tmp.loadHistos(histNames,prefix=hDir)
       realDatasetList.append(tmp)
 
+bkgErrDatasetMap = {}
+if JETErrors:
+  errorList = ["JESUp","JESDown","JERUp","JERDown"]
+  for e in errorList:
+    bkgErrDatasetListTmp = []
+    for i in backgroundList:
+      i += "_"+RUNPERIOD
+      if i in scaleFactors:
+        if scaleFactors[i]>0.0:
+          filename = dataDir+i+".root"
+          if not os.path.exists(filename):
+              continue
+          tmp = Dataset(filename,getLegendEntry(i),getColor(i),scaleFactors[i],error=e)
+          if tmp.isZombie():
+            print ("Warning: file for dataset %i is Zombie!!" % (i))
+            continue
+          print("Loading Variation Dataset: %s %s" % (i,e))
+          for hDir in histDirs:
+            tmp.loadHistos(histNames,prefix=hDir)
+          bkgErrDatasetListTmp.append(tmp)
+    bkgErrDatasetMap[e] = bkgErrDatasetListTmp
+
 #######################################
 
 canvas = root.TCanvas("canvas")
@@ -400,6 +436,15 @@ for histName in bkgDatasetList[0].hists:
   for realDS in realDatasetList:
     dataHist.Add(realDS.hists[histName])
 
+  mcVariations=None
+  if JETErrors:
+    mcVariations={}
+    for e in bkgErrDatasetMap:
+      bkgErrList = []
+      for ds in bkgErrDatasetMap[e]:
+        bkgErrList.append(ds.hists[histName])
+      mcVariations[e] = bkgErrList
+
   histBaseName = re.sub(r".*/","",histName)
   categoryName = re.sub(r"/.*","",histName)+'/'
   xtitle = histNames[histBaseName]["xlabel"]
@@ -431,7 +476,7 @@ for histName in bkgDatasetList[0].hists:
     yMaxXRanges += [[legRightPos,0.7]]
   else:
     yMaxXRanges += [[0.3,legLeftPos]]
-  stack = DataMCStack(bkgHistList, dataHist, canvas, xtitle,lumi=LUMI,logy=LOGY,xlimits=histNames[histBaseName]["xlimits"],signalsNoStack=sigHistList,integralPlot=integralPlot,energyStr=RUNPERIOD,ylimits=ylimits,ylimitsRatio=ylimitsRatio,pullType=PULLTYPE,doMCErrors=MCErrors,yMaxVals=yMaxVals,yMaxXRanges=yMaxXRanges)
+  stack = DataMCStack(bkgHistList, dataHist, canvas, xtitle,lumi=LUMI,logy=LOGY,xlimits=histNames[histBaseName]["xlimits"],signalsNoStack=sigHistList,integralPlot=integralPlot,energyStr=RUNPERIOD,ylimits=ylimits,ylimitsRatio=ylimitsRatio,pullType=PULLTYPE,doMCErrors=MCErrors,yMaxVals=yMaxVals,yMaxXRanges=yMaxXRanges,mcVariations=mcVariations)
 
 
   leg.Draw("same")
@@ -519,7 +564,7 @@ for histName in bkgDatasetList[0].hists:
     continue
 
   if histNames[histBaseName].has_key("units"):
-    tmpAx = stack.stack.GetYaxis()
+    tmpAx = stack.histForAxis.GetYaxis()
     tmpAx.SetTitle(tmpAx.GetTitle()+histNames[histBaseName]["units"])
 
   saveName = histName.replace("(","")

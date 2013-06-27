@@ -52,11 +52,12 @@ combine -M MaxLikelihoodFit --rMin -50 --rMax 50 --plots --saveNormalizations $F
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
-combine -M ChannelCompatibilityCheck --saveFitResult --rMax 50 $FILENAME >> logCCC
-mv higgsCombineTest.ChannelCompatibilityCheck.*.root ../$FILENAME.CCC.root
+# only positive mu... not really good choice. Commenting it out
+#combine -M ChannelCompatibilityCheck --saveFitResult --rMax 50 $FILENAME >> logCCC
+#mv higgsCombineTest.ChannelCompatibilityCheck.*.root ../$FILENAME.CCC.root
 
-rm -f roostats*
-rm -f higgsCombineTest*.root
+#rm -f roostats*
+#rm -f higgsCombineTest*.root
 
 combine -M ChannelCompatibilityCheck --saveFitResult --rMin -150 --rMax 150 $FILENAME >> logCCC2
 mv higgsCombineTest.ChannelCompatibilityCheck.*.root ../$FILENAME.CCC2.root

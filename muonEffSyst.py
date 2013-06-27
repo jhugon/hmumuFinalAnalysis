@@ -84,6 +84,36 @@ def doSystVariation(tree,baseName,histos,canvas):
 
 #####################################################################
 
+#~48 Charactars Max
+titleMap = {
+
+  "Jets01PassPtG10BB": "Non-VBF Tight BB",
+  "Jets01PassPtG10BO": "Non-VBF Tight BO",
+  "Jets01PassPtG10BE": "Non-VBF Tight BE",
+  "Jets01PassPtG10OO": "Non-VBF Tight OO",
+  "Jets01PassPtG10OE": "Non-VBF Tight OE",
+  "Jets01PassPtG10EE": "Non-VBF Tight EE",
+  "Jets01PassCatAll" : "Non-VBF Tight",
+                               
+  "Jets01FailPtG10BB": "Non-VBF Loose BB",
+  "Jets01FailPtG10BO": "Non-VBF Loose BO",
+  "Jets01FailPtG10BE": "Non-VBF Loose BE",
+  "Jets01FailPtG10OO": "Non-VBF Loose OO",
+  "Jets01FailPtG10OE": "Non-VBF Loose OE",
+  "Jets01FailPtG10EE": "Non-VBF Loose EE",
+  "Jets01FailCatAll" : "Non-VBF Loose",
+                               
+  "Jets01SplitCatAll": "Non-VBF",
+
+
+  "Jet2CutsVBFPass"  :"VBF, VBF Tight",
+  "Jet2CutsGFPass"   :"VBF, GF Tight",
+  "Jet2CutsFailVBFGF":"VBF, Loose",
+
+  "Jet2SplitCutsGFSplit" : "VBF Preselection",
+  "CombSplitAll" : "Combination",
+
+}
            
 # baseline++
 
@@ -92,8 +122,8 @@ jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
 baseNames = []
 
-baseNames += [["Jets01PassPtG10",    "dimuonPt>10." + jet01PtCuts]]
-baseNames += [["Jets01FailPtG10","  !(dimuonPt>10.)"+ jet01PtCuts]]
+baseNames += [["Jets01PassCatAll",    "dimuonPt>10." + jet01PtCuts]]
+baseNames += [["Jets01FailCatAll","  !(dimuonPt>10.)"+ jet01PtCuts]]
 baseNames += [["Jet2CutsVBFPass",    "deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
 baseNames += [["Jet2CutsGFPass",   "!(deltaEtaJets>3.5 && dijetMass>650.) &&  (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 baseNames += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
@@ -104,11 +134,13 @@ hSyst = root.TH2F("hSyst", "%s at %s" % (process, benergy),
                   len(masses),0,len(masses),
                   len(baseNames),0,len(baseNames) )
 
+hSyst.GetXaxis().SetTitle("M_{H} [GeV/c^{2}]")
+
 for id in range(0,len(masses)):
-   hSyst.GetXaxis().SetBinLabel(id+1,masses[id])
+   hSyst.GetXaxis().SetBinLabel( id+1, masses[id] )
 
 for id in range(0,len(baseNames)):
-   hSyst.GetYaxis().SetBinLabel(id+1,baseNames[id][0])
+   hSyst.GetYaxis().SetBinLabel( id+1, titleMap[ baseNames[id][0] ] )
 
 
 
@@ -151,11 +183,15 @@ for massId in range(0,len(masses)):
 
       syst = doSystVariation(tree,baseNames[bId],histos[bId],canvases[bId])
       hSyst.SetBinContent(massId+1,bId+1,syst)
-
+      
 
 
 canvas = root.TCanvas("canvas","",300,300,800,600)
 canvas.SetMargin(0.19,0.05,0.13,0.08)
 canvas.cd()
+
 hSyst.Draw("COLZ TEXT")
+
 canvas.Update()
+canvas.SaveAs("systematics/muonEffSyst/syst_muonSF_" + process + "_" + benergy +".png")
+canvas.SaveAs("systematics/muonEffSyst/syst_muonSF_" + process + "_" + benergy +".pdf")

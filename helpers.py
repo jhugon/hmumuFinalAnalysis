@@ -760,7 +760,7 @@ def makeWeightHist(f1,canvas,leg):
   leg.Draw("same")
 
 class DataMCStack:
-  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",ylimits=[],ylimitsRatio=[],pullType="",doMCErrors=False,showPullStats=False,yMaxVals=[],yMaxXRanges=[]):
+  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",ylimits=[],ylimitsRatio=[],pullType="",doMCErrors=False,showPullStats=False,yMaxVals=[],yMaxXRanges=[],mcVariations=None):
     nBinsX = dataHist.GetNbinsX()
     self.xlimits = xlimits
     self.ylimits = ylimits
@@ -773,6 +773,7 @@ class DataMCStack:
     self.tlatex.SetTextFont(root.gStyle.GetLabelFont())
     self.tlatex.SetTextSize(0.05)
     self.tlatex.SetTextAlign(22)
+    self.mcVarHist = None
     setYLimitsAuto = getattr(self,"setYLimitsAuto")
     if ytitle=="":
       ytitle="Events/%s" % (getBinWidthStr(dataHist))
@@ -797,7 +798,7 @@ class DataMCStack:
     self.signalsNoStack = signalsNoStack
     self.mcHistList = mcHistList
     self.dataHist = dataHist
-  
+
     # Make MC Stack/sumHist
     self.stack = root.THStack()
     self.mcSumHist = dataHist.Clone("mcSumHist"+dataHist.GetName())
@@ -814,8 +815,10 @@ class DataMCStack:
     if showOverflow:
         showHistOverflow(dataHist)
 
+    self.doMCVariations(mcVariations)
+
     self.mcSumHist.SetFillColor(root.kGray+3)
-    self.mcSumHist.SetFillStyle(3013)
+    self.mcSumHist.SetFillStyle(3254)
     self.mcSumHist.SetMarkerSize(0)
     if doMCErrors and drawStack:
         self.mcSumHist.SetLineStyle(0)
@@ -956,6 +959,8 @@ class DataMCStack:
     self.histForAxis.GetXaxis().SetLabelColor(0)
     if drawStack:
       self.stack.Draw("hist same")
+      if self.mcVarHist != None:
+        self.mcVarHist.Draw("e2same")
       if doMCErrors:
         self.mcSumHist.Draw("e2same")
       pad1.Update()
@@ -1097,7 +1102,11 @@ class DataMCStack:
       for i in range(1,xAxis.GetNbins()+1):
         if xAxis.GetBinUpEdge(i) >= r[0] and xAxis.GetBinLowEdge(i) <= r[1]:
           y = self.mcSumHist.GetBinContent(i)
-          y += self.mcSumHist.GetBinError(i)
+          yErrTmp = self.mcSumHist.GetBinError(i)
+          yErr2Tmp = 0.
+          if self.mcVarHist != None:
+            yErr2Tmp = self.mcVarHist.GetBinError(i)
+          y += max(yErrTmp,yErr2Tmp)
           maxY = max(y,maxY)
       maxPoints += [maxY]
     rescale = 0.0
@@ -1116,7 +1125,7 @@ class DataMCStack:
         if rescaleTmp > rescale:
           rescale = rescaleTmp
     if rescale == 0.0:
-        self.ymax = yMaxCurrent
+        self.ymax = yMaxCurrent*1.1
         return
     if self.logy:
       rescale = 10**rescale*5.
@@ -1130,6 +1139,45 @@ class DataMCStack:
     self.mcSumHist.Draw("e1 same")
     #self.canvas.SaveAs("after_"+str(int(time.time()*100))+".png")
     setYLimitsAuto(rangesNDC,yNDCLimits,newYMax)
+
+  def doMCVariations(self,mcVariations):
+    self.mcVarHist = None
+    if mcVariations==None:
+      return
+    errorTypes = set()
+    for key in mcVariations:
+      key = re.sub("Up$","",key)
+      key = re.sub("Down$","",key)
+      if not key in errorTypes:
+        errorTypes.add(key)
+    mcSumVariations = {}
+    for key in mcVariations:
+      if len(mcVariations[key])==0:
+        continue
+      sumHist = mcVariations[key][0].Clone()
+      sumHist.Reset()
+      for h in mcVariations[key]:
+        sumHist.Add(h)
+      mcSumVariations[key] = sumHist
+    self.mcVarHist = self.mcSumHist.Clone(self.mcSumHist.GetName()+"_mcVariations")
+    for iBin in range(1,self.mcVarHist.GetNbinsX()+1):
+      nom = self.mcVarHist.GetBinContent(iBin)
+      err2 = self.mcVarHist.GetBinError(iBin)**2
+      for eBase in errorTypes:
+        errUp = mcSumVariations[eBase+"Up"].GetBinContent(iBin)
+        errDown = mcSumVariations[eBase+"Down"].GetBinContent(iBin)
+        errUp = abs(nom-errUp)
+        errDown = abs(nom-errDown)
+        if errUp > errDown:
+            err2 += errUp**2
+        else:
+            err2 += errDown**2
+      err = sqrt(err2)
+      self.mcVarHist.SetBinError(iBin,err)
+    self.mcVarHist.SetFillColor(root.kRed)
+    self.mcVarHist.SetFillStyle(3245)
+    self.mcVarHist.SetMarkerSize(0)
+    self.mcVarHist.SetLineStyle(0)
 
 class CompareTwoHists:
   def __init__(self, hist1,hist2, canvas, xtitle, ytitle="Events",nDivX=7,nDivPullY=5,xlimits=[],ylimits=[],pullHistRangeY=[0.0,2.0],energyStr="8TeV",lumi=19.4):

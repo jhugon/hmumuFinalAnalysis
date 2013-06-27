@@ -509,6 +509,7 @@ def makePDFSigDG(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,ch
     ## Error time
 
     paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+    print "makePDFSigDG:", paramList
     for i in rooParamList:
        i.setConstant(True)
 
@@ -581,6 +582,18 @@ def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=True)
 
 
     rooParamList = []
+
+    # deal with shape systematic directly here and NOT in
+    # nuisanceMap which for non-shape systematics
+    paramList = [] # this is the list of shapes parameters to vary
+    muonres = {}
+    muonres["7TeV"] = 0.15 # this is a percentage
+    muonres["8TeV"] = 0.03 # this is a percentage  
+
+    muonscale = {}
+    muonscale["7TeV"] = 0.002 # this is a percentage
+    muonscale["8TeV"] = 0.002 # this is a percentage  
+
     if useDG:
       #if len(params.keys())>4:
       # define the Double Gaussian
@@ -617,19 +630,13 @@ def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=True)
                                 name,
                                 gaus1,gaus2,mixGG)
       workspaceImportFn(pdfMmumu)
-      rooParamList += [meanG1,meanG2,widthG1,widthG2,mixGG]
-      #else:
-      #  # define the Single Gaussian for the EE category
-      #  meanSG  = root.RooRealVar(channelName+"_"+name+"_MeanSG", 
-      #                            "MeanSG", 
-      #                            params['meanSG'])
-      #  widthSG = root.RooRealVar(channelName+"_"+name+"_WidthSG",
-      #                            channelName+"_"+name+"_WidthSG", 
-      #                            params['widthSG'])
-      #  pdfMmumu = root.RooGaussian(convertSigName(name),name,dimuonMass,meanSG,widthSG)
-      #  workspaceImportFn(pdfMmumu)
-      #  rooParamList += [meanSG,widthSG]
-      #  debug += "#    using Single Gaussian (Probably for EE)"
+      rooParamList = [meanG1,meanG2,widthG1,widthG2,mixGG]
+
+      # adding a parameter to this list makes it float in the combination tool
+      # for shape systematic uncertainties evaluation
+      paramList.append(Param(meanG2.GetName(),meanG2.getVal(),meanG2.getVal()*muonscale[energy],meanG2.getVal()*muonscale[energy]))
+      paramList.append(Param(widthG2.GetName(),widthG2.getVal(),widthG2.getVal()*muonres[energy],widthG2.getVal()*muonres[energy]))
+
     else:
       mean = root.RooRealVar(channelName+"_"+name+"_Mean",
                              channelName+"_"+name+"_Mean",
@@ -663,8 +670,13 @@ def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=True)
 
     for i in rooParamList:
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+      
+    
+    #print "##########################"
+    #print paramList
+    #print "##########################"
+    return paramList, debug
 
-    return debug
 
 #makePDFSig = makePDFSigCBPlusGaus
 makePDFSig = makePDFSigDG
@@ -855,10 +867,12 @@ class Analysis:
     self.countsBakTotal = self.bakNormTup[0]*self.bakNormTup[1]
     self.debug += tmpDebug
     
-    self.sigParamListList = []
+    self.sigParamList = []
     if USEGPANNA:
       for name in signalNames:
-        self.debug +=  makePDFSigNew(analysis+energyStr,name,dimuonMass,self.higgsMass,wImport)
+        sigParams, sigDebug =  makePDFSigNew(analysis+energyStr,name,dimuonMass,self.higgsMass,wImport)
+        self.sigParamList.append(sigParams)
+        self.debug += sigDebug
     elif True: # Use ggH for non-VBF channels, and VBF shape for VBF
       sigNameToUse = None
       sigHistCounts = []
@@ -870,12 +884,12 @@ class Analysis:
       sigHistRawToUse = self.sigHistsRaw[maxIndex]
       for name in signalNames:
           sigParams, sigDebug, tmpDS = makePDFSig(name,sigHistRawToUse,dimuonMass,minMass,maxMass,wImport,analysis+energyStr)
-          self.sigParamListList.append(sigParams)
+          self.sigParamList.append(sigParams)
           self.debug += sigDebug
     else:
       for name, hist in zip(signalNames,self.sigHistsRaw):
           sigParams, sigDebug, tmpDS = makePDFSig(name,hist,dimuonMass,minMass,maxMass,wImport,analysis+energyStr,forceMean=higgsPeakMean)
-          self.sigParamListList.append(sigParams)
+          self.sigParamList.append(sigParams)
           self.debug += sigDebug
           
     self.xsecSigTotal = 0.0
@@ -1387,10 +1401,11 @@ class DataCardMaker:
       formatString += "\n"
       outfile.write(formatString.format(*formatList))
 
-      # Parameter Uncertainties
+      # Parameter Shape Uncertainties For Signal 
       for channel,channelName in zip(self.channels,self.channelNames):
-        for nu in channel.params:
-          if (not FREEBAKPARAMS) or ("voit" in nu.name):
+        for siglist in channel.sigParamList:
+          for nu in siglist:
+            #print nu
             nuisanceName = nu.name
             formatString = "{0:<25} {1:<6} {2:<10.5g} {3:<10}"
             formatList = [nuisanceName,"param",nu.nominal,nu.getErrString()]
@@ -1443,6 +1458,7 @@ if __name__ == "__main__":
   root.gROOT.SetBatch(True)
 
   directory = "input/ptM15GeV/"
+  #directory = "/data/uftrig01b/digiovan/baselinePP/input/ptM15GeV_outtree_LoosePUID/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
   #periods = ["8TeV"]
@@ -1497,7 +1513,7 @@ if __name__ == "__main__":
   jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
-  ## analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  #analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
   analyses += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   analyses += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   analyses += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
@@ -1553,7 +1569,6 @@ if __name__ == "__main__":
     ],"Jet2SplitCutsGFSplit"
   ))
  
-  
   # Jets 0,1,>=2 Pass + Fail All
   combinations.append((
     [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
