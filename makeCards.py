@@ -48,7 +48,7 @@ USEGPANNA = True
 SIGNALFIT = [110.,140.]
 FREEBAKPARAMS = True
 
-USETREES=True
+USETREES=False
 HISTNAME="mDiMu"
 
 if args.cutOpt:
@@ -1372,7 +1372,7 @@ class DataCardMaker:
             channelEnergyMatch = re.search(r"[\d]TeV$",channelName)
             assert(channelEnergyMatch)
             channelEnergy = channelEnergyMatch.group(0)
-            print("channelEnergy: %s" % channelEnergy)
+            #print("channelEnergy: %s" % channelEnergy)
             channelNameNoEnergy = re.sub(r"[\d]TeV$","",channelName)
             for sigName in channel.sigNames:
               formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
@@ -1516,7 +1516,7 @@ if __name__ == "__main__":
   root.gROOT.SetBatch(True)
 
   directory = "input/ptM15GeV/"
-  #directory = "/data/uftrig01b/digiovan/baselinePP/input/ptM15GeV_outtree_LoosePUID/"
+  directory = "/data/uftrig01b/digiovan/baselinePP/input/ptM15GeV_outtree_LoosePUID/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
   #periods = ["8TeV"]
