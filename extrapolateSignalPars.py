@@ -59,64 +59,64 @@ if (process == 'GluGlu' and 'VBF' in cat):
 
 if (cat == "Jets01PassPtG10BB"):
    baseName = "Jets01PassPtG10BB"
-   title = "Jet 0+1 cat p_{T}(#mu#mu)>10 GeV/c, Barrel - Barrel (%s)" % benergy
+   title = "Non-VBF Presel. Tight, Barrel - Barrel (%s)" % benergy
 if (cat == "Jets01PassPtG10BO"):
    baseName = "Jets01PassPtG10BO"
-   title = "Jet 0+1 cat p_{T}(#mu#mu)>10 GeV/c, Barrel - Overlap (%s)" % benergy
+   title = "Non-VBF Presel. Tight, Barrel - Overlap (%s)" % benergy
 if (cat == "Jets01PassPtG10BE"):
    baseName = "Jets01PassPtG10BE"
-   title = "Jet 0+1 cat p_{T}(#mu#mu)>10 GeV/c, Barrel - Endcap (%s)" % benergy
+   title = "Non-VBF Presel. Tight, Barrel - Endcap (%s)" % benergy
 if (cat == "Jets01PassPtG10OO"):
    baseName = "Jets01PassPtG10OO"
-   title = "Jet 0+1 cat p_{T}(#mu#mu)>10 GeV/c, Overlap - Overlap (%s)" % benergy
+   title = "Non-VBF Presel. Tight, Overlap - Overlap (%s)" % benergy
 if (cat == "Jets01PassPtG10OE"):
    baseName = "Jets01PassPtG10OE"
-   title = "Jet 0+1 cat p_{T}(#mu#mu)>10 GeV/c, Overlap - Endcap (%s)" % benergy
+   title = "Non-VBF Presel. Tight, Overlap - Endcap (%s)" % benergy
 if (cat == "Jets01PassPtG10EE"):
    baseName = "Jets01PassPtG10EE"
-   title = "Jet 0+1 cat p_{T}(#mu#mu)>10 GeV/c, Endcap - Endcap (%s)" % benergy
+   title = "Non-VBF Presel. Tight, Endcap - Endcap (%s)" % benergy
 if (cat == "Jets01PassPtG10CC"):
    baseName = "Jets01PassPtG10CC"
-   title = "Jet 0+1 cat p_{T}(#mu#mu)>10 GeV/c, BE+OO (%s)" % benergy
+   title = "Non-VBF Presel. Tight, BE+OO (%s)" % benergy
 if (cat == "Jets01PassPtG10FF"):
    baseName = "Jets01PassPtG10FF"
-   title = "Jet 0+1 cat p_{T}(#mu#mu)>10 GeV/c, OE+EE (%s)" % benergy
+   title = "Non-VBF Presel. Tight, OE+EE (%s)" % benergy
       
 if (cat == "Jets01FailPtG10BB"):
    baseName = "Jets01FailPtG10BB"
-   title = "Jet 0+1 cat p_{T}(#mu#mu)<10 GeV/c, Barrel - Barrel (%s)" % benergy
+   title = "Non-VBF Presel. Loose, Barrel - Barrel (%s)" % benergy
 if (cat == "Jets01FailPtG10BO"):
    baseName = "Jets01FailPtG10BO"
-   title = "Jet 0+1 cat p_{T}(#mu#mu)<10 GeV/c, Barrel - Overlap (%s)" % benergy
+   title = "Non-VBF Presel. Loose, Barrel - Overlap (%s)" % benergy
 if (cat == "Jets01FailPtG10BE"):
    baseName = "Jets01FailPtG10BE"
-   title = "Jet 0+1 cat p_{T}(#mu#mu)<10 GeV/c, Barrel - Endcap (%s)" % benergy
+   title = "Non-VBF Presel. Loose, Barrel - Endcap (%s)" % benergy
 if (cat == "Jets01FailPtG10OO"):
    baseName = "Jets01FailPtG10OO"
-   title = "Jet 0+1 cat p_{T}(#mu#mu)<10 GeV/c, Overlap - Overlap (%s)" % benergy
+   title = "Non-VBF Presel. Loose, Overlap - Overlap (%s)" % benergy
 if (cat == "Jets01FailPtG10OE"):
    baseName = "Jets01FailPtG10OE"
-   title = "Jet 0+1 cat p_{T}(#mu#mu)<10 GeV/c, Overlap - Endcap (%s)" % benergy
+   title = "Non-VBF Presel. Loose, Overlap - Endcap (%s)" % benergy
 if (cat == "Jets01FailPtG10EE"):
    baseName = "Jets01FailPtG10EE"
-   title = "Jet 0+1 cat p_{T}(#mu#mu)<10 GeV/c, Endcap - Endcap (%s)" % benergy
+   title = "Non-VBF Presel. Loose, Endcap - Endcap (%s)" % benergy
 if (cat == "Jets01FailPtG10CC"):
    baseName = "Jets01FailPtG10CC"
-   title = "Jet 0+1 cat p_{T}(#mu#mu)<10 GeV/c, BE+OO (%s)" % benergy
+   title = "Non-VBF Presel. Loose, BE+OO (%s)" % benergy
 if (cat == "Jets01FailPtG10FF"):
    baseName = "Jets01FailPtG10FF"
-   title = "Jet 0+1 cat p_{T}(#mu#mu)<10 GeV/c, OE+EE (%s)" % benergy
+   title = "Non-VBF Presel. Loose, OE+EE (%s)" % benergy
 
 
 if (cat == "Jet2CutsVBFPass"):
    baseName = "Jet2CutsVBFPass"
-   title = ">=2 Jets, VBF Pass (%s)" % benergy
+   title = "VBF Presel, VBF Tight (%s)" % benergy
 if (cat == "Jet2CutsGFPass"):
    baseName = "Jet2CutsGFPass"
-   title = ">=2 Jets, VBF Fail, GG+VH Pass (%s)" % benergy
+   title = "VBF Presel, GF Tight (%s)" % benergy
 if (cat == "Jet2CutsFailVBFGF"):
    baseName = "Jet2CutsFailVBFGF"
-   title = ">=2 Jets, VBF Fail, GG+VH Fail (%s)" % benergy
+   title = "VBF Presel, Loose (%s)" % benergy
 
 if (baseName == None):
    print "No category defined -> exiting...\n"

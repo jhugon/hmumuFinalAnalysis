@@ -3,7 +3,8 @@ import ROOT as root
 import helpers
 
 lumiDict={}
-lumiDict["8TeV"] = 19.39 #2012AARecovBCD
+#lumiDict["8TeV"] = 19.39 #2012AARecovBCD
+lumiDict["8TeV"] = 19.79 #2012ABCD 22Jan2013
 lumiDict["7TeV"] = 5.05 #2011AB
 
 #LUMI=0.807 #2012A
@@ -171,13 +172,21 @@ signalList = [
 
 dataDict = {}
 
+#dataDict["8TeV"] = [
+#    "SingleMuRun2012Av1",
+#    "SingleMuRun2012Av1Recover",
+#    "SingleMuRun2012Bv1",
+#    "SingleMuRun2012Cv1",
+#    "SingleMuRun2012Cv2",
+#    "SingleMuRun2012D"
+#]
+
+# Test with the new ReReco
 dataDict["8TeV"] = [
-    "SingleMuRun2012Av1",
-    "SingleMuRun2012Av1Recover",
-    "SingleMuRun2012Bv1",
-    "SingleMuRun2012Cv1",
-    "SingleMuRun2012Cv2",
-    "SingleMuRun2012D"
+    "SingleMuRun2012A_22Jan2013v1",
+    "SingleMuRun2012B_22Jan2013v1",
+    "SingleMuRun2012C_22Jan2013v1",
+    "SingleMuRun2012D_22Jan2013v1"
 ]
 
 dataDict["7TeV"] = [

@@ -1,0 +1,23 @@
+
+# muon efficiency systematic 
+# there are no scale factors for trigger at 7 TeV
+# so I am using the 8TeV systematics for the 7 TeV 
+# as well 
+
+python -i muonEffSyst.py GluGlu 8TeV
+python -i muonEffSyst.py VBF 8TeV
+
+# python -i muonEffSyst.py GluGlu 7TeV
+# python -i muonEffSyst.py VBF 7TeV
+
+
+
+# muon momentum resolution systematic 
+
+python -i muonMomScaleSyst.py GluGlu 8TeV
+python -i muonMomScaleSyst.py VBF 8TeV
+
+python -i muonMomScaleSyst.py GluGlu 7TeV
+python -i muonMomScaleSyst.py VBF 7TeV
+
+

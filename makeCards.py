@@ -48,7 +48,7 @@ USEGPANNA = True
 SIGNALFIT = [110.,140.]
 FREEBAKPARAMS = True
 
-USETREES=False
+USETREES=True
 HISTNAME="mDiMu"
 
 if args.cutOpt:
@@ -99,10 +99,10 @@ class Param:
     else:
         return "-{0:.5g}/+{1:.5g}".format(self.lowErr,self.highErr)
 
-def makePDFBakExpLog(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,mMuMuZ=None,rooDatasetZ=None):
+def makePDFBakExpLog(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None):
     debug = ""
     debug += "### makePDFBakExpLog: "+name+"\n"
-    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
     debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
 
     channelName = name
@@ -110,7 +110,7 @@ def makePDFBakExpLog(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,mMu
     p1 = root.RooRealVar(channelName+"_p1","p1", 0.0, -1., 1.)
     p2 = root.RooRealVar(channelName+"_p2","p2", 0.0, -1., 1.)
     p3 = root.RooRealVar(channelName+"_p3","p3", 0.0, -1., 1.)
-    pdfMmumu = root.RooGenericPdf("bak","TMath::Exp(@0*@0*@1 + @0*@2 + @3*TMath::Log(@0) )",root.RooArgList(mMuMu,p1,p2,p3))
+    pdfMmumu = root.RooGenericPdf("bak","TMath::Exp(@0*@0*@1 + @0*@2 + @3*TMath::Log(@0) )",root.RooArgList(dimuonMass,p1,p2,p3))
 
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
@@ -129,10 +129,10 @@ def makePDFBakExpLog(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,mMu
     #Norm Time
     bakNormTup = None
     if True:
-      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
-      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
-      signalRangeList = getRooVarRange(mMuMu,"signal")
-      getSidebandString = "mMuMu < {0} || mMuMu > {1}".format(*signalRangeList)
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(dimuonMass,"signal")
+      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
       nSideband =  rooDataset.sumEntries(getSidebandString)
       nData =  rooDataset.sumEntries()
       bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
@@ -149,7 +149,7 @@ def makePDFBakExpLog(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,mMu
     #  workspaceImportFn(rooDataset2)
 
 #    ## Debug Time
-#    frame = mMuMu.frame()
+#    frame = dimuonMass.frame()
 #    frame.SetName("bak_Plot")
 #    rooDataset.plotOn(frame)
 #    pdfMmumu.plotOn(frame)
@@ -164,17 +164,26 @@ def makePDFBakExpLog(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,mMu
     return paramList, bakNormTup, debug
 
 
-def makePDFBakExpMOverSq(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,mMuMuZ=None,rooDatasetZ=None):
+def makePDFBakExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None):
     debug = ""
     debug += "### makePDFBakExpMOverSq: "+name+"\n"
-    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
     debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
 
     channelName = name
 
-    InvPolMass = root.RooRealVar(channelName+"_InvPolMass","InvPolMass", 91., 70., 95.)
-    ExpMass = root.RooRealVar(channelName+"_ExpMass","ExpMass", 0.0, -1., 1.)
-    pdfMmumu = root.RooGenericPdf("bak","TMath::Exp(@0*@2)/(@0-@1)/(@0-@1)",root.RooArgList(mMuMu,InvPolMass,ExpMass))
+    #InvPolMass = root.RooRealVar(channelName+"_InvPolMass","InvPolMass", 91., 70., 95.)
+    #ExpMass = root.RooRealVar(channelName+"_ExpMass","ExpMass", 0.0, -1., 1.)
+
+    # new values from Anna 13 Jun 2013
+    InvPolMass = root.RooRealVar(channelName+"_InvPolMass","InvPolMass", 91.187, 30., 105.)
+    ExpMass = root.RooRealVar(channelName+"_ExpMass","ExpMass", 0.0, -2., 2.)
+  
+    if ('Jet2CutsVBFPass' in name ):
+      debug += "###  fixing InvPolMass to Z pdg value\n"
+      InvPolMass.setConstant(True)
+
+    pdfMmumu = root.RooGenericPdf("bak","TMath::Exp(@0*@2)/(@0-@1)/(@0-@1)",root.RooArgList(dimuonMass,InvPolMass,ExpMass))
 
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
@@ -185,6 +194,8 @@ def makePDFBakExpMOverSq(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn
 
     for param in rooParamList:
         param.setConstant(not FREEBAKPARAMS)
+        if ('Jet2CutsVBFPass' in name ):
+          InvPolMass.setConstant(True)
 
     if workspaceImportFn != None:
       workspaceImportFn(pdfMmumu)
@@ -193,10 +204,10 @@ def makePDFBakExpMOverSq(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn
     #Norm Time
     bakNormTup = None
     if True:
-      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
-      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
-      signalRangeList = getRooVarRange(mMuMu,"signal")
-      getSidebandString = "mMuMu < {0} || mMuMu > {1}".format(*signalRangeList)
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(dimuonMass,"signal")
+      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
       nSideband =  rooDataset.sumEntries(getSidebandString)
       nData =  rooDataset.sumEntries()
       bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
@@ -213,7 +224,7 @@ def makePDFBakExpMOverSq(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn
     #  workspaceImportFn(rooDataset2)
 
 #    ## Debug Time
-#    frame = mMuMu.frame()
+#    frame = dimuonMass.frame()
 #    frame.SetName("bak_Plot")
 #    rooDataset.plotOn(frame)
 #    pdfMmumu.plotOn(frame)
@@ -227,16 +238,16 @@ def makePDFBakExpMOverSq(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn
 
     return paramList, bakNormTup, debug
 
-def makePDFBakMOverSq(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,mMuMuZ=None,rooDatasetZ=None):
+def makePDFBakMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None):
     debug = ""
     debug += "### makePDFBakMOverSq: "+name+"\n"
-    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
     debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
 
     channelName = name
 
     InvPolMass = root.RooRealVar(channelName+"_InvPolMass","InvPolMass", 91., 70., 95.)
-    pdfMmumu = root.RooGenericPdf("bak","@0/(@0-@1)/(@0-@1)",root.RooArgList(mMuMu,InvPolMass))
+    pdfMmumu = root.RooGenericPdf("bak","@0/(@0-@1)/(@0-@1)",root.RooArgList(dimuonMass,InvPolMass))
 
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
@@ -255,10 +266,10 @@ def makePDFBakMOverSq(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,mM
     #Norm Time
     bakNormTup = None
     if True:
-      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
-      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
-      signalRangeList = getRooVarRange(mMuMu,"signal")
-      getSidebandString = "mMuMu < {0} || mMuMu > {1}".format(*signalRangeList)
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(dimuonMass,"signal")
+      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
       nSideband =  rooDataset.sumEntries(getSidebandString)
       nData =  rooDataset.sumEntries()
       bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
@@ -275,7 +286,7 @@ def makePDFBakMOverSq(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,mM
     #  workspaceImportFn(rooDataset2)
 
 #    ## Debug Time
-#    frame = mMuMu.frame()
+#    frame = dimuonMass.frame()
 #    frame.SetName("bak_Plot")
 #    rooDataset.plotOn(frame)
 #    pdfMmumu.plotOn(frame)
@@ -291,10 +302,10 @@ def makePDFBakMOverSq(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,mM
 
 
 
-def makePDFBakOld(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,mMuMuZ=None,rooDatasetZ=None):
+def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None):
     debug = ""
     debug += "### makePDFBakOld: "+name+"\n"
-    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
     debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
 
     channelName = name
@@ -303,28 +314,28 @@ def makePDFBakOld(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,mMuMuZ
     voitWidth.setConstant(True)
     voitmZ = root.RooRealVar(channelName+"_voitmZ","voitmZ",85,95)
     voitSig = root.RooRealVar(channelName+"_voitSig","voitSig",0.0,30.0)
-    voitMmumu = root.RooVoigtian("bak_voitMmumu","voitMmumu",mMuMu,voitmZ,voitWidth,voitSig)
+    voitMmumu = root.RooVoigtian("bak_voitMmumu","voitMmumu",dimuonMass,voitmZ,voitWidth,voitSig)
 
     expParam = root.RooRealVar(channelName+"_expParam","expParam",-1,0)
-    expMmumu = root.RooExponential("bak_expMmumu","expMmumu",mMuMu,expParam)
+    expMmumu = root.RooExponential("bak_expMmumu","expMmumu",dimuonMass,expParam)
 
     mixParam = root.RooRealVar(channelName+"_mixParam","mixParam",0,1)
 
     pdfMmumu = root.RooAddPdf("bak","bak",root.RooArgList(voitMmumu,expMmumu),root.RooArgList(mixParam))
 
     # Just For Z-Peak Part
-    assert(mMuMuZ != None)
+    assert(dimuonMassZ != None)
     assert(rooDatasetZ != None)
-    voitMmumuZ = root.RooVoigtian("bak_voitMmumuZ","voitMmumuZ",mMuMuZ,voitmZ,voitWidth,voitSig)
+    voitMmumuZ = root.RooVoigtian("bak_voitMmumuZ","voitMmumuZ",dimuonMassZ,voitmZ,voitWidth,voitSig)
 
     voitMmumuZ.fitTo(rooDatasetZ,root.RooFit.SumW2Error(False),PRINTLEVEL)
     voitmZ.setConstant(True)
     voitSig.setConstant(True)
 
 #    ## Debug Time
-#    frameZ = mMuMuZ.frame()
+#    frameZ = dimuonMassZ.frame()
 #    frameZ.SetName("bak_PlotZ")
-#    mMuMuZRooDataHist.plotOn(frameZ)
+#    dimuonMassZRooDataHist.plotOn(frameZ)
 #    voitMmumuZ.plotOn(frameZ)
 #    canvas = root.TCanvas()
 #    frameZ.Draw()
@@ -354,10 +365,10 @@ def makePDFBakOld(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,mMuMuZ
     #Norm Time
     bakNormTup = None
     if True:
-      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal,low,high"))
-      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(mMuMu),root.RooFit.Range("signal"))
-      signalRangeList = getRooVarRange(mMuMu,"signal")
-      getSidebandString = "mMuMu < {0} || mMuMu > {1}".format(*signalRangeList)
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(dimuonMass,"signal")
+      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
       nSideband =  rooDataset.sumEntries(getSidebandString)
       nData =  rooDataset.sumEntries()
       bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
@@ -374,7 +385,7 @@ def makePDFBakOld(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,mMuMuZ
     #  workspaceImportFn(rooDataset2)
 
 #    ## Debug Time
-#    frame = mMuMu.frame()
+#    frame = dimuonMass.frame()
 #    frame.SetName("bak_Plot")
 #    rooDataset.plotOn(frame)
 #    pdfMmumu.plotOn(frame)
@@ -388,11 +399,11 @@ def makePDFBakOld(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,mMuMuZ
 
     return paramList, bakNormTup, debug
 
-def makePDFSigCBPlusGaus(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,channelName,forceMean=-1.,sigInject=0):
+def makePDFSigCBPlusGaus(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,channelName,forceMean=-1.,sigInject=0):
 
     debug = ""
     debug += "### makePDFSigCBPlusGaus: "+channelName+": "+name+"\n"
-    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
     debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
 
     mean = root.RooRealVar(channelName+"_"+name+"_Mean",channelName+"_"+name+"_Mean",125.,100.,150.)
@@ -401,8 +412,8 @@ def makePDFSigCBPlusGaus(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn
     alpha = root.RooRealVar(channelName+"_"+name+"_Alpha",channelName+"_"+name+"_Alpha",1.0,0.1,10.0)
     n = root.RooRealVar(channelName+"_"+name+"_n",channelName+"_"+name+"_n",1.0,0.1,10.0)
     mix = root.RooRealVar(channelName+"_"+name+"_mix",channelName+"_"+name+"_mix",0.5,0.0,1.0)
-    cb = root.RooCBShape(name+"_CB",name+"_CB",mMuMu,mean,width,alpha,n)
-    gaus = root.RooGaussian(name+"_Gaus",name+"_Gaus",mMuMu,mean,width2)
+    cb = root.RooCBShape(name+"_CB",name+"_CB",dimuonMass,mean,width,alpha,n)
+    gaus = root.RooGaussian(name+"_Gaus",name+"_Gaus",dimuonMass,mean,width2)
     pdfMmumu = root.RooAddPdf(convertSigName(name),convertSigName(name),cb,gaus,mix)
     
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True),root.RooFit.Range("signalfit"))
@@ -429,7 +440,7 @@ def makePDFSigCBPlusGaus(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn
       workspaceImportFn(fr)
 
     ## Debug Time
-#    frame = mMuMu.frame()
+#    frame = dimuonMass.frame()
 #    frame.SetName(name+"_Plot")
 #    rooDataset.plotOn(frame)
 #    pdfMmumu.plotOn(frame)
@@ -443,15 +454,15 @@ def makePDFSigCBPlusGaus(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn
 
     sigInjectDataset = None
     if sigInject > 0:
-      sigInjectDataset = pdfMmumu.generate(root.RooArgSet(mMuMu),sigInject,False)
+      sigInjectDataset = pdfMmumu.generate(root.RooArgSet(dimuonMass),sigInject,False)
 
     return paramList, debug, sigInjectDataset
 
-def makePDFSigDG(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,channelName,forceMean=-1.,sigInject=0):
+def makePDFSigDG(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,channelName,forceMean=-1.,sigInject=0):
 
     debug = ""
     debug += "### makePDFSigDG: "+channelName+": "+name+"\n"
-    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,mMuMu.GetName(),maxMass)
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
     debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
 
     rooParamList = []
@@ -475,10 +486,10 @@ def makePDFSigDG(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,channel
                             0.5,0.,1.)
     gaus1 = root.RooGaussian(channelName+"_"+name+"_gaus1",
                              channelName+"_"+name+"_gaus1",
-                             mMuMu,meanG1,widthG1)
+                             dimuonMass,meanG1,widthG1)
     gaus2 = root.RooGaussian(channelName+"_"+name+"_gaus2",
                              channelName+"_"+name+"_gaus2",
-                             mMuMu,meanG2,widthG2)
+                             dimuonMass,meanG2,widthG2)
     pdfMmumu = root.RooAddPdf(convertSigName(name),
                               name,
                               gaus1,gaus2,mixGG)
@@ -498,6 +509,7 @@ def makePDFSigDG(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,channel
     ## Error time
 
     paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+    print "makePDFSigDG:", paramList
     for i in rooParamList:
        i.setConstant(True)
 
@@ -507,7 +519,7 @@ def makePDFSigDG(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,channel
       workspaceImportFn(fr)
 
     ## Debug Time
-#    frame = mMuMu.frame()
+#    frame = dimuonMass.frame()
 #    frame.SetName(name+"_Plot")
 #    rooDataset.plotOn(frame)
 #    pdfMmumu.plotOn(frame)
@@ -521,12 +533,12 @@ def makePDFSigDG(name,rooDataset,mMuMu,minMass,maxMass,workspaceImportFn,channel
 
     sigInjectDataset = None
     if sigInject > 0:
-      sigInjectDataset = pdfMmumu.generate(root.RooArgSet(mMuMu),sigInject,False)
+      sigInjectDataset = pdfMmumu.generate(root.RooArgSet(dimuonMass),sigInject,False)
 
     return paramList, debug, sigInjectDataset
 
-def makePDFSigNew(channelName,name,mMuMu,mass,workspaceImportFn,useDG=True):
-#def makePDFSigNew(channelName,name,mMuMu,mass,workspaceImportFn,useDG=False):
+def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=True):
+#def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=False):
 
     debug = ""
     debug += "### makePDFSigNew: "+channelName+": "+name+"\n"
@@ -570,6 +582,18 @@ def makePDFSigNew(channelName,name,mMuMu,mass,workspaceImportFn,useDG=True):
 
 
     rooParamList = []
+
+    # deal with shape systematic directly here and NOT in
+    # nuisanceMap which for non-shape systematics
+    paramList = [] # this is the list of shapes parameters to vary
+    muonres = {}
+    muonres["7TeV"] = 0.15 # this is a percentage
+    muonres["8TeV"] = 0.03 # this is a percentage  
+
+    muonscale = {}
+    muonscale["7TeV"] = 0.002 # this is a percentage
+    muonscale["8TeV"] = 0.002 # this is a percentage  
+
     if useDG:
       #if len(params.keys())>4:
       # define the Double Gaussian
@@ -598,27 +622,21 @@ def makePDFSigNew(channelName,name,mMuMu,mass,workspaceImportFn,useDG=True):
       #params['mixGG'])
       gaus1 = root.RooGaussian(channelName+"_"+name+"_gaus1",
                                channelName+"_"+name+"_gaus1",
-                               mMuMu,meanG1,widthG1)
+                               dimuonMass,meanG1,widthG1)
       gaus2 = root.RooGaussian(channelName+"_"+name+"_gaus2",
                                channelName+"_"+name+"_gaus2",
-                               mMuMu,meanG2,widthG2)
+                               dimuonMass,meanG2,widthG2)
       pdfMmumu = root.RooAddPdf(convertSigName(name),
                                 name,
                                 gaus1,gaus2,mixGG)
       workspaceImportFn(pdfMmumu)
-      rooParamList += [meanG1,meanG2,widthG1,widthG2,mixGG]
-      #else:
-      #  # define the Single Gaussian for the EE category
-      #  meanSG  = root.RooRealVar(channelName+"_"+name+"_MeanSG", 
-      #                            "MeanSG", 
-      #                            params['meanSG'])
-      #  widthSG = root.RooRealVar(channelName+"_"+name+"_WidthSG",
-      #                            channelName+"_"+name+"_WidthSG", 
-      #                            params['widthSG'])
-      #  pdfMmumu = root.RooGaussian(convertSigName(name),name,mMuMu,meanSG,widthSG)
-      #  workspaceImportFn(pdfMmumu)
-      #  rooParamList += [meanSG,widthSG]
-      #  debug += "#    using Single Gaussian (Probably for EE)"
+      rooParamList = [meanG1,meanG2,widthG1,widthG2,mixGG]
+
+      # adding a parameter to this list makes it float in the combination tool
+      # for shape systematic uncertainties evaluation
+      paramList.append(Param(meanG2.GetName(),meanG2.getVal(),meanG2.getVal()*muonscale[energy],meanG2.getVal()*muonscale[energy]))
+      paramList.append(Param(widthG2.GetName(),widthG2.getVal(),widthG2.getVal()*muonres[energy],widthG2.getVal()*muonres[energy]))
+
     else:
       mean = root.RooRealVar(channelName+"_"+name+"_Mean",
                              channelName+"_"+name+"_Mean",
@@ -642,18 +660,23 @@ def makePDFSigNew(channelName,name,mMuMu,mass,workspaceImportFn,useDG=True):
       #mix = root.RooRealVar(channelName+"_"+name+"_mix",
       #                         channelName+"_"+name+"_mix",
       #                         params['mix'])
-      #cb = root.RooCBShape(name+"_CB",name+"_CB",mMuMu,mean,width,alpha,n)
-      #gaus = root.RooGaussian(name+"_Gaus",name+"_Gaus",mMuMu,mean,width2)
+      #cb = root.RooCBShape(name+"_CB",name+"_CB",dimuonMass,mean,width,alpha,n)
+      #gaus = root.RooGaussian(name+"_Gaus",name+"_Gaus",dimuonMass,mean,width2)
       #pdfMmumu = root.RooAddPdf(convertSigName(name),name,cb,gaus,mix)
-      pdfMmumu = root.RooCBShape(convertSigName(name),name,mMuMu,mean,width,alpha,n)
+      pdfMmumu = root.RooCBShape(convertSigName(name),name,dimuonMass,mean,width,alpha,n)
       #pdfMmumu = root.RooAddPdf(convertSigName(name),name,cb,gaus,mix)
       workspaceImportFn(pdfMmumu)
       rooParamList += [mean,width,alpha,n]
 
     for i in rooParamList:
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+      
+    
+    #print "##########################"
+    #print paramList
+    #print "##########################"
+    return paramList, debug
 
-    return debug
 
 #makePDFSig = makePDFSigCBPlusGaus
 makePDFSig = makePDFSigDG
@@ -707,26 +730,27 @@ class Analysis:
     minMass = controlRegionLow[0]
     self.minMass = minMass
     self.maxMass = maxMass
-    mMuMu = root.RooRealVar("mMuMu","mMuMu",minMass,maxMass)
-    mMuMu.setRange("low",controlRegionLow[0],controlRegionLow[1])
-    mMuMu.setRange("high",controlRegionHigh[0],controlRegionHigh[1])
-    mMuMu.setRange("signal",controlRegionLow[1],controlRegionHigh[0])
-    mMuMu.setRange("signalfit",SIGNALFIT[0],SIGNALFIT[1])
-    self.mMuMu = mMuMu
+    #dimuonMass = root.RooRealVar("dimuonMass","dimuonMass",minMass,maxMass)
+    dimuonMass = root.RooRealVar("dimuonMass","dimuonMass",minMass,maxMass)
+    dimuonMass.setRange("low",controlRegionLow[0],controlRegionLow[1])
+    dimuonMass.setRange("high",controlRegionHigh[0],controlRegionHigh[1])
+    dimuonMass.setRange("signal",controlRegionLow[1],controlRegionHigh[0])
+    dimuonMass.setRange("signalfit",SIGNALFIT[0],SIGNALFIT[1])
+    self.dimuonMass = dimuonMass
 
     self.rooPUWeight = root.RooRealVar("puWeight","PU Weight",0.0,200.)
     self.observablesForRooDataset = root.RooArgSet(
-                            self.mMuMu,
+                            self.dimuonMass,
                             self.rooPUWeight,
                         )
 
     # Hack to Make makePDFBakOld work
     self.minMassZ = 88.
     self.maxMassZ = 94.
-    mMuMuZ = root.RooRealVar("mMuMu","mMuMu",self.minMassZ,self.maxMassZ)
-    self.mMuMuZ = mMuMuZ
+    dimuonMassZ = root.RooRealVar("dimuonMass","dimuonMass",self.minMassZ,self.maxMassZ)
+    self.dimuonMassZ = dimuonMassZ
     self.observablesForRooDatasetZ = root.RooArgSet(
-                            mMuMuZ,
+                            dimuonMassZ,
                             self.rooPUWeight,
                         )
 
@@ -757,10 +781,12 @@ class Analysis:
     self.datHists = []
     self.datHistsZ = []
     for name in dataNames:
-      tmpH = self.getRooDataSample(name,self.observablesForRooDataset)
+      #tmpH = self.getRooDataSample(name,self.observablesForRooDataset)
+      tmpH = self.getRooDataSet(name,self.observablesForRooDataset)
       self.debug += "#  N Events in {0}: {1}\n".format(name,tmpH.sumEntries())
       self.datHists.append(tmpH)
-      tmpH = self.getRooDataSample(name,self.observablesForRooDatasetZ,True)
+      #tmpH = self.getRooDataSample(name,self.observablesForRooDatasetZ,True)
+      tmpH = self.getRooDataSet(name,self.observablesForRooDatasetZ,True)
       self.datHistsZ.append(tmpH)
 
     effMap = {}
@@ -803,7 +829,8 @@ class Analysis:
       if self.datHistTotal == None:
         self.datHistTotal = h.Clone("data_obs")
       else:
-        self.datHistTotal.add(h)
+        #self.datHistTotal.add(h)
+        self.datHistTotal.append(h)
     assert(self.dataCountsTotal == self.datHistTotal.sumEntries())
 
     self.dataCountsTotalZ = None
@@ -817,7 +844,8 @@ class Analysis:
       if self.datHistTotalZ == None:
         self.datHistTotalZ = h.Clone("data_obs_Z")
       else:
-        self.datHistTotalZ.add(h)
+        #self.datHistTotalZ.add(h)
+        self.datHistTotalZ.append(h)
     assert(self.dataCountsTotalZ == self.datHistTotalZ.sumEntries())
 
     histToUseForBak = self.datHistTotal
@@ -832,17 +860,19 @@ class Analysis:
 
     tmpBakParams, self.bakNormTup, tmpDebug = makePDFBak(
                                     analysis+energyStr,histToUseForBak,
-                                    mMuMu, minMass,maxMass,wImport,
-                                    mMuMuZ,histToUseForBakZ
+                                    dimuonMass, minMass,maxMass,wImport,
+                                    dimuonMassZ,histToUseForBakZ
                                        )
     self.params.extend(tmpBakParams)
     self.countsBakTotal = self.bakNormTup[0]*self.bakNormTup[1]
     self.debug += tmpDebug
     
-    self.sigParamListList = []
+    self.sigParamList = []
     if USEGPANNA:
       for name in signalNames:
-        self.debug +=  makePDFSigNew(analysis+energyStr,name,mMuMu,self.higgsMass,wImport)
+        sigParams, sigDebug =  makePDFSigNew(analysis+energyStr,name,dimuonMass,self.higgsMass,wImport)
+        self.sigParamList.append(sigParams)
+        self.debug += sigDebug
     elif True: # Use ggH for non-VBF channels, and VBF shape for VBF
       sigNameToUse = None
       sigHistCounts = []
@@ -853,13 +883,13 @@ class Analysis:
       self.debug += "# Signal Histogram for Shape: {0} Counts: {1:.1f}\n".format(signalNames[maxIndex],maxCounts)
       sigHistRawToUse = self.sigHistsRaw[maxIndex]
       for name in signalNames:
-          sigParams, sigDebug, tmpDS = makePDFSig(name,sigHistRawToUse,mMuMu,minMass,maxMass,wImport,analysis+energyStr)
-          self.sigParamListList.append(sigParams)
+          sigParams, sigDebug, tmpDS = makePDFSig(name,sigHistRawToUse,dimuonMass,minMass,maxMass,wImport,analysis+energyStr)
+          self.sigParamList.append(sigParams)
           self.debug += sigDebug
     else:
       for name, hist in zip(signalNames,self.sigHistsRaw):
-          sigParams, sigDebug, tmpDS = makePDFSig(name,hist,mMuMu,minMass,maxMass,wImport,analysis+energyStr,forceMean=higgsPeakMean)
-          self.sigParamListList.append(sigParams)
+          sigParams, sigDebug, tmpDS = makePDFSig(name,hist,dimuonMass,minMass,maxMass,wImport,analysis+energyStr,forceMean=higgsPeakMean)
+          self.sigParamList.append(sigParams)
           self.debug += sigDebug
           
     self.xsecSigTotal = 0.0
@@ -929,7 +959,7 @@ class Analysis:
         for j in range(contentInt):
           bakDataTH1.Fill(binCenter)
       self.dataCountsTotal = int(bakDataTH1.Integral())
-      obsData = root.RooDataHist("data_obs","MC Full-Sim Data",root.RooArgList(mMuMu),bakDataTH1)
+      obsData = root.RooDataHist("data_obs","MC Full-Sim Data",root.RooArgList(dimuonMass),bakDataTH1)
       print "counts: {} obsData: {}".format(self.dataCountsTotal,obsData.sumEntries())
       wImport(obsData)
       self.bakHistTotal.SetName("data_obs_"+analysis)
@@ -939,13 +969,13 @@ class Analysis:
     elif toyData:
       bakPDF = self.workspace.pdf("bak")
       sigPDFList = [self.workspace.pdf(i) for i in signalNames]
-      toyDataset = bakPDF.generate(root.RooArgSet(mMuMu),int(self.dataCountsTotal))
+      toyDataset = bakPDF.generate(root.RooArgSet(dimuonMass),int(self.dataCountsTotal))
       doSigInject(toyDataset,sigInject,sigInjectMass)
       #toyDataHist = toyDataset.binnedClone("data_obs","Toy Data")
       self.dataCountsTotal = int(toyDataset.sumEntries())
       wImport(toyDataset)
     else:
-      #realDataHist = root.RooDataHist("data_obs","Real Observed Data",root.RooArgList(mMuMu),self.datHistTotal)
+      #realDataHist = root.RooDataHist("data_obs","Real Observed Data",root.RooArgList(dimuonMass),self.datHistTotal)
       #wImport(realDataHist)
       #realDataHistNotVeryLow = realDataHist.reduce(root.RooFit.CutRange("low,signal,high"))
       #wImport(realDataHistNotVeryLow)
@@ -986,7 +1016,7 @@ class Analysis:
   def doSigInject(self,dataHist,sigStrength,sigMass):
     if sigStrength <= 0.0:
         return 0
-    mMuMu = self.mMuMu
+    dimuonMass = self.dimuonMass
     w = root.RooWorkspace("tmpWorkspace"+str(random.randint(0,10000)))
     self.sigInjectWorkspaces.append(w)
     wImport = getattr(w,"import")
@@ -1007,26 +1037,47 @@ class Analysis:
       if counts == 0:
         continue
       tmpName = name+"TmpSigInject"+str(random.randint(0,10000))
-      sigParams, sigDebug, rooData = makePDFSig(tmpName,hist,mMuMu,sigMass-20,sigMass+20,wImport,tmpName,forceMean=sigMass-0.3,sigInject=counts)
+      sigParams, sigDebug, rooData = makePDFSig(tmpName,hist,dimuonMass,sigMass-20,sigMass+20,wImport,tmpName,forceMean=sigMass-0.3,sigInject=counts)
       if dataHist.InheritsFrom("RooAbsData"):
         dataHist.append(rooData)
       else:
         tmpHist = dataHist.Clone("sigInjectHistTmp"+str(random.randint(0,10000)))
         tmpHist.Reset()
-        rooData.fillHistogram(tmpHist,root.RooArgList(mMuMu))
+        rooData.fillHistogram(tmpHist,root.RooArgList(dimuonMass))
         dataHist.Add(tmpHist)
     return sum(countsList)
+
+  def getRooDataSet(self,name,observables,aroundZ=False):
+    tmpFLoc = self.directory+name+".root"
+    tmpF = root.TFile(tmpFLoc)
+    minMass = self.minMass
+    maxMass = self.maxMass
+    dimuonMass = self.dimuonMass
+    if aroundZ:
+      minMass = self.minMassZ
+      maxMass = self.maxMassZ
+      dimuonMass = self.dimuonMassZ
+
+    thetreename  = self.treename
+    thetreename += self.analysis
+
+    tmpTree = tmpF.Get(self.treename + self.analysis)
+    tmpTree.SetCacheSize(10000000);
+    tmpTree.AddBranchToCache("*");
+
+    tmpDataSet = root.RooDataSet(name,name,tmpTree,root.RooArgSet(dimuonMass))
+    return tmpDataSet
 
   def getRooDataSample(self,name,observables,aroundZ=False):
     tmpFLoc = self.directory+name+".root"
     tmpF = root.TFile(tmpFLoc)
     minMass = self.minMass
     maxMass = self.maxMass
-    mMuMu = self.mMuMu
+    dimuonMass = self.dimuonMass
     if aroundZ:
       minMass = self.minMassZ
       maxMass = self.maxMassZ
-      mMuMu = self.mMuMuZ
+      dimuonMass = self.dimuonMassZ
     if USETREES:
       tmpTree = tmpF.Get(self.treename)
       tmpTree.SetCacheSize(10000000);
@@ -1037,7 +1088,7 @@ class Analysis:
       drawString = "dimuonMass >> {0}".format(histName)
       tmpTree.Draw(drawString,self.fullCutString)
       self.origHistList.append(tmpHist)
-      tmpH = root.RooDataHist(name,name,root.RooArgList(mMuMu),tmpHist)
+      tmpH = root.RooDataHist(name,name,root.RooArgList(dimuonMass),tmpHist)
       return tmpH
     else:
       histName = self.analysis+"/"+HISTNAME
@@ -1046,7 +1097,7 @@ class Analysis:
       tmpHist = shrinkTH1(tmpHist,minMass,maxMass,True)
       tmpHist.GetNbinsX()
       self.origHistList.append(tmpHist)
-      tmpH = root.RooDataHist(name,name,root.RooArgList(mMuMu),tmpHist)
+      tmpH = root.RooDataHist(name,name,root.RooArgList(dimuonMass),tmpHist)
       return tmpH
 
   def getSigEff(self,name):
@@ -1408,10 +1459,11 @@ class DataCardMaker:
       formatString += "\n"
       outfile.write(formatString.format(*formatList))
 
-      # Parameter Uncertainties
+      # Parameter Shape Uncertainties For Signal 
       for channel,channelName in zip(self.channels,self.channelNames):
-        for nu in channel.params:
-          if (not FREEBAKPARAMS) or ("voit" in nu.name):
+        for siglist in channel.sigParamList:
+          for nu in siglist:
+            #print nu
             nuisanceName = nu.name
             formatString = "{0:<25} {1:<6} {2:<10.5g} {3:<10}"
             formatList = [nuisanceName,"param",nu.nominal,nu.getErrString()]
@@ -1464,10 +1516,11 @@ if __name__ == "__main__":
   root.gROOT.SetBatch(True)
 
   directory = "input/ptM15GeV/"
-  directory = "/data/uftrig01b/digiovan/baselinePP/input/ptM15GeV_outtree_LoosePUID/"
+  #directory = "/data/uftrig01b/digiovan/baselinePP/input/ptM15GeV_outtree_LoosePUID/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
   #periods = ["8TeV"]
+  #periods = ["7TeV"]
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
   categoriesFF = ["BB","BO","BE","OO","FF"]
   categoriesCC = ["BB","BO","CC","OE","EE"]
@@ -1518,15 +1571,13 @@ if __name__ == "__main__":
   jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
-  ## analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  """
+  #analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
   analyses += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   analyses += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   analyses += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   analyses += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  """
   analyses += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  """
+
 
   # Jet 0+1 Pass All Cats
   combinations.append((
@@ -1576,7 +1627,6 @@ if __name__ == "__main__":
     ],"Jet2SplitCutsGFSplit"
   ))
  
-  
   # Jets 0,1,>=2 Pass + Fail All
   combinations.append((
     [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
@@ -1587,47 +1637,8 @@ if __name__ == "__main__":
      ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
     ],"CombSplitAll"
   ))
-  """
  
   ## combinations = []
-
-  # Jets 0,1,>=2 Pass + Fail CC FF
-  #combinations.append((
-  #  [["Jets01Pass"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesCCFF]+
-  #  [["Jets01Fail"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesCCFF]+
-  #  [
-  #   ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
-  #   ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-  #   ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-  #  ],"CombSplitAll"
-  #))
-
- 
-## GP   combinations.append((
-## GP     [
-## GP       ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
-## GP       ["Jet2CutsFailVBF","!(deltaEtaJets>3.5 && dijetMass>650.)"+jet2PtCuts],
-## GP     ],"Jet2SplitCutsNoGFSplit"
-## GP   ))
-## GP 
-## GP   combinations.append((
-## GP     [["Jets01Pass"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
-## GP     [["Jets01Fail"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]+
-## GP     [
-## GP       ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
-## GP       ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-## GP       ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-## GP     ],"CombGFSplit"
-## GP   ))
-## GP 
-## GP   combinations.append((
-## GP     [["Jets01"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
-## GP     [["Jets01Fail"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]+
-## GP     [
-## GP       ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
-## GP       ["Jet2CutsFailVBF","!(deltaEtaJets>3.5 && dijetMass>650.)"+jet2PtCuts],
-## GP     ],"CombNoGFSplit"
-## GP   ))
 
   # Multi-dimensional Optimization of Cuts
   # First two arguments are just like combinations
@@ -1665,13 +1676,19 @@ if __name__ == "__main__":
   #backgroundNames= ["DYJetsToLL","ttbar"]
   backgroundNames= []
   dataDict = {}
+  #dataDict["8TeV"] = [
+  #  "SingleMuRun2012Av1",
+  #  "SingleMuRun2012Av1Recover",
+  #  "SingleMuRun2012Bv1",
+  #  "SingleMuRun2012Cv1",
+  #  "SingleMuRun2012Cv2",
+  #  "SingleMuRun2012D",
+  #]
   dataDict["8TeV"] = [
-    "SingleMuRun2012Av1",
-    "SingleMuRun2012Av1Recover",
-    "SingleMuRun2012Bv1",
-    "SingleMuRun2012Cv1",
-    "SingleMuRun2012Cv2",
-    "SingleMuRun2012D",
+    "SingleMuRun2012A_22Jan2013v1",
+    "SingleMuRun2012B_22Jan2013v1",
+    "SingleMuRun2012C_22Jan2013v1",
+    "SingleMuRun2012D_22Jan2013v1",
   ]
   #dataDict["8TeV"] = []
   dataDict["7TeV"] = [

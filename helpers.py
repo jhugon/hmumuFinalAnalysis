@@ -20,6 +20,71 @@ import datetime
 PRELIMINARYSTRING="CMS Preliminary"
 #PRELIMINARYSTRING="CMS"
 
+def drange(start, stop, step):
+  r = start
+  while r < stop:
+    yield r
+    r += step
+
+def revdrange(start, stop, step):
+  r = start
+  while r > stop:
+    yield r
+    r -= step
+
+# calculate FWHM
+def calcFWHM(pdf,obs,min,max,step):
+
+  var = pdf.getObservables(root.RooArgSet(obs)).first();
+
+  ymaxVal = float(0)
+  xmaxVal = float(0)
+
+  # find the maximum value
+  for x in drange(min,max,step):
+   
+    var.setVal(x)
+    pdfVal = pdf.getVal(root.RooArgSet(var)) 
+
+    if (pdfVal > ymaxVal):
+       xmaxVal = x
+       ymaxVal = pdfVal
+       
+    #print "x=%s, pdfVal=%s" % (x,pdfVal)
+
+  #print "xMax=%s, ymaxVal=%s\n\n\n\n" % (xmaxVal,ymaxVal)
+
+
+  # find lower boundary with y=max/2
+  xLow = float(0)
+  for x in drange(min,max,step):
+   
+    var.setVal(x)
+    pdfVal = pdf.getVal(root.RooArgSet(var)) 
+
+    #print "x=%s, pdfVal=%s, ymaxVal/2.=%s" % (x,pdfVal, ymaxVal/2.)
+    if (pdfVal > ymaxVal/2. and xLow==0):
+       xLow = x
+
+  #print "xLow=%s" % xLow
+  
+
+  # find higher boundary with y=max/2
+  xHigh = float(0)
+  for x in revdrange(max,min,step):
+   
+    var.setVal(x)
+    pdfVal = pdf.getVal(root.RooArgSet(var)) 
+
+    if (pdfVal > ymaxVal/2. and xHigh==0):
+       xHigh = x
+
+  #print "xHigh=%s" % xHigh
+  
+  return (xHigh-xLow)
+
+
+  
 #fr stands for FitResults
 def setAddPDFfromFR(fr,PDF,data):
 
@@ -156,12 +221,6 @@ def doubleGauss(x,par):
   return scale*dgauss
   #return meanG1 + widthG1*x[0]
   
-def drange(start, stop, step):
-  r = start
-  while r < stop:
-    yield r
-    r += step
-
 def fit2DResHist(hist,color):
   histName = hist.GetName()
   hist.FitSlicesY()
@@ -2440,7 +2499,6 @@ def treeCut(category,cutString,eventWeights=True,muonRequirements=True,KDString=
   if eventWeights:
     result = "("+result+")*puWeight"
   return result
-
 
 if __name__ == "__main__":
 

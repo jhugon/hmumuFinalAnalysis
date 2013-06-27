@@ -35,14 +35,14 @@ for mass in massrange:
 
    
    jobscript = 'JOBS/' + 'jobs_makeCards_mass%s.sh' % str(mass).replace(".","p")
-#   outfile = open(jobscript,'w') 
-#   outfile.write('#! /bin/bash\n\n')
-#   outfile.write('cd /afs/cern.ch/work/d/digiovan/code/CMSSW_6_1_1/src/\n')
-#   outfile.write('source ../STARTUP\n')
-#   outfile.write('cd %s\n' % PWD)
-#   outfile.write('./makeCards.py -m %s\n\n' % mass)
-#   outfile.close()
-#   
+   outfile = open(jobscript,'w') 
+   outfile.write('#! /bin/bash\n\n')
+   outfile.write('cd /afs/cern.ch/work/d/digiovan/code/CMSSW_6_1_1/src/\n')
+   outfile.write('source ../STARTUP\n')
+   outfile.write('cd %s\n' % PWD)
+   outfile.write('./makeCards.py -m %s\n\n' % mass)
+   outfile.close()
+   
    print '\nbsub -q %s -J JOB_%s < %s' \
          % (queue, mass, jobscript)
    

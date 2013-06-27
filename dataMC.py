@@ -6,16 +6,15 @@ import ROOT as root
 import os
 import sys
 
-dataDir = "input/V00-01-10/"
-dataDir = "/data/uftrig01b/digiovan/baselinePP/input/ptM15GeV_outtree_LoosePUID/"
+dataDir = "input/ptM15GeV/"
 outDir = "output/"
 
-RUNPERIOD="7TeV"
+RUNPERIOD="8TeV"
 LUMI=lumiDict[RUNPERIOD]
 
 scaleHiggsBy = 500.
 
-JETErrors=False
+JETErrors=True
 LOGY=False
 integralPlot=False
 MCErrors=True
@@ -62,8 +61,8 @@ histDirs = ["nonVBFPresel/"]
 
 CUTS="dimuonMass < 170. && dimuonMass > 110."
 
-#anotateText2 = "VBF Preselection"
-#CUTS+=" && jetLead_pt>40. && jetSub_pt>30. && ptMiss<40."
+anotateText2 = "VBF Preselection"
+CUTS+=" && jetLead_pt>40. && jetSub_pt>30. && ptMiss<40."
 #CUTS+=" && jetLead_pt>40. && jetSub_pt>30."
 
 #anotateText2 = "VBF Presel. VBF Tight"
@@ -75,8 +74,8 @@ CUTS="dimuonMass < 170. && dimuonMass > 110."
 #anotateText2 = "VBF Presel. Loose"
 #CUTS+=" && jetLead_pt>40. && jetSub_pt>30. && ptMiss<40. && !(dijetMass > 650. && deltaEtaJets>3.5) && !(dijetMass>250. && dimuonPt>50.)"
 
-anotateText2 = "Non-VBF Preselection"
-CUTS+=" && !(jetLead_pt>40. && jetSub_pt>30. && ptMiss<40.)"
+#anotateText2 = "Non-VBF Preselection"
+#CUTS+=" && !(jetLead_pt>40. && jetSub_pt>30. && ptMiss<40.)"
 
 root.gErrorIgnoreLevel = root.kWarning
 GLOBALCOUNTER=0
@@ -86,18 +85,18 @@ if True:
     histNames["dimuonMass"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,170.],"nbins":60}#,"ylimits":[0.1,5e5]}
     #histNames["dimuonMass"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,170.],"nbins":24}#,"ylimits":[0.1,5e5]}
     histNames["dimuonPt"] = {"xlabel":"p_{T,#mu#mu} [GeV/c]","xlimits":[0.0,200.0],"nbins":20}#,"ylimits":[0.1,1e5]}
-    histNames["dimuonY"] = {"xlabel":"y_{#mu#mu}","xlimits":[-2.2,2.2],"nbins":22}#,"ylimits":[0.1,3e6]}
-    histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1,1],"nbins":20}#,"ylimits":[0.1,3e6]}
+#    histNames["dimuonY"] = {"xlabel":"y_{#mu#mu}","xlimits":[-2.2,2.2],"nbins":22}#,"ylimits":[0.1,3e6]}
+#    histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1,1],"nbins":20}#,"ylimits":[0.1,3e6]}
     #histNames["muonLead_pt"] = {"xlabel":"Leading Muon p_{T} [GeV/c]","xlimits":[25.,150.],"nbins":25}#,"ylimits":[0.1,3e6]}
     #histNames["muonSub_pt"] = {"xlabel":"Sub-Leading Muon p_{T} [GeV/c]","xlimits":[25.,150.],"nbins":25}#,"ylimits":[0.1,3e6]}
     #histNames["muonLead_eta"] = {"xlabel":"Leading Muon #eta","xlimits":[-2.1,2.1],"nbins":25}#,"ylimits":[0.1,3e6]}
     #histNames["muonSub_eta"] = {"xlabel":"Sub-Leading Muon #eta","xlimits":[-2.1,2.1],"nbins":10}#,"ylimits":[0.1,3e6]}
 
     #histNames["nJets"] = {"xlabel":"N_{jets}","xlimits":[-0.5,5.5],"nbins":6}#,"ylimits":[0.1,3e6]}
-#    histNames["ptMiss"] = {"xlabel":"Missing p_{T} [GeV/c]","xlimits":[0.0,300.0],"nbins":12}#,"ylimits":[0.1,3e6]}
-#    histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta(j_{1},j_{2})","xlimits":[0.0,7.0],"nbins":14}#,"ylimits":[0.1,3e6]}
-#
-#    histNames["dijetMass"] = {"xlabel":"m_{jj} [GeV/c^{2}]","xlimits":[0.,1000.],"nbins":20}#,"ylimits":[0.1,5e5]}
+    histNames["ptMiss"] = {"xlabel":"Missing p_{T} [GeV/c]","xlimits":[0.0,300.0],"nbins":12}#,"ylimits":[0.1,3e6]}
+    histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta(j_{1},j_{2})","xlimits":[0.0,7.0],"nbins":14}#,"ylimits":[0.1,3e6]}
+
+    histNames["dijetMass"] = {"xlabel":"m_{jj} [GeV/c^{2}]","xlimits":[0.,1000.],"nbins":20}#,"ylimits":[0.1,5e5]}
     #histNames["dijetPt"] = {"xlabel":"p_{T,jj} [GeV/c]","xlimits":[0.0,1000.0],"nbins":50}#,"ylimits":[0.1,1e5]}
     #histNames["dijetY"] = {"xlabel":"y_{jj}","xlimits":[-5.0,5.0],"nbins":20}#,"ylimits":[0.1,3e6]}
 
