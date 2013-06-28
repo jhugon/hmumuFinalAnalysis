@@ -587,8 +587,8 @@ def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=True)
     # nuisanceMap which for non-shape systematics
     paramList = [] # this is the list of shapes parameters to vary
     muonres = {}
-    muonres["7TeV"] = 0.15 # this is a percentage
-    muonres["8TeV"] = 0.03 # this is a percentage  
+    muonres["7TeV"] = 0.03 # this is a percentage
+    muonres["8TeV"] = 0.02 # this is a percentage  
 
     muonscale = {}
     muonscale["7TeV"] = 0.002 # this is a percentage
@@ -1517,6 +1517,7 @@ if __name__ == "__main__":
 
   directory = "input/ptM15GeV/"
   directory = "/data/uftrig01b/digiovan/baselinePP/input/ptM15GeV_outtree_LoosePUID/"
+  directory = "input/V00-01-10/forGPReRecoMuScleFit/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
   #periods = ["8TeV"]
