@@ -23,7 +23,7 @@ cd $DIRNAME
 
 echo "executing combine -M Asymptotic $FILENAME >& $FILENAME.out"
 
-combine -M Asymptotic $FILENAME >& $FILENAME.out
+combine -M Asymptotic --rMax 150 $FILENAME >& $FILENAME.out
 
 cp $FILENAME.out ..
 

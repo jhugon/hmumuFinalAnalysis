@@ -76,7 +76,33 @@ titleMap = {
   "IncPreselPtG10OE":"Non-VBF OE",
   "IncPreselPtG10EE":"Non-VBF EE",
   "IncPreselPtG10":"Non-VBF",
-  "BDTCutCatVBFBDTOnly": "VBF & Non-VBF Combination"
+  "BDTCutCatVBFBDTOnly": "VBF & Non-VBF Combination",
+
+  "Jets01PassPtG10BB": "Non-VBF Preselection, Tight BB",
+  "Jets01PassPtG10BO": "Non-VBF Preselection, Tight BO",
+  "Jets01PassPtG10BE": "Non-VBF Preselection, Tight BE",
+  "Jets01PassPtG10OO": "Non-VBF Preselection, Tight OO",
+  "Jets01PassPtG10OE": "Non-VBF Preselection, Tight OE",
+  "Jets01PassPtG10EE": "Non-VBF Preselection, Tight EE",
+  "Jets01PassCatAll" : "Non-VBF Preselection, Tight",
+                                      
+  "Jets01FailPtG10BB": "Non-VBF Preselection, Loose BB",
+  "Jets01FailPtG10BO": "Non-VBF Preselection, Loose BO",
+  "Jets01FailPtG10BE": "Non-VBF Preselection, Loose BE",
+  "Jets01FailPtG10OO": "Non-VBF Preselection, Loose OO",
+  "Jets01FailPtG10OE": "Non-VBF Preselection, Loose OE",
+  "Jets01FailPtG10EE": "Non-VBF Preselection, Loose EE",
+  "Jets01FailCatAll" : "Non-VBF Preselection, Loose",
+                                      
+  "Jets01SplitCatAll": "Non-VBF Combination",
+
+
+  "Jet2CutsVBFPass":"VBF Preselection, VBF Tight",
+  "Jet2CutsGFPass":"VBF Preselection, GF Tight",
+  "Jet2CutsFailVBFGF":"VBF Preselection, Loose",
+
+  "Jet2SplitCutsGFSplit" : "VBF Combination",
+  "CombSplitAll" : "Combination",
 }
 
 colorMap = {
@@ -92,7 +118,32 @@ colorMap = {
   "IncPreselPtG10OE":root.kMagenta,
   "IncPreselPtG10EE":root.kViolet+2,
   "IncPreselPtG10":root.kBlue,
-  "BDTCutCatVBFBDTOnly": 1
+  "BDTCutCatVBFBDTOnly": 1,
+
+  "Jets01PassPtG10BB": root.kCyan,
+  "Jets01PassPtG10BO": root.kOrange,
+  "Jets01PassPtG10BE": root.kGreen,
+  "Jets01PassPtG10OO": root.kOrange+3,
+  "Jets01PassPtG10OE": root.kMagenta,
+  "Jets01PassPtG10EE": root.kViolet+2,
+  "Jets01PassCatAll" : root.kBlue+3,
+                                      
+  "Jets01FailPtG10BB": root.kCyan,
+  "Jets01FailPtG10BO": root.kOrange,
+  "Jets01FailPtG10BE": root.kGreen,
+  "Jets01FailPtG10OO": root.kOrange+3,
+  "Jets01FailPtG10OE": root.kMagenta,
+  "Jets01FailPtG10EE": root.kViolet+2,
+  "Jets01FailCatAll" : root.kBlue+3,
+                                      
+  "Jets01SplitCatAll": root.kBlue,
+
+  "Jet2CutsVBFPass":root.kGreen,
+  "Jet2CutsGFPass": root.kBlue+3,
+  "Jet2CutsFailVBFGF":root.kOrange+3,
+
+  "Jet2SplitCutsGFSplit" : root.kRed,
+  "CombSplitAll" : 1,
 }
 
 comparisonMap = {
@@ -594,19 +645,87 @@ if __name__ == "__main__":
     canvas.SetLogy(1)
     pValueVetos = [
         [
-          "VBFBDTCut",
-          "BDTCutCatVBFBDTOnly"
+            "Jets01PassPtG10BB",
+            "Jets01PassPtG10BO",
+            "Jets01PassPtG10BE",
+            "Jets01PassPtG10OO",
+            "Jets01PassPtG10OE",
+            "Jets01PassPtG10EE",
+            "Jets01PassCatAll" ,
+                                                
+            "Jets01FailPtG10BB",
+            "Jets01FailPtG10BO",
+            "Jets01FailPtG10BE",
+            "Jets01FailPtG10OO",
+            "Jets01FailPtG10OE",
+            "Jets01FailPtG10EE",
+            "Jets01FailCatAll" ,
+                                                
+            "Jets01SplitCatAll",
+          
+            "CombSplitAll" 
         ],
         [
-          "IncPreselPtG10BB",
-          "IncPreselPtG10BE",
-          "IncPreselPtG10BO",
-          "IncPreselPtG10EE",
-          "IncPreselPtG10OE",
-          "IncPreselPtG10OO"
+            "Jets01FailPtG10BB",
+            "Jets01FailPtG10BO",
+            "Jets01FailPtG10BE",
+            "Jets01FailPtG10OO",
+            "Jets01FailPtG10OE",
+            "Jets01FailPtG10EE",
+            "Jets01FailCatAll" ,
+                                                
+            "Jets01SplitCatAll",
+          
+          
+            "Jet2CutsVBFPass",
+            "Jet2CutsGFPass",
+            "Jet2CutsFailVBFGF",
+          
+            "Jet2SplitCutsGFSplit" ,
+            "CombSplitAll" 
+        ],
+        [
+            "Jets01PassPtG10BB",
+            "Jets01PassPtG10BO",
+            "Jets01PassPtG10BE",
+            "Jets01PassPtG10OO",
+            "Jets01PassPtG10OE",
+            "Jets01PassPtG10EE",
+            "Jets01PassCatAll" ,
+                                                
+            "Jets01SplitCatAll",
+          
+          
+            "Jet2CutsVBFPass",
+            "Jet2CutsGFPass",
+            "Jet2CutsFailVBFGF",
+          
+            "Jet2SplitCutsGFSplit" ,
+            "CombSplitAll" 
+        ],
+        [
+            "Jets01PassPtG10BB",
+            "Jets01PassPtG10BO",
+            "Jets01PassPtG10BE",
+            "Jets01PassPtG10OO",
+            "Jets01PassPtG10OE",
+            "Jets01PassPtG10EE",
+            "Jets01PassCatAll" ,
+                                                
+            "Jets01FailPtG10BB",
+            "Jets01FailPtG10BO",
+            "Jets01FailPtG10BE",
+            "Jets01FailPtG10OO",
+            "Jets01FailPtG10OE",
+            "Jets01FailPtG10EE",
+            "Jets01FailCatAll" ,
+                                                
+            "Jet2CutsVBFPass",
+            "Jet2CutsGFPass",
+            "Jet2CutsFailVBFGF"
         ]
     ]
-    for saveName,vetos in zip(["NonVBF","Final"],pValueVetos):
+    for saveName,vetos in zip(["VBF","NonVBFTight","NonVBFLoose","Final"],pValueVetos):
       if len(plots)==0 or not args.higgsMass:
         continue
       pValueDict = {}

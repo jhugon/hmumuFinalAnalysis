@@ -1,21 +1,20 @@
 #!/bin/bash
 
-REMOTEDIR=/afs/cern.ch/work/d/digiovan/code/CMSSW_6_1_1/batchBaselinePP/
+#REMOTEDIR=/afs/cern.ch/work/d/digiovan/code/CMSSW_6_1_1/batchBaselinePP/
+REMOTEDIR=/afs/cern.ch/user/j/jhugon/work/private/stats/CMSSW_5_2_5/stats/
 if ! `ssh lxplus5 touch $REMOTEDIR/touchfile.txt`; then
   echo "Error: Remote directory $REMOTEDIR doesn't exist or isn't writable"
   exit
 fi
 
-#rm -f shapes/*
-#rm -f statsCards/*
+rm -f shapes/*
+rm -f statsCards/*
 rm -f statsInput/*
-#rm -f statsOutput/*
+rm -f statsOutput/*
 
-#for i in "115" "120" "123" "124" "124.5" "125" "125.5" "126" "126.5" "127" "130" "135"; do
-#for i in "115" "120" "125" "130" "135"; do
-#for i in "120" "125" "130"; do
-#  nice ./makeCards.py -m $i
-#done
+for i in $(seq 115 1 160); do
+  nice ./makeCards.py -m $i
+done
 echo "Removing files in lxplus5:$REMOTEDIR"
 ssh lxplus5 "cd /tmp/digiovan/; rm -rf $REMOTEDIR/*;echo \"Contents of dir: \`ls $REMOTEDIR \`\""
 echo "Copying input files to lxplus5..."
