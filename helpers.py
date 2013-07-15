@@ -2204,8 +2204,14 @@ class RooModelPlotter:
 
     tmpDataHistName = data.GetName()+nowStr
     tmpBakPDFName = pdf.GetName()+nowStr
+    tmpBakPDFErrorName = pdf.GetName()+"Error"+nowStr
     tmpDataHistNameArg = root.RooFit.Name(tmpDataHistName)
     tmpBakPDFNameArg = root.RooFit.Name(tmpBakPDFName)
+    tmpBakPDFErrorNameArg = root.RooFit.Name(tmpBakPDFErrorName)
+
+    nData = data.sumEntries()
+    normErr = nData**(-0.5)
+    self.normErr = normErr
 
     # Main Frame
 
@@ -2217,10 +2223,10 @@ class RooModelPlotter:
     #print "backgroundPDFName = %s" % backgroundPDFName 
     if backgroundPDFName != None:
       bakCompArg = root.RooFit.Components(backgroundPDFName)
-      pdf.plotOn(frame,errVisArg,errColorArg,bakCompArg,rangeArg)
+      pdf.plotOn(frame,errVisArg,errColorArg,bakCompArg,rangeArg,tmpBakPDFErrorNameArg)
       pdf.plotOn(frame,lineDrawOptArg,lineColorArg,lineWidthArg,bakCompArg,rangeArg,tmpBakPDFNameArg)
     else:
-      pdf.plotOn(frame,errVisArg,errColorArg,rangeArg)
+      pdf.plotOn(frame,errVisArg,errColorArg,rangeArg,tmpBakPDFErrorNameArg)
       pdf.plotOn(frame,lineDrawOptArg,lineColorArg,lineWidthArg,rangeArg,tmpBakPDFNameArg)
 
     data.plotOn(frame,graphDrawOptArg,binningArg,tmpDataHistNameArg)
@@ -2341,6 +2347,7 @@ class RooModelPlotter:
     # Main Pad
     pad1.cd();
     self.frame.Draw()
+    self.addPDFNormError(pad1)
     self.leg.Draw()
 
     # Pulls Pad
@@ -2473,6 +2480,46 @@ class RooModelPlotter:
       #print(" pull: %10.2f" % (pull))
       pullsHist.SetBinContent(i,pull)
     return pullsHist
+
+  def addPDFNormError(self,pad):
+    bakCurve = None
+    bakErrCurve = None
+    for i in pad.GetListOfPrimitives():
+      name = i.GetName()
+      if re.match(r"bak[\d]+",name):
+        bakCurve = pad.FindObject(name)
+      elif re.match(r"bakError[\d]+",name):
+        bakErrCurve = pad.FindObject(name)
+    assert(bakCurve)
+    assert(bakErrCurve)
+    assert(bakCurve.GetN()*2 == bakErrCurve.GetN())
+    nPoints = bakCurve.GetN()
+    x = root.Double(0.)
+    y = root.Double(0.)
+    xUp = root.Double(0.)
+    yUp = root.Double(0.)
+    xDown = root.Double(0.)
+    yDown = root.Double(0.)
+    for i in range(nPoints):
+      bakCurve.GetPoint(i,x,y)
+      bakErrCurve.GetPoint(i,xDown,yDown)
+      iUp = 2*nPoints-i-1
+      bakErrCurve.GetPoint(iUp,xUp,yUp)
+      normErr = self.normErr*y
+      errUp = float(yUp)-float(y)
+      errDown = float(yDown)-float(y)
+      errUp2 = errUp**2+normErr**2
+      errDown2 = errDown**2+normErr**2
+      if errUp < 0:
+        errUp = - sqrt(errUp2)
+      else:
+        errUp = sqrt(errUp2)
+      if errDown < 0:
+        errDown = - sqrt(errDown2)
+      else:
+        errDown = sqrt(errDown2)
+      bakErrCurve.SetPoint(i,xDown,y+errDown)
+      bakErrCurve.SetPoint(iUp,xUp,y+errUp)
 
 def treeCut(category,cutString,eventWeights=True,muonRequirements=True,KDString="KD"):
   global MENormDict
