@@ -1446,12 +1446,7 @@ class DataCardMaker:
           if channel == channel1:
             value = tmpTup[1]
             if FREEBAKPARAMS:
-              value = 1.0/sqrt(tmpTup[1]*tmpTup[0])
-              if value <= 0.01/20.:
-                  value = 0.01
-              else:
-                  value *= 20
-              value += 1.0
+              value = 2.
             tmpString = "{"+str(iParam)+":^"+str(self.largestChannelName)+".2f}"
           formatString += tmpString
           formatList.append(value)
