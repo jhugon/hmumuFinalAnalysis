@@ -830,6 +830,10 @@ class DataMCStack:
     self.normchi2 = dataHist.Chi2Test(self.mcSumHist,"UW CHI2/NDF")
     self.chi2Prob = dataHist.Chi2Test(self.mcSumHist,"UW")
     self.KSProb = dataHist.KolmogorovTest(self.mcSumHist)
+    if self.mcVarHist != None:
+      self.normchi2 = dataHist.Chi2Test(self.mcVarHist,"UW CHI2/NDF")
+      self.chi2Prob = dataHist.Chi2Test(self.mcVarHist,"UW")
+      self.KSProb = dataHist.KolmogorovTest(self.mcVarHist)
     if self.chi2Prob < 1e-20:
         self.chi2Prob = 0.0
     if self.KSProb < 1e-20:
@@ -848,6 +852,8 @@ class DataMCStack:
       nMC = self.mcSumHist.GetBinContent(i)
       error = dataHist.GetBinError(i)
       errorMC = self.mcSumHist.GetBinError(i)
+      if self.mcVarHist != None:
+        errorMC = self.mcVarHist.GetBinError(i)
       pull = 0.0
       ratio = 0.0
       ratioErr = 0.0
@@ -887,6 +893,8 @@ class DataMCStack:
       self.mcSumHist.GetXaxis().SetRangeUser(*xlimits)
       self.dataHist.GetXaxis().SetRangeUser(*xlimits)
     mcMax = self.mcSumHist.GetMaximum()
+    if self.mcVarHist != None:
+      mcMax = self.mcSumHist.GetMaximum()
     dataMaxBin = self.dataHist.GetMaximumBin()
     dataMax = dataHist.GetBinContent(dataMaxBin)+dataHist.GetBinError(dataMaxBin)
     ymax = 0.0
@@ -959,10 +967,11 @@ class DataMCStack:
     self.histForAxis.GetXaxis().SetLabelColor(0)
     if drawStack:
       self.stack.Draw("hist same")
-      if self.mcVarHist != None:
-        self.mcVarHist.Draw("e2same")
       if doMCErrors:
-        self.mcSumHist.Draw("e2same")
+        if self.mcVarHist != None:
+          self.mcVarHist.Draw("e2same")
+        else:
+          self.mcSumHist.Draw("e2same")
       pad1.Update()
     else:
       self.mcSumHist.SetFillColor(856)
@@ -2200,7 +2209,7 @@ class RooModelPlotter:
 
     data.plotOn(frame,graphDrawOptArg,binningArg)
 
-    #print "backgroundPDFName=", backgroundPDFName 
+    #print "backgroundPDFName = %s" % backgroundPDFName 
     if backgroundPDFName != None:
       bakCompArg = root.RooFit.Components(backgroundPDFName)
       pdf.plotOn(frame,errVisArg,errColorArg,bakCompArg,rangeArg)

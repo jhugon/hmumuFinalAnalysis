@@ -124,7 +124,7 @@ class ShapePlotter:
       signalLegEntry = "SM Higgs#times{0:.0f}".format(signalInject)
 
       #Set the PDF pars value from the FitResults
-      #setPDFfromFR(fr,bakPDF,data_obs)
+      setPDFfromFR(fr,bakPDF,data_obs)
 
       #Plot Time
       rmp = RooModelPlotter(mMuMu,bakPDF,data_obs,fr,
@@ -267,6 +267,7 @@ titleMap = {
 }
         
 if __name__ == "__main__":
+  root.gROOT.SetBatch(True)
 
   dataDir = "statsCards/"
   outDir = "shapes/"
@@ -281,7 +282,7 @@ if __name__ == "__main__":
   shapePlotterList = []
   #for fn in glob.glob(dataDir+"*20.root")+glob.glob(dataDir+"*5.05.root"):
   #for fn in glob.glob(dataDir+"JetN*.root"):
-  for fn in glob.glob(dataDir+"*.root"):
+  for fn in glob.glob(dataDir+"*CombSplitAll*.root"):
     if re.search("P[\d.]+TeV",fn):
         continue
 

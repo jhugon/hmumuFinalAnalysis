@@ -358,138 +358,138 @@ errors.PUID = {
   }
 
 errors.QCDScale = {
-  'gg' : {
-    '8TeV' : {
-      'Jets01PassPtG10' : -1.0119,
-      'Jets01FailPtG10' : 1.0438,
-      'Jet2CutsVBFPass' : -1.1585,
-      'Jet2CutsGFPass' : 1.1550,
-      'Jet2CutsFailVBFGF' : -1.0658,
-      },
-    '7TeV' : {
-      'Jets01PassPtG10' : -1.0079,
-      'Jets01FailPtG10' : -1.0281,
-      'Jet2CutsVBFPass' : -1.2424,
-      'Jet2CutsGFPass' : -1.1608,
-      'Jet2CutsFailVBFGF' : 1.0615,
-      },
-    },
-  'vbf' : {
-    '8TeV' : {
-      'Jets01PassPtG10' : -1.0139,
-      'Jets01FailPtG10' : -1.1585,
-      'Jet2CutsVBFPass' : 1.0313,
-      'Jet2CutsGFPass' : 1.0302,
-      'Jet2CutsFailVBFGF' : -1.0422,
-      },
-    '7TeV' : {
-      'Jets01PassPtG10' : 1.0042,
-      'Jets01FailPtG10' : 1.0552,
-      'Jet2CutsVBFPass' : -1.0487,
-      'Jet2CutsGFPass' : -1.0381,
-      'Jet2CutsFailVBFGF' : 1.0654,
-      },
-    },
-  'w' : {
-    '8TeV' : {
-      'Jets01PassPtG10' : None,
-      'Jets01FailPtG10' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsFailVBFGF' : None,
-      },
-    '7TeV' : {
-      'Jets01PassPtG10' : None,
-      'Jets01FailPtG10' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsFailVBFGF' : None,
-      },
-    },
-  'z' : {
-    '8TeV' : {
-      'Jets01PassPtG10' : None,
-      'Jets01FailPtG10' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsFailVBFGF' : None,
-      },
-    '7TeV' : {
-      'Jets01PassPtG10' : None,
-      'Jets01FailPtG10' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsFailVBFGF' : None,
-      },
-    },
-  }
+      'gg' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : -1.0121,
+          'Jets01FailPtG10' : 1.0450,
+          'Jet2CutsVBFPass' : -1.1585,
+          'Jet2CutsGFPass' : 1.1515,
+          'Jet2CutsFailVBFGF' : -1.0662,
+          },
+        '7TeV' : {
+          'Jets01PassPtG10' : 1.0104,
+          'Jets01FailPtG10' : 1.0417,
+          'Jet2CutsVBFPass' : -1.2424,
+          'Jet2CutsGFPass' : -1.1608,
+          'Jet2CutsFailVBFGF' : 1.0626,
+          },
+        },
+      'vbf' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : -1.0139,
+          'Jets01FailPtG10' : -1.1598,
+          'Jet2CutsVBFPass' : 1.0313,
+          'Jet2CutsGFPass' : -1.0372,
+          'Jet2CutsFailVBFGF' : -1.0427,
+          },
+        '7TeV' : {
+          'Jets01PassPtG10' : 1.0101,
+          'Jets01FailPtG10' : 1.0571,
+          'Jet2CutsVBFPass' : -1.0489,
+          'Jet2CutsGFPass' : -1.0380,
+          'Jet2CutsFailVBFGF' : 1.0653,
+          },
+        },
+      'w' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        },
+      'z' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        },
+      }
 
 errors.UE = {
-  'gg' : {
-    '8TeV' : {
-      'Jets01PassPtG10' : -1.0619,
-      'Jets01FailPtG10' : 1.1687,
-      'Jet2CutsVBFPass' : 1.4228,
-      'Jet2CutsGFPass' : 1.2317,
-      'Jet2CutsFailVBFGF' : -1.0847,
-      },
-    '7TeV' : {
-      'Jets01PassPtG10' : -1.0660,
-      'Jets01FailPtG10' : 1.1588,
-      'Jet2CutsVBFPass' : 1.5915,
-      'Jet2CutsGFPass' : -1.1856,
-      'Jet2CutsFailVBFGF' : -1.0698,
-      },
-    },
-  'vbf' : {
-    '8TeV' : {
-      'Jets01PassPtG10' : -1.0199,
-      'Jets01FailPtG10' : 1.0622,
-      'Jet2CutsVBFPass' : -1.1030,
-      'Jet2CutsGFPass' : -1.0396,
-      'Jet2CutsFailVBFGF' : 1.0429,
-      },
-    '7TeV' : {
-      'Jets01PassPtG10' : -1.0519,
-      'Jets01FailPtG10' : 1.0642,
-      'Jet2CutsVBFPass' : -1.1420,
-      'Jet2CutsGFPass' : -1.1004,
-      'Jet2CutsFailVBFGF' : 1.0762,
-      },
-    },
-  'w' : {
-    '8TeV' : {
-      'Jets01PassPtG10' : None,
-      'Jets01FailPtG10' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsFailVBFGF' : None,
-      },
-    '7TeV' : {
-      'Jets01PassPtG10' : None,
-      'Jets01FailPtG10' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsFailVBFGF' : None,
-      },
-    },
-  'z' : {
-    '8TeV' : {
-      'Jets01PassPtG10' : None,
-      'Jets01FailPtG10' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsFailVBFGF' : None,
-      },
-    '7TeV' : {
-      'Jets01PassPtG10' : None,
-      'Jets01FailPtG10' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsFailVBFGF' : None,
-      },
-    },
-  }
+      'gg' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : -1.0618,
+          'Jets01FailPtG10' : 1.1698,
+          'Jet2CutsVBFPass' : 1.4228,
+          'Jet2CutsGFPass' : 1.2317,
+          'Jet2CutsFailVBFGF' : -1.0847,
+          },
+        '7TeV' : {
+          'Jets01PassPtG10' : -1.0658,
+          'Jets01FailPtG10' : 1.1715,
+          'Jet2CutsVBFPass' : 1.6606,
+          'Jet2CutsGFPass' : 1.2570,
+          'Jet2CutsFailVBFGF' : -1.0669,
+          },
+        },
+      'vbf' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : -1.0309,
+          'Jets01FailPtG10' : -1.0794,
+          'Jet2CutsVBFPass' : -1.1030,
+          'Jet2CutsGFPass' : -1.0585,
+          'Jet2CutsFailVBFGF' : 1.0432,
+          },
+        '7TeV' : {
+          'Jets01PassPtG10' : -1.0515,
+          'Jets01FailPtG10' : 1.0953,
+          'Jet2CutsVBFPass' : -1.1421,
+          'Jet2CutsGFPass' : -1.1014,
+          'Jet2CutsFailVBFGF' : 1.0763,
+          },
+        },
+      'w' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        },
+      'z' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        },
+      }
 
 
 errors.PDF = {
