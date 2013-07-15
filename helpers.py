@@ -2202,6 +2202,11 @@ class RooModelPlotter:
     xVar.setRange("RMPRange",self.binning.lowBound(),self.binning.highBound())
     rangeArg = root.RooFit.Range("RMPRange")
 
+    tmpDataHistName = data.GetName()+nowStr
+    tmpBakPDFName = pdf.GetName()+nowStr
+    tmpDataHistNameArg = root.RooFit.Name(tmpDataHistName)
+    tmpBakPDFNameArg = root.RooFit.Name(tmpBakPDFName)
+
     # Main Frame
 
     frame = xVar.frame(root.RooFit.Title(""))
@@ -2213,12 +2218,12 @@ class RooModelPlotter:
     if backgroundPDFName != None:
       bakCompArg = root.RooFit.Components(backgroundPDFName)
       pdf.plotOn(frame,errVisArg,errColorArg,bakCompArg,rangeArg)
-      pdf.plotOn(frame,lineDrawOptArg,lineColorArg,lineWidthArg,bakCompArg,rangeArg)
+      pdf.plotOn(frame,lineDrawOptArg,lineColorArg,lineWidthArg,bakCompArg,rangeArg,tmpBakPDFNameArg)
     else:
       pdf.plotOn(frame,errVisArg,errColorArg,rangeArg)
-      pdf.plotOn(frame,lineDrawOptArg,lineColorArg,lineWidthArg,rangeArg)
+      pdf.plotOn(frame,lineDrawOptArg,lineColorArg,lineWidthArg,rangeArg,tmpBakPDFNameArg)
 
-    data.plotOn(frame,graphDrawOptArg,binningArg)
+    data.plotOn(frame,graphDrawOptArg,binningArg,tmpDataHistNameArg)
 
     frame.SetTitle("")
     frame.GetXaxis().SetLabelSize(0)
@@ -2240,25 +2245,13 @@ class RooModelPlotter:
 
     # Pulls Frame
 
-    pullsHistRF = frame.pullHist()
-    self.pullsHistRF = pullsHistRF
-    pullsHist = root.TH1F("pullsHist"+nowStr,"",
-            self.binning.numBins(),
-            self.binning.lowBound(),
-            self.binning.highBound()
-        )
+    pullsHist = self.makePullPlotHist(frame,tmpDataHistName,tmpBakPDFName)
     self.pullsHist = pullsHist
-
     pullsHist.SetLineColor(root.kBlue)
     pullsHist.SetLineWidth(2)
     pullsHist.SetFillColor(856)
     pullsHist.SetFillStyle(1001)
     setHistTitles(pullsHist,xtitle,"#frac{Data-Fit}{#sqrt{Fit}}")
-    x = root.Double(0.)
-    y = root.Double(0.)
-    for i in range(1,self.binning.numBins()+1):
-      pullsHistRF.GetPoint(i-1,x,y)
-      pullsHist.SetBinContent(i,y)
 
     pullsHist.GetXaxis().SetTitle(xtitle)
     pullsHist.GetXaxis().CenterTitle(1)
@@ -2439,6 +2432,47 @@ class RooModelPlotter:
     self.dummySigPdfE = root.RooExtendPdf("dummySigPdfE"+nowStr,"",pdf,self.nDumbSig)
     self.dummyPdf = root.RooAddPdf("dummyPdf"+nowStr,"dummyPdf",root.RooArgList(self.dummySigPdfE,self.dummyUnifPdfE))
     return self.dummyPdf, root.RooFit.Components(pdf.GetName())
+
+  def makePullPlotHist(self,frame,histPlotName,pdfPlotName):
+    """
+    Makes pulls that are (data-fit)/sqrt(fit) where fit is the average value of the
+    PDF within the data histogram bin.
+    """
+
+    #print "\n\n\nStarting makePullPlotHist\n==============================================\n"
+    hist = frame.findObject(histPlotName)
+    curve = frame.findObject(pdfPlotName)
+    assert(hist)
+    assert(curve)
+
+    pullsHist = root.TH1F("pulls_"+histPlotName+"_"+pdfPlotName,"",
+            self.binning.numBins(),
+            self.binning.lowBound(),
+            self.binning.highBound()
+        )
+    x = root.Double(0.)
+    y = root.Double(0.)
+
+    curve.GetPoint(0,x,y) # Get Curve Start X
+    xCurveMin = float(x)
+    curve.GetPoint(curve.GetN()-1,x,y) # Get Curve End X
+    xCurveMax = float(x)
+
+    for i in range(1,self.binning.numBins()+1):
+      hist.GetPoint(i-1,x,y)
+      pull = float(y)
+      #print("hist bin: %10i, x: %10.2f, y: %10.2f" % (i,float(x),float(y)))
+      if x > xCurveMin and x < xCurveMax:
+        curvePoint = curve.interpolate(x)
+        pull -= curvePoint
+        pull /= sqrt(curvePoint)
+      #  print(" curve interpolation: %10.2f" % (curvePoint))
+      else:
+        pull = 0.
+        print(" Warning: x outside of curve range: [ %10.2f %10.2f ]" % (xCurveMin,xCurveMax))
+      #print(" pull: %10.2f" % (pull))
+      pullsHist.SetBinContent(i,pull)
+    return pullsHist
 
 def treeCut(category,cutString,eventWeights=True,muonRequirements=True,KDString="KD"):
   global MENormDict

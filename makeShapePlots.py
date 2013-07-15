@@ -280,9 +280,7 @@ if __name__ == "__main__":
   rebin=1
 
   shapePlotterList = []
-  #for fn in glob.glob(dataDir+"*20.root")+glob.glob(dataDir+"*5.05.root"):
-  #for fn in glob.glob(dataDir+"JetN*.root"):
-  for fn in glob.glob(dataDir+"*CombSplitAll*.root"):
+  for fn in glob.glob(dataDir+"*.root"):
     if re.search("P[\d.]+TeV",fn):
         continue
 
