@@ -78,30 +78,30 @@ titleMap = {
   "IncPreselPtG10":"Non-VBF",
   "BDTCutCatVBFBDTOnly": "VBF & Non-VBF Combination",
 
-  "Jets01PassPtG10BB": "Non-VBF Preselection, Tight BB",
-  "Jets01PassPtG10BO": "Non-VBF Preselection, Tight BO",
-  "Jets01PassPtG10BE": "Non-VBF Preselection, Tight BE",
-  "Jets01PassPtG10OO": "Non-VBF Preselection, Tight OO",
-  "Jets01PassPtG10OE": "Non-VBF Preselection, Tight OE",
-  "Jets01PassPtG10EE": "Non-VBF Preselection, Tight EE",
-  "Jets01PassCatAll" : "Non-VBF Preselection, Tight",
+  "Jets01PassPtG10BB": "Non-VBF Presel. Tight BB",
+  "Jets01PassPtG10BO": "Non-VBF Presel. Tight BO",
+  "Jets01PassPtG10BE": "Non-VBF Presel. Tight BE",
+  "Jets01PassPtG10OO": "Non-VBF Presel. Tight OO",
+  "Jets01PassPtG10OE": "Non-VBF Presel. Tight OE",
+  "Jets01PassPtG10EE": "Non-VBF Presel. Tight EE",
+  "Jets01PassCatAll" : "Non-VBF Presel. Tight",
+
+  "Jets01FailPtG10BB": "Non-VBF Presel. Loose BB",
+  "Jets01FailPtG10BO": "Non-VBF Presel. Loose BO",
+  "Jets01FailPtG10BE": "Non-VBF Presel. Loose BE",
+  "Jets01FailPtG10OO": "Non-VBF Presel. Loose OO",
+  "Jets01FailPtG10OE": "Non-VBF Presel. Loose OE",
+  "Jets01FailPtG10EE": "Non-VBF Presel. Loose EE",
+  "Jets01FailCatAll" : "Non-VBF Presel. Loose",
                                       
-  "Jets01FailPtG10BB": "Non-VBF Preselection, Loose BB",
-  "Jets01FailPtG10BO": "Non-VBF Preselection, Loose BO",
-  "Jets01FailPtG10BE": "Non-VBF Preselection, Loose BE",
-  "Jets01FailPtG10OO": "Non-VBF Preselection, Loose OO",
-  "Jets01FailPtG10OE": "Non-VBF Preselection, Loose OE",
-  "Jets01FailPtG10EE": "Non-VBF Preselection, Loose EE",
-  "Jets01FailCatAll" : "Non-VBF Preselection, Loose",
-                                      
-  "Jets01SplitCatAll": "Non-VBF Combination",
+  "Jets01SplitCatAll": "Non-VBF Comb.",
 
 
-  "Jet2CutsVBFPass":"VBF Preselection, VBF Tight",
-  "Jet2CutsGFPass":"VBF Preselection, GF Tight",
-  "Jet2CutsFailVBFGF":"VBF Preselection, Loose",
+  "Jet2CutsVBFPass":"VBF Presel., VBF Tight",
+  "Jet2CutsGFPass":"VBF Presel., GF Tight",
+  "Jet2CutsFailVBFGF":"VBF Presel., Loose",
 
-  "Jet2SplitCutsGFSplit" : "VBF Combination",
+  "Jet2SplitCutsGFSplit" : "VBF Comb.",
   "CombSplitAll" : "Combination",
 }
 
@@ -555,9 +555,12 @@ class PValuePlotTogether:
     #legend = root.TLegend(0.58,0.70,0.9,0.9) # UR
     baselineY = gStyle.GetPadBottomMargin()+0.02
     marginR = 1.0-gStyle.GetPadRightMargin()+0.01
-    legend = root.TLegend(marginR-0.28,baselineY,marginR,baselineY+0.4)
+    marginL = gStyle.GetPadLeftMargin()+0.01
+    #legend = root.TLegend(marginR-0.28,baselineY,marginR,baselineY+0.4)
+    legend = root.TLegend(marginL+0.1,baselineY,marginL+0.1+0.45,baselineY+0.37)
     if len(graphs) < 5:
-      legend = root.TLegend(marginR-0.32,baselineY,marginR,baselineY+0.25)
+      #legend = root.TLegend(marginR-0.32,baselineY,marginR,baselineY+0.25)
+      legend = root.TLegend(marginL+0.1,baselineY,marginL+0.1+0.35,baselineY+0.27)
     legend.SetFillColor(0)
     legend.SetLineColor(0)
     self.legend = legend

@@ -33,9 +33,9 @@ echo "executing combine -M Asymptotic --rMax 150 $FILENAME >& $FILENAME.out"
 
 combine -M Asymptotic --rMax 150 $FILENAME >& $FILENAME.out
 
-echo "executing combine -M ProfileLikelihood -d $FILENAME --signif --usePLC >& $FILENAME.sig"
+echo "executing combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif --usePLC >& $FILENAME.sig"
 
-combine -M ProfileLikelihood -d $FILENAME --signif --usePLC >& $FILENAME.sig
+combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif --usePLC >& $FILENAME.sig
 rm -f roostats*
 rm -f higgsCombineTest*.root
 

@@ -12,14 +12,14 @@ rm -f higgsCombineTest*.root
 
 echo "executing combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif --usePLC >& $FILENAME.sig"
 
-nice combine -M ProfileLikelihood -d $FILENAME --signif --usePLC >& $FILENAME.sig
+nice combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif --usePLC >& $FILENAME.sig
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
 echo "executing combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig"
 
-nice combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 >& $FILENAME.expsig
-#combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig
+nice combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif --expectSignal=1 -t -1 >& $FILENAME.expsig
+#combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig
 rm -f roostats*
 rm -f higgsCombineTest*.root
 

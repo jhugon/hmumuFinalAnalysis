@@ -2,7 +2,7 @@
 
 import optparse
 parser = optparse.OptionParser(description="Makes Channel compatabiltiy plots")
-parser.add_option("-t","--plotTests", help="Use This Higgs Mass",action="store_true",default=False)
+parser.add_option("-m","--higgsMass", help="Use This Higgs Mass",type=str,default="125.0")
 args, fakeargs = parser.parse_args()
 
 from helpers import *
@@ -391,7 +391,6 @@ class ChannelPlot:
         data[channel] = [param.getVal(),-param.getErrorLo(),param.getErrorHi(),match.group(1),match.group(2)]
         high = data[channel][0]+data[channel][2]
         low = data[channel][0]-data[channel][1]
-        print param.getVal()
         if high > xMax:
             xMax = high
         if low < xMin:
@@ -553,57 +552,7 @@ if __name__ == "__main__":
     fnToGlob = dirName+"*_"+period+"_*.txt.*root"
     allfiles = glob.glob(fnToGlob)
 
-    if args.plotTests:
-      ## Limit v. Lumi
-      energyStr = ""
-      plots = set()
-      for fn in allfiles:
-        match = re.search(r".*/(.+)_(.+)_[.\d]+.txt.*root",fn)
-        badPlot = re.search(r"Silly",fn)
-        badPlot2 = re.search(r"Silly",fn)
-        if match and not (badPlot or badPlot2):
-          plots.add(match.group(1))
-          energyStr = match.group(2)
-  
-      if energyStr == "7P8TeV":
-        energyStr = "7 & 8 TeV"
-      else:
-        energyStr.replace("TeV"," TeV")
-    
-      caption2 = "#sqrt{s} = "+energyStr
-      caption3 = ""
-  
-      ## All p-values together plot
-      canvas.SetLogy(1)
-      pValueVetos = [
-          [
-            "VBFBDTCut",
-            "BDTCutCatVBFBDTOnly"
-          ],
-          [
-            "IncPreselPtG10BB",
-            "IncPreselPtG10BE",
-            "IncPreselPtG10BO",
-            "IncPreselPtG10EE",
-            "IncPreselPtG10OE",
-            "IncPreselPtG10OO"
-          ]
-      ]
-      for saveName,vetos in zip(["NonVBF","Final"],pValueVetos):
-        if len(plots)==0:
-          continue
-        pValueDict = {}
-        for plotName in plots:
-          if plotName in vetos:
-              continue
-  
-          data = getDataGOF(dirName+plotName+"_"+period,outDir)
-          pValueDict[plotName] = data
-        pValueAllPlot = PValuePlotTogether(pValueDict,canvas,caption2=caption2,caption3=caption3,energyStr=energyStr)
-        saveAs(canvas,outDir+"ccc_"+saveName+period)
-      canvas.SetLogy(0)
-
-    compareMass = "125.0"
+    compareMass = args.higgsMass
     compareFileGlob = "Comb*_"+period+"_*"+compareMass+".txt.CCC.root"
     compareFiles = glob.glob(dirName+compareFileGlob)
     for f in compareFiles:
@@ -612,5 +561,5 @@ if __name__ == "__main__":
     compareFileGlob = "Comb*_"+period+"_*"+compareMass+".txt.CCC2.root"
     compareFiles = glob.glob(dirName+compareFileGlob)
     for f in compareFiles:
-      ChannelPlot(f,outDir+"cccCompare2_"+period)
+      ChannelPlot(f,outDir+"cccCompare2_"+period+"_"+compareMass)
     
