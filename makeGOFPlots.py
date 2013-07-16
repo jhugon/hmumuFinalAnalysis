@@ -371,9 +371,6 @@ if __name__ == "__main__":
   setStyle()
   canvas = root.TCanvas()
   
-  mpl.rcParams["font.family"] = "sans-serif"
-  #print mpl.rcParams["backend"]
-
   ylimits=[]
 
   lumisToUse={"7TeV":lumiDict["7TeV"],"8TeV":lumiDict["8TeV"],"7P8TeV":lumiDict["8TeV"]+lumiDict["7TeV"]}

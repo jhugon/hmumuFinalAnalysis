@@ -19,6 +19,7 @@ from xsec import *
 #######################################
 
 #~48 Charactars Max
+#~48 Charactars Max
 titleMap = {
   "AllCat":"H->#mu#mu Catagories Combination",
   "IncCat":"Non-VBF Categories Comb.",
@@ -69,6 +70,10 @@ titleMap = {
   "VBFPreselBB":"VBF Preselection BB",
   "VBFPreselNotBB":"VBF Preselection !BB",
 
+  "IncPtCut":"Non-VBF",
+  "VBFmDiJetCut":"VBF Cut-Based",
+  "VBFdeltaEtaJetCut":"VBF Cut-Based",
+
   "IncPreselPtG10BB":"Non-VBF BB",
   "IncPreselPtG10BO":"Non-VBF BO",
   "IncPreselPtG10BE":"Non-VBF BE",
@@ -76,79 +81,34 @@ titleMap = {
   "IncPreselPtG10OE":"Non-VBF OE",
   "IncPreselPtG10EE":"Non-VBF EE",
   "IncPreselPtG10":"Non-VBF",
-  "BDTCutCatVBFBDTOnly": "VBF & Non-VBF Combination"
-}
+  "BDTCutCatVBFBDTOnly": "VBF & Non-VBF Combination",
 
-colorMap = {
-  "IncPresel":root.kRed,
-  "VBFPresel":root.kBlue,
-  "VBFBDTCut":root.kBlue,
-  "IncPreselCat":root.kRed,
+  "Jets01PassPtG10BB": "Non-VBF T BB",
+  "Jets01PassPtG10BO": "Non-VBF T BO",
+  "Jets01PassPtG10BE": "Non-VBF T BE",
+  "Jets01PassPtG10OO": "Non-VBF T OO",
+  "Jets01PassPtG10OE": "Non-VBF T OE",
+  "Jets01PassPtG10EE": "Non-VBF T EE",
+  "Jets01PassCatAll" : "Non-VBF T",
+                               
+  "Jets01FailPtG10BB": "Non-VBF L BB",
+  "Jets01FailPtG10BO": "Non-VBF L BO",
+  "Jets01FailPtG10BE": "Non-VBF L BE",
+  "Jets01FailPtG10OO": "Non-VBF L OO",
+  "Jets01FailPtG10OE": "Non-VBF L OE",
+  "Jets01FailPtG10EE": "Non-VBF L EE",
+  "Jets01FailCatAll" : "Non-VBF L",
+                               
+  "Jets01SplitCatAll": "Non-VBF",
 
-  "IncPreselPtG10BB":root.kCyan,
-  "IncPreselPtG10BO":root.kOrange,
-  "IncPreselPtG10BE":root.kGreen,
-  "IncPreselPtG10OO":root.kOrange+3,
-  "IncPreselPtG10OE":root.kMagenta,
-  "IncPreselPtG10EE":root.kViolet+2,
-  "IncPreselPtG10":root.kBlue,
-  "BDTCutCatVBFBDTOnly": 1
-}
 
-comparisonMap = {
-  "AllCat":"All Cat. Comb.",
-  "IncCat":"!VBF Cat. Comb.",
-  "VBFCat":"VBF Cat. Comb.",
+  "Jet2CutsVBFPass":"VBF, VBF T",
+  "Jet2CutsGFPass":"VBF, GF T",
+  "Jet2CutsFailVBFGF":"VBF L",
 
-  "Presel":"Presel. Comb.",
-  "IncPresel":"!VBF Presel.",
-  "VBFPresel":"VBF Presel.",
+  "Jet2SplitCutsGFSplit" : "VBF",
+  "CombSplitAll" : "Combination",
 
-  "Pt0to30":"$p_{T}^{\mu\mu} \in [0,30]$",
-  "Pt30to50":"$p_{T}^{\mu\mu} \in [30,50]$",
-  "Pt50to125":"$p_{T}^{\mu\mu} \in [50,125]$",
-  "Pt125to250":"$p_{T}^{\mu\mu} \in [125,250]$",
-  "Pt250":"$p_{T}^{\mu\mu}>250$",
-
-  "VBFLoose":"VBFL",
-  "VBFMedium":"VBFM",
-  "VBFTight":"VBFT",
-  "VBFVeryTight":"VBFVT",
-
-  "BDTCut":"BDT Comb.",
-  "IncBDTCut":"!VBF BDT",
-  "VBFBDTCut":"VBF BDT",
-
-  "BDTCutCat":"BDT Res. Comb.",
-  "IncBDTCutCat":"!VBF BDT Res.",
-  "VBFBDTCutCat":"VBF BDT Res.",
-
-  #"BDTCutCat":"Combination",
-  #"IncBDTCutCat":"Non-VBF",
-  #"VBFBDTCutCat":"VBF",
-
-  "PreselCat":"Presel. Res. Comb.",
-  "IncPreselCat":"!VBF Res. Presel.",
-  "VBFPreselCat":"VBF Res. Presel.",
-
-  "IncBDTCutBB":"!VBF BDT BB",
-  "IncBDTCutBO":"!VBF BDT BO",
-  "IncBDTCutBE":"!VBF BDT BE",
-  "IncBDTCutOO":"!VBF BDT OO",
-  "IncBDTCutOE":"!VBF BDT OE",
-  "IncBDTCutEE":"!VBF BDT EE",
-  "IncBDTCutNotBB":"!VBF BDT !BB",
-  "VBFBDTCutBB":"VBF BDT BB",
-  "VBFBDTCutNotBB":"VBF BDT !BB",
-  "IncPreselBB":"!VBF Presel. BB",
-  "IncPreselBO":"!VBF Presel. BO",
-  "IncPreselBE":"!VBF Presel. BE",
-  "IncPreselOO":"!VBF Presel. OO",
-  "IncPreselOE":"!VBF Presel. OE",
-  "IncPreselEE":"!VBF Presel. EE",
-  "IncPreselNotBB":"!VBF Presel. !BB",
-  "VBFPreselBB":"VBF Presel. BB",
-  "VBFPreselNotBB":"VBF Presel. !BB"
 }
 
 #######################################
@@ -465,12 +425,15 @@ class ChannelPlot:
     self.canvas.cd()
     frame = root.TH2F("frame","",1,self.xMin,self.xMax,self.nChannels+1,0,self.nChannels+1)
     if self.differentEnergies:
-      frame.GetYaxis().SetLabelSize(frame.GetYaxis().GetLabelSize()*1.3)
+      frame.GetYaxis().SetLabelSize(frame.GetYaxis().GetLabelSize()*1.22)
+      #frame.GetYaxis().SetLabelOffset(frame.GetYaxis().GetLabelOffset()*0.2)
     else:
-      frame.GetYaxis().SetLabelSize(frame.GetYaxis().GetLabelSize()*1.75)
+      frame.GetYaxis().SetLabelSize(frame.GetYaxis().GetLabelSize()*1.70)
     frame.GetXaxis().SetLabelSize(frame.GetXaxis().GetLabelSize()*1.4)
     frame.GetXaxis().SetTitleSize(frame.GetXaxis().GetTitleSize()*1.2)
     frame.GetXaxis().SetTitleOffset(frame.GetXaxis().GetTitleOffset()*0.8)
+    frame.GetXaxis().SetTickLength(frame.GetXaxis().GetTickLength()*0.75)
+    frame.GetYaxis().SetTickLength(frame.GetYaxis().GetTickLength()*0.5)
     setHistTitles(frame,"Best Fit #sigma/#sigma_{SM}","")
     points = root.TGraphAsymmErrors()
     points.SetMarkerStyle(21)
@@ -526,7 +489,7 @@ class ChannelPlot:
     else:
       tmp = self.energy+"TeV"
       energyStr="#sqrt{{s}} = {0} TeV, L = {1:.1f} fb^{{-1}}".format(tmp,lumiDict[tmp])
-      tlatex.SetTextSize(0.04)
+      tlatex.SetTextSize(0.039)
     tlatex.SetTextAlign(21)
     tlatex.DrawLatex(self.padM,1.01-self.padT,energyStr)
 
@@ -535,13 +498,16 @@ class ChannelPlot:
     tlatex.SetTextAlign(22)
     tmpShift = 0.0
     if self.nChannels >= 10:
-        tmpShift = -0.15
+      tmpShift = -0.15
+    if self.differentEnergies:
+      tmpShift -= 0.5
+      tlatex.SetTextSize(0.035)
     tlatex.DrawLatex((self.xMax-self.xMin)*0.25+self.xMin,self.nChannels+0.5+tmpShift,PRELIMINARYSTRING)
     if self.massStr != None:
       tlatex.DrawLatex((self.xMax-self.xMin)*0.75+self.xMin,self.nChannels+0.5+tmpShift,
             "m_{{H}} = {0} GeV/c^{{2}}".format(self.massStr))
 
-
+    tlatex.SetTextSize(0.04)
     tlatex.SetNDC(True)
     if self.nChannels >= 10:
       tlatex.SetTextAlign(12)
@@ -549,7 +515,7 @@ class ChannelPlot:
             "Combined")
       tlatex.SetTextSize(0.028)
       tlatex.SetTextAlign(32)
-      tlatex.DrawLatex(self.padL,getYNDC(self.nChannels+0.5)-0.005,
+      tlatex.DrawLatex(self.padL-0.01,getYNDC(self.nChannels+0.5)-0.005,
             "#mu={0:.1f}#pm{1:.1f}".format(self.data['r'][0],self.data['r'][1]))
     else:
       tlatex.SetTextAlign(22)
@@ -638,12 +604,12 @@ if __name__ == "__main__":
       canvas.SetLogy(0)
 
     compareMass = "125.0"
-    compareFileGlob = "BDTCutCatVBFBDTOnly*_"+period+"_*"+compareMass+".txt.CCC.root"
+    compareFileGlob = "Comb*_"+period+"_*"+compareMass+".txt.CCC.root"
     compareFiles = glob.glob(dirName+compareFileGlob)
     for f in compareFiles:
       ChannelPlot(f,outDir+"cccCompare_"+period)
 
-    compareFileGlob = "BDTCutCatVBFBDTOnly*_"+period+"_*"+compareMass+".txt.CCC2.root"
+    compareFileGlob = "Comb*_"+period+"_*"+compareMass+".txt.CCC2.root"
     compareFiles = glob.glob(dirName+compareFileGlob)
     for f in compareFiles:
       ChannelPlot(f,outDir+"cccCompare2_"+period)
