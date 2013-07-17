@@ -706,6 +706,10 @@ class Analysis:
     self.higgsMass = 125.
     if args.higgsMass > 0.0:
       self.higgsMass = args.higgsMass
+    higgsMassStr = "{0:.0f}".format(self.higgsMass)
+    if self.higgsMass % 1 > 0.0:
+      higgsMassStr = "{0:.1f}".format(self.higgsMass)
+    self.higgsMassStr = higgsMassStr
 
     self.energyStr = energyStr
     self.lumi = lumi
@@ -717,9 +721,27 @@ class Analysis:
     self.controlRegionHigh = controlRegionHigh
     self.analysis = analysis
     self.params = []
-    self.debug = ""
+    self.debug = "#******************************************************#\n"*3
     self.debug += "#Nominal Higgs Mass: "+str(self.higgsMass) +"\n"
     self.debug += "#Peak Centered at: "+str(higgsPeakMean) +"\n"
+    self.debug += "#Using lumi: "+str(lumi)+"\n"
+    self.debug += "########################\n"
+    self.debug += "#input directory name: "+str(directory)+"\n"
+    self.debug += "#Data names:\n"
+    for i in dataNames:
+      self.debug += "#  "+str(i)+"\n"
+    self.debug += "#signal names:\n"
+    for i in signalNames:
+      self.debug += "#  "+str(i)+"\n"
+    self.debug += "#background names:\n"
+    for i in backgroundNames:
+      self.debug += "#  "+str(i)+"\n"
+    self.debug += "########################\n"
+    self.debug += "# USEGPANNA: "+str(USEGPANNA)+"\n"
+    self.debug += "# SIGNALFIT: "+str(SIGNALFIT)+"\n"
+    self.debug += "# FREEBAKPARAMS: "+str(FREEBAKPARAMS)+"\n"
+    self.debug += "# USETREES: "+str(USETREES)+"\n"
+    self.debug += "########################\n"
 
     self.workspace = root.RooWorkspace(analysis+energyStr)
     self.workspaceName = analysis+energyStr
@@ -898,9 +920,6 @@ class Analysis:
     self.sigHists = []
     if USEGPANNA:
       for name in signalNames:
-        higgsMassStr = "{0:.0f}".format(self.higgsMass)
-        if self.higgsMass % 1 > 0.0:
-          higgsMassStr = "{0:.1f}".format(self.higgsMass)
         nameMatch = re.match(r"(.+)Hmumu[\d.]+_[\d]+TeV",name)
         assert(nameMatch)
         prodMode = nameMatch.group(1)
@@ -932,11 +951,7 @@ class Analysis:
         eff = counts/nEventsMap[name]*efficiencyMap[getPeriod(name)]
         xs = eff*xsec[name]
         if args.higgsMass > 0.0:
-          prec = "0"
-          if args.higgsMass % 1 > 0.0:
-            prec = "1"
-          higgsMassString =("{0:."+prec+"f}").format(args.higgsMass)
-          tmpName = name.replace("125",higgsMassString)
+          tmpName = name.replace("125",higgsMassStr)
           xs = eff*xsec[tmpName]
         self.xsecSigTotal += xs
         self.xsecSigList.append(xs)
@@ -1343,7 +1358,7 @@ class DataCardMaker:
           channelNameNoEnergy = re.sub(r"[\d]TeV$","",channelName)
           for sigName in channel.sigNames:
             formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-            value = nuisance(nu,sigName,channelNameNoEnergy)
+            value = nuisance(nu,sigName,channelNameNoEnergy,channel.higgsMassStr)
             if value == None:
               value = "-"
             else:
@@ -1376,7 +1391,7 @@ class DataCardMaker:
             channelNameNoEnergy = re.sub(r"[\d]TeV$","",channelName)
             for sigName in channel.sigNames:
               formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-              value = nuisance(nu,sigName,channelNameNoEnergy)
+              value = nuisance(nu,sigName,channelNameNoEnergy,channel.higgsMassStr)
               if value == None:
                 value = "-"
               else:
@@ -1408,7 +1423,7 @@ class DataCardMaker:
               value = "-"
               formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
               if channelName == channelName2 and sigName == sigName2:
-                value = nuisance(nu,sigName,channelNameNoEnergy)
+                value = nuisance(nu,sigName,channelNameNoEnergy,channel.higgsMassStr)
                 if value == None:
                   value = "-"
                 else:
@@ -1680,11 +1695,17 @@ if __name__ == "__main__":
   #  "SingleMuRun2012Cv2",
   #  "SingleMuRun2012D",
   #]
+  #dataDict["8TeV"] = [
+  #  "SingleMuRun2012A_22Jan2013v1",
+  #  "SingleMuRun2012B_22Jan2013v1",
+  #  "SingleMuRun2012C_22Jan2013v1",
+  #  "SingleMuRun2012D_22Jan2013v1",
+  #]
   dataDict["8TeV"] = [
-    "SingleMuRun2012A_22Jan2013v1",
-    "SingleMuRun2012B_22Jan2013v1",
-    "SingleMuRun2012C_22Jan2013v1",
-    "SingleMuRun2012D_22Jan2013v1",
+    "SingleMuRun2012Av1-22Jan2013",
+    "SingleMuRun2012Bv1-22Jan2013",
+    "SingleMuRun2012Cv1-22Jan2013",
+    "SingleMuRun2012Dv1-22Jan2013",
   ]
   #dataDict["8TeV"] = []
   dataDict["7TeV"] = [

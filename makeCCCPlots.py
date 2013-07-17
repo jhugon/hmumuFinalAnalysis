@@ -585,13 +585,14 @@ if __name__ == "__main__":
     allfiles = glob.glob(fnToGlob)
 
     compareMass = args.higgsMass
+    outMass = args.higgsMass.replace(".","p")
     compareFileGlob = "Comb*_"+period+"_*"+compareMass+".txt.CCC.root"
-    compareFiles = glob.glob(dirName+compareFileGlob)
+    compareFiles = glob.glob(dirName+compareFileGlob+"_"+outMass)
     for f in compareFiles:
       ChannelPlot(f,outDir+"cccCompare_"+period)
 
     compareFileGlob = "Comb*_"+period+"_*"+compareMass+".txt.CCC2.root"
     compareFiles = glob.glob(dirName+compareFileGlob)
     for f in compareFiles:
-      ChannelPlot(f,outDir+"cccCompare2_"+period+"_"+compareMass)
+      ChannelPlot(f,outDir+"cccCompare2_"+period+"_"+outMass)
     
