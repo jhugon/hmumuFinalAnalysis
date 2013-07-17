@@ -443,8 +443,9 @@ class RelativePlot:
     tlatex.SetTextAlign(32)
     tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption)
 
-    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin()-0.03,0.88,caption2)
-    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin()-0.03,0.82,caption3)
+    tlatex.SetTextAlign(12)
+    tlatex.DrawLatex(gStyle.GetPadLeftMargin()+0.03,0.88,caption2)
+    tlatex.DrawLatex(gStyle.GetPadLeftMargin()+0.03,0.82,caption3)
 
     for g in self.vertLines:
       g.Draw("l")
@@ -523,7 +524,6 @@ class PValuePlotTogether:
         graph.Draw("al")
         xmin = graph.GetXaxis().GetXmin()
         xmax = graph.GetXaxis().GetXmax()
-        print xmin, xmax
         hLabelX = (xmax-xmin)/0.02+xmin
         for yPos in sigmaVals:
          if yPos < ymin:
@@ -544,8 +544,11 @@ class PValuePlotTogether:
     tlatex.SetTextAlign(32)
     tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption)
 
-    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin()-0.03,0.88,caption2)
-    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin()-0.03,0.82,caption3)
+    tlatex.SetTextAlign(12)
+    caption23 = caption2
+    if caption3 != "":
+      caption23 += ", "+caption3
+    tlatex.DrawLatex(gStyle.GetPadLeftMargin()+0.03,0.88,caption23)
 
     #tlatex.SetTextAlign(12)
     #tlatex.SetTextSize(0.05)
@@ -614,16 +617,25 @@ if __name__ == "__main__":
         plots.add(match.group(1))
         energyStr = match.group(2)
 
+    caption2 = ""
+    caption3 = ""
+    if energyStr == '':
+      pass
+    elif energyStr == "7P8TeV":
+      caption2 = "#sqrt{{s}} = 7 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict["7TeV"]))
+      caption3 = "#sqrt{{s}} = 8 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict["8TeV"]))
+    else:
+      caption2 = "#sqrt{{s}} = {0} L = {1:.1f} fb^{{-1}}".format(energyStr,float(lumiDict[energyStr]))
+      caption3 = ""
+
     if energyStr == "7P8TeV":
       energyStr = "7 & 8 TeV"
     else:
       energyStr.replace("TeV"," TeV")
   
-    caption2 = "#sqrt{s} = "+energyStr
-    caption3 = ""
     if args.signalInject>0.0:
-      caption3 = "Signal Injected {0:.1f}#timesSM".format(args.signalInject)
-      caption3 += " m_{H} = "+"{0:.1f}".format(args.signalInjectMass)+" GeV/c^{2}"
+      caption2 += "Signal Injected {0:.1f}#timesSM".format(args.signalInject)
+      caption2 += " m_{H} = "+"{0:.1f}".format(args.signalInjectMass)+" GeV/c^{2}"
     legend = root.TLegend(0.58,0.70,0.9,0.9)
     legend.SetFillColor(0)
     legend.SetLineColor(0)
