@@ -3,6 +3,7 @@
 import optparse
 parser = optparse.OptionParser(description="Makes Channel compatabiltiy plots")
 parser.add_option("-m","--higgsMass", help="Use This Higgs Mass",type=str,default="125.0")
+parser.add_option("-x","--xMax", help="min and max mu",type=float,default=50.)
 args, fakeargs = parser.parse_args()
 
 from helpers import *
@@ -416,9 +417,9 @@ class ChannelPlot:
     self.xMin = xMin
 
     if self.xMin < -50.:
-      self.xMin = -50.
+      self.xMin = -args.xMax
     if self.xMax > 50.:
-      self.xMax = 50.
+      self.xMax = args.xMax
 
   def plot(self,savename):
     self.canvas.cd()
@@ -440,6 +441,8 @@ class ChannelPlot:
     points.SetMarkerSize(2)
     points.SetLineColor(root.kRed)
     points.SetLineWidth(5)
+
+    self.arrows = []
     
     for i in range(self.nChannels):
         datapoint = self.data[self.channels[i]]
@@ -449,6 +452,33 @@ class ChannelPlot:
         if self.differentEnergies:
             extra = " {0} TeV".format(datapoint[4])
         frame.GetYaxis().SetBinLabel(i+1,titleMap[datapoint[3]]+extra)
+        xWidth = self.xMax-self.xMin
+        if datapoint[0] > self.xMax and datapoint[0]-datapoint[1] < self.xMax:
+          x = datapoint[0]-datapoint[1]
+          if x < self.xMin:
+            x = self.xMin
+          tmpArr = root.TLine(x,i+0.5,self.xMax,i+0.5)
+          tmpArr.SetLineColor(root.kRed)
+          tmpArr.SetLineWidth(5)
+          self.arrows.append(tmpArr)
+        elif datapoint[0] < self.xMin and datapoint[0]+datapoint[2] > self.xMin:
+          x = datapoint[0]+datapoint[2]
+          if x > self.xMax:
+            x = self.xMax
+          tmpArr = root.TLine(self.xMin,i+0.5,x,i+0.5)
+          tmpArr.SetLineColor(root.kRed)
+          tmpArr.SetLineWidth(5)
+          self.arrows.append(tmpArr)
+        elif datapoint[0] > self.xMax:
+          tmpArr = root.TArrow(self.xMax-xWidth*2e-2,i+0.5,self.xMax-xWidth*1e-2,i+0.5,0.02,"|>")
+          tmpArr.SetLineColor(root.kRed)
+          tmpArr.SetLineWidth(5)
+          self.arrows.append(tmpArr)
+        elif datapoint[0] < self.xMin:
+          tmpArr = root.TArrow(self.xMin+xWidth*2e-2,i+0.5,self.xMin+xWidth*1e-2,i+0.5,0.02,"|>")
+          tmpArr.SetLineColor(root.kRed)
+          tmpArr.SetLineWidth(5)
+          self.arrows.append(tmpArr)
 
     globalFitVal = self.data['r'][0]
     globalFitP1Sig = self.data['r'][2]+globalFitVal
@@ -465,6 +495,8 @@ class ChannelPlot:
     globalFitBand.Draw()
     globalFitLine.Draw()
     points.Draw("PZ")
+    for arr in self.arrows:
+      arr.Draw()
 
     getattr(self,"drawCaptions")()
 

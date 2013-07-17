@@ -557,7 +557,8 @@ class PValuePlotTogether:
     marginR = 1.0-gStyle.GetPadRightMargin()+0.01
     marginL = gStyle.GetPadLeftMargin()+0.01
     #legend = root.TLegend(marginR-0.28,baselineY,marginR,baselineY+0.4)
-    legend = root.TLegend(marginL+0.1,baselineY,marginL+0.1+0.45,baselineY+0.37)
+    #legend = root.TLegend(marginL+0.1,baselineY,marginL+0.1+0.45,baselineY+0.37)
+    legend = root.TLegend(marginL+0.1,baselineY,marginL+0.1+0.45,baselineY+0.32)
     if len(graphs) < 5:
       #legend = root.TLegend(marginR-0.32,baselineY,marginR,baselineY+0.25)
       legend = root.TLegend(marginL+0.1,baselineY,marginL+0.1+0.35,baselineY+0.27)
