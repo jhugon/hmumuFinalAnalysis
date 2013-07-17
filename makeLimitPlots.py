@@ -715,11 +715,17 @@ if __name__ == "__main__":
       elif args.higgsMass:
         if energyStr == "8TeV":
             ylimits = [0.,40.]
+            caption2 = "#sqrt{{s}} = 8 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict[energyStr]))
+            caption3 = ""
         elif energyStr == "7TeV":
             ylimits = [0.,70.]
+            caption2 = "#sqrt{{s}} = 7 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict[energyStr]))
+            caption3 = ""
+        elif energyStr == "7P8TeV":
+            caption2 = "#sqrt{{s}} = 7 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict["7TeV"]))
+            caption3 = "#sqrt{{s}} = 8 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict["8TeV"]))
         ylimits = []
         xlabel="m_{H} [GeV/c^{2}]"
-        caption3 = "L = {0:.1f} fb^{{-1}}".format(float(lumisToUse[energyStr]))
       #elif period == "14TeV":
       #  title = "Standard Model H#rightarrow#mu#mu"
       title = titleMap[plotName]
