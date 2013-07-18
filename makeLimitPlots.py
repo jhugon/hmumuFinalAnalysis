@@ -329,9 +329,9 @@ class RelativePlot:
     oneSigGraph.Draw("3")
     expGraph.Draw("l")
     expGraph.Draw("p")
-    #if showObs:
-    #  obsGraph.Draw("l")
-    #  obsGraph.Draw("p")
+    if showObs:
+      obsGraph.Draw("l")
+      obsGraph.Draw("p")
 
     tlatex = root.TLatex()
     tlatex.SetNDC()
