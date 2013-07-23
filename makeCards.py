@@ -1968,3 +1968,6 @@ if __name__ == "__main__":
   shutil.copy("etc/runHPC_GOF.sh",outDir+"runHPC_GOF.sh")
   shutil.copy("etc/runHPC_Compat.sh",outDir+"runHPC_Compat.sh")
   shutil.copy("etc/compatHPC_Template.sh",outDir+"compatHPC_Template.sh")
+  shutil.copy("etc/lxbatch_LEE.sh",outDir+"lxbatch_LEE.sh")
+  shutil.copy("etc/runLEE.sh",outDir+"runLEE.sh")
+

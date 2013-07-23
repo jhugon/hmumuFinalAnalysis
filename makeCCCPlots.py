@@ -491,9 +491,16 @@ class ChannelPlot:
     globalFitLine.SetLineWidth(5);
     globalFitLine.SetLineColor(1);
 
+    zeroLine = root.TLine(0., 0., 0., self.nChannels);
+    zeroLine.SetLineWidth(2);
+    zeroLine.SetLineColor(1);
+    zeroLine.SetLineStyle(2);
+    self.zeroLine = zeroLine
+
     frame.Draw()
     globalFitBand.Draw()
     globalFitLine.Draw()
+    zeroLine.Draw()
     points.Draw("PZ")
     for arr in self.arrows:
       arr.Draw()
