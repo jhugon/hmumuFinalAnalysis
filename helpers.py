@@ -2152,7 +2152,7 @@ def fitDGFindQuantiles(hist,level):
     return quants
         
 class RooModelPlotter:
-  def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None):
+  def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None,canvas=None):
     self.xVar = xVar
     self.pdf = pdf
     self.data = data
@@ -2180,7 +2180,8 @@ class RooModelPlotter:
     nBins = self.binning.numBins()
     binWidth = (self.binning.highBound()-self.binning.lowBound())/nBins
 
-    canvas = root.TCanvas("canvas"+nowStr)
+    if canvas == None:
+      canvas = root.TCanvas("canvas"+nowStr)
     self.canvas = canvas
 
     self.tlatex = root.TLatex()
