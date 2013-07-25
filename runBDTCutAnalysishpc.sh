@@ -1,6 +1,6 @@
 #!/bin/bash
 
-REMOTEDIR=/scratch/hpc/jhugon/stats/CMSSW_5_2_5/stats/
+REMOTEDIR=/scratch/hpc/jhugon/stats/CMSSW_6_1_1/stats/
 NODE=submit.hpc.ufl.edu
 if ! `ssh $NODE touch $REMOTEDIR/touchfile.txt`; then
   echo "Error: Remote directory $REMOTEDIR doesn't exist or isn't writable"

@@ -3,7 +3,7 @@
 SIGNALSTRENGTH=10.0
 SIGNALMASS=123
 
-REMOTEDIR=/afs/cern.ch/user/j/jhugon/work/private/stats/CMSSW_5_2_5/stats/
+REMOTEDIR=/afs/cern.ch/user/j/jhugon/work/private/stats/CMSSW_6_1_1/stats/
 if ! `ssh lxplus5 touch $REMOTEDIR/touchfile.txt`; then
   echo "Error: Remote directory $REMOTEDIR doesn't exist or isn't writable"
   exit

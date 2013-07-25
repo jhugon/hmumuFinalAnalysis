@@ -253,7 +253,7 @@ def getData(fileString,matchString=r"_([-\d.]+)\.txt\.out",dontMatchStrings=[],d
   return result
 
 class RelativePlot:
-  def __init__(self,dataPoints, canvas, legend, caption, ylabel="Expected 95% CL Limit #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV"):
+  def __init__(self,dataPoints, canvas, legend, caption, ylabel="95% CL Limit on #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV"):
     expGraph = root.TGraph()
     expGraph.SetLineStyle(2)
     expGraph.SetMarkerStyle(20)

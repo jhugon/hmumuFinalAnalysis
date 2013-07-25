@@ -33,18 +33,18 @@ echo "executing combine -M Asymptotic --rMax 150 $FILENAME >& $FILENAME.out"
 
 combine -M Asymptotic --rMax 150 $FILENAME >& $FILENAME.out
 
-echo "executing combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif --usePLC >& $FILENAME.sig"
+echo "executing combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif >& $FILENAME.sig"
 
-combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif --usePLC >& $FILENAME.sig
+combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif >& $FILENAME.sig
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
-echo "executing combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig"
-
-combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif --expectSignal=1 -t -1 >& $FILENAME.expsig
+#echo "executing combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig"
+#
+#combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif --expectSignal=1 -t -1 >& $FILENAME.expsig
 ##combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig
-rm -f roostats*
-rm -f higgsCombineTest*.root
+#rm -f roostats*
+#rm -f higgsCombineTest*.root
 
 echo "executing combine -M MaxLikelihoodFit --rMin -150 --rMax 150 --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
 

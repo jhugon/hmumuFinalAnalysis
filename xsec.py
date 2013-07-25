@@ -183,10 +183,10 @@ dataDict = {}
 
 # Test with the new ReReco
 dataDict["8TeV"] = [
-    "SingleMuRun2012A_22Jan2013v1",
-    "SingleMuRun2012B_22Jan2013v1",
-    "SingleMuRun2012C_22Jan2013v1",
-    "SingleMuRun2012D_22Jan2013v1"
+    "SingleMuRun2012Av1-22Jan2013",
+    "SingleMuRun2012Bv1-22Jan2013",
+    "SingleMuRun2012Cv1-22Jan2013",
+    "SingleMuRun2012Dv1-22Jan2013"
 ]
 
 dataDict["7TeV"] = [

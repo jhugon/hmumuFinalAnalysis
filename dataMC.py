@@ -6,13 +6,13 @@ import ROOT as root
 import os
 import sys
 
-dataDir = "input/ptM15GeV/"
+dataDir = "input/V00-01-10/forGPReRecoMuScleFit/"
 outDir = "output/"
 
 RUNPERIOD="8TeV"
 LUMI=lumiDict[RUNPERIOD]
 
-scaleHiggsBy = 500.
+scaleHiggsBy = 1000.
 
 JETErrors=True
 LOGY=False
@@ -58,6 +58,7 @@ histDirs = ["VBFPreselDiMuPtL20/","IncPreselDiMuPtL20/"]
 histDirs = ["","BB/","IncPreselBB/","VBFPresel/"]
 histDirs = ["Jets0/","Jets1/","Jets2/"]
 histDirs = ["nonVBFPresel/"]
+histDirs = [""]
 
 CUTS="dimuonMass < 170. && dimuonMass > 110."
 
@@ -93,7 +94,7 @@ if True:
     #histNames["muonSub_eta"] = {"xlabel":"Sub-Leading Muon #eta","xlimits":[-2.1,2.1],"nbins":10}#,"ylimits":[0.1,3e6]}
 
     #histNames["nJets"] = {"xlabel":"N_{jets}","xlimits":[-0.5,5.5],"nbins":6}#,"ylimits":[0.1,3e6]}
-    histNames["ptMiss"] = {"xlabel":"Missing p_{T} [GeV/c]","xlimits":[0.0,300.0],"nbins":12}#,"ylimits":[0.1,3e6]}
+    #histNames["ptMiss"] = {"xlabel":"Missing p_{T} [GeV/c]","xlimits":[0.0,300.0],"nbins":12}#,"ylimits":[0.1,3e6]}
     histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta(j_{1},j_{2})","xlimits":[0.0,7.0],"nbins":14}#,"ylimits":[0.1,3e6]}
 
     histNames["dijetMass"] = {"xlabel":"m_{jj} [GeV/c^{2}]","xlimits":[0.,1000.],"nbins":20}#,"ylimits":[0.1,5e5]}
