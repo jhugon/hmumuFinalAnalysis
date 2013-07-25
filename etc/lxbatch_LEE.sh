@@ -21,7 +21,7 @@ cp $FILENAME $DIRNAME/
 cp $ROOTFILENAME $DIRNAME/
 cd $DIRNAME
 
-ntoys=10
+ntoys=$3
 iseed=1000
 ((iseed += $2))
 echo "iseed = $iseed"
@@ -32,7 +32,8 @@ linkcommand="ln -s -T ../$toysfile $toysfile"
 echo "running: $linkcommand"
 $linkcommand
 
-command="combine -M ProfileLikelihood --signif -t $ntoys --toysFile=$toysfile -v 2 $FILENAME"
+# must do --usePLC b/c it handels errors that happen too often!
+command="combine -M ProfileLikelihood --signif --usePLC -t $ntoys --toysFile=$toysfile -v 2 $FILENAME"
 echo $command
 $command >& $FILENAME."$2".sigToys
 
@@ -42,8 +43,8 @@ ls -lh
 cp $FILENAME."$2".sigToys ..
 cp higgs*ProfileLikelihood*.root ../$FILENAME."$2".sigToys.root
 
-#cd ..
-#rm -r $DIRNAME
+cd ..
+rm -r $DIRNAME
 
 echo "done"
 date

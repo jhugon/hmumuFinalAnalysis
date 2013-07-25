@@ -760,7 +760,7 @@ def makeWeightHist(f1,canvas,leg):
   leg.Draw("same")
 
 class DataMCStack:
-  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",ylimits=[],ylimitsRatio=[],pullType="",doMCErrors=False,showPullStats=False,yMaxVals=[],yMaxXRanges=[],mcVariations=None):
+  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",ylimits=[],ylimitsRatio=[],pullType="",doMCErrors=False,showPullStats=False,yMaxVals=[],yMaxXRanges=[],mcVariations=None,scaleMC2Data=False):
     nBinsX = dataHist.GetNbinsX()
     self.xlimits = xlimits
     self.ylimits = ylimits
@@ -799,6 +799,14 @@ class DataMCStack:
     self.mcHistList = mcHistList
     self.dataHist = dataHist
 
+    self.nDataEvents = dataHist.Integral(0,dataHist.GetNbinsX()+1)
+    self.mc2DataSF = 1.
+    if scaleMC2Data:
+      tmpMCSum = 0.
+      for mcHist in mcHistList:
+        tmpMCSum += mcHist.Integral(0,mcHist.GetNbinsX()+1)
+      self.mc2DataSF = float(self.nDataEvents)/tmpMCSum
+
     # Make MC Stack/sumHist
     self.stack = root.THStack()
     self.mcSumHist = dataHist.Clone("mcSumHist"+dataHist.GetName())
@@ -809,6 +817,7 @@ class DataMCStack:
       mcHist.SetLineColor(mcHist.GetFillColor())
       if showOverflow:
         showHistOverflow(mcHist)
+      mcHist.Scale(self.mc2DataSF)
       self.mcSumHist.Add(mcHist)
       self.stack.Add(mcHist)
 
@@ -824,7 +833,6 @@ class DataMCStack:
         self.mcSumHist.SetLineStyle(0)
 
     self.nMCEvents = self.mcSumHist.Integral(0,self.mcSumHist.GetNbinsX()+1)
-    self.nDataEvents = dataHist.Integral(0,dataHist.GetNbinsX()+1)
 
     # Get chi^2 Prob Data/MC
     self.normchi2 = dataHist.Chi2Test(self.mcSumHist,"UW CHI2/NDF")
@@ -945,11 +953,12 @@ class DataMCStack:
     yAxis = None
     histForAxis = None
     if len(self.ylimits)==2:
+      ylimits[0] += 1e-3
       histForAxis = root.TH2F(dataHist.GetName()+"ForAxis","",1,xlimits[0],xlimits[1],1,self.ylimits[0],self.ylimits[1])
     elif self.logy:
       histForAxis = root.TH2F(dataHist.GetName()+"ForAxis","",1,xlimits[0],xlimits[1],1,0.1,ymax*2.0)
     else:
-      histForAxis = root.TH2F(dataHist.GetName()+"ForAxis","",1,xlimits[0],xlimits[1],1,0.0,ymax*1.05)
+      histForAxis = root.TH2F(dataHist.GetName()+"ForAxis","",1,xlimits[0],xlimits[1],1,1e-3,ymax*1.05)
     self.histForAxis = histForAxis
     self.histForAxis.Draw()
     self.mcSumHist.Draw("e1same")
@@ -970,8 +979,7 @@ class DataMCStack:
       if doMCErrors:
         if self.mcVarHist != None:
           self.mcVarHist.Draw("e2same")
-        else:
-          self.mcSumHist.Draw("e2same")
+        self.mcSumHist.Draw("e2same")
       pad1.Update()
     else:
       self.mcSumHist.SetFillColor(856)
@@ -1012,6 +1020,8 @@ class DataMCStack:
     self.pullHist.SetFillColor(856)
     self.pullHist.SetFillStyle(1001)
     if len(ylimitsRatio) == 2:
+      ylimitsRatio[0] += 1e-3
+      ylimitsRatio[1] -= 1e-3
       self.pullHist.GetYaxis().SetRangeUser(*ylimitsRatio)
 
     if pullType=="ratio":
@@ -1140,7 +1150,7 @@ class DataMCStack:
       rescale = 10**rescale*5.
     #print(rescale)
     newYMax = yMaxCurrent*rescale*1.5
-    newYMin = 0.0
+    newYMin = 1e-3
     if self.logy:
       newYMin = 0.1
     self.histForAxis = root.TH2F(self.histForAxis.GetName()+"ForAxis","",1,self.xlimits[0],self.xlimits[1],1,newYMin,newYMax)
@@ -1153,6 +1163,9 @@ class DataMCStack:
     self.mcVarHist = None
     if mcVariations==None:
       return
+    for key in mcVariations:
+      for hist in mcVariations[key]:
+        hist.Scale(self.mc2DataSF)
     errorTypes = set()
     for key in mcVariations:
       key = re.sub("Up$","",key)

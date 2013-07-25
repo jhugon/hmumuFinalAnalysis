@@ -14,6 +14,7 @@ LUMI=lumiDict[RUNPERIOD]
 
 scaleHiggsBy = 1000.
 
+SCALEMC2DATA=True
 JETErrors=True
 LOGY=False
 integralPlot=False
@@ -477,7 +478,7 @@ for histName in bkgDatasetList[0].hists:
     yMaxXRanges += [[legRightPos,0.7]]
   else:
     yMaxXRanges += [[0.3,legLeftPos]]
-  stack = DataMCStack(bkgHistList, dataHist, canvas, xtitle,lumi=LUMI,logy=LOGY,xlimits=histNames[histBaseName]["xlimits"],signalsNoStack=sigHistList,integralPlot=integralPlot,energyStr=RUNPERIOD,ylimits=ylimits,ylimitsRatio=ylimitsRatio,pullType=PULLTYPE,doMCErrors=MCErrors,yMaxVals=yMaxVals,yMaxXRanges=yMaxXRanges,mcVariations=mcVariations)
+  stack = DataMCStack(bkgHistList, dataHist, canvas, xtitle,lumi=LUMI,logy=LOGY,xlimits=histNames[histBaseName]["xlimits"],signalsNoStack=sigHistList,integralPlot=integralPlot,energyStr=RUNPERIOD,ylimits=ylimits,ylimitsRatio=ylimitsRatio,pullType=PULLTYPE,doMCErrors=MCErrors,yMaxVals=yMaxVals,yMaxXRanges=yMaxXRanges,mcVariations=mcVariations,scaleMC2Data=SCALEMC2DATA)
 
 
   leg.Draw("same")
@@ -577,12 +578,6 @@ for histName in bkgDatasetList[0].hists:
     saveName += "_IntPlot"
   saveAs(canvas,outDir+saveName+"_"+RUNPERIOD)
 
-  match = re.match(r"(.*)_ptDiMu",saveName)
-  if match:
-    catName = match.group(1)
-    dataMCRatioStr += "%-10s Data/MC Ratio: %.3f\n" % (catName,float(stack.nDataEvents)/stack.nMCEvents)
-  elif saveName == "ptDiMu":
-    catName = "All"
-    dataMCRatioStr += "%-10s Data/MC Ratio: %.3f\n" % (catName,float(stack.nDataEvents)/stack.nMCEvents)
+  dataMCRatioStr += "%-10s Data/MC Ratio: %.3f\n" % (histName,float(stack.nDataEvents)/stack.nMCEvents)
 
 print(dataMCRatioStr)
