@@ -45,10 +45,7 @@ class ShapePlotter:
     tmpMatch = re.search(r"([\w]*)_(.+)_([.0-9]+)\.root",filename)
     if tmpMatch:
       self.energyStr = tmpMatch.group(2)
-      if   (self.energyStr == "8TeV"):
-        self.lumi = float(19.39)
-      elif (self.energyStr == "7TeV"):
-        self.lumi = float(5.05)
+      self.lumi = float(lumiDict[self.energyStr])
         
       #self.lumi = float(tmpMatch.group(3))
       self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(self.lumi)
@@ -130,7 +127,8 @@ class ShapePlotter:
       rmp = RooModelPlotter(mMuMu,bakPDF,data_obs,fr,
                             channelTitle,self.energyStr,self.lumi,
                             nSignal=nSignal,signalPdf=sigPDF,
-                            signalLegEntry=signalLegEntry
+                            signalLegEntry=signalLegEntry,
+                            caption1="Analysis A"
                             )
       rmp.draw(saveName)
 
@@ -239,31 +237,31 @@ titleMap = {
 
   "IncPreselPtG":"Non-VBF Not Combined",
 
-  "Jets01PassPtG10BB": "Non-VBF Presel, Tight BB",
-  "Jets01PassPtG10BO": "Non-VBF Presel, Tight BO",
-  "Jets01PassPtG10BE": "Non-VBF Presel, Tight BE",
-  "Jets01PassPtG10OO": "Non-VBF Presel, Tight OO",
-  "Jets01PassPtG10OE": "Non-VBF Presel, Tight OE",
-  "Jets01PassPtG10EE": "Non-VBF Presel, Tight EE",
-  "Jets01PassCatAll" : "Non-VBF Preselection, Tight",
-                                      
-  "Jets01FailPtG10BB": "Non-VBF Presel, Loose BB",
-  "Jets01FailPtG10BO": "Non-VBF Presel, Loose BO",
-  "Jets01FailPtG10BE": "Non-VBF Presel, Loose BE",
-  "Jets01FailPtG10OO": "Non-VBF Presel, Loose OO",
-  "Jets01FailPtG10OE": "Non-VBF Presel, Loose OE",
-  "Jets01FailPtG10EE": "Non-VBF Presel, Loose EE",
-  "Jets01FailCatAll" : "Non-VBF Preselection, Loose",
-                                      
-  "Jets01SplitCatAll": "Non-VBF Preselection",
+  "Jets01PassPtG10BB": "0,1-Jet Tight BB",
+  "Jets01PassPtG10BO": "0,1-Jet Tight BO",
+  "Jets01PassPtG10BE": "0,1-Jet Tight BE",
+  "Jets01PassPtG10OO": "0,1-Jet Tight OO",
+  "Jets01PassPtG10OE": "0,1-Jet Tight OE",
+  "Jets01PassPtG10EE": "0,1-Jet Tight EE",
+  "Jets01PassCatAll" : "0,1-Jet Tight Combination",
+                        
+  "Jets01FailPtG10BB": "0,1-Jet Loose BB",
+  "Jets01FailPtG10BO": "0,1-Jet Loose BO",
+  "Jets01FailPtG10BE": "0,1-Jet Loose BE",
+  "Jets01FailPtG10OO": "0,1-Jet Loose OO",
+  "Jets01FailPtG10OE": "0,1-Jet Loose OE",
+  "Jets01FailPtG10EE": "0,1-Jet Loose EE",
+  "Jets01FailCatAll" : "0,1-Jet Loose Combination",
+                        
+  "Jets01SplitCatAll": "0,1-Jet Combination",
 
 
-  "Jet2CutsVBFPass":"VBF Preselection, VBF Tight",
-  "Jet2CutsGFPass":"VBF Preselection, GF Tight",
-  "Jet2CutsFailVBFGF":"VBF Preselection, Loose",
+  "Jet2CutsVBFPass":"2-Jet VBF Tight",
+  "Jet2CutsGFPass":"2-Jet GF Tight",
+  "Jet2CutsFailVBFGF":"2-Jet VBF Loose",
 
-  "Jet2SplitCutsGFSplit" : "VBF Preselection",
-  "CombSplitAll" : "Combination",
+  "Jet2SplitCutsGFSplit" : "2-Jet Combination",
+  "CombSplitAll" : "H#rightarrow#mu#mu Combination",
 }
         
 if __name__ == "__main__":

@@ -2165,7 +2165,7 @@ def fitDGFindQuantiles(hist,level):
     return quants
         
 class RooModelPlotter:
-  def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None,canvas=None):
+  def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None,canvas=None,caption1=""):
     self.xVar = xVar
     self.pdf = pdf
     self.data = data
@@ -2178,6 +2178,7 @@ class RooModelPlotter:
     self.nSignal = nSignal
     nowStr = str(int(time.time()*1e6))
     self.nowStr = nowStr
+    self.caption1 = caption1
 
     self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(lumi)
 
@@ -2370,13 +2371,15 @@ class RooModelPlotter:
   
     # Text
     self.pad1.cd()
-    #self.tlatex.SetTextSize(root.gStyle.GetLabelSize())
     self.tlatex.SetTextSize(0.04*canvasToPad1FontScalingFactor)
     self.tlatex.SetTextAlign(12)
     self.tlatex.DrawLatex(root.gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
     self.tlatex.SetTextAlign(32)
-    self.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
-    #self.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,"#sqrt{{s}}={0}, L={1:.1f} fb^{{-1}}".format(self.energyStr,self.lumi))
+    #self.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
+    caption1 = self.caption1
+    if caption1 != "":
+        caption1 += ": "
+    self.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption1+self.title)
 
     self.tlatex.SetTextAlign(32)
     self.tlatex.DrawLatex(self.legPos[0]-0.01,0.820,self.lumiStr)
@@ -2384,6 +2387,9 @@ class RooModelPlotter:
     if re.search(r"[\d]TeV",energyStr):
       energyStr = energyStr.replace("TeV"," TeV")
     self.tlatex.DrawLatex(self.legPos[0]-0.01,0.875,"#sqrt{s} = "+self.energyStr)
+
+    #self.tlatex.SetTextAlign(12)
+    #self.tlatex.DrawLatex(root.gStyle.GetPadLeftMargin()+0.04,0.865,self.caption1)
 
     pad2.cd()
     self.tlatex.SetTextSize(self.pullsHist.GetYaxis().GetLabelSize())
@@ -2433,13 +2439,18 @@ class RooModelPlotter:
     tlatex.SetTextAlign(12)
     tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
     tlatex.SetTextAlign(32)
-    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
+    #tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
+    caption1 = self.caption1
+    if caption1 != "":
+        caption1 += ": "
+    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption1+self.title)
     tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.875,"#sqrt{s} = "+self.energyStr)
     tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.825,self.lumiStr)
     tlatex.SetTextAlign(12)
     tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.875,"#chi^{{2}}/NDF = {0:.2g}".format(float(chi2)/ndf))
     tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.825,"#mu = {0:.2f} #pm {1:.2f}".format(mean,meanErr))
     tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.775,"#sigma = {0:.2f} #pm {1:.2f}".format(sigma,sigmaErr))
+
     saveAs(self.canvas,filenameNoExt)
 
   def getProperSigPdfAndComponent(self,var,data,pdf,n):

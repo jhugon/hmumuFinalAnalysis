@@ -40,7 +40,7 @@ if mplGood:
 
 #~48 Charactars Max
 titleMap = {
-  "AllCat":"H->#mu#mu Catagories Combination",
+  "AllCat":"All Categories Comb.",
   "IncCat":"Non-VBF Categories Comb.",
   "VBFCat":"VBF Categories Comb.",
 
@@ -58,27 +58,26 @@ titleMap = {
   "VBFTight":"VBFT",
   "VBFVeryTight":"VBFVT",
 
-  "BDTCut":"H->#mu#mu BDT Combination",
-  "IncBDTCut":"Non-VBF BDT ",
-  "VBFBDTCut":"VBF BDT ",
+  "BDTCut":"BDT Cut Combination",
+  "IncBDTCut":"Non-VBF BDT Cut",
+  "VBFBDTCut":"VBF BDT Cut",
 
-  "BDTCutCat":"BDT Res. Cat. Combination",
-  "IncBDTCutCat":"Non-VBF BDT Resolution Categories",
-  "VBFBDTCutCat":"VBF BDT Resolution Categories",
+  "BDTCutCat":"BDT Cut Cat. Combination",
+  "IncBDTCutCat":"Non-VBF BDT Cut",
+  "VBFBDTCutCat":"VBF BDT Cut",
 
-  "PreselCat":"Res. Cat. Preselection Combination",
-  "IncPreselCat":"Non-VBF",
-  "VBFPreselCat":"VBF Cat. Resolution Preselection",
+  "IncPreselCat":"Non-VBF Cat. Preselection",
+  "VBFPreselCat":"VBF Cat. Preselection",
 
-  "IncBDTCutBB":"Non-VBF BDT BB",
-  "IncBDTCutBO":"Non-VBF BDT BO",
-  "IncBDTCutBE":"Non-VBF BDT BE",
-  "IncBDTCutOO":"Non-VBF BDT OO",
-  "IncBDTCutOE":"Non-VBF BDT OE",
-  "IncBDTCutEE":"Non-VBF BDT EE",
-  "IncBDTCutNotBB":"Non-VBF BDT !BB",
-  "VBFBDTCutBB":"VBF BDT BB",
-  "VBFBDTCutNotBB":"VBF BDT !BB",
+  "IncBDTCutBB":"Non-VBF BDT Cut BB",
+  "IncBDTCutBO":"Non-VBF BDT Cut BO",
+  "IncBDTCutBE":"Non-VBF BDT Cut BE",
+  "IncBDTCutOO":"Non-VBF BDT Cut OO",
+  "IncBDTCutOE":"Non-VBF BDT Cut OE",
+  "IncBDTCutEE":"Non-VBF BDT Cut EE",
+  "IncBDTCutNotBB":"Non-VBF BDT Cut !BB",
+  "VBFBDTCutBB":"VBF BDT Cut BB",
+  "VBFBDTCutNotBB":"VBF BDT Cut !BB",
   "IncPreselBB":"Non-VBF Preselection BB",
   "IncPreselBO":"Non-VBF Preselection BO",
   "IncPreselBE":"Non-VBF Preselection BE",
@@ -89,45 +88,44 @@ titleMap = {
   "VBFPreselBB":"VBF Preselection BB",
   "VBFPreselNotBB":"VBF Preselection !BB",
 
-  "IncPtCut":"Non-VBF",
-  "VBFmDiJetCut":"VBF Cut-Based",
-  "VBFdeltaEtaJetCut":"VBF Cut-Based",
-
   "IncPreselPtG10BB":"Non-VBF BB",
   "IncPreselPtG10BO":"Non-VBF BO",
   "IncPreselPtG10BE":"Non-VBF BE",
   "IncPreselPtG10OO":"Non-VBF OO",
   "IncPreselPtG10OE":"Non-VBF OE",
   "IncPreselPtG10EE":"Non-VBF EE",
-  "IncPreselPtG10":"Non-VBF",
-  "BDTCutCatVBFBDTOnly": "VBF & Non-VBF Combination",
+  "IncPreselPtG10NotBB":"Non-VBF !BB",
 
-  "Jets01PassPtG10BB": "Non-VBF Preselection, Tight BB",
-  "Jets01PassPtG10BO": "Non-VBF Preselection, Tight BO",
-  "Jets01PassPtG10BE": "Non-VBF Preselection, Tight BE",
-  "Jets01PassPtG10OO": "Non-VBF Preselection, Tight OO",
-  "Jets01PassPtG10OE": "Non-VBF Preselection, Tight OE",
-  "Jets01PassPtG10EE": "Non-VBF Preselection, Tight EE",
-  "Jets01PassCatAll" : "Non-VBF Preselection, Tight",
-                                      
-  "Jets01FailPtG10BB": "Non-VBF Preselection, Loose BB",
-  "Jets01FailPtG10BO": "Non-VBF Preselection, Loose BO",
-  "Jets01FailPtG10BE": "Non-VBF Preselection, Loose BE",
-  "Jets01FailPtG10OO": "Non-VBF Preselection, Loose OO",
-  "Jets01FailPtG10OE": "Non-VBF Preselection, Loose OE",
-  "Jets01FailPtG10EE": "Non-VBF Preselection, Loose EE",
-  "Jets01FailCatAll" : "Non-VBF Preselection, Loose",
-                                      
-  "Jets01SplitCatAll": "Non-VBF Preselection",
+  "IncPreselPtG":"Non-VBF Not Combined",
+
+  "Jets01PassPtG10BB": "0,1-Jet Tight BB",
+  "Jets01PassPtG10BO": "0,1-Jet Tight BO",
+  "Jets01PassPtG10BE": "0,1-Jet Tight BE",
+  "Jets01PassPtG10OO": "0,1-Jet Tight OO",
+  "Jets01PassPtG10OE": "0,1-Jet Tight OE",
+  "Jets01PassPtG10EE": "0,1-Jet Tight EE",
+  "Jets01PassCatAll" : "0,1-Jet Tight Combination",
+                        
+  "Jets01FailPtG10BB": "0,1-Jet Loose BB",
+  "Jets01FailPtG10BO": "0,1-Jet Loose BO",
+  "Jets01FailPtG10BE": "0,1-Jet Loose BE",
+  "Jets01FailPtG10OO": "0,1-Jet Loose OO",
+  "Jets01FailPtG10OE": "0,1-Jet Loose OE",
+  "Jets01FailPtG10EE": "0,1-Jet Loose EE",
+  "Jets01FailCatAll" : "0,1-Jet Loose Combination",
+                        
+  #"Jets01SplitCatAll": "H#rightarrow#mu#mu 0,1-Jet Combination",
+  "Jets01SplitCatAll": "0,1-Jet Combination",
 
 
-  "Jet2CutsVBFPass":"VBF Preselection, VBF Tight",
-  "Jet2CutsGFPass":"VBF Preselection, GF Tight",
-  "Jet2CutsFailVBFGF":"VBF Preselection, Loose",
+  "Jet2CutsVBFPass":"2-Jet VBF Tight",
+  "Jet2CutsGFPass":"2-Jet GF Tight",
+  "Jet2CutsFailVBFGF":"2-Jet VBF Loose",
 
-  "Jet2SplitCutsGFSplit" : "VBF Preselection",
+  #"Jet2SplitCutsGFSplit" : "H#rightarrow#mu#mu 2-Jet Combination",
+  #"CombSplitAll" : "H#rightarrow#mu#mu Combination",
+  "Jet2SplitCutsGFSplit" : "2-Jet Combination",
   "CombSplitAll" : "Combination",
-
 }
 
 comparisonMap = {
@@ -253,7 +251,7 @@ def getData(fileString,matchString=r"_([-\d.]+)\.txt\.out",dontMatchStrings=[],d
   return result
 
 class RelativePlot:
-  def __init__(self,dataPoints, canvas, legend, caption, ylabel="95% CL Limit on #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV"):
+  def __init__(self,dataPoints, canvas, legend, caption, ylabel="95% CL Limit on #sigma/#sigma_{SM} (H#rightarrow#mu#mu)", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV"):
     expGraph = root.TGraph()
     expGraph.SetLineStyle(2)
     expGraph.SetMarkerStyle(20)
@@ -340,6 +338,7 @@ class RelativePlot:
     tlatex.SetTextSize(0.04)
     tlatex.SetTextAlign(12)
     tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+    tlatex.SetTextAlign(12)
     tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.88,caption2)
     tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.82,caption3)
 

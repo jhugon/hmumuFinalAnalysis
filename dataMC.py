@@ -1,18 +1,63 @@
 #!/usr/bin/env python
 
+import optparse
+parser = optparse.OptionParser(description="Makes data and MC comparison plots.")
+parser.add_option("--scaleHiggsBy", help="Scale Factor For Higgs Samples",type=float,default=1000.0)
+parser.add_option("--energy", help="Energy to Use, either 7TeV or 8TeV",default="8TeV")
+parser.add_option("--disableMCErrors", help="Energy to Use, either 7TeV or 8TeV",action="store_true",default=False)
+parser.add_option("--outPrefix", help="Output filename prefix",default="")
+parser.add_option("--n01Jet", help="Preset to run 0,1 Jet Presel Plots",action="store_true",default=False)
+parser.add_option("--n01JetMassOnly", help="Preset to run 0,1 Jet Presel Mass Plot",action="store_true",default=False)
+parser.add_option("--n2Jet", help="Preset to run 2 Jet Presel Plots",action="store_true",default=False)
+parser.add_option("--n2JetMassOnly", help="Preset to run 2 Jet Presel Mass Plot",action="store_true",default=False)
+parser.add_option("--n2JetVBFTight", help="Preset to run 2 Jet VBF Tight Plots",action="store_true",default=False)
+parser.add_option("--n2JetVBFLoose", help="Preset to run 2 Jet VBF Loose Plots",action="store_true",default=False)
+parser.add_option("--n2JetGFTight", help="Preset to run 2 Jet GF Tight Plots",action="store_true",default=False)
+args, fakeargs = parser.parse_args()
+
+if args.n01Jet:
+  args.scaleHiggsBy = 500.
+  args.outPrefix = "nonVBFPresel"
+  args.disableMCErrors = True
+
+if args.n01JetMassOnly:
+  args.scaleHiggsBy = 500.
+  args.outPrefix = "nonVBFPresel"
+  args.disableMCErrors = True
+
+if args.n2Jet:
+  args.scaleHiggsBy = 1000.
+  args.outPrefix = ""
+
+if args.n2JetMassOnly:
+  args.scaleHiggsBy = 200.
+  args.outPrefix = "presel"
+
+if args.n2JetVBFTight:
+  args.scaleHiggsBy = 50.
+  args.outPrefix = "vbfTight"
+
+if args.n2JetVBFLoose:
+  args.scaleHiggsBy = 50.
+  args.outPrefix = "loose"
+
+if args.n2JetGFTight:
+  args.scaleHiggsBy = 50.
+  args.outPrefix = "gfTight"
+
 from xsec import *
 from helpers import *
 import ROOT as root
 import os
 import sys
 
-dataDir = "input/V00-01-10/forGPReRecoMuScleFit/"
+dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
 outDir = "output/"
 
-RUNPERIOD="8TeV"
+RUNPERIOD=args.energy
 LUMI=lumiDict[RUNPERIOD]
 
-scaleHiggsBy = 1000.
+scaleHiggsBy = args.scaleHiggsBy
 
 SCALEMC2DATA=True
 JETErrors=True
@@ -28,17 +73,19 @@ if PULLTYPE=="adrian1":
 elif PULLTYPE=="ratio":
   ylimitsRatio = [0.5,1.5]
 
+if args.disableMCErrors:
+  JETErrors=False
+  MCErrors=False
+
 anotateText2 = ""
+anotateText3 = "Analysis A"
 
 #anotateText = "80 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"
 #anotateText = "110 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"
 #anotateText = "80 GeV < m_{#mu#mu} < 160 GeV"
 anotateText = "110 GeV < m_{#mu#mu} < 170 GeV"
-
-categoryAnotations ={}
-categoryAnotations['Jets0/'] = "0 Jet"
-categoryAnotations['Jets1/'] = "1 Jet"
-categoryAnotations['Jets2/'] = "#geq2 Jets"
+if args.n2JetMassOnly or args.n2JetVBFTight or args.n2JetGFTight or args.n2JetVBFLoose or args.n01JetMassOnly:
+  anotateText = ""
 
 urLegendPos = [0.70,0.67,0.9,0.9]
 ulLegendPos = [0.20,0.67,0.4,0.9]
@@ -48,45 +95,44 @@ llLegendPos = [0.20,0.35,0.4,0.63]
 ccLegendPos = [0.46,0.47,0.64,0.7]
 stdLegendPos = urLegendPos
 
-#histDirs = ["","4GeVWindow/","PtDiMu100/","VBFPresel/","IncPresel/","NotBlindWindow/"]
-histDirs = ["NotBlindWindow/"]
-histDirs = ["VBFPreselDiMuPtL20/","IncPreselDiMuPtL20/"]
-#histDirs = ["VBFPresel/","IncPresel/"]
-#histDirs = ["IncPresel/"]
-#histDirs = ["IncPreselPtG10BB/","VBFBDTCut/"]
-#histDirs = ["VBFBDTCut/"]
-#histDirs = ["VBFBDTCut/"]
-histDirs = ["","BB/","IncPreselBB/","VBFPresel/"]
-histDirs = ["Jets0/","Jets1/","Jets2/"]
-histDirs = ["nonVBFPresel/"]
-histDirs = [""]
+if args.outPrefix != "":
+  args.outPrefix += "/"
+histDirs = [args.outPrefix]
 
 CUTS="dimuonMass < 170. && dimuonMass > 110."
 
-anotateText2 = "VBF Preselection"
-CUTS+=" && jetLead_pt>40. && jetSub_pt>30. && ptMiss<40."
-#CUTS+=" && jetLead_pt>40. && jetSub_pt>30."
+if args.n01Jet or args.n01JetMassOnly:
+  anotateText2 = "0,1-Jet Preselection"
+  CUTS+=" && !(jetLead_pt>40. && jetSub_pt>30. && ptMiss<40.)"
 
-#anotateText2 = "VBF Presel. VBF Tight"
-#CUTS+=" && jetLead_pt>40. && jetSub_pt>30. && ptMiss<40. && dijetMass > 650. && deltaEtaJets>3.5"
+if args.n2Jet or args.n2JetMassOnly:
+  anotateText2 = "2-Jet Preselection"
+  CUTS+=" && jetLead_pt>40. && jetSub_pt>30. && ptMiss<40."
+  CUTS+=" && jetLead_pt>40. && jetSub_pt>30."
 
-#anotateText2 = "VBF Presel. GF Tight"
-#CUTS+=" && jetLead_pt>40. && jetSub_pt>30. && ptMiss<40. && !(dijetMass > 650. && deltaEtaJets>3.5) && dijetMass>250. && dimuonPt>50."
+if args.n2JetVBFTight:
+  anotateText2 = "2-Jet VBF Tight"
+  CUTS+=" && jetLead_pt>40. && jetSub_pt>30. && ptMiss<40. && dijetMass > 650. && deltaEtaJets>3.5"
 
-#anotateText2 = "VBF Presel. Loose"
-#CUTS+=" && jetLead_pt>40. && jetSub_pt>30. && ptMiss<40. && !(dijetMass > 650. && deltaEtaJets>3.5) && !(dijetMass>250. && dimuonPt>50.)"
+if args.n2JetVBFLoose:
+  anotateText2 = "2-Jet VBF Loose"
+  CUTS+=" && jetLead_pt>40. && jetSub_pt>30. && ptMiss<40. && !(dijetMass > 650. && deltaEtaJets>3.5) && !(dijetMass>250. && dimuonPt>50.)"
 
-#anotateText2 = "Non-VBF Preselection"
-#CUTS+=" && !(jetLead_pt>40. && jetSub_pt>30. && ptMiss<40.)"
+if args.n2JetGFTight:
+  anotateText2 = "2-Jet GF Tight"
+  CUTS+=" && jetLead_pt>40. && jetSub_pt>30. && ptMiss<40. && !(dijetMass > 650. && deltaEtaJets>3.5) && dijetMass>250. && dimuonPt>50."
 
 root.gErrorIgnoreLevel = root.kWarning
 GLOBALCOUNTER=0
 
 histNames = {}
 if True:
-    histNames["dimuonMass"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,170.],"nbins":60}#,"ylimits":[0.1,5e5]}
-    #histNames["dimuonMass"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,170.],"nbins":24}#,"ylimits":[0.1,5e5]}
-    histNames["dimuonPt"] = {"xlabel":"p_{T,#mu#mu} [GeV/c]","xlimits":[0.0,200.0],"nbins":20}#,"ylimits":[0.1,1e5]}
+    if args.n2JetVBFTight or args.n2JetGFTight or args.n2JetVBFLoose:
+      histNames["dimuonMass"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,170.],"nbins":24}#,"ylimits":[0.1,5e5]}
+    elif not args.n2Jet:
+      histNames["dimuonMass"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,170.],"nbins":60}#,"ylimits":[0.1,5e5]}
+    if not ( args.n2JetVBFTight or args.n2JetGFTight or args.n2JetVBFLoose or args.n2JetMassOnly or args.n01JetMassOnly):
+      histNames["dimuonPt"] = {"xlabel":"p_{T,#mu#mu} [GeV/c]","xlimits":[0.0,200.0],"nbins":20}#,"ylimits":[0.1,1e5]}
 #    histNames["dimuonY"] = {"xlabel":"y_{#mu#mu}","xlimits":[-2.2,2.2],"nbins":22}#,"ylimits":[0.1,3e6]}
 #    histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1,1],"nbins":20}#,"ylimits":[0.1,3e6]}
     #histNames["muonLead_pt"] = {"xlabel":"Leading Muon p_{T} [GeV/c]","xlimits":[25.,150.],"nbins":25}#,"ylimits":[0.1,3e6]}
@@ -96,9 +142,10 @@ if True:
 
     #histNames["nJets"] = {"xlabel":"N_{jets}","xlimits":[-0.5,5.5],"nbins":6}#,"ylimits":[0.1,3e6]}
     #histNames["ptMiss"] = {"xlabel":"Missing p_{T} [GeV/c]","xlimits":[0.0,300.0],"nbins":12}#,"ylimits":[0.1,3e6]}
-    histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta(j_{1},j_{2})","xlimits":[0.0,7.0],"nbins":14}#,"ylimits":[0.1,3e6]}
+    if not (args.n01Jet or args.n2JetMassOnly or args.n2JetVBFTight or args.n2JetGFTight or args.n2JetVBFLoose or args.n01JetMassOnly):
+      histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta(j_{1},j_{2})","xlimits":[0.0,7.0],"nbins":14}#,"ylimits":[0.1,3e6]}
 
-    histNames["dijetMass"] = {"xlabel":"m_{jj} [GeV/c^{2}]","xlimits":[0.,1000.],"nbins":20}#,"ylimits":[0.1,5e5]}
+      histNames["dijetMass"] = {"xlabel":"m_{jj} [GeV/c^{2}]","xlimits":[0.,1000.],"nbins":20}#,"ylimits":[0.1,5e5]}
     #histNames["dijetPt"] = {"xlabel":"p_{T,jj} [GeV/c]","xlimits":[0.0,1000.0],"nbins":50}#,"ylimits":[0.1,1e5]}
     #histNames["dijetY"] = {"xlabel":"y_{jj}","xlimits":[-5.0,5.0],"nbins":20}#,"ylimits":[0.1,3e6]}
 
@@ -483,10 +530,6 @@ for histName in bkgDatasetList[0].hists:
 
   leg.Draw("same")
 
-  thisAnnotation = anotateText2
-  if categoryAnotations.has_key(categoryName):
-    thisAnnotation += categoryAnotations[categoryName]
-
   if scaleHiggsPos == "lc":
     if scaleHiggsBy != 1.0:
       tlatex.SetTextSize(0.07)
@@ -496,7 +539,8 @@ for histName in bkgDatasetList[0].hists:
     tlatex.SetTextSize(0.03)
     tlatex.SetTextAlign(22)
     tlatex.DrawLatex(0.55,0.75,anotateText)
-    tlatex.DrawLatex(0.55,0.6,thisAnnotation)
+    tlatex.DrawLatex(0.55,0.55,anotateText2)
+    tlatex.DrawLatex(0.55,0.6,anotateText3)
   elif scaleHiggsPos == "ll" or scaleHiggsPos == "ul":
     if scaleHiggsBy != 1.0:
       tlatex.SetTextSize(0.07)
@@ -506,7 +550,8 @@ for histName in bkgDatasetList[0].hists:
     tlatex.SetTextSize(0.04)
     tlatex.SetTextAlign(23)
     tlatex.DrawLatex(0.55,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
-    tlatex.DrawLatex(0.55,0.77,thisAnnotation)
+    tlatex.DrawLatex(0.55,0.72,anotateText2)
+    tlatex.DrawLatex(0.55,0.77,anotateText3)
   else:
     if scaleHiggsBy != 1.0:
       tlatex.SetTextSize(0.07)
@@ -516,7 +561,10 @@ for histName in bkgDatasetList[0].hists:
     tlatex.SetTextSize(0.04)
     tlatex.SetTextAlign(33)
     tlatex.DrawLatex(legLeftPos-0.02,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
-    tlatex.DrawLatex(legLeftPos-0.02,0.77,thisAnnotation)
+    tlatex.DrawLatex(legLeftPos-0.02,0.77,anotateText2)
+    tlatex.DrawLatex(legLeftPos-0.02,0.72,anotateText3)
+    #tlatex.SetTextAlign(23)
+    #tlatex.DrawLatex(0.55,0.77,anotateText3)
 
   vertLine = None
   arrow = None
