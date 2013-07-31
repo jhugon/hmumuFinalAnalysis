@@ -56,9 +56,9 @@ class CrossSections:
         result = self.vbf[energy][mass]
       elif prodMode == "gg":
         result = self.gg[energy][mass]
-      elif prodMode == "w":
+      elif prodMode == "wh":
         result = self.wh[energy][mass]
-      elif prodMode == "z":
+      elif prodMode == "zh":
         result = self.zh[energy][mass]
       else:
         raise Exception("Higgs Production mode not recognized for: " + key)
@@ -111,8 +111,8 @@ nEventsMap = {}
 nEventsMap["ggHmumu125_8TeV"] = 49994
 nEventsMap["vbfHmumu125_8TeV"] = 49894
 
-nEventsMap["zHmumu125_8TeV"] = 10000
-nEventsMap["wHmumu125_8TeV"] = 10000
+nEventsMap["zhHmumu125_8TeV"] = 10000
+nEventsMap["whHmumu125_8TeV"] = 10000
 nEventsMap["DYJetsToLL_8TeV"] = 30086987
 nEventsMap["DY2JetsToLL_8TeV"] = 0.000001
 nEventsMap["DY3JetsToLL_8TeV"] = 0.000001
@@ -133,8 +133,8 @@ nEventsMap["QCD_8TeV"] =  20764602
 nEventsMap["ggHmumu125_7TeV"] = 49871
 nEventsMap["vbfHmumu125_7TeV"] = 42861
 
-nEventsMap["zHmumu125_7TeV"] = 10000
-nEventsMap["wHmumu125_7TeV"] = 10000
+nEventsMap["zhHmumu125_7TeV"] = 10000
+nEventsMap["whHmumu125_7TeV"] = 10000
 nEventsMap["DYJetsToLL_7TeV"] = 34334400
 nEventsMap["ttbar_7TeV"] = 51360015
 nEventsMap["DYToMuMu_7TeV"] = 23263564
@@ -166,8 +166,8 @@ backgroundList = [
 signalList = [
 "ggHmumu125",
 "vbfHmumu125",
-"wHmumu125",
-"zHmumu125"
+"whHmumu125",
+"zhHmumu125"
 ]
 
 dataDict = {}
@@ -183,10 +183,10 @@ dataDict = {}
 
 # Test with the new ReReco
 dataDict["8TeV"] = [
-    "SingleMuRun2012A_22Jan2013v1",
-    "SingleMuRun2012B_22Jan2013v1",
-    "SingleMuRun2012C_22Jan2013v1",
-    "SingleMuRun2012D_22Jan2013v1"
+    "SingleMuRun2012Av1-22Jan2013",
+    "SingleMuRun2012Bv1-22Jan2013",
+    "SingleMuRun2012Cv1-22Jan2013",
+    "SingleMuRun2012Dv1-22Jan2013"
 ]
 
 dataDict["7TeV"] = [
@@ -206,8 +206,8 @@ legendEntries["vbfHmumu125"] = "VBF H->#mu#mu"
 legendEntries["ggHmumu125"] = "gg->H->#mu#mu"
 legendEntries["vbfHmumu125ChangeEvents"] = "New VBF H->#mu#mu"
 legendEntries["ggHmumu125ChangeEvents"] = "New ggH->#mu#mu"
-legendEntries["zHmumu125"] = "ZH, H->#mu#mu"
-legendEntries["wHmumu125"] = "WH, H->#mu#mu"
+legendEntries["zhHmumu125"] = "ZH, H->#mu#mu"
+legendEntries["whHmumu125"] = "WH, H->#mu#mu"
 legendEntries["ttbar"] = "t#bar{t}"
 legendEntries["DYToTauTau"] = "DY->#tau#tau"
 legendEntries["WW"] = "VV"
@@ -229,8 +229,8 @@ colors["vbfHmumu125"] = root.kBlue
 colors["ggHmumu125"] = root.kRed
 colors["vbfHmumu125ChangeEvents"] = root.kBlue+3
 colors["ggHmumu125ChangeEvents"] = root.kRed+2
-colors["zHmumu125"] = root.kGreen+1
-colors["wHmumu125"] = root.kOrange+7
+colors["zhHmumu125"] = root.kGreen+1
+colors["whHmumu125"] = root.kOrange+7
 colors["ttbar"] = root.kGreen-1
 colors["DYToTauTau"] = root.kOrange+3 #brown
 #colors["WW"] = root.kPink+9
@@ -316,7 +316,7 @@ class NuisanceMap:
           'Jets01PassPtG10' : -1.0250,
           },
         },
-      'w' : {
+      'wh' : {
         '7TeV' : {
           'Jet2CutsFailVBFGF' : None,
           'Jet2CutsGFPass' : None,
@@ -332,7 +332,7 @@ class NuisanceMap:
           'Jets01PassPtG10' : None,
           },
         },
-      'z' : {
+      'zh' : {
         '7TeV' : {
           'Jet2CutsFailVBFGF' : None,
           'Jet2CutsGFPass' : None,
@@ -382,7 +382,7 @@ class NuisanceMap:
           'Jets01PassPtG10' : None,
           },
         },
-      'w' : {
+      'wh' : {
         '7TeV' : {
           'Jet2CutsFailVBFGF' : None,
           'Jet2CutsGFPass' : None,
@@ -398,7 +398,7 @@ class NuisanceMap:
           'Jets01PassPtG10' : None,
           },
         },
-      'z' : {
+      'zh' : {
         '7TeV' : {
           'Jet2CutsFailVBFGF' : None,
           'Jet2CutsGFPass' : None,
@@ -448,7 +448,7 @@ class NuisanceMap:
           'Jets01PassPtG10' : 1.0128,
           },
         },
-      'w' : {
+      'wh' : {
         '7TeV' : {
           'Jet2CutsFailVBFGF' : None,
           'Jet2CutsGFPass' : None,
@@ -464,7 +464,7 @@ class NuisanceMap:
           'Jets01PassPtG10' : None,
           },
         },
-      'z' : {
+      'zh' : {
         '7TeV' : {
           'Jet2CutsFailVBFGF' : None,
           'Jet2CutsGFPass' : None,
@@ -514,7 +514,7 @@ class NuisanceMap:
           'Jets01PassPtG10' : None,
           },
         },
-      'w' : {
+      'wh' : {
         '7TeV' : {
           'Jet2CutsFailVBFGF' : None,
           'Jet2CutsGFPass' : None,
@@ -530,7 +530,7 @@ class NuisanceMap:
           'Jets01PassPtG10' : None,
           },
         },
-      'z' : {
+      'zh' : {
         '7TeV' : {
           'Jet2CutsFailVBFGF' : None,
           'Jet2CutsGFPass' : None,
@@ -580,7 +580,7 @@ class NuisanceMap:
           'Jet2CutsFailVBFGF' : 1.0204,
           },
         },
-      'w' : {
+      'wh' : {
         '8TeV' : {
           'Jets01PassPtG10' : None,
           'Jets01FailPtG10' : None,
@@ -596,7 +596,7 @@ class NuisanceMap:
           'Jet2CutsFailVBFGF' : None,
           },
         },
-      'z' : {
+      'zh' : {
         '8TeV' : {
           'Jets01PassPtG10' : None,
           'Jets01FailPtG10' : None,
@@ -646,7 +646,7 @@ class NuisanceMap:
           'Jet2CutsFailVBFGF' : None,
           },
         },
-      'w' : {
+      'wh' : {
         '8TeV' : {
           'Jets01PassPtG10' : None,
           'Jets01FailPtG10' : None,
@@ -662,7 +662,7 @@ class NuisanceMap:
           'Jet2CutsFailVBFGF' : None,
           },
         },
-      'z' : {
+      'zh' : {
         '8TeV' : {
           'Jets01PassPtG10' : None,
           'Jets01FailPtG10' : None,
@@ -712,7 +712,7 @@ class NuisanceMap:
           'Jet2CutsFailVBFGF' : 1.0653,
           },
         },
-      'w' : {
+      'wh' : {
         '8TeV' : {
           'Jets01PassPtG10' : None,
           'Jets01FailPtG10' : None,
@@ -728,7 +728,7 @@ class NuisanceMap:
           'Jet2CutsFailVBFGF' : None,
           },
         },
-      'z' : {
+      'zh' : {
         '8TeV' : {
           'Jets01PassPtG10' : None,
           'Jets01FailPtG10' : None,
@@ -778,7 +778,7 @@ class NuisanceMap:
           'Jet2CutsFailVBFGF' : 1.0763,
           },
         },
-      'w' : {
+      'wh' : {
         '8TeV' : {
           'Jets01PassPtG10' : None,
           'Jets01FailPtG10' : None,
@@ -794,7 +794,7 @@ class NuisanceMap:
           'Jet2CutsFailVBFGF' : None,
           },
         },
-      'z' : {
+      'zh' : {
         '8TeV' : {
           'Jets01PassPtG10' : None,
           'Jets01FailPtG10' : None,
@@ -813,9 +813,9 @@ class NuisanceMap:
       }
 
     # The list of systematics to be applied
-    self._keys = ["xs_ggH","xs_vbfH","xs_wH","xs_zH","br_Hmm","lumi","PDF","JES","JER","PUID","MCStat","PU","UE","QCDScale"]
+    self._keys = ["xs_ggH","xs_vbfH","xs_whH","xs_zhH","br_Hmm","lumi","PDF","JES","JER","PUID","MCStat","PU","UE","QCDScale"]
     # The list of systematics which are correlated between energies
-    self.keysEnergyCorr = ["xs_ggH","xs_vbfH","xs_wH","xs_zH","br_Hmm","PDF","JER","UE","QCDScale"]
+    self.keysEnergyCorr = ["xs_ggH","xs_vbfH","xs_whH","xs_zhH","br_Hmm","PDF","JER","UE","QCDScale"]
     # The list of systematics which are not correlated between energies or categories
     self.keysNotCatCorr = ["MCStat"]
     # The list of systematics which are not correlated between energies, but correlated w/ categories 
@@ -846,9 +846,9 @@ class NuisanceMap:
         result = self.vbf[energy].lnN[mass]
       elif prodMode == "gg":
         result = self.gg[energy].lnN[mass]
-      elif prodMode == "w":
+      elif prodMode == "wh":
         result = self.wh[energy].lnN[mass]
-      elif prodMode == "z":
+      elif prodMode == "zh":
         result = self.zh[energy].lnN[mass]
       else:
         raise Exception("Higgs Production mode not recognized for: "+ds)

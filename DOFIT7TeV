@@ -1,0 +1,139 @@
+
+##################################################
+##################################################
+#
+# 7  T E V
+#
+##################################################
+##################################################
+
+
+## D O U B L E    G A U S S I A N
+
+
+python  extractRooFitSignalDG.py GluGlu 115   7TeV
+python  extractRooFitSignalDG.py GluGlu 120   7TeV
+python  extractRooFitSignalDG.py GluGlu 126   7TeV
+python  extractRooFitSignalDG.py GluGlu 128   7TeV
+python  extractRooFitSignalDG.py GluGlu 135   7TeV
+python  extractRooFitSignalDG.py GluGlu 140   7TeV
+python  extractRooFitSignalDG.py GluGlu 145   7TeV
+python  extractRooFitSignalDG.py GluGlu 150   7TeV
+python  extractRooFitSignalDG.py GluGlu 155   7TeV
+
+python  extractRooFitSignalDG.py VBF 115   7TeV
+python  extractRooFitSignalDG.py VBF 120   7TeV
+python  extractRooFitSignalDG.py VBF 125   7TeV
+python  extractRooFitSignalDG.py VBF 130   7TeV
+python  extractRooFitSignalDG.py VBF 135   7TeV
+python  extractRooFitSignalDG.py VBF 140   7TeV
+python  extractRooFitSignalDG.py VBF 145   7TeV
+python  extractRooFitSignalDG.py VBF 150   7TeV
+python  extractRooFitSignalDG.py VBF 155   7TeV
+
+python  extractRooFitSignalDG.py WH 115   7TeV
+python  extractRooFitSignalDG.py WH 125   7TeV
+python  extractRooFitSignalDG.py WH 135   7TeV
+python  extractRooFitSignalDG.py WH 145   7TeV
+python  extractRooFitSignalDG.py WH 155   7TeV
+
+python  extractRooFitSignalDG.py ZH 115   7TeV
+python  extractRooFitSignalDG.py ZH 125   7TeV
+python  extractRooFitSignalDG.py ZH 135   7TeV
+python  extractRooFitSignalDG.py ZH 145   7TeV
+python  extractRooFitSignalDG.py ZH 155   7TeV
+
+
+
+# E X T R A P O L A T I O N
+
+## gg
+python extrapolateSignalPars.py gg 7TeV DG Jets01PassPtG10BB
+python extrapolateSignalPars.py gg 7TeV DG Jets01PassPtG10BO
+python extrapolateSignalPars.py gg 7TeV DG Jets01PassPtG10BE
+python extrapolateSignalPars.py gg 7TeV DG Jets01PassPtG10OO
+python extrapolateSignalPars.py gg 7TeV DG Jets01PassPtG10OE
+python extrapolateSignalPars.py gg 7TeV DG Jets01PassPtG10EE
+
+python extrapolateSignalPars.py gg 7TeV DG Jets01FailPtG10BB
+python extrapolateSignalPars.py gg 7TeV DG Jets01FailPtG10BO
+python extrapolateSignalPars.py gg 7TeV DG Jets01FailPtG10BE
+python extrapolateSignalPars.py gg 7TeV DG Jets01FailPtG10OO
+python extrapolateSignalPars.py gg 7TeV DG Jets01FailPtG10OE
+python extrapolateSignalPars.py gg 7TeV DG Jets01FailPtG10EE
+
+python extrapolateSignalPars.py gg 7TeV DG Jet2CutsGFPass 
+python extrapolateSignalPars.py gg 7TeV DG Jet2CutsFailVBFGF
+
+
+#vbf
+python extrapolateSignalPars.py vbf 7TeV DG Jets01PassPtG10BB
+python extrapolateSignalPars.py vbf 7TeV DG Jets01PassPtG10BO
+python extrapolateSignalPars.py vbf 7TeV DG Jets01PassPtG10BE
+python extrapolateSignalPars.py vbf 7TeV DG Jets01PassPtG10OO
+python extrapolateSignalPars.py vbf 7TeV DG Jets01PassPtG10OE
+python extrapolateSignalPars.py vbf 7TeV DG Jets01PassPtG10EE
+
+python extrapolateSignalPars.py vbf 7TeV DG Jet2CutsVBFPass
+python extrapolateSignalPars.py vbf 7TeV DG Jet2CutsGFPass 
+python extrapolateSignalPars.py vbf 7TeV DG Jet2CutsFailVBFGF
+
+#wh
+python extrapolateSignalPars.py wh 7TeV DG Jets01PassPtG10BB
+python extrapolateSignalPars.py wh 7TeV DG Jets01PassPtG10BO
+python extrapolateSignalPars.py wh 7TeV DG Jets01PassPtG10BE
+python extrapolateSignalPars.py wh 7TeV DG Jets01PassPtG10OO
+python extrapolateSignalPars.py wh 7TeV DG Jets01PassPtG10OE
+python extrapolateSignalPars.py wh 7TeV DG Jets01PassPtG10EE
+                                
+python extrapolateSignalPars.py wh 7TeV DG Jet2CutsGFPass 
+python extrapolateSignalPars.py wh 7TeV DG Jet2CutsFailVBFGF
+
+#zh
+python extrapolateSignalPars.py zh 7TeV DG Jets01PassPtG10BB
+python extrapolateSignalPars.py zh 7TeV DG Jets01PassPtG10BO
+python extrapolateSignalPars.py zh 7TeV DG Jets01PassPtG10BE
+python extrapolateSignalPars.py zh 7TeV DG Jets01PassPtG10OO
+python extrapolateSignalPars.py zh 7TeV DG Jets01PassPtG10OE
+python extrapolateSignalPars.py zh 7TeV DG Jets01PassPtG10EE
+                                
+python extrapolateSignalPars.py zh 7TeV DG Jet2CutsGFPass 
+python extrapolateSignalPars.py zh 7TeV DG Jet2CutsFailVBFGF
+
+
+
+
+
+# D R A W   T H E   S I G N A L   T E M P L A T E S 
+
+python -i signalPars.py
+
+s = signalPars('fitresults', 'gg', '7TeV', 'IncPreselPtG10BB')
+s.draw(5)
+
+s = signalPars('fitresults', 'gg', '7TeV', 'IncPreselPtG10BO')
+s.draw(5)
+
+s = signalPars('fitresults', 'gg', '7TeV', 'IncPreselPtG10BE')
+s.draw(5)
+
+s = signalPars('fitresults', 'gg', '7TeV', 'IncPreselPtG10OO')
+s.draw(5)
+
+s = signalPars('fitresults', 'gg', '7TeV', 'IncPreselPtG10OE')
+s.draw(5)
+
+s = signalPars('fitresults', 'gg', '7TeV', 'IncPreselPtG10EE')
+s.draw(5)
+
+
+
+s = signalPars('fitresults', 'vbf', '7TeV', 'VBFBDTCut')
+s.draw(5)
+
+s = signalPars('fitresults', 'vbf', '7TeV', 'VBFDeJJG3p5MJJG550pTmissL100')
+s.draw(5)
+
+s = signalPars('fitresults', 'vbf', '7TeV', 'VBFDeJJG3p4MJJG500pTmissL25')
+s.draw(5)
+
