@@ -76,9 +76,9 @@ def convertSigName(name):
     return "ggH"
   if "vbfH" in name:
     return "qqH"
-  if "wH" in name:
+  if "whH" in name:
     return "WH"
-  if "zH" in name:
+  if "zhH" in name:
     return "ZH"
 
 ###################################################################################
@@ -555,7 +555,7 @@ def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=True)
       fitTypeString = "DG"
     #params = sigFits.parameters[energy][massStr][category][fitTypeString]
     prodMode = 'gg'
-    if ('VBF' in category or 'Jet2' in category):
+    if ('Jet2' in category):
       prodMode = 'vbf'
 
     #print ' ####### prodMode = %s' % prodMode 
@@ -629,6 +629,7 @@ def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=True)
       pdfMmumu = root.RooAddPdf(convertSigName(name),
                                 name,
                                 gaus1,gaus2,mixGG)
+
       workspaceImportFn(pdfMmumu)
       rooParamList = [meanG1,meanG2,widthG1,widthG2,mixGG]
 
@@ -1528,6 +1529,7 @@ if __name__ == "__main__":
   directory = "input/ptM15GeV/"
   directory = "/data/uftrig01b/digiovan/baselinePP/input/ptM15GeV_outtree_LoosePUID/"
   directory = "input/V00-01-10/forGPReRecoMuScleFit/"
+  directory = "../hmumuFinalAnalysis.answerstoarc/input/V00-01-10/forGPReRecoMuScleFit/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
   #periods = ["8TeV"]
@@ -1682,8 +1684,9 @@ if __name__ == "__main__":
   ################################################################
 
   histPostFix="/mDiMu"
-  #signalNames=["ggHmumu125","vbfHmumu125","wHmumu125","zHmumu125"]
-  signalNames=["ggHmumu125","vbfHmumu125"]
+  signalNames=["ggHmumu125","vbfHmumu125","whHmumu125","zhHmumu125"]
+  #signalNames=["ggHmumu125","vbfHmumu125"]
+  #signalNames=["whHmumu125"]
   #backgroundNames= ["DYJetsToLL","ttbar"]
   backgroundNames= []
   dataDict = {}
