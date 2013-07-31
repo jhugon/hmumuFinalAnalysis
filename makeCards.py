@@ -1526,10 +1526,7 @@ if __name__ == "__main__":
   print "Started makeCards.py"
   root.gROOT.SetBatch(True)
 
-  directory = "input/ptM15GeV/"
-  directory = "/data/uftrig01b/digiovan/baselinePP/input/ptM15GeV_outtree_LoosePUID/"
-  directory = "input/V00-01-10/forGPReRecoMuScleFit/"
-  directory = "../hmumuFinalAnalysis.answerstoarc/input/V00-01-10/forGPReRecoMuScleFit/"
+  directory = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
   #periods = ["8TeV"]
