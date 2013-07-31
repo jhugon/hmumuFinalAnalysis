@@ -110,6 +110,7 @@ class GlobalSigEvaluator:
     self.histMax = root.TH1F("sigMax","",50,0.,5.)
     self.histMax.GetXaxis().SetTitle("Max Significance")
     self.histMax.GetYaxis().SetTitle("Fraction of Events")
+    self.listMax = []
     self.hist2D = root.TH2F("sigHist","",50,110,160,50,0.,5.)
     self.hist2D.GetXaxis().SetTitle("m_{H} [GeV/c^{2}]")
     self.hist2D.GetYaxis().SetTitle("Significance")
@@ -130,6 +131,7 @@ class GlobalSigEvaluator:
       self.graphs.append(graph)
       self.trialList.append(sigListVMass)
       self.histMax.Fill(max(sigListVMass))
+      self.listMax.append(max(sigListVMass))
 
     self.histMax.Scale(1./minLen)
 
@@ -264,15 +266,25 @@ class GlobalSigEvaluator:
     sg = SigGlobalObj(sigLocal,sig0,nAvg)
     return sg
 
+  def getSigGlobalTraditional(self,sigLocal):
+    result = 0.
+    for i in self.listMax:
+      if sigLocal <= i:
+        result += 1.
+    result /= len(self.listMax)
+    return result
+
+
 if __name__ == "__main__":
   os.chdir("playWithLEE/")
   #os.chdir("playWithLEE/nonVBFPassBB8TeVOnly/")
   gse = GlobalSigEvaluator("Add*.root")
   gse.drawHist()
-  gse.drawGraphs()
+  #gse.drawGraphs()
   sigLocal = 2.84096
   print "for local significance: %.3f" % sigLocal
   print "global significance is:"
   for sig0 in [0.25,0.5,1.,1.5,2.]:
     print "  for sig0: %10.3f sigGlobal: %10.3f" % (sig0,gse.getSigGlobal(sigLocal,sig0)())
   print gse.getSigGlobal(sigLocal,1.0)
+  print "traditional global p-value (may have large stat errror: ) %10.3f" % gse.getSigGlobalTraditional(sigLocal)
