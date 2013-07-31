@@ -84,8 +84,8 @@ anotateText3 = "Analysis A"
 #anotateText = "110 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"
 #anotateText = "80 GeV < m_{#mu#mu} < 160 GeV"
 anotateText = "110 GeV < m_{#mu#mu} < 170 GeV"
-if args.n2JetMassOnly or args.n2JetVBFTight or args.n2JetGFTight or args.n2JetVBFLoose or args.n01JetMassOnly:
-  anotateText = ""
+#if args.n2JetMassOnly or args.n2JetVBFTight or args.n2JetGFTight or args.n2JetVBFLoose or args.n01JetMassOnly:
+#  anotateText = ""
 
 urLegendPos = [0.70,0.67,0.9,0.9]
 ulLegendPos = [0.20,0.67,0.4,0.9]
