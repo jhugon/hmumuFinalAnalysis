@@ -806,6 +806,7 @@ class DataMCStack:
       for mcHist in mcHistList:
         tmpMCSum += mcHist.Integral(0,mcHist.GetNbinsX()+1)
       self.mc2DataSF = float(self.nDataEvents)/tmpMCSum
+      print("DataMC SF: %.2f" % self.mc2DataSF)
 
     # Make MC Stack/sumHist
     self.stack = root.THStack()

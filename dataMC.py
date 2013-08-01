@@ -19,31 +19,38 @@ if args.n01Jet:
   args.scaleHiggsBy = 500.
   args.outPrefix = "nonVBFPresel"
   args.disableMCErrors = True
+  print("Running 01Jet Presel")
 
 if args.n01JetMassOnly:
   args.scaleHiggsBy = 500.
   args.outPrefix = "nonVBFPresel"
   args.disableMCErrors = True
+  print("Running 01Jet Presel Mass Only")
 
 if args.n2Jet:
   args.scaleHiggsBy = 1000.
   args.outPrefix = ""
+  print("Running 2Jet Presel")
 
 if args.n2JetMassOnly:
   args.scaleHiggsBy = 200.
   args.outPrefix = "presel"
+  print("Running 2Jet Presel Mass Only")
 
 if args.n2JetVBFTight:
   args.scaleHiggsBy = 50.
   args.outPrefix = "vbfTight"
+  print("Running 2Jet VBF Tight")
 
 if args.n2JetVBFLoose:
   args.scaleHiggsBy = 50.
   args.outPrefix = "loose"
+  print("Running 2Jet Loose")
 
 if args.n2JetGFTight:
   args.scaleHiggsBy = 50.
   args.outPrefix = "gfTight"
+  print("Running 2Jet GF Tight")
 
 from xsec import *
 from helpers import *
@@ -495,6 +502,7 @@ for histName in bkgDatasetList[0].hists:
       mcVariations[e] = bkgErrList
 
   histBaseName = re.sub(r".*/","",histName)
+  print("Making hist: "+histBaseName)
   categoryName = re.sub(r"/.*","",histName)+'/'
   xtitle = histNames[histBaseName]["xlabel"]
   ylimits = []
