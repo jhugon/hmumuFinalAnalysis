@@ -9,6 +9,7 @@ parser.add_option("--cutOpt", help="Creates Cards with Different Cut Values",act
 parser.add_option("--gaussian", help="Use A Gaussian Signal Template with floating width",type=float,default=-1.0)
 parser.add_option("-m","--higgsMass", help="Use This Higgs Mass",type=float,default=-1.0)
 parser.add_option("--combinationsOnly", help="Run Only Combinations of Channels",action="store_true",default=False)
+parser.add_option("--optimisticSystematics", help="Optimistic Systematics.  Exp ~ 1/sqrt(L), Thry ~0.5",action="store_true",default=False)
 args, fakeargs = parser.parse_args()
 
 import math
@@ -50,6 +51,8 @@ FREEBAKPARAMS = True
 
 USETREES=False
 HISTNAME="mDiMu"
+
+TOYSBINNED=True
 
 if args.cutOpt:
   USEGPANNA = False
@@ -991,9 +994,8 @@ class Analysis:
       if self.dataCountsTotal == None:
         self.dataCountsTotal = self.countsBakTotal
       bakPDF = self.workspace.pdf("bak")
-      toysBinned = True
       toyDataset = None
-      if toysBinned:
+      if TOYSBINNED:
         tmpBinning = dimuonMass.getBinning()
         binWidth = 0.1
         nBins = int((tmpBinning.highBound()-tmpBinning.lowBound())/binWidth)
@@ -1049,9 +1051,6 @@ class Analysis:
       outHist.SetBinContent(iX,mySum)
 
   def doSigInject(self,dataHist,sigStrength,sigMass):
-    print "doSigInject: starting..."
-    print "  sigStrength: {0:.2f}".format(sigStrength)
-    print "  sigMass: {0:.2f}".format(sigMass)
     if sigStrength <= 0.0:
         return 0
     dimuonMass = self.dimuonMass
@@ -1059,8 +1058,6 @@ class Analysis:
     self.sigInjectWorkspaces.append(w)
     wImport = getattr(w,"import")
     countsList = []
-    print "  sigNames: {0}".format(self.sigNames)
-    print "  sigHistsRaw: {0}".format(self.sigHistsRaw)
     if USEGPANNA:
       signalPdfListTmp = []
       signalCountsListTmp = []
@@ -1414,7 +1411,7 @@ class DataCardMaker:
           channelNameNoEnergy = re.sub(r"[\d]+TeV$","",channelName)
           for sigName in channel.sigNames:
             formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-            value = nuisance(nu,sigName,channelNameNoEnergy,channel.higgsMassStr)
+            value = nuisance(nu,sigName,channelNameNoEnergy,channel.higgsMassStr,lumi,args.optimisticSystematics)
             if value == None:
               value = "-"
             else:
@@ -1447,7 +1444,7 @@ class DataCardMaker:
             channelNameNoEnergy = re.sub(r"[\d]+TeV$","",channelName)
             for sigName in channel.sigNames:
               formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-              value = nuisance(nu,sigName,channelNameNoEnergy,channel.higgsMassStr)
+              value = nuisance(nu,sigName,channelNameNoEnergy,channel.higgsMassStr,lumi,args.optimisticSystematics)
               if value == None:
                 value = "-"
               else:
@@ -1479,7 +1476,7 @@ class DataCardMaker:
               value = "-"
               formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
               if channelName == channelName2 and sigName == sigName2:
-                value = nuisance(nu,sigName,channelNameNoEnergy,channel.higgsMassStr)
+                value = nuisance(nu,sigName,channelNameNoEnergy,channel.higgsMassStr,lumi,args.optimisticSystematics)
                 if value == None:
                   value = "-"
                 else:

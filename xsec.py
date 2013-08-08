@@ -1,4 +1,5 @@
 import re
+from math import sqrt
 import ROOT as root
 import helpers
 
@@ -1045,10 +1046,30 @@ class NuisanceMap:
     return self.data.keys() + self._keys
   def __setitem__(self,key,value):
     self.data[key] = value
-  def __call__(self,nu,ds,category,mass):
+  def scaleUnc(self,nu,lumi,optimistic,thry):
+    if not optimistic or nu==None or nu==1.:
+      return nu
+    else:
+      nuL1 = False
+      if nu < 1.:
+        nuL1 = True
+      nu = abs(nu-1.)
+      if thry:
+        nu *= 0.5
+      else:
+        nu *= sqrt(19.8*1000./lumi)
+      if nu < 0.01:
+        return None
+      if nuL1:
+        nu = 1. - nu
+      else:
+        nu += 1.
+      return nu
+  def __call__(self,nu,ds,category,mass,lumi=None,optimistic=False):
+    scaleUnc = self.scaleUnc
     if nu in self.data:
       if ds in self.data[nu]:
-        return self.data[nu][ds]
+        return scaleUnc(self.data[nu][ds],lumi,optimistic,False)
     match = re.match(r"([a-z]+)Hmumu([\d.]+)_([\d]+TeV)",ds)
     if not match:
       return None
@@ -1069,35 +1090,36 @@ class NuisanceMap:
         result = self.zh[energy].lnN[mass]
       else:
         raise Exception("Higgs Production mode not recognized for: "+ds)
+      result = scaleUnc(result,lumi,optimistic,True)
       return result
     if nu == "br_Hmm" and match:
-      return self.br.lnN[mass]
+      return scaleUnc(self.br.lnN[mass],lumi,optimistic,True)
     if nu == "lumi" and match:
-      return self.lumi[energy]
+      return scaleUnc(self.lumi[energy],lumi,optimistic,False)
     if nu == "PDF" and match:
       category = self.getBaseCat(category)
-      return goodCorr(self.PDF[prodMode][energy][category])
+      return scaleUnc(goodCorr(self.PDF[prodMode][energy][category]),lumi,optimistic,True)
     if nu == "JES" and match:
       category = self.getBaseCat(category)
-      return goodCorr(self.JES[prodMode][energy][category])
+      return scaleUnc(goodCorr(self.JES[prodMode][energy][category]),lumi,optimistic,False)
     if nu == "JER" and match:
       category = self.getBaseCat(category)
-      return goodCorr(self.JER[prodMode][energy][category])
+      return scaleUnc(goodCorr(self.JER[prodMode][energy][category]),lumi,optimistic,False)
     if nu == "MCStat" and match:
       category = self.getBaseCat(category)
-      return goodCorr(self.MCStat[prodMode][energy][category])
+      return scaleUnc(goodCorr(self.MCStat[prodMode][energy][category]),lumi,optimistic,False)
     if nu == "PU" and match:
       category = self.getBaseCat(category)
-      return goodCorr(self.PU[prodMode][energy][category])
+      return scaleUnc(goodCorr(self.PU[prodMode][energy][category]),lumi,optimistic,False)
     if nu == "PUID" and match:
       category = self.getBaseCat(category)
-      return goodCorr(self.PUID[prodMode][energy][category])
+      return scaleUnc(goodCorr(self.PUID[prodMode][energy][category]),lumi,optimistic,False)
     if nu == "QCDScale" and match:
       category = self.getBaseCat(category)
-      return goodCorr(self.QCDScale[prodMode][energy][category])
+      return scaleUnc(goodCorr(self.QCDScale[prodMode][energy][category]),lumi,optimistic,True)
     if nu == "UE" and match:
       category = self.getBaseCat(category)
-      return goodCorr(self.UE[prodMode][energy][category])
+      return scaleUnc(goodCorr(self.UE[prodMode][energy][category]),lumi,optimistic,True)
   def getBaseCat(self,cat):
     categoriesAllCCFF = ["BB","BO","BE","OO","OE","EE","CC","FF"]
     for i in categoriesAllCCFF:

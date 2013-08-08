@@ -555,7 +555,8 @@ if __name__ == "__main__":
     if re.search("P[\d.]+TeV",fn):
         continue
 
-    if ("126" not in fn):
+    #if ("126" not in fn):
+    if ("3000" not in fn):
         continue
     #if ("8TeV" not in fn):
     #    continue
@@ -624,6 +625,7 @@ if __name__ == "__main__":
   
   catVetos["CombSplitAll"] = []
   
+  print("shapePlotterList: \n{0}".format(shapePlotterList))
   
   sp_merged = None
   for s in shapePlotterList:
