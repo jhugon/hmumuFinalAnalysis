@@ -19,13 +19,7 @@ scp statsCards/* lxplus5:$REMOTEDIR/.
 echo "Running combine on lxplus5..."
 ssh lxplus5 "cd $REMOTEDIR; eval \`scramv1 runtime -sh\`;bash run.sh; bash getStatus2.sh"
 echo "Copying output files from lxplus5..."
-scp lxplus5:$REMOTEDIR/*.out statsInput/.
-scp lxplus5:$REMOTEDIR/*.sig statsInput/.
-scp lxplus5:$REMOTEDIR/*.expsig statsInput/.
-scp lxplus5:$REMOTEDIR/*.mu statsInput/.
-scp lxplus5:$REMOTEDIR/*.txt.root statsInput/.
-scp lxplus5:$REMOTEDIR/*.png statsInput/.
-scp lxplus5:$REMOTEDIR/*CCC*.root statsInput/.
+scp lxplus5:$REMOTEDIR/*.txt.* statsInput/.
 
 nice ./makeShapePlots.py
 nice ./makeLimitPlots.py

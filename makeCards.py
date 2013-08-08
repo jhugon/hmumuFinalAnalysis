@@ -185,7 +185,8 @@ def makePDFBakExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
 
     pdfMmumu = root.RooGenericPdf("bak","TMath::Exp(@0*@2)/(@0-@1)/(@0-@1)",root.RooArgList(dimuonMass,InvPolMass,ExpMass))
 
-    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    #fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(True),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
@@ -223,14 +224,14 @@ def makePDFBakExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
     #if workspaceImportFn != None:
     #  workspaceImportFn(rooDataset2)
 
-#    ## Debug Time
-#    frame = dimuonMass.frame()
-#    frame.SetName("bak_Plot")
-#    rooDataset.plotOn(frame)
-#    pdfMmumu.plotOn(frame)
-#    canvas = root.TCanvas()
-#    frame.Draw()
-#    canvas.SaveAs("debug_"+name+channelName+".png")
+    ### Debug Time
+    #frame = dimuonMass.frame()
+    #frame.SetName("bak_Plot")
+    #rooDataset.plotOn(frame)
+    #pdfMmumu.plotOn(frame)
+    #canvas = root.TCanvas()
+    #frame.Draw()
+    #canvas.SaveAs("debug_"+name+channelName+str(time.clock())+".png")
 
     for i in rooParamList:
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
@@ -543,10 +544,13 @@ def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=True)
     debug = ""
     debug += "### makePDFSigNew: "+channelName+": "+name+"\n"
     debug += "#    useDG: {0}\n".format(useDG)
-    matchChannel = re.match(r"(.*)([\d]TeV)",channelName)
-    assert(matchChannel)
-    category = matchChannel.group(1)
-    energy = matchChannel.group(2)
+    energy = ""
+    category = ""
+    for e in ["7TeV","8TeV","14TeV"]:
+      if e in channelName:
+        energy = e
+        category = channelName[:-len(e)]
+        break
     #massStr = "{0:.0f}".format(mass)
     #if mass % 1 > 0.0:
     massStr = "{0:.1f}".format(mass)
@@ -589,10 +593,12 @@ def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=True)
     muonres = {}
     muonres["7TeV"] = 0.03 # this is a percentage
     muonres["8TeV"] = 0.02 # this is a percentage  
+    muonres["14TeV"] = 0.02 # this is a percentage  
 
     muonscale = {}
     muonscale["7TeV"] = 0.002 # this is a percentage
     muonscale["8TeV"] = 0.002 # this is a percentage  
+    muonscale["14TeV"] = 0.002 # this is a percentage  
 
     if useDG:
       #if len(params.keys())>4:
@@ -795,10 +801,12 @@ class Analysis:
     self.bakHistsRaw = []
     self.bakHistsRawZ = []
     for name in backgroundNames:
-      tmpH = self.getRooDataSample(name,self.observablesForRooDataset)
+      #tmpH = self.getRooDataSample(name,self.observablesForRooDataset)
+      tmpH = self.getRooDataSet(name,self.observablesForRooDataset)
       self.debug += "#  N Events in {0}: {1}\n".format(name,tmpH.sumEntries())
       self.bakHistsRaw.append(tmpH)
-      tmpH = self.getRooDataSample(name,self.observablesForRooDatasetZ,True)
+      #tmpH = self.getRooDataSample(name,self.observablesForRooDatasetZ,True)
+      tmpH = self.getRooDataSet(name,self.observablesForRooDatasetZ,True)
       self.bakHistsRawZ.append(tmpH)
 
     self.datHists = []
@@ -823,22 +831,29 @@ class Analysis:
     self.effBakList = []
     self.bakHists = []
     self.bakHistTotal = None
+    self.bakWeightVar = root.RooRealVar("bakWeight","Background Weight",0.)
+    self.observablesForRooDatasetWeight = root.RooArgSet(
+                            self.dimuonMass,
+                            self.rooPUWeight,
+                            self.bakWeightVar
+                        )
     for h,name in zip(self.bakHistsRaw,backgroundNames):
-      sys.exit(1)
       counts = h.sumEntries()
       eff = counts/nEventsMap[name]*efficiencyMap[getPeriod(name)]
       xs = eff*xsec[name]
       self.xsecBakTotal += xs
       self.xsecBakList.append(xs)
       self.effBakList.append(eff)
-      h.Scale(xsec[name]/nEventsMap[name]*efficiencyMap[getPeriod(name)])
+      self.bakWeightVar.setVal(xsec[name]/nEventsMap[name]*efficiencyMap[getPeriod(name)]*lumi)
+      h.addColumn(self.bakWeightVar)
+      h = root.RooDataSet(name,h.GetTitle(),self.observablesForRooDatasetWeight,
+                root.RooFit.Import(h),root.RooFit.WeightVar(self.bakWeightVar))
       self.bakHists.append(h)
       if self.bakHistTotal == None:
         self.bakHistTotal = h.Clone("bak")
       else:
-        self.bakHistTotal.Add(h)
+        self.bakHistTotal.append(h)
 
-    #self.bakHistTotal.Scale(lumi)
     #self.bakHistTotalReal = self.bakHistTotal.Clone("data_obs")
 
     self.dataCountsTotal = None
@@ -854,7 +869,8 @@ class Analysis:
       else:
         #self.datHistTotal.add(h)
         self.datHistTotal.append(h)
-    assert(self.dataCountsTotal == self.datHistTotal.sumEntries())
+    if self.datHistTotal != None:
+      assert(self.dataCountsTotal == self.datHistTotal.sumEntries())
 
     self.dataCountsTotalZ = None
     self.datHistTotalZ = None
@@ -869,26 +885,34 @@ class Analysis:
       else:
         #self.datHistTotalZ.add(h)
         self.datHistTotalZ.append(h)
-    assert(self.dataCountsTotalZ == self.datHistTotalZ.sumEntries())
+    if self.datHistTotalZ != None:
+      assert(self.dataCountsTotalZ == self.datHistTotalZ.sumEntries())
 
+    # Creating Background PDF shape
     histToUseForBak = self.datHistTotal
     histToUseForBakZ = self.datHistTotalZ
-    if histToUseForBak is None:
-        print("Background MC rescaling RooDataSet to lumi doesn't work...\n  you must use real data...Exiting")
-        sys.exit(1)
-        doSigInject(self.bakHistTotal,sigInject,sigInjectMass)
-        histToUseForBak = self.bakHistTotal
-    else:
-        self.dataCountsTotal += doSigInject(self.datHistTotal,sigInject,sigInjectMass)
+    if histToUseForBak == None:
+      histToUseForBak = self.bakHistTotal
+      tmpBakParams, self.bakNormTup, tmpDebug = makePDFBak(
+                                    analysis+energyStr,histToUseForBak,
+                                    dimuonMass, minMass,maxMass,wImport,
+                                    dimuonMassZ,None
+                                       )
+      self.params.extend(tmpBakParams)
+      self.countsBakTotal = self.bakNormTup[0]*self.bakNormTup[1]
+      self.debug += tmpDebug
 
-    tmpBakParams, self.bakNormTup, tmpDebug = makePDFBak(
+    else:
+      self.dataCountsTotal += doSigInject(self.datHistTotal,sigInject,sigInjectMass)
+
+      tmpBakParams, self.bakNormTup, tmpDebug = makePDFBak(
                                     analysis+energyStr,histToUseForBak,
                                     dimuonMass, minMass,maxMass,wImport,
                                     dimuonMassZ,histToUseForBakZ
                                        )
-    self.params.extend(tmpBakParams)
-    self.countsBakTotal = self.bakNormTup[0]*self.bakNormTup[1]
-    self.debug += tmpDebug
+      self.params.extend(tmpBakParams)
+      self.countsBakTotal = self.bakNormTup[0]*self.bakNormTup[1]
+      self.debug += tmpDebug
     
     self.sigParamList = []
     if USEGPANNA:
@@ -963,38 +987,33 @@ class Analysis:
     self.countsSigList = [x*lumi for x in self.xsecSigList]
     self.countsBakList = [x*lumi for x in self.xsecBakList]
 
-    if self.dataCountsTotal is None:
-      assert(False)
-      bakDataTH1 = self.bakHistTotal.Clone("bak_Template"+str(random.randint(0,10000)))
-      bakDataTH1 = shrinkTH1(bakDataTH1,minMass,maxMass)
-      for i in range(bakDataTH1.GetNbinsX()+2):
-        binCenter = bakDataTH1.GetXaxis().GetBinCenter(i)
-        contentInt = int("{0:.0f}".format(bakDataTH1.GetBinContent(i)))
-        bakDataTH1.SetBinContent(i,0.0)
-        bakDataTH1.SetBinError(i,0.0)
-        for j in range(contentInt):
-          bakDataTH1.Fill(binCenter)
-      self.dataCountsTotal = int(bakDataTH1.Integral())
-      obsData = root.RooDataHist("data_obs","MC Full-Sim Data",root.RooArgList(dimuonMass),bakDataTH1)
-      print "counts: {} obsData: {}".format(self.dataCountsTotal,obsData.sumEntries())
-      wImport(obsData)
-      self.bakHistTotal.SetName("data_obs_"+analysis)
-      #degubf = root.TFile("debug.root","recreate")
-      #self.bakHistTotal.Write()
-      #degubf.Close()
-    elif toyData:
+    if toyData or self.dataCountsTotal == None:
+      if self.dataCountsTotal == None:
+        self.dataCountsTotal = self.countsBakTotal
       bakPDF = self.workspace.pdf("bak")
-      sigPDFList = [self.workspace.pdf(i) for i in signalNames]
-      toyDataset = bakPDF.generate(root.RooArgSet(dimuonMass),int(self.dataCountsTotal))
+      toysBinned = True
+      toyDataset = None
+      if toysBinned:
+        tmpBinning = dimuonMass.getBinning()
+        binWidth = 0.1
+        nBins = int((tmpBinning.highBound()-tmpBinning.lowBound())/binWidth)
+        dimuonMass.setBins(nBins)
+        toyDataset = bakPDF.generateBinned(root.RooArgSet(dimuonMass),int(self.dataCountsTotal))
+      else:
+        toyDataset = bakPDF.generate(root.RooArgSet(dimuonMass),int(self.dataCountsTotal))
       doSigInject(toyDataset,sigInject,sigInjectMass)
-      #toyDataHist = toyDataset.binnedClone("data_obs","Toy Data")
-      self.dataCountsTotal = int(toyDataset.sumEntries())
+      toyDataset.SetName("data_obs")
+      toyDataset.SetTitle("Toy Data")
+      self.datHistTotal = toyDataset
+      self.dataCountsTotal = int(round(self.datHistTotal.sumEntries(),0))
       wImport(toyDataset)
+    #elif self.dataCountsTotal == None:
+    elif False:
+      self.datHistTotal = self.bakHistTotal.Clone("data_obs")
+      self.datHistTotal.SetTitle("MC Data")
+      self.dataCountsTotal = int(round(self.datHistTotal.sumEntries(),0))
+      wImport(self.datHistTotal)
     else:
-      #realDataHist = root.RooDataHist("data_obs","Real Observed Data",root.RooArgList(dimuonMass),self.datHistTotal)
-      #wImport(realDataHist)
-      #realDataHistNotVeryLow = realDataHist.reduce(root.RooFit.CutRange("low,signal,high"))
-      #wImport(realDataHistNotVeryLow)
       self.datHistTotal.SetTitle("Real Observed Data")
       wImport(self.datHistTotal)
 
@@ -1030,6 +1049,9 @@ class Analysis:
       outHist.SetBinContent(iX,mySum)
 
   def doSigInject(self,dataHist,sigStrength,sigMass):
+    print "doSigInject: starting..."
+    print "  sigStrength: {0:.2f}".format(sigStrength)
+    print "  sigMass: {0:.2f}".format(sigMass)
     if sigStrength <= 0.0:
         return 0
     dimuonMass = self.dimuonMass
@@ -1037,31 +1059,64 @@ class Analysis:
     self.sigInjectWorkspaces.append(w)
     wImport = getattr(w,"import")
     countsList = []
-    for h,name in zip(self.sigHistsRaw,self.sigNames):
-      counts = getIntegralAll(h,boundaries=self.massBounds)
-      eff = counts/nEventsMap[name]*efficiencyMap[getPeriod(name)]
-      xs = eff*xsec[name]
-      if sigMass > 0.0:
-        prec = "0"
-        if sigMass % 1 > 0.0:
-          prec = "1"
-        higgsMassString =("{0:."+prec+"f}").format(sigMass)
-        tmpName = name.replace("125",higgsMassString)
-        xs = eff*xsec[tmpName]
-      countsList.append(int(xs*self.lumi*sigStrength))
-    for name, hist, counts in zip(self.sigNames,self.sigHistsRaw,countsList):
-      if counts == 0:
-        continue
-      tmpName = name+"TmpSigInject"+str(random.randint(0,10000))
-      sigParams, sigDebug, rooData = makePDFSig(tmpName,hist,dimuonMass,sigMass-20,sigMass+20,wImport,tmpName,forceMean=sigMass-0.3,sigInject=counts)
-      if dataHist.InheritsFrom("RooAbsData"):
-        dataHist.append(rooData)
+    print "  sigNames: {0}".format(self.sigNames)
+    print "  sigHistsRaw: {0}".format(self.sigHistsRaw)
+    if USEGPANNA:
+      signalPdfListTmp = []
+      signalCountsListTmp = []
+      for name,count in zip(self.sigNames,self.countsSigList):
+        pdfName = convertSigName(name)
+        pdf = self.workspace.pdf(pdfName)
+        signalPdfListTmp.append(pdf)
+        signalCountsListTmp.append(
+            root.RooRealVar("SignalCounts_"+name+"_"+self.analysis+self.energyStr,
+                            "SignalCounts_"+name+"_"+self.analysis+self.energyStr,
+                                count*sigStrength
+                            )
+          )
+      rooPdfListTmp = root.RooArgList(*signalPdfListTmp)
+      rooCountsListTmp = root.RooArgList(*signalCountsListTmp)
+      signalPdfSumTmp = root.RooAddPdf("SumSigPdf_"+self.analysis+self.energyStr,
+                                       "SumSigPdf_"+self.analysis+self.energyStr,
+                                                             rooPdfListTmp,rooCountsListTmp)
+
+      signalDatasetTmp = None
+      if dataHist.InheritsFrom("RooDataSet"):
+        signalDatasetTmp = signalPdfSumTmp.generate(root.RooArgSet(dimuonMass))
+        dataHist.append(signalDatasetTmp)
       else:
-        tmpHist = dataHist.Clone("sigInjectHistTmp"+str(random.randint(0,10000)))
-        tmpHist.Reset()
-        rooData.fillHistogram(tmpHist,root.RooArgList(dimuonMass))
-        dataHist.Add(tmpHist)
-    return sum(countsList)
+        print("Error: doSigInject RooDataHist treatment not implemented! Exiting.")
+        #sys.exit(1)
+      signalPdfSumTmp.Print("v")
+      signalDatasetTmp.Print("v")
+      return signalDatasetTmp.sumEntries()
+    else:
+      for h,name in zip(self.sigHistsRaw,self.sigNames):
+        counts = getIntegralAll(h,boundaries=self.massBounds)
+        eff = counts/nEventsMap[name]*efficiencyMap[getPeriod(name)]
+        xs = eff*xsec[name]
+        if sigMass > 0.0:
+          prec = "0"
+          if sigMass % 1 > 0.0:
+            prec = "1"
+          higgsMassString =("{0:."+prec+"f}").format(sigMass)
+          tmpName = name.replace("125",higgsMassString)
+          xs = eff*xsec[tmpName]
+        countsList.append(int(xs*self.lumi*sigStrength))
+      for name, hist, counts in zip(self.sigNames,self.sigHistsRaw,countsList):
+        print "doSigInject: in signal hist loop..."
+        if counts == 0:
+          continue
+        tmpName = name+"TmpSigInject"+str(random.randint(0,10000))
+        sigParams, sigDebug, rooData = makePDFSig(tmpName,hist,dimuonMass,sigMass-20,sigMass+20,wImport,tmpName,forceMean=sigMass-0.3,sigInject=counts)
+        if dataHist.InheritsFrom("RooAbsData"):
+          dataHist.append(rooData)
+        else:
+          tmpHist = dataHist.Clone("sigInjectHistTmp"+str(random.randint(0,10000)))
+          tmpHist.Reset()
+          rooData.fillHistogram(tmpHist,root.RooArgList(dimuonMass))
+          dataHist.Add(tmpHist)
+      return sum(countsList)
 
   def getRooDataSet(self,name,observables,aroundZ=False):
     tmpFLoc = self.directory+name+".root"
@@ -1356,7 +1411,7 @@ class DataCardMaker:
       formatList = [nu,"lnN"]
       iParam = 2
       for channel,channelName in zip(self.channels,self.channelNames):
-          channelNameNoEnergy = re.sub(r"[\d]TeV$","",channelName)
+          channelNameNoEnergy = re.sub(r"[\d]+TeV$","",channelName)
           for sigName in channel.sigNames:
             formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
             value = nuisance(nu,sigName,channelNameNoEnergy,channel.higgsMassStr)
@@ -1385,11 +1440,11 @@ class DataCardMaker:
         formatList = [nu+"_"+energy,"lnN"]
         iParam = 2
         for channel,channelName in zip(self.channels,self.channelNames):
-            channelEnergyMatch = re.search(r"[\d]TeV$",channelName)
+            channelEnergyMatch = re.search(r"[\d]+TeV$",channelName)
             assert(channelEnergyMatch)
             channelEnergy = channelEnergyMatch.group(0)
             #print("channelEnergy: %s" % channelEnergy)
-            channelNameNoEnergy = re.sub(r"[\d]TeV$","",channelName)
+            channelNameNoEnergy = re.sub(r"[\d]+TeV$","",channelName)
             for sigName in channel.sigNames:
               formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
               value = nuisance(nu,sigName,channelNameNoEnergy,channel.higgsMassStr)
@@ -1418,7 +1473,7 @@ class DataCardMaker:
           formatList = [nu+"_"+channelName,"lnN"]
           iParam = 2
           for channel2,channelName2 in zip(self.channels,self.channelNames):
-            channelNameNoEnergy = re.sub(r"[\d]TeV$","",channelName)
+            channelNameNoEnergy = re.sub(r"[\d]+TeV$","",channelName)
             value = "-"
             for sigName2 in channel.sigNames:
               value = "-"
@@ -1527,10 +1582,11 @@ if __name__ == "__main__":
   root.gROOT.SetBatch(True)
 
   directory = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
+  directory = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/fake14TeV/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  #periods = ["8TeV"]
-  #periods = ["7TeV"]
+  periods = ["8TeV"]
+  periods = ["14TeV"]
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
   categoriesFF = ["BB","BO","BE","OO","FF"]
   categoriesCC = ["BB","BO","CC","OE","EE"]
@@ -1582,61 +1638,61 @@ if __name__ == "__main__":
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
   #analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  analyses += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
-  analyses += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  analyses += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  analyses += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  analyses += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-
-
-  # Jet 0+1 Pass All Cats
-  combinations.append((
-    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]
-    ,"Jets01PassCatAll"
-  ))
- 
-  # Jet 0+1 Fail All Cats
-  combinations.append((
-    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-    ,"Jets01FailCatAll"
-  ))
- 
-  # Jet 0+1 Pass BB,BO,CC,FF Cats
-  #combinations.append((
-  #  [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesCCFF]
-  #  ,"Jets01PassCatCCFF"
-  #))
- 
-  # Jet 0+1 Fail BB,BO,CC,FF Cats
-  #combinations.append((
-  #  [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesCCFF]
-  #  ,"Jets01FailCatCCFF"
-  #))
- 
- 
- 
-  # Jet 0+1 Pass All Cats
-  combinations.append((
-    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
-    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-    ,"Jets01SplitCatAll"
-  ))
-  # Jet 0+1 Pass BB,BO,CC,FF Cats
-  #combinations.append((
-  #  [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesCCFF]+
-  #  [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesCCFF]
-  #  ,"Jets01SplitCatCCFF"
-  #))
- 
-  # Jets >=2 Pass + Fail
-  combinations.append((
-    [  
-     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
-     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-    ],"Jet2SplitCutsGFSplit"
-  ))
- 
+#  analyses += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
+#  analyses += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+#  analyses += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+#  analyses += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+#  analyses += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+#
+#
+#  # Jet 0+1 Pass All Cats
+#  combinations.append((
+#    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]
+#    ,"Jets01PassCatAll"
+#  ))
+# 
+#  # Jet 0+1 Fail All Cats
+#  combinations.append((
+#    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+#    ,"Jets01FailCatAll"
+#  ))
+# 
+#  # Jet 0+1 Pass BB,BO,CC,FF Cats
+#  #combinations.append((
+#  #  [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesCCFF]
+#  #  ,"Jets01PassCatCCFF"
+#  #))
+# 
+#  # Jet 0+1 Fail BB,BO,CC,FF Cats
+#  #combinations.append((
+#  #  [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesCCFF]
+#  #  ,"Jets01FailCatCCFF"
+#  #))
+# 
+# 
+# 
+#  # Jet 0+1 Pass All Cats
+#  combinations.append((
+#    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
+#    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+#    ,"Jets01SplitCatAll"
+#  ))
+#  # Jet 0+1 Pass BB,BO,CC,FF Cats
+#  #combinations.append((
+#  #  [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesCCFF]+
+#  #  [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesCCFF]
+#  #  ,"Jets01SplitCatCCFF"
+#  #))
+# 
+#  # Jets >=2 Pass + Fail
+#  combinations.append((
+#    [  
+#     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+#     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#    ],"Jet2SplitCutsGFSplit"
+#  ))
+# 
   # Jets 0,1,>=2 Pass + Fail All
   combinations.append((
     [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
@@ -1684,8 +1740,8 @@ if __name__ == "__main__":
   signalNames=["ggHmumu125","vbfHmumu125","whHmumu125","zhHmumu125"]
   #signalNames=["ggHmumu125","vbfHmumu125"]
   #signalNames=["whHmumu125"]
-  #backgroundNames= ["DYJetsToLL","ttbar"]
   backgroundNames= []
+  backgroundNames= ["DYJetsToLL","ttbar"]
   dataDict = {}
   #dataDict["8TeV"] = [
   #  "SingleMuRun2012Av1",
@@ -1714,8 +1770,7 @@ if __name__ == "__main__":
   ]
   #dataDict["7TeV"] = []
   dataDict["14TeV"] = []
-  lumiList = [lumiDict["8TeV"],20,25,30]
-  lumiList = [lumiDict["8TeV"]]
+  lumiList = [20,30,50,100,150,200,250,300,400,500,600,750,1000,1500,2000,3000]
 
   controlRegionVeryLow=[60,110]
   controlRegionLow=[110,120]

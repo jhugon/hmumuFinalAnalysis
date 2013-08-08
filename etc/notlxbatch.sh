@@ -16,16 +16,17 @@ nice combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif >& $FILENAME.
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
-#echo "executing combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig"
-#
-#nice combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif --expectSignal=1 -t -1 >& $FILENAME.expsig
-##combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig
-#rm -f roostats*
-#rm -f higgsCombineTest*.root
+echo "executing combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig"
+
+nice combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif --expectSignal=1 -t -1 >& $FILENAME.expsig
+#combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig
+rm -f roostats*
+rm -f higgsCombineTest*.root
 
 echo "executing combine -M MaxLikelihoodFit --rMin -150 --rMax 150 --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
 
-nice combine -M MaxLikelihoodFit --rMin -150 --rMax 150 --plots --saveNormalizations $FILENAME >& $FILENAME.mu
+#nice combine -M MaxLikelihoodFit --rMin -150 --rMax 150 --plots --saveNormalizations $FILENAME >& $FILENAME.mu
+nice combine -M MaxLikelihoodFit --rMin -50 --rMax 50 --plots --saveNormalizations --expectSignal=1 -t -1 $FILENAME >& $FILENAME.mu
 rm -f roostats*
 rm -f higgsCombineTest*.root
 cp mlfit.root $FILENAME.root

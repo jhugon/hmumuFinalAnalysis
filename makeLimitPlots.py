@@ -251,7 +251,7 @@ def getData(fileString,matchString=r"_([-\d.]+)\.txt\.out",dontMatchStrings=[],d
   return result
 
 class RelativePlot:
-  def __init__(self,dataPoints, canvas, legend, caption, ylabel="95% CL Limit on #sigma/#sigma_{SM} (H#rightarrow#mu#mu)", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV"):
+  def __init__(self,dataPoints, canvas, legend, caption, ylabel="95% CL Limit on #sigma/#sigma_{SM} (H#rightarrow#mu#mu)", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],horizLines=[],showObs=False,energyStr="8TeV"):
     expGraph = root.TGraph()
     expGraph.SetLineStyle(2)
     expGraph.SetMarkerStyle(20)
@@ -315,7 +315,15 @@ class RelativePlot:
     label.SetTextAlign(22)
     self.label=label
 
-    twoSigGraph.Draw("a3")
+    if len(xlimits)==2 and len(ylimits)==2:
+      axisHist = root.TH2F("axisHist","",1,xlimits[0],xlimits[1],1,ylimits[0],ylimits[1])
+      self.axisHist = axisHist
+      axisHist.GetXaxis().SetTitle(xlabel)
+      axisHist.GetYaxis().SetTitle(ylabel)
+      axisHist.Draw()
+      twoSigGraph.Draw("3")
+    else:
+      twoSigGraph.Draw("a3")
     twoSigGraph.GetXaxis().SetTitle(xlabel)
     twoSigGraph.GetYaxis().SetTitle(ylabel)
     if len(ylimits)==2:
@@ -363,6 +371,11 @@ class RelativePlot:
       #arrow.SetAngle(40)
       arrow.Draw()
       self.arrows += [arrow]
+    self.horizLine = root.TLine()
+    self.horizLine.SetLineColor(root.kBlack)
+    self.horizLine.SetLineWidth(2)
+    for yPos in horizLines:
+      self.vertLine.DrawLine(xlimits[0],yPos,xlimits[1],yPos)
 
     canvas.RedrawAxis()
 
@@ -607,8 +620,9 @@ if __name__ == "__main__":
 
   canvas = root.TCanvas()
   if (not args.bdtCut) and (not args.higgsMass):
-    canvas.SetLogx(1)
-    canvas.SetLogy(1)
+    #canvas.SetLogx(1)
+    #canvas.SetLogy(1)
+    pass
   
   #mpl.rcParams["font.family"] = "sans-serif"
   #print mpl.rcParams["backend"]
@@ -668,6 +682,7 @@ if __name__ == "__main__":
       data = getData(dirName+plotName+"_"+energyStr+"_*.txt.out")
       xlimits = []
       vertLines = []
+      horizLines = []
       if len(data)<=1:
         continue
       xlabel="Integrated Luminosity [fb^{-1}]"
@@ -725,126 +740,12 @@ if __name__ == "__main__":
             caption3 = "#sqrt{{s}} = 8 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict["8TeV"]))
         ylimits = []
         xlabel="m_{H} [GeV/c^{2}]"
+      else:
+        xlimits = [0.,350.]
+        ylimits = [0.,5.]
+        horizLines = [1.0]
       #elif period == "14TeV":
       #  title = "Standard Model H#rightarrow#mu#mu"
       title = titleMap[plotName]
-      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStrWrite,xlabel=xlabel,caption3=caption3,showObs=args.higgsMass,xlimits=xlimits,vertLines = vertLines)
+      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStrWrite,xlabel=xlabel,caption3=caption3,showObs=args.higgsMass,xlimits=xlimits,vertLines=vertLines,horizLines=horizLines)
       saveAs(canvas,outDir+plotName+"_"+energyStr)
-
-    if not mplGood:
-        continue
-
-    if args.bdtCut:
-        continue
-
-    ## Compare all types of limits
-    if period == "14TeV":
-        continue
-
-    veto = []
-    #veto = [r"CNC",r"PM","BB","BO","BE","OO","OE","EE","NotBB"]
-    #veto = [r"CNC",r"PM","Presel","BB","BO","BE","OO","OE","EE","NotBB"]
-    #veto = [r"CNC",r"PM","BDT","BB","BO","BE","OO","OE","EE","NotBB"]
-    #veto = [r"CNC",r"PM","Presel"]
-    #veto = [r"CNC",r"PM","BDT"]
-
-    #veto = ["Cat","Presel"]
-    #veto = ["Cat","Comb","Presel"]
-    #veto = ["Comb","Presel"]
-    veto = ["Presel"]
-    veto = ["Presel","BB","BO","BE","OO","OE","EE"]
-
-    mustBe = r"(.+)_(.+)_[.\d]+.txt.out"
-    #mustBe = r"(.+Cat)_(.+)_[.\d]+.txt.out"
-    
-    desiredLumiStr=str(lumisToUse[period])
-    fnGlobStr = dirName+"*_"+energyStr+"_"+desiredLumiStr+".txt.out"
-    compareData = getData(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
-    energyStrWrite = None
-    if energyStr == "7P8TeV":
-      energyStrWrite = "7 & 8 TeV"
-    else:
-      energyStrWrite = energyStr.replace("TeV"," TeV")
-    #print compareData
-    if len(compareData)==0:
-        print("No Data to Compare for {0}!!".format(period))
-        continue
-    lumiStrWrite = "{0:.1f}".format(float(desiredLumiStr))
-
-    anotation1 = "$\sqrt{s}$ = "+energyStrWrite
-    anotation1 += ", $\mathcal{L}$ = "+lumiStrWrite+" fb$^{-1}$"
-    if energyStr == "7P8TeV":
-      anotation1 = "$\sqrt{s}$ = 7 TeV, $\mathcal{L}$ = "
-      anotation1 += "{0:.1f}".format(lumiDict["7TeV"])
-      anotation1 += " fb$^{-1}$"
-      anotation1 += " &\n "
-      anotation1 += "$\sqrt{s}$ = 8 TeV, $\mathcal{L}$ = "
-      anotation1 += "{0:.1f}".format(lumiDict["8TeV"])
-      anotation1 += " fb$^{-1}$"
-    anotation2 = '$m_H=125$ GeV/$c^2$'
-
-    ## Inclusive Categories
-    
-    veto = ["VBF","IncBDT"]
-    mustBe="(IncPresel.*)_(.+)_[.\d]+.txt.out"
-    tmpMap = { 
-  "IncPreselPtG10BB":"Non-VBF BB",
-  "IncPreselPtG10BO":"Non-VBF BO",
-  "IncPreselPtG10BE":"Non-VBF BE",
-  "IncPreselPtG10OO":"Non-VBF OO",
-  "IncPreselPtG10OE":"Non-VBF OE",
-  "IncPreselPtG10EE":"Non-VBF EE",
-  "IncPreselPtG10":"Non-VBF \nNo Categories",
-  "IncPreselCat":"Non-VBF\nCategory\nCombination",
-        }
-    compareData = getData(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
-    if len(compareData)>0:
-      comparePlot = ComparePlotTable(compareData,titleMap=tmpMap,vertLine1=False,anotation1=anotation1,anotation2=anotation2,signalInject=args.signalInject)
-      comparePlot.save(outDir+"compareNonVBFCats"+"_"+energyStr)
-
-    ## VBF v. Inclusive Categories
-    
-    veto = ["EE",'BB',"BO","BE","OE","OO","BDTCutVBF"]
-    mustBe="(.*)_(.+)_[.\d]+.txt.out"
-    veto2 = ["BDTCut","IncPresel","Presel","PreselCat","VBFPresel","IncPreselPtG10","BDTCutCat"]
-    tmpMap = { 
-        "VBFBDTCut":'VBF',
-        "IncPreselCat":'Non-VBF',
-        "BDTCutCatVBFBDTOnly":'VBF & Non-VBF\nCombination',
-        }
-    compareData = getData(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
-    veto3 = []
-    for i in range(len(compareData)):
-        for j in veto2:
-          if os.path.split(compareData[i][0])[1] == j:
-            veto3.append(i)
-    for i in reversed(veto3):
-        compareData.pop(i)
-    if len(compareData)>0:
-      comparePlot = ComparePlotTable(compareData,titleMap=tmpMap,vertLine1=False,anotation1=anotation1,anotation2=anotation2,signalInject=args.signalInject)
-      comparePlot.save(outDir+"compareFinal"+"_"+energyStr)
-
-    ## All Categories
-
-    mustBe = r"(.+)_(.+)_[.\d]+.txt.out"
-    veto = ["EE",'BB',"BO","BE","OE","OO"]
-    compareData = getData(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
-    comparePlot = ComparePlotTable(compareData,titleMap={},vertLine1=False,anotation1=anotation1,anotation2=anotation2,signalInject=args.signalInject)
-    comparePlot.save(outDir+"all"+"_"+energyStr)
-
-    ## Inc BDT v. Presel
-
-    mustBe = r"(Inc.+Cat)_(.+)_[.\d]+.txt.out"
-    veto = ["EE",'BB',"BO","BE","OE","OO"]
-    veto2 = ["BDTCut"]
-    compareData = getData(fnGlobStr,matchString=mustBe,dontMatchStrings=veto,doSort=False)
-    veto3 = []
-    for i in range(len(compareData)):
-        for j in veto2:
-          if os.path.split(compareData[i][0])[1] == j:
-            veto3.append(i)
-    for i in reversed(veto3):
-        compareData.pop(i)
-    if len(compareData)>0:
-      comparePlot = ComparePlotTable(compareData,titleMap={},vertLine1=False,anotation1=anotation1,anotation2=anotation2,signalInject=args.signalInject)
-      comparePlot.save(outDir+"IncBDTVPresel"+"_"+energyStr)

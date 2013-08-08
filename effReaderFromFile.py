@@ -38,6 +38,8 @@ class effReaderFromFile:
          self.process = 'vbf'
 
       # benergy should be 7TeV or 8TeV
+      if benergy == "14TeV":
+        benergy = "8TeV"
       self.benergy  = benergy
       # the current categories available are:
       #    - GluGlu BB,BO,BE,OO,OE,EE

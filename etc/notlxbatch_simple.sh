@@ -6,7 +6,7 @@ for i in *.txt; do
 FILENAME=$i
 echo "executing combine -M Asymptotic $FILENAME >& $FILENAME.out"
 
-nice combine -M Asymptotic --rMax 150 $FILENAME >& $FILENAME.out
+nice combine -M Asymptotic $FILENAME >& $FILENAME.out
 rm -f roostats*
 rm -f higgsCombineTest*.root
 

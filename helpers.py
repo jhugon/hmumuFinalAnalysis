@@ -2164,6 +2164,76 @@ def fitDGFindQuantiles(hist,level):
 
     quants =  getMedianAndQuantileInterval(pdftf,level)
     return quants
+
+def tgraphFindY(graph,xToFind):
+  nPoints = graph.GetN()
+  x = root.Double(0.)
+  y = root.Double(0.)
+  xDistanceList = []
+  for i in range(nPoints):
+    graph.GetPoint(i,x,y)
+    if x == xToFind:
+      return float(y)
+    xDistanceList.append( float(x) - xToFind )
+  maxDist = max(xDistanceList)
+  xDistanceListPos = []
+  xDistanceListNeg = []
+  for dist in xDistanceList:
+    if dist > 0:
+      xDistanceListPos.append(dist)
+      xDistanceListNeg.append(maxDist)
+    else:
+      xDistanceListPos.append(maxDist)
+      xDistanceListNeg.append(abs(dist))
+  index1 = xDistanceListPos.index(min(xDistanceListPos))
+  index2 = xDistanceListNeg.index(min(xDistanceListNeg))
+  print index1,index2
+  graph.GetPoint(index1,x,y)
+  x1 = float(x)
+  y1 = float(y)
+  graph.GetPoint(index2,x,y)
+  x2 = float(x)
+  y2 = float(y)
+  m = (y2-y1)/(x2-x1)
+  return y1 + (xToFind-x1)*m
+
+def tgraphFindX(graph,yToFind):
+  nPoints = graph.GetN()
+  x = root.Double(0.)
+  y = root.Double(0.)
+  yDistanceList = []
+  for i in range(nPoints):
+    graph.GetPoint(i,x,y)
+    if y == yToFind:
+      return float(y)
+    yDistanceList.append( float(y) - yToFind )
+  maxDist = 1e15
+  yDistanceListPos = []
+  yDistanceListNeg = []
+  for dist in yDistanceList:
+    if dist > 0:
+      yDistanceListPos.append(dist)
+      yDistanceListNeg.append(maxDist)
+    else:
+      yDistanceListPos.append(maxDist)
+      yDistanceListNeg.append(abs(dist))
+  index1 = yDistanceListPos.index(min(yDistanceListPos))
+  index2 = yDistanceListNeg.index(min(yDistanceListNeg))
+  graph.GetPoint(index1,x,y)
+  x1 = float(x)
+  y1 = float(y)
+  graph.GetPoint(index2,x,y)
+  x2 = float(x)
+  y2 = float(y)
+  m = (x2-x1)/(y2-y1)
+  return x1 + (yToFind-y1)*m
+
+def computeMedian(arr):
+  arr.sort()
+  if len(arr) % 2 == 0:
+    return arr[len(arr)/2]
+  else:
+    return (arr[len(arr)/2-1]+arr[len(arr)/2])/2.
         
 class RooModelPlotter:
   def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None,canvas=None,caption1=""):

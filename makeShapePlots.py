@@ -45,9 +45,10 @@ class ShapePlotter:
     tmpMatch = re.search(r"([\w]*)_(.+)_([.0-9]+)\.root",filename)
     if tmpMatch:
       self.energyStr = tmpMatch.group(2)
-      self.lumi = float(lumiDict[self.energyStr])
-        
-      #self.lumi = float(tmpMatch.group(3))
+      if lumiDict.has_key(self.energyStr):
+        self.lumi = float(lumiDict[self.energyStr])
+      else:
+        self.lumi = float(tmpMatch.group(3))
       self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(self.lumi)
       
     self.data = {}
@@ -282,10 +283,11 @@ if __name__ == "__main__":
     if re.search("P[\d.]+TeV",fn):
         continue
 
-    if ("125" not in fn):
+    #if ("125" not in fn):
     #if ("148" not in fn):
     #if ("145" not in fn):
     #if ("147" not in fn):
+    if ("300" not in fn):
         continue
 
     skip = True

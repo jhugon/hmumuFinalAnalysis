@@ -6,6 +6,7 @@ parser.add_option("--signalInject", help="Inject Signal with Strength into data_
 parser.add_option("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
 parser.add_option("-m","--higgsMass", help="Makes plots v. Higgs Mass",action="store_true",default=False)
 parser.add_option("-p","--pValue", help="Makes p-value plots instead of significance",action="store_true",default=False)
+parser.add_option("-e","--expected", help="Makes Expected sig/mu plots v. lumi",action="store_true",default=False)
 args, fakeargs = parser.parse_args()
 
 from helpers import *
@@ -15,6 +16,8 @@ import re
 import os.path
 
 from xsec import *
+
+import numpy
 
 #######################################
 
@@ -231,7 +234,7 @@ def getDataSig(fileString,matchString=r"_([-\d.]+)\.txt",dontMatchStrings=[],doS
         continue
     tmpF = open(fname)
     match = re.search(matchString+r"\.sig",fname)
-    obs = -10.0
+    obs = -15.0
     exp = -20.0
     xNum = -10.0
     if match:
@@ -245,7 +248,6 @@ def getDataSig(fileString,matchString=r"_([-\d.]+)\.txt",dontMatchStrings=[],doS
       if obsMatch:
         obs = obsMatch.group(1)
     expFname = os.path.splitext(fname)[0]+".expsig"
-    """
     try:
       tmpFExp = open(expFname)
       for line in tmpFExp:
@@ -256,9 +258,13 @@ def getDataSig(fileString,matchString=r"_([-\d.]+)\.txt",dontMatchStrings=[],doS
           obsMatch = re.search(r"^Significance:[\s]+([.\deE]+)",line)
         if obsMatch:
           exp = obsMatch.group(1)
+      if xNum == -10.:
+        match = re.search(matchString+r"\.sigexp",expFname)
+        if match:
+          xNum = match.group(1)
     except Exception:
-      print("Expected Significance Not Found: "+expFname)
-    """
+      #print("Expected Significance Not Found: "+expFname)
+      pass
     thisPoint = [xNum,obs,exp]
     #print thisPoint
     if thisPoint.count("-10.0")>0:
@@ -316,9 +322,93 @@ def getDataMu(fileString,matchString=r"_([-\d.]+)\.txt\.mu",dontMatchStrings=[],
     result.append(thisPoint)
   return result
 
+def getDataMu2(fileString,matchString=r".*_([-\d.]+)\.txt\.mu\.root",dontMatchStrings=[],doSort=True):
+  def sortfun(s):
+    match = re.search(matchString,s)
+    result = 1e12
+    if match:
+      result = float(match.group(1))
+    return result
+
+  result = []
+  fNames =  glob.glob(fileString)
+  if doSort:
+    fNames.sort(key=sortfun)
+  #print fileString
+  #print fNames
+  for fname in fNames: 
+    dontMatch = False
+    for dont in dontMatchStrings:
+      if re.search(dont,fname):
+        dontMatch = True
+    if dontMatch:
+        continue
+    xNum = -10.0
+    match = re.match(matchString,fname)
+    if match:
+      xNum = match.group(1)
+    else:
+      continue
+    #print "x: ",xNum
+    tmpF = root.TFile(fname)
+    avgMu = 0.
+    muSigma = 0.
+    avgErrMu = 0.
+    errMuSigma = 0.
+    tmpTree = tmpF.Get("limit")
+    nEntries = tmpTree.GetEntries()
+    if nEntries == 0:
+        continue
+    nToys = nEntries/4
+    nToysReal = 0.
+    muVals = []
+    muErrVals = []
+    for iToy in range(nToys):
+      iEntry = iToy*4+1
+      tmpTree.GetEntry(iEntry)
+      if tmpTree.limit == -50.:
+        continue
+      iEntry = iToy*4+3
+      tmpTree.GetEntry(iEntry)
+      avgMu += tmpTree.limit
+      avgErrMu += tmpTree.limitErr/tmpTree.limit
+      muVals.append(tmpTree.limit)
+      muErrVals.append(tmpTree.limitErr/tmpTree.limit)
+      #print("Toy: {0}, Mu: {1:.2f} +/- {2:.2f}".format(iToy,tmpTree.limit,tmpTree.limitErr))
+      nToysReal += 1.
+    avgMu /= float(nToysReal)
+    avgErrMu /= float(nToysReal)
+    for iToy in range(nToys):
+      iEntry = iToy*4+1
+      tmpTree.GetEntry(iEntry)
+      if tmpTree.limit == -50.:
+        continue
+      iEntry = iToy*4+3
+      tmpTree.GetEntry(iEntry)
+      muSigma += (tmpTree.limit-avgMu)**2
+      errMuSigma += (tmpTree.limitErr/tmpTree.limit-avgErrMu)**2
+    muSigma /= float(nToysReal-1)
+    errMuSigma /= float(nToysReal-1)
+    muSigma = sqrt(muSigma)
+    errMuSigma = sqrt(errMuSigma)
+
+    medMu = computeMedian(muVals)
+    medErrMu = computeMedian(muErrVals)
+    #print("Original Values for mu: {0} {1}".format(avgMu,avgErrMu))
+    #print("Median Values for mu  : {0} {1}".format(medMu,medErrMu))
+
+    #thisPoint = [xNum,avgMu,muSigma,avgErrMu,errMuSigma]
+    thisPoint = [xNum,medMu,muSigma,medErrMu,errMuSigma]
+    if thisPoint.count("-10.0")>0:
+        continue
+    if thisPoint.count(-10.0)>0:
+        continue
+    #print thisPoint
+    result.append(thisPoint)
+  return result
 
 class RelativePlot:
-  def __init__(self,dataPoints, canvas, legend, caption, ylabel="Error on #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV",doMuExtraPlot=False):
+  def __init__(self,dataPoints, canvas, legend, caption, ylabel="Error on #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV",doMuExtraPlot=False,horizLines=[],drawErrBands=True,yToFind=[],xToFind=[]):
     errGraph = root.TGraph()
     #errGraph.SetLineStyle(2)
     errGraph.SetLineColor(root.kRed)
@@ -339,12 +429,17 @@ class RelativePlot:
     muExtraGraph.SetMarkerStyle(20)
     muExtraGraph.SetMarkerSize(1.0)
     muExtraGraph.SetMarkerColor(root.kBlack)
+    if not drawErrBands:
+      muExtraGraph.SetLineColor(root.kRed)
+      muExtraGraph.SetMarkerColor(root.kRed)
     muExtraGraphErr.SetFillColor(root.kGreen)
     self.muExtraGraph = muExtraGraph
     self.muExtraGraphErr = muExtraGraphErr
     iPoint = 0
     ymax = 1e-20
     ymin = 1e20
+    xmax = 1e-20
+    xmin = 1e20
     for point in dataPoints:
       value = None
       obs = 0.0
@@ -356,12 +451,20 @@ class RelativePlot:
             continue
       if len(point)==4: #mu
         #thisPoint = [xNum,obs,low1sig,high1sig]
-        high1sig = float(point[3])
-        low1sig = float(point[2])
+        high1sig = float(point[3])*100.
+        low1sig = float(point[2])*100.
         if high1sig > low1sig:
             value = high1sig
         else:
             value = low1sig
+      elif len(point)==5: #mu2
+        value = point[3]
+        high1sig = point[4]
+        low1sig = point[4]
+        value *= 100.
+        high1sig *= 100.
+        low1sig *= 100.
+        print("Error on mu for: {0:.2f} fb^-1: {1:.2f} +/- {2:.2f}".format(xNum,value,high1sig))
       else: #sig len=3
         #thisPoint = [xNum,obs,exp]
         value = float(point[2])
@@ -371,11 +474,42 @@ class RelativePlot:
       errGraph.SetPoint(iPoint,xNum,value)
       obsGraph.SetPoint(iPoint,xNum,obs)
       if doMuExtraPlot:
-        muExtraGraph.SetPoint(iPoint,xNum,float(point[1]))
-        muExtraGraphErr.SetPoint(iPoint,xNum,float(point[1]))
-        muExtraGraphErr.SetPointError(iPoint,0.,0.,float(point[2]),float(point[3]))
-        #canvas.SetGrid(0,1)
+        if len(point)==4: #mu
+          muExtraGraph.SetPoint(iPoint,xNum,float(point[1]))
+          muExtraGraphErr.SetPoint(iPoint,xNum,float(point[1]))
+          muExtraGraphErr.SetPointError(iPoint,0.,0.,float(point[2]),float(point[3]))
+        elif len(point)==5: #mu2
+          muExtraGraph.SetPoint(iPoint,xNum,value)
+          muExtraGraphErr.SetPoint(iPoint,xNum,value)
+          muExtraGraphErr.SetPointError(iPoint,0.,0.,low1sig,high1sig)
+      if xNum < xmin:
+        xmin = xNum
+      if xNum > xmax:
+        xmax = xNum
+      if value < ymin:
+        ymin = value 
+      if value > ymax:
+        ymax = value
       iPoint += 1
+
+    xWidth = xmax-xmin
+    yWidth = ymax-ymin
+    xEdge = xWidth*0.1
+    yEdge = yWidth*0.1
+    xmin -= xEdge
+    xmax += xEdge
+    ymin -= yEdge
+    ymax += yEdge
+    if len(xlimits) == 2:
+      xmin = xlimits[0]
+      xmax = xlimits[1]
+    if len(ylimits) == 2:
+      ymin = ylimits[0]
+      ymax = ylimits[1]
+    self.axisHist = root.TH2F("axisHist","",1,xmin,xmax,1,ymin,ymax)
+    setHistTitles(self.axisHist,xlabel,ylabel)
+
+    self.axisHist.Draw()
 
     self.vertLines = []
     self.vertLabel = []
@@ -388,6 +522,24 @@ class RelativePlot:
       self.vertLines.append(tmp)
       self.vertLabel.append(xPos)
 
+    pairsToPlot = []
+    for x in xToFind:
+      y = tgraphFindY(errGraph,x)
+      pairsToPlot.append((x,y))
+
+    for y in yToFind:
+      x = tgraphFindX(errGraph,y)
+      pairsToPlot.append((x,y))
+
+    self.line = root.TLine()
+    self.line.SetLineWidth(2)
+    self.line.SetLineStyle(2)
+    self.lines = []
+    for pair in pairsToPlot:
+      x,y = pair
+      self.lines.append(self.line.DrawLine(xmin,y,x,y))
+      self.lines.append(self.line.DrawLine(x,ymin,x,y))
+
     label = root.TLatex()
     #label.SetNDC()
     label.SetTextFont(root.gStyle.GetLabelFont("X"))
@@ -397,41 +549,20 @@ class RelativePlot:
     self.label=label
 
     if doMuExtraPlot:
-      muExtraGraphErr.GetXaxis().SetTitle(xlabel)
-      muExtraGraphErr.GetYaxis().SetTitle(ylabel)
-      if len(ylimits)==2:
-        muExtraGraphErr.GetYaxis().SetRangeUser(*ylimits)
-      muExtraGraphErr.Draw("a3")
-      muExtraGraph.Draw("l")
-      muExtraGraph.Draw("p")
-      #muExtraGraphErr.Draw("a4")
-      #muExtraGraph.Draw("c")
+      if drawErrBands:
+        muExtraGraphErr.Draw("3")
+        muExtraGraph.Draw("l")
+        muExtraGraph.Draw("p")
+      else:
+        muExtraGraph.Draw("l")
+        muExtraGraph.Draw("p")
     else:
-      errGraph.GetXaxis().SetTitle(xlabel)
-      errGraph.GetYaxis().SetTitle(ylabel)
       if showObs:
-        if len(ylimits)==2:
-          errGraph.GetYaxis().SetRangeUser(*ylimits)
-        else:
-          maxVal = 0.0
-          tmpY = root.Double()
-          tmpX = root.Double()
-          for i in range(obsGraph.GetN()):
-            obsGraph.GetPoint(i,tmpX,tmpY)
-            if maxVal < float(tmpY):
-              maxVal = float(tmpY)
-          for i in range(errGraph.GetN()):
-            errGraph.GetPoint(i,tmpX,tmpY)
-            if maxVal < float(tmpY):
-              maxVal = float(tmpY)
-          errGraph.SetMaximum(maxVal)
-        errGraph.Draw("al")
+        errGraph.Draw("l")
         obsGraph.Draw("l")
         obsGraph.Draw("p")
       else:
-        if len(ylimits)==2:
-          errGraph.GetYaxis().SetRangeUser(*ylimits)
-        errGraph.Draw("al")
+        errGraph.Draw("l")
         errGraph.Draw("p")
 
     tlatex = root.TLatex()
@@ -450,6 +581,10 @@ class RelativePlot:
 
     for g in self.vertLines:
       g.Draw("l")
+
+    if doMuExtraPlot and drawErrBands:
+      for l in self.lines:
+        l.Draw()
 
     canvas.RedrawAxis()
 
@@ -596,7 +731,8 @@ if __name__ == "__main__":
   setStyle()
   canvas = root.TCanvas()
   if not args.higgsMass:
-    canvas.SetLogx(1)
+    #canvas.SetLogx(1)
+    pass
   canvas.SetLogy(0)
   
   ylimits=[]
@@ -625,6 +761,9 @@ if __name__ == "__main__":
     elif energyStr == "7P8TeV":
       caption2 = "#sqrt{{s}} = 7 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict["7TeV"]))
       caption3 = "#sqrt{{s}} = 8 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict["8TeV"]))
+    elif energyStr == "14TeV":
+      caption2 = "#sqrt{{s}} = {0}".format(energyStr)
+      caption3 = ""
     else:
       caption2 = "#sqrt{{s}} = {0} L = {1:.1f} fb^{{-1}}".format(energyStr,float(lumiDict[energyStr]))
       caption3 = ""
@@ -641,22 +780,64 @@ if __name__ == "__main__":
     legend.SetFillColor(0)
     legend.SetLineColor(0)
     
+    #print "allfiles:"
+    #print allfiles
+    #print "plots:"
+    #print plots
+    
     canvas.SetLogy(0)
     for plotName in plots:
       data = None
-      doMuExtraPlot=True
+      doMuExtraPlot=False
       showObs=False
       data = getDataMu(dirName+plotName+"_"+period+"_*.txt*")
-      if len(data)<=1 or not args.higgsMass:
+      #print "muData:"
+      #print data
+      if len(data)<=1:
         continue
       title = "Standard Model H#rightarrow#mu#mu"
       xlabel="Integrated Luminosity [fb^{-1}]"
-      ytitle = "Best Fit #sigma/#sigma_{SM}"
+      ytitle = "Error on #sigma/#sigma_{SM} [%]"
+      drawErrBands=True
+      xlimits=[0.,3200.]
+      #xlimits=[0.,1700.]
+      ylimits=[0.,100.]
       if args.higgsMass:
         title = titleMap[plotName]
+        doMuExtraPlot=True
+        ytitle = "Best Fit #sigma/#sigma_{SM}"
         xlabel="m_{H} [GeV/c^{2}]"
-      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,caption3=caption3,ylabel=ytitle,energyStr=energyStr,doMuExtraPlot=doMuExtraPlot,showObs=showObs,xlabel=xlabel)
+        xlimits=[]
+        ylimits=[]
+      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,caption3=caption3,ylabel=ytitle,energyStr=energyStr,doMuExtraPlot=doMuExtraPlot,showObs=showObs,xlabel=xlabel,drawErrBands=drawErrBands,xlimits=xlimits,ylimits=ylimits)
       saveAs(canvas,outDir+"mu"+plotName+"_"+period)
+
+      if args.higgsMass:
+        continue
+
+      data = getDataMu2(dirName+plotName+"_"+period+"_*.txt*")
+      #print "muData2:"
+      #print data
+      doMuExtraPlot=True
+      drawErrBands=False
+      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,caption3=caption3,ylabel=ytitle,energyStr=energyStr,doMuExtraPlot=doMuExtraPlot,showObs=showObs,xlabel=xlabel,drawErrBands=drawErrBands,xlimits=xlimits,ylimits=ylimits,xToFind=[300.,3000.])
+      saveAs(canvas,outDir+"mu2"+plotName+"_"+period)
+
+      data = getDataSig(dirName+plotName+"_"+period+"_*.txt*")
+      #print "SigData:"
+      #print data
+      if len(data)<=1:
+        continue
+
+      title = "Standard Model H#rightarrow#mu#mu"
+      xlabel="Integrated Luminosity [fb^{-1}]"
+      ytitle = "Expected Significance"
+      xlimits=[0.,1700.]
+      ylimits=[0.,6.0]
+      xlimits=[0.,3200.]
+      ylimits=[0.,8.0]
+      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,caption3=caption3,ylabel=ytitle,energyStr=energyStr,showObs=showObs,xlabel=xlabel,xlimits=xlimits,ylimits=ylimits,yToFind=[3.,5.])
+      saveAs(canvas,outDir+"sig"+plotName+"_"+period)
 
     ## All p-values together plot
     canvas.SetLogy(1)

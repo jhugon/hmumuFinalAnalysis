@@ -35,7 +35,7 @@ class CrossSections:
     self.gg = {}
     self.wh = {}
     self.zh = {}
-    for e in ["8TeV","7TeV"]:
+    for e in ["8TeV","7TeV","14TeV"]:
       self.vbf[e] = helpers.readCSVXS("etc/vbfH_"+e+".csv")
       self.gg[e] = helpers.readCSVXS("etc/ggH_"+e+".csv")
       self.wh[e] = helpers.readCSVXS("etc/wH_"+e+".csv")
@@ -93,19 +93,10 @@ xsec["WJetsToLNu_7TeV"] = 27770.
 xsec["QCD_7TeV"] =  84679.
 
 #LHC Higgs XS WG: European Strat Group
-xsec["DYJetsToLL_14TeV"] = 6131.
+xsec["DYJetsToLL_14TeV"] = 2.029*xsec["DYJetsToLL_7TeV"] # Scale Factor from Markus Klute
 xsec["ttbar_14TeV"] =   964.6 #LHC Higgs XS WG: European Strat Group
 
 nEventsMap = {}
-
-#nEventsMap["ggHmumu125_8TeV"] = 9998
-#nEventsMap["vbfHmumu125_8TeV"] = 9990
-
-# For Different than changing sample
-#nEventsMap["ggHmumu125_8TeV"] = 9999
-#nEventsMap["vbfHmumu125_8TeV"] = 7992
-#nEventsMap["ggHmumu125ChangeEvents_8TeV"] = 9999
-#nEventsMap["vbfHmumu125ChangeEvents_8TeV"] = 7992
 
 # For different large check samples
 nEventsMap["ggHmumu125_8TeV"] = 49994
@@ -125,9 +116,6 @@ nEventsMap["WZ_8TeV"] = 10000283
 nEventsMap["ZZ_8TeV"] = 10320000
 nEventsMap["WJetsToLNu_8TeV"] =  44371574
 nEventsMap["QCD_8TeV"] =  20764602
-
-#nEventsMap["ggHmumu125_7TeV"] = 10000
-#nEventsMap["vbfHmumu125_7TeV"] = 9994
 
 # For different large check samples
 nEventsMap["ggHmumu125_7TeV"] = 49871
@@ -149,8 +137,8 @@ nEventsMap["QCD_7TeV"] =  0.00000001
 #nEventsMap["vbfHmumu125_14TeV"] = nEventsMap["vbfHmumu125_8TeV"]
 #nEventsMap["zHmumu125_14TeV"] = nEventsMap["zHmumu125_8TeV"]
 #nEventsMap["wHmumu125_14TeV"] = nEventsMap["wHmumu125_8TeV"]
-#nEventsMap["DYJetsToLL_14TeV"] = nEventsMap["DYJetsToLL_8TeV"]
-#nEventsMap["ttbar_14TeV"] = nEventsMap["ttbar_8TeV"]
+nEventsMap["DYJetsToLL_14TeV"] = nEventsMap["DYJetsToLL_8TeV"]
+nEventsMap["ttbar_14TeV"] = nEventsMap["ttbar_8TeV"]
 
 backgroundList = [
 #"DYToMuMu",
@@ -256,6 +244,7 @@ mcPlotScaleFactorMap["14TeV"] = 1.0
 MENormDict = {}
 MENormDict['7TeV'] = {}
 MENormDict['8TeV'] = {}
+MENormDict['14TeV'] = {}
 MENormDict['7TeV']['sigME'] = 2104
 MENormDict['7TeV']['bakME'] = 41.72
 MENormDict['7TeV']['sigMEPdf'] = 0.0143
@@ -264,6 +253,10 @@ MENormDict['8TeV']['sigME'] = 2104
 MENormDict['8TeV']['bakME'] = 41.62
 MENormDict['8TeV']['sigMEPdf'] = 0.008808
 MENormDict['8TeV']['bakMEPdf'] = 0.009364
+MENormDict['14TeV']['sigME'] = 0.
+MENormDict['14TeV']['bakME'] = 0.
+MENormDict['14TeV']['sigMEPdf'] = 0.
+MENormDict['14TeV']['bakMEPdf'] = 0.
 
 class NuisanceMap:
   def __init__(self):
@@ -273,7 +266,7 @@ class NuisanceMap:
     self.gg = {}
     self.wh = {}
     self.zh = {}
-    for e in ["8TeV","7TeV"]:
+    for e in ["8TeV","7TeV","14TeV"]:
       self.vbf[e] = helpers.readCSVXS("etc/vbfH_"+e+".csv")
       self.gg[e] = helpers.readCSVXS("etc/ggH_"+e+".csv")
       self.wh[e] = helpers.readCSVXS("etc/wH_"+e+".csv")
@@ -299,6 +292,13 @@ class NuisanceMap:
           'Jets01FailPtG10' : None,
           'Jets01PassPtG10' : None,
           },
+        '14TeV' : {
+          'Jet2CutsFailVBFGF' : 1.0799,
+          'Jet2CutsGFPass' : 1.0477,
+          'Jet2CutsVBFPass' : 1.0606,
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          },
         },
       'vbf' : {
         '7TeV' : {
@@ -309,6 +309,13 @@ class NuisanceMap:
           'Jets01PassPtG10' : -1.0308,
           },
         '8TeV' : {
+          'Jet2CutsFailVBFGF' : 1.0482,
+          'Jet2CutsGFPass' : 1.0249,
+          'Jet2CutsVBFPass' : 1.0185,
+          'Jets01FailPtG10' : -1.0278,
+          'Jets01PassPtG10' : -1.0250,
+          },
+        '14TeV' : {
           'Jet2CutsFailVBFGF' : 1.0482,
           'Jet2CutsGFPass' : 1.0249,
           'Jet2CutsVBFPass' : 1.0185,
@@ -331,6 +338,13 @@ class NuisanceMap:
           'Jets01FailPtG10' : None,
           'Jets01PassPtG10' : None,
           },
+        '14TeV' : {
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          },
         },
       'zh' : {
         '7TeV' : {
@@ -341,6 +355,13 @@ class NuisanceMap:
           'Jets01PassPtG10' : None,
           },
         '8TeV' : {
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          },
+        '14TeV' : {
           'Jet2CutsFailVBFGF' : None,
           'Jet2CutsGFPass' : None,
           'Jet2CutsVBFPass' : None,
@@ -365,6 +386,13 @@ class NuisanceMap:
           'Jets01FailPtG10' : None,
           'Jets01PassPtG10' : None,
           },
+        '14TeV' : {
+          'Jet2CutsFailVBFGF' : -1.0131,
+          'Jet2CutsGFPass' : -1.0101,
+          'Jet2CutsVBFPass' : -1.0273,
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          },
         },
       'vbf' : {
         '7TeV' : {
@@ -375,6 +403,13 @@ class NuisanceMap:
           'Jets01PassPtG10' : None,
           },
         '8TeV' : {
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jets01FailPtG10' : -1.0162,
+          'Jets01PassPtG10' : None,
+          },
+        '14TeV' : {
           'Jet2CutsFailVBFGF' : None,
           'Jet2CutsGFPass' : None,
           'Jet2CutsVBFPass' : None,
@@ -397,6 +432,13 @@ class NuisanceMap:
           'Jets01FailPtG10' : None,
           'Jets01PassPtG10' : None,
           },
+        '14TeV' : {
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          },
         },
       'zh' : {
         '7TeV' : {
@@ -407,6 +449,13 @@ class NuisanceMap:
           'Jets01PassPtG10' : None,
           },
         '8TeV' : {
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          },
+        '14TeV' : {
           'Jet2CutsFailVBFGF' : None,
           'Jet2CutsGFPass' : None,
           'Jet2CutsVBFPass' : None,
@@ -431,6 +480,13 @@ class NuisanceMap:
           'Jets01FailPtG10' : None,
           'Jets01PassPtG10' : None,
           },
+        '14TeV' : {
+          'Jet2CutsFailVBFGF' : 1.0142,
+          'Jet2CutsGFPass' : 1.0174,
+          'Jet2CutsVBFPass' : 1.0386,
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          },
         },
       'vbf' : {
         '7TeV' : {
@@ -441,6 +497,13 @@ class NuisanceMap:
           'Jets01PassPtG10' : 1.0108,
           },
         '8TeV' : {
+          'Jet2CutsFailVBFGF' : 1.0155,
+          'Jet2CutsGFPass' : 1.0168,
+          'Jet2CutsVBFPass' : 1.0328,
+          'Jets01FailPtG10' : 1.0129,
+          'Jets01PassPtG10' : 1.0128,
+          },
+        '14TeV' : {
           'Jet2CutsFailVBFGF' : 1.0155,
           'Jet2CutsGFPass' : 1.0168,
           'Jet2CutsVBFPass' : 1.0328,
@@ -463,6 +526,13 @@ class NuisanceMap:
           'Jets01FailPtG10' : None,
           'Jets01PassPtG10' : None,
           },
+        '14TeV' : {
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          },
         },
       'zh' : {
         '7TeV' : {
@@ -473,6 +543,13 @@ class NuisanceMap:
           'Jets01PassPtG10' : None,
           },
         '8TeV' : {
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          },
+        '14TeV' : {
           'Jet2CutsFailVBFGF' : None,
           'Jet2CutsGFPass' : None,
           'Jet2CutsVBFPass' : None,
@@ -497,6 +574,13 @@ class NuisanceMap:
           'Jets01FailPtG10' : 1.0147,
           'Jets01PassPtG10' : None,
           },
+        '14TeV' : {
+          'Jet2CutsFailVBFGF' : 1.0308,
+          'Jet2CutsGFPass' : 1.0577,
+          'Jet2CutsVBFPass' : 1.1068,
+          'Jets01FailPtG10' : 1.0147,
+          'Jets01PassPtG10' : None,
+          },
         },
       'vbf' : {
         '7TeV' : {
@@ -507,6 +591,13 @@ class NuisanceMap:
           'Jets01PassPtG10' : None,
           },
         '8TeV' : {
+          'Jet2CutsFailVBFGF' : 1.0178,
+          'Jet2CutsGFPass' : 1.0152,
+          'Jet2CutsVBFPass' : 1.0135,
+          'Jets01FailPtG10' : 1.0642,
+          'Jets01PassPtG10' : None,
+          },
+        '14TeV' : {
           'Jet2CutsFailVBFGF' : 1.0178,
           'Jet2CutsGFPass' : 1.0152,
           'Jet2CutsVBFPass' : 1.0135,
@@ -529,6 +620,13 @@ class NuisanceMap:
           'Jets01FailPtG10' : None,
           'Jets01PassPtG10' : None,
           },
+        '14TeV' : {
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          },
         },
       'zh' : {
         '7TeV' : {
@@ -539,6 +637,13 @@ class NuisanceMap:
           'Jets01PassPtG10' : None,
           },
         '8TeV' : {
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jets01FailPtG10' : None,
+          'Jets01PassPtG10' : None,
+          },
+        '14TeV' : {
           'Jet2CutsFailVBFGF' : None,
           'Jet2CutsGFPass' : None,
           'Jet2CutsVBFPass' : None,
@@ -563,6 +668,13 @@ class NuisanceMap:
           'Jet2CutsGFPass' : 1.0743,
           'Jet2CutsFailVBFGF' : 1.0801,
           },
+        '14TeV' : {
+          'Jets01PassPtG10' : 1.0799,
+          'Jets01FailPtG10' : 1.0844,
+          'Jet2CutsVBFPass' : 1.0578,
+          'Jet2CutsGFPass' : 1.0715,
+          'Jet2CutsFailVBFGF' : 1.0809,
+          },
         },
       'vbf' : {
         '8TeV' : {
@@ -578,6 +690,13 @@ class NuisanceMap:
           'Jet2CutsVBFPass' : 1.0448,
           'Jet2CutsGFPass' : 1.0299,
           'Jet2CutsFailVBFGF' : 1.0204,
+          },
+        '14TeV' : {
+          'Jets01PassPtG10' : 1.0197,
+          'Jets01FailPtG10' : 1.0186,
+          'Jet2CutsVBFPass' : 1.0378,
+          'Jet2CutsGFPass' : 1.0212,
+          'Jet2CutsFailVBFGF' : 1.0196,
           },
         },
       'wh' : {
@@ -595,6 +714,13 @@ class NuisanceMap:
           'Jet2CutsGFPass' : None,
           'Jet2CutsFailVBFGF' : None,
           },
+        '14TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
         },
       'zh' : {
         '8TeV' : {
@@ -605,6 +731,13 @@ class NuisanceMap:
           'Jet2CutsFailVBFGF' : None,
           },
         '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        '14TeV' : {
           'Jets01PassPtG10' : None,
           'Jets01FailPtG10' : None,
           'Jet2CutsVBFPass' : None,
@@ -629,6 +762,13 @@ class NuisanceMap:
           'Jet2CutsGFPass' : 1.0103,
           'Jet2CutsFailVBFGF' : 1.0112,
           },
+        '14TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : 1.0222,
+          'Jet2CutsGFPass' : 1.0103,
+          'Jet2CutsFailVBFGF' : 1.0112,
+          },
         },
       'vbf' : {
         '8TeV' : {
@@ -639,6 +779,13 @@ class NuisanceMap:
           'Jet2CutsFailVBFGF' : None,
           },
         '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : 1.0207,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        '14TeV' : {
           'Jets01PassPtG10' : None,
           'Jets01FailPtG10' : 1.0207,
           'Jet2CutsVBFPass' : None,
@@ -661,6 +808,13 @@ class NuisanceMap:
           'Jet2CutsGFPass' : None,
           'Jet2CutsFailVBFGF' : None,
           },
+        '14TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
         },
       'zh' : {
         '8TeV' : {
@@ -671,6 +825,13 @@ class NuisanceMap:
           'Jet2CutsFailVBFGF' : None,
           },
         '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        '14TeV' : {
           'Jets01PassPtG10' : None,
           'Jets01FailPtG10' : None,
           'Jet2CutsVBFPass' : None,
@@ -695,6 +856,13 @@ class NuisanceMap:
           'Jet2CutsGFPass' : -1.1608,
           'Jet2CutsFailVBFGF' : 1.0626,
           },
+        '14TeV' : {
+          'Jets01PassPtG10' : -1.0121,
+          'Jets01FailPtG10' : 1.0450,
+          'Jet2CutsVBFPass' : -1.1585,
+          'Jet2CutsGFPass' : 1.1515,
+          'Jet2CutsFailVBFGF' : -1.0662,
+          },
         },
       'vbf' : {
         '8TeV' : {
@@ -710,6 +878,13 @@ class NuisanceMap:
           'Jet2CutsVBFPass' : -1.0489,
           'Jet2CutsGFPass' : -1.0380,
           'Jet2CutsFailVBFGF' : 1.0653,
+          },
+        '14TeV' : {
+          'Jets01PassPtG10' : -1.0139,
+          'Jets01FailPtG10' : -1.1598,
+          'Jet2CutsVBFPass' : 1.0313,
+          'Jet2CutsGFPass' : -1.0372,
+          'Jet2CutsFailVBFGF' : -1.0427,
           },
         },
       'wh' : {
@@ -727,6 +902,13 @@ class NuisanceMap:
           'Jet2CutsGFPass' : None,
           'Jet2CutsFailVBFGF' : None,
           },
+        '14TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
         },
       'zh' : {
         '8TeV' : {
@@ -737,6 +919,13 @@ class NuisanceMap:
           'Jet2CutsFailVBFGF' : None,
           },
         '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        '14TeV' : {
           'Jets01PassPtG10' : None,
           'Jets01FailPtG10' : None,
           'Jet2CutsVBFPass' : None,
@@ -761,6 +950,13 @@ class NuisanceMap:
           'Jet2CutsGFPass' : 1.2570,
           'Jet2CutsFailVBFGF' : -1.0669,
           },
+        '14TeV' : {
+          'Jets01PassPtG10' : -1.0618,
+          'Jets01FailPtG10' : 1.1698,
+          'Jet2CutsVBFPass' : 1.4228,
+          'Jet2CutsGFPass' : 1.2317,
+          'Jet2CutsFailVBFGF' : -1.0847,
+          },
         },
       'vbf' : {
         '8TeV' : {
@@ -776,6 +972,13 @@ class NuisanceMap:
           'Jet2CutsVBFPass' : -1.1421,
           'Jet2CutsGFPass' : -1.1014,
           'Jet2CutsFailVBFGF' : 1.0763,
+          },
+        '14TeV' : {
+          'Jets01PassPtG10' : -1.0309,
+          'Jets01FailPtG10' : -1.0794,
+          'Jet2CutsVBFPass' : -1.1030,
+          'Jet2CutsGFPass' : -1.0585,
+          'Jet2CutsFailVBFGF' : 1.0432,
           },
         },
       'wh' : {
@@ -793,6 +996,13 @@ class NuisanceMap:
           'Jet2CutsGFPass' : None,
           'Jet2CutsFailVBFGF' : None,
           },
+        '14TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
         },
       'zh' : {
         '8TeV' : {
@@ -803,6 +1013,13 @@ class NuisanceMap:
           'Jet2CutsFailVBFGF' : None,
           },
         '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsVBFPass' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsFailVBFGF' : None,
+          },
+        '14TeV' : {
           'Jets01PassPtG10' : None,
           'Jets01FailPtG10' : None,
           'Jet2CutsVBFPass' : None,
