@@ -62,7 +62,7 @@ class CrossSections:
         result = self.zh[energy][mass]
       else:
         raise Exception("Higgs Production mode not recognized for: " + key)
-      return result*self.br[mass]
+      return result * self.br[mass]
     else:
       return self.data[key]
 
@@ -843,18 +843,18 @@ class NuisanceMap:
       if prodMode not in nu:
         return None
       if prodMode == "vbf":
-        result = self.vbf[energy].lnN[mass]
+        result = self.vbf[energy].getLnN(mass)
       elif prodMode == "gg":
-        result = self.gg[energy].lnN[mass]
+        result = self.gg[energy].getLnN(mass)
       elif prodMode == "wh":
-        result = self.wh[energy].lnN[mass]
+        result = self.wh[energy].getLnN(mass)
       elif prodMode == "zh":
-        result = self.zh[energy].lnN[mass]
+        result = self.zh[energy].getLnN(mass)
       else:
         raise Exception("Higgs Production mode not recognized for: "+ds)
       return result
     if nu == "br_Hmm" and match:
-      return self.br.lnN[mass]
+      return self.br.getLnN(mass)
     if nu == "lumi" and match:
       return self.lumi[energy]
     if nu == "PDF" and match:

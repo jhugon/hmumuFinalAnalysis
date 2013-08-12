@@ -1880,17 +1880,51 @@ def sqrtTH1(hist):
 class CrossSecsErrs:
   def __init__(self,csvDict):
     self.data = csvDict
+    self.nominal = {}
     self.err = {}
     self.errUp = {}
     self.errDown = {}
     self.lnN = {}
     for key in self.data:
+      self.nominal[key] = self.data[key][0]
       self.errUp[key] = self.data[key][1]/100.
       self.errDown[key] = self.data[key][2]/100.
       self.err[key] = max(abs(self.data[key][1]),abs(self.data[key][2]))/100.
       self.lnN[key] = self.err[key] + 1.0
   def __getitem__(self,key):
-    return self.data[key][0]
+    return self.extrap(self.nominal,key)
+  def getLnN(self,key):
+    return self.extrap(self.lnN,key)
+  def has_key(self,key):
+    return self.data.has_key(key)
+  def keys(self):
+    return self.data.keys()
+  def extrap(self,dict,mass):
+    if dict.has_key(mass):
+      return dict[mass]
+    massStr = mass
+    mass = float(mass)
+    dPos = []
+    dNeg = []
+    massKeys = dict.keys()
+    for iMassStr in massKeys:
+      iMass = float(iMassStr)
+      if iMass >= mass:
+        dPos.append(iMass-mass)
+        dNeg.append(1e8)
+      else:
+        dPos.append(1e8)
+        dNeg.append(mass-iMass)
+    i1 = dPos.index(min(dPos))
+    i2 = dNeg.index(min(dNeg))
+    m1 = float(massKeys[i1])
+    m2 = float(massKeys[i2])
+    val1 = float(dict[massKeys[i1]])
+    val2 = float(dict[massKeys[i2]])
+    slope = (val2-val1)/(m2-m1)
+    return val1 + slope*(mass-m1)
+
+  
 
 def readCSVXS(filename):
   f = open(filename)

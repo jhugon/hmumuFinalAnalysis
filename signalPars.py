@@ -19,6 +19,7 @@ from helpers import *
 class signalPars:
    
    def __init__(self,folder,process,benergy,cat,massLow=115.,massHigh=160.):
+      self.stepSize = 0.1
       # this is the folder where all the extrapolation
       # parameters are contained
       self.folder   = folder
@@ -127,7 +128,7 @@ class signalPars:
       
       parameter = {}
 
-      massrange = drange(self.massLow, self.massHigh+0.5, 0.5)
+      massrange = drange(self.massLow, self.massHigh+self.stepSize, self.stepSize)
       for mass in massrange:
          parValue = func.Eval(mass)
          #print parname, mass, parValue
@@ -159,7 +160,7 @@ class signalPars:
       # get the parameters
       par_meanG1, par_widthG1, par_meanG2, par_widthG2, par_mixGG = self.getPars()
       
-      massrange = drange(self.massLow, self.massHigh+0.5, step)
+      massrange = drange(self.massLow, self.massHigh+self.stepSize, step)
       #workspace = root.RooWorkspace("w")
       #wImport = getattr(workspace,"import")
       self.canvas = root.TCanvas("canvas","",0,0,1100,650)

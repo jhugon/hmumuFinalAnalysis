@@ -24,6 +24,7 @@ def drange(start, stop, step):
 class effReaderFromFile:
    
    def __init__(self,folder,process,benergy,cat,massLow=115.,massHigh=160.):
+      self.stepSize = 0.1
       # this is the folder where all the extrapolation
       # parameters are contained
       self.folder   = folder
@@ -86,7 +87,7 @@ class effReaderFromFile:
       
       efficiency = {}
 
-      massrange = drange(self.massLow, self.massHigh+0.5, 0.5)
+      massrange = drange(self.massLow, self.massHigh+self.stepSize, self.stepSize)
       for mass in massrange:
          parValue = func.Eval(mass)
          #print parname, mass, parValue
