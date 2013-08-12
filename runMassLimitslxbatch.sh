@@ -15,7 +15,8 @@ rm -f statsInput/*
 rm -f statsOutput/*
 
 echo "making cards..."
-for i in $(seq 115 1 160); do
+#for i in $(seq 1245 1265); do i=${i:0:3}"."${i:3:4};    # For Coupling Combination
+for i in $(seq 115 1 155); do
   nice ./makeCards.py -m $i
 done
 echo "Removing files in lxplus5:$REMOTEDIR"
