@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 import optparse
 parser = optparse.OptionParser(description="Makes Shape Diagnostic Plots from Datacards")
 parser.add_option("--signalInject", help="Sets a caption saying that signal was injected with strength",type=float,default=20.0)
@@ -22,7 +21,7 @@ from ROOT import gSystem
 gSystem.Load('libRooFit')
 
 root.gErrorIgnoreLevel = root.kWarning
-root.gROOT.SetBatch(True)
+#root.gROOT.SetBatch(True)
 root.gStyle.SetOptStat(0)
 
 #root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.WARNING)
@@ -152,7 +151,7 @@ class ShapePlotter:
       saveNamePulls = saveNameSplit[0]+"/"+"pulls_"+saveNameSplit[1]
       rmp.drawPulls(saveNamePulls)
 
-      self.rmpList.append(rmp)
+      self.rmpList.append(rmp)      
 
       #if ("Jet2" in channelNameOrig):
       #  continue
@@ -205,7 +204,7 @@ class ShapePlotter:
 
       # sig integral
       sigInt = sigPDF.createIntegral(mMuMuArgSet,SoBRange,rooNormSet)
-      nSig   = sigInt.getVal()*(nSignal/signalInject)  
+      nSig   = sigInt.getVal()*(nSignal/signalInject) # this remove the signalInjection
 
       # for debugging purposes
       print "%s %f %f %f" % (channelNameOrig,
@@ -219,7 +218,7 @@ class ShapePlotter:
       self.events   [channelNameOrig] = nDataTotal
       self.datasets [channelNameOrig] = data_obs
       self.signalPDF[channelNameOrig] = sigPDF
-      self.sigYield [channelNameOrig] = nSignal/signalInject
+      self.sigYield [channelNameOrig] = nSig
       
 
   def readCard(self,fn):
@@ -265,8 +264,8 @@ class ShapePlotter:
   def merge(self, anotherSP):
 
     # quick sanity check
-    print "self.massStr = ", self.massStr
-    print "anotherSP.massStr = ", anotherSP.massStr
+    #print "self.massStr = ", self.massStr
+    #print "anotherSP.massStr = ", anotherSP.massStr
     if (self.massStr != anotherSP.massStr):
       print "ERROR merge: different mass values in the ShapePlotters\n"
       sys.exit(0)
@@ -300,7 +299,6 @@ class ShapePlotter:
     # sum the datasets with weights and plot them
     # define the x-axis variable
     dimuonMass = root.RooRealVar("dimuonMass","M(#mu#mu) [GeV/c^{2}]",110,170)
-    #dimuonMass = root.RooRealVar("dimuonMass","M(#mu#mu) [GeV/c^{2}]",115,130)
     datasetSoB = None
     signalPdfList = []
     signalPdfCoeffList = []
@@ -313,6 +311,7 @@ class ShapePlotter:
 
     nsignal = 0
     sumsobdotsigevents = 0
+
     for dname in self.datasets.keys():
 
       # if you need to veto some of the dataset:
@@ -328,11 +327,11 @@ class ShapePlotter:
       sumsobdotevents += self.SoB[dname] * nDataTotal
       sumsospbdotevents += self.SoSpB[dname] * nDataTotal
 
-      print "self.sigYield[dname] = ", self.sigYield[dname]
+      #print "self.sigYield[%s] = %f" % (dname, self.sigYield[dname])
       nsignal += self.sigYield[dname]
       sumsobdotsigevents += self.SoB[dname] * self.sigYield[dname]
 
-    print "nsignal = ", nsignal
+    #print "nsignal = ", nsignal
     #id = 0
     # loop again on the datasets  
     for dname in self.datasets.keys():
@@ -340,13 +339,12 @@ class ShapePlotter:
       if ( dname in vetoList ):
         continue
 
-      print dname
+      #print dname
       dataset = self.datasets[dname]
 
       # construct the weight (making sure the total num events stays the same)
       SoBWeight = root.RooRealVar("SoBWeight_"+name,"SoB Weight",1)
       SoBWeight.setVal( self.SoB[dname] * nevents / sumsobdotevents )
-      #SoBWeight.setVal( self.SoSpB[dname] * nevents / sumsospbdotevents )
 
       # the set containing the observable and the weight
       observablesForRooDatasetWeight = root.RooArgSet(dimuonMass,
@@ -366,18 +364,14 @@ class ShapePlotter:
       else:
         datasetSoB.append(dataset_withWeights)
 
-      #id+=1
-      #if id > 5:
-      #  continue
-      # signal pdf
       sigWeight = root.RooRealVar("sigWeight_"+dname,"sig Weight",1)
       sigWeight.setVal( self.SoB[dname] * nsignal / sumsobdotsigevents )
-      
-      #sigWeight.setVal(0.01)
       
       signalPdfList.append( self.signalPDF[dname] )
       signalPdfCoeffList.append( sigWeight )
 
+      
+    # signal pdf
     coefflist = None
     for coeff in signalPdfCoeffList:
       if coefflist == None:
@@ -393,11 +387,8 @@ class ShapePlotter:
        pdflist.add(pdf)
 
     signalPdfSum = root.RooAddPdf("signalPdfSum","signalPdfSum",
-                                  pdflist,
-                                  coefflist
-                                  #root.RooArgList(*signalPdfList),
-                                  #root.RooArgList(*signalPdfCoeffList)
-                                  )
+                                  pdflist,coefflist)
+
 
     # fit with new values from Anna 13 Jun 2013
     InvPolMass = root.RooRealVar("InvPolMass","InvPolMass", 91.187, 30., 105.)
@@ -423,13 +414,20 @@ class ShapePlotter:
                       root.RooFit.Save(True))
     # end fitting part
 
-    #print totalweight
-    print nevents, " vs ", datasetSoB.sumEntries("dimuonMass > 0.0")
+
+    # uncomment for debugging purpouses
+    # print "totalweight = %f " % print totalweight
+    # print nevents, " vs ", datasetSoB.sumEntries("dimuonMass > 0.0")
+    # print "nsignal = %f" % nsignal
+    # print "sumsobdotsigevents = %f" % sumsobdotsigevents
 
     #Plot Time
     rmp = RooModelPlotter(dimuonMass,bakPDF,datasetSoB,fr,
                           title,self.energyStr,self.lumi,
-                          None,None,50,signalPdfSum,"Signal m_{H}=126 GeV #times 50"
+                          None,None,
+                          self.signalInject, # sum pdf already norm to num events (you can check it if you put 1)
+                          signalPdfSum,
+                          "Signal m_{H}=126 GeV #times %d" % ( self.signalInject )
                           )
 
     savename = outDir + name
@@ -440,13 +438,18 @@ class ShapePlotter:
     dimuonMass.setRange(zoom,120,135)
     rmp = RooModelPlotter(dimuonMass,bakPDF,datasetSoB,fr,
                           title,self.energyStr,self.lumi,
-                          None,None,50,signalPdfSum,"Signal m_{H}=126 GeV #times 50",
+                          None,None,
+                          7., # hardcoded
+                          signalPdfSum,
+                          "Signal m_{H}=126 GeV #times 7", #hardcoded
                           zoom
                           )
 
     rmp.draw(savename+"_"+self.energyStr+"_"+self.massStr+"_zoomedat126_SoB")
     self.rmpList.append(rmp)
 
+    rmp.drawBkgSub(savename+"_"+self.energyStr+"_"+self.massStr+"_bkgSub_SoB")
+    self.rmpList.append(rmp)
 
 
 #~48 Charactars Max

@@ -760,7 +760,7 @@ def makeWeightHist(f1,canvas,leg):
   leg.Draw("same")
 
 class DataMCStack:
-  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",ylimits=[],ylimitsRatio=[],pullType="",doMCErrors=False,showPullStats=False,yMaxVals=[],yMaxXRanges=[],mcVariations=None,scaleMC2Data=False):
+  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",ylimits=[],ylimitsRatio=[],pullType="",doMCErrors=False,showPullStats=False,yMaxVals=[],yMaxXRanges=[],mcVariations=None):
     nBinsX = dataHist.GetNbinsX()
     self.xlimits = xlimits
     self.ylimits = ylimits
@@ -799,15 +799,6 @@ class DataMCStack:
     self.mcHistList = mcHistList
     self.dataHist = dataHist
 
-    self.nDataEvents = dataHist.Integral(0,dataHist.GetNbinsX()+1)
-    self.mc2DataSF = 1.
-    if scaleMC2Data:
-      tmpMCSum = 0.
-      for mcHist in mcHistList:
-        tmpMCSum += mcHist.Integral(0,mcHist.GetNbinsX()+1)
-      self.mc2DataSF = float(self.nDataEvents)/tmpMCSum
-      print("DataMC SF: %.2f" % self.mc2DataSF)
-
     # Make MC Stack/sumHist
     self.stack = root.THStack()
     self.mcSumHist = dataHist.Clone("mcSumHist"+dataHist.GetName())
@@ -818,7 +809,6 @@ class DataMCStack:
       mcHist.SetLineColor(mcHist.GetFillColor())
       if showOverflow:
         showHistOverflow(mcHist)
-      mcHist.Scale(self.mc2DataSF)
       self.mcSumHist.Add(mcHist)
       self.stack.Add(mcHist)
 
@@ -834,6 +824,7 @@ class DataMCStack:
         self.mcSumHist.SetLineStyle(0)
 
     self.nMCEvents = self.mcSumHist.Integral(0,self.mcSumHist.GetNbinsX()+1)
+    self.nDataEvents = dataHist.Integral(0,dataHist.GetNbinsX()+1)
 
     # Get chi^2 Prob Data/MC
     self.normchi2 = dataHist.Chi2Test(self.mcSumHist,"UW CHI2/NDF")
@@ -954,12 +945,11 @@ class DataMCStack:
     yAxis = None
     histForAxis = None
     if len(self.ylimits)==2:
-      ylimits[0] += 1e-3
       histForAxis = root.TH2F(dataHist.GetName()+"ForAxis","",1,xlimits[0],xlimits[1],1,self.ylimits[0],self.ylimits[1])
     elif self.logy:
       histForAxis = root.TH2F(dataHist.GetName()+"ForAxis","",1,xlimits[0],xlimits[1],1,0.1,ymax*2.0)
     else:
-      histForAxis = root.TH2F(dataHist.GetName()+"ForAxis","",1,xlimits[0],xlimits[1],1,1e-3,ymax*1.05)
+      histForAxis = root.TH2F(dataHist.GetName()+"ForAxis","",1,xlimits[0],xlimits[1],1,0.0,ymax*1.05)
     self.histForAxis = histForAxis
     self.histForAxis.Draw()
     self.mcSumHist.Draw("e1same")
@@ -980,7 +970,8 @@ class DataMCStack:
       if doMCErrors:
         if self.mcVarHist != None:
           self.mcVarHist.Draw("e2same")
-        self.mcSumHist.Draw("e2same")
+        else:
+          self.mcSumHist.Draw("e2same")
       pad1.Update()
     else:
       self.mcSumHist.SetFillColor(856)
@@ -1021,8 +1012,6 @@ class DataMCStack:
     self.pullHist.SetFillColor(856)
     self.pullHist.SetFillStyle(1001)
     if len(ylimitsRatio) == 2:
-      ylimitsRatio[0] += 1e-3
-      ylimitsRatio[1] -= 1e-3
       self.pullHist.GetYaxis().SetRangeUser(*ylimitsRatio)
 
     if pullType=="ratio":
@@ -1151,7 +1140,7 @@ class DataMCStack:
       rescale = 10**rescale*5.
     #print(rescale)
     newYMax = yMaxCurrent*rescale*1.5
-    newYMin = 1e-3
+    newYMin = 0.0
     if self.logy:
       newYMin = 0.1
     self.histForAxis = root.TH2F(self.histForAxis.GetName()+"ForAxis","",1,self.xlimits[0],self.xlimits[1],1,newYMin,newYMax)
@@ -1164,9 +1153,6 @@ class DataMCStack:
     self.mcVarHist = None
     if mcVariations==None:
       return
-    for key in mcVariations:
-      for hist in mcVariations[key]:
-        hist.Scale(self.mc2DataSF)
     errorTypes = set()
     for key in mcVariations:
       key = re.sub("Up$","",key)
@@ -2166,7 +2152,7 @@ def fitDGFindQuantiles(hist,level):
     return quants
         
 class RooModelPlotter:
-  def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None,canvas=None,caption1=""):
+  def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None,RangeName=""):
     self.xVar = xVar
     self.pdf = pdf
     self.data = data
@@ -2179,7 +2165,6 @@ class RooModelPlotter:
     self.nSignal = nSignal
     nowStr = str(int(time.time()*1e6))
     self.nowStr = nowStr
-    self.caption1 = caption1
 
     self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(lumi)
 
@@ -2195,8 +2180,10 @@ class RooModelPlotter:
     nBins = self.binning.numBins()
     binWidth = (self.binning.highBound()-self.binning.lowBound())/nBins
 
-    if canvas == None:
-      canvas = root.TCanvas("canvas"+nowStr)
+    #print "TEST"
+    #print nBins,binWidth, self.binning.highBound(),self.binning.lowBound()
+
+    canvas = root.TCanvas("canvas"+nowStr)
     self.canvas = canvas
 
     self.tlatex = root.TLatex()
@@ -2229,13 +2216,24 @@ class RooModelPlotter:
     normErr = nData**(-0.5)
     self.normErr = normErr
 
+    self.rangename = None
     # Main Frame
+    frame       = xVar.frame(root.RooFit.Title(""))
+    # simply cloning the frame did not work for me... :-(
+    # working around it
+    frameBkgSub = xVar.frame(root.RooFit.Title("BkgSub"))
 
-    frame = xVar.frame(root.RooFit.Title(""))
-    self.frame = frame
+    if (RangeName):
+      self.rangename = RangeName
+      frame = xVar.frame(root.RooFit.Title(""),root.RooFit.Range(self.rangename))
+      frameBkgSub = xVar.frame(root.RooFit.Title("BkgSub"),root.RooFit.Range(self.rangename))
+      #frame.SetMaximum(6000)
 
-    data.plotOn(frame,graphDrawOptArg,binningArg)
-
+    self.frame       = frame
+    self.frameBkgSub = frameBkgSub
+    
+    data.plotOn(frame,      graphDrawOptArg,binningArg)
+      
     #print "backgroundPDFName = %s" % backgroundPDFName 
     if backgroundPDFName != None:
       bakCompArg = root.RooFit.Components(backgroundPDFName)
@@ -2247,6 +2245,12 @@ class RooModelPlotter:
 
     data.plotOn(frame,graphDrawOptArg,binningArg,tmpDataHistNameArg)
 
+    # filling it with white points for the sig PDF normalization
+    data.plotOn(frameBkgSub,graphDrawOptArg,
+                root.RooFit.MarkerColor(root.kWhite),
+                root.RooFit.LineColor(root.kWhite),
+                binningArg,tmpDataHistNameArg)
+
     frame.SetTitle("")
     frame.GetXaxis().SetLabelSize(0)
     frame.GetYaxis().SetLabelSize(0.050)
@@ -2254,19 +2258,33 @@ class RooModelPlotter:
     frame.GetYaxis().SetTitleOffset(
         0.85*frame.GetYaxis().GetTitleOffset()
         )
+
+    frameBkgSub.SetTitle("")
+    frameBkgSub.GetYaxis().SetLabelSize(0.04)
+    frameBkgSub.GetYaxis().SetTitleSize(0.055*0.9)
+    frameBkgSub.GetYaxis().SetTitleOffset(
+        1.1*frameBkgSub.GetYaxis().GetTitleOffset()
+        )
+
+    
     unitMatch =  re.search(r"GeV([\s]*/[\s]*c\^\{2\}|[\s]*/[\s]*c)?",xtitle)
     units = ""
     if unitMatch:
       units = " "+unitMatch.group(0)
     frame.SetYTitle("Events/"+str(binWidth)+units)
-    self.frame.SetMinimum(0)
+    frameBkgSub.SetYTitle("Events/"+str(binWidth)+units)
+    #if (RangeName):
+      #self.frame.SetMaximum(6000)
+      #self.frame.SetMinimum(1000)
+      #self.frame.GetYaxis().SetRangeUser(1500,8000)
+    #else:
+    #  self.frame.SetMinimum(0)
 
     self.chi2 = None
     nparams = pdf.getParameters(data).getSize()
     self.chi2 = frame.chiSquare(nparams)
 
     # Pulls Frame
-
     pullsHist = self.makePullPlotHist(frame,tmpDataHistName,tmpBakPDFName)
     self.pullsHist = pullsHist
     pullsHist.SetLineColor(root.kBlue)
@@ -2288,6 +2306,20 @@ class RooModelPlotter:
     self.pullsHist.GetYaxis().SetLabelSize(0.097)
     self.pullsHist.GetYaxis().SetTitleOffset(0.70*0.9)
 
+
+    # Bkg Sub Hist
+    bkgSubHist = self.makeBkgSubHist(frame,tmpDataHistName,tmpBakPDFName)
+    bkgSubHist.SetLineColor(root.kGray+2)
+    bkgSubHist.SetLineWidth(2)
+    bkgSubHist.SetFillColor(root.kGray)
+    bkgSubHist.SetFillStyle(1001)
+    setHistTitles(bkgSubHist,xtitle,"Data-Bkg Fit Model")
+    self.bkgSubHist = bkgSubHist
+
+    bkgSubDataHist = root.RooDataHist("data_men_fit","",
+                                      root.RooArgList(xVar),bkgSubHist)    
+
+    # add the signal PDF if it is there
     if signalPDFName != None and signalPdf == None:
         pdfList = pdf.pdfList()
         for i in range(pdfList.getSize()):
@@ -2304,9 +2336,12 @@ class RooModelPlotter:
     if signalPdf != None:
         sigPdfToDraw, componentToDraw = self.getProperSigPdfAndComponent(
                             xVar,data,signalPdf,self.nSignal
-                    )
-        sigPdfToDraw.plotOn(frame,lineDrawOptArg,sigLineColorArg,lineWidthArg,componentToDraw)
+                            )
 
+        sigPdfToDraw.plotOn(frame,      lineDrawOptArg,sigLineColorArg,lineWidthArg,componentToDraw),
+        sigPdfToDraw.plotOn(frameBkgSub,lineDrawOptArg,sigLineColorArg,lineWidthArg,componentToDraw)
+      
+        
     # Legend
     self.phonyFitLegHist = root.TH1F("phonyFit"+nowStr,"",1,0,1)
     self.phonyFitLegHist.SetFillColor(root.kCyan)
@@ -2328,13 +2363,23 @@ class RooModelPlotter:
     self.leg = root.TLegend(*legPos)
     self.leg.SetFillColor(0)
     self.leg.SetLineColor(0)
-    self.leg.AddEntry(self.phonyDatLegHist,"Data","lep")
-    self.leg.AddEntry(self.phonyFitLegHist,"Fit","lf")
+    self.leg.AddEntry(self.phonyDatLegHist,"Data","lp")
+    self.leg.AddEntry(self.phonyFitLegHist,"Background Model","lf")
+
+    legPosBkgSub = [0.64,0.72,0.92,0.88]
+    self.legBkgSub = root.TLegend(*legPosBkgSub)
+    self.legBkgSub.SetFillColor(0)
+    self.legBkgSub.SetLineColor(0)
+    self.legBkgSub.AddEntry(self.bkgSubHist,"Data - Background Model","lf")
+
     if signalPdf != None:
       if signalLegEntry != None:
         self.leg.AddEntry(self.phonySigLegHist,signalLegEntry,"l")
+        self.legBkgSub.AddEntry(self.phonySigLegHist,signalLegEntry,"l")
       else:
         self.leg.AddEntry(self.phonySigLegHist,"Signal","l")
+        self.legBkgSub.AddEntry(self.phonySigLegHist,"Signal","l")
+
 
   def draw(self,filenameNoExt):
     nowStr = self.nowStr
@@ -2372,25 +2417,27 @@ class RooModelPlotter:
   
     # Text
     self.pad1.cd()
+    #self.tlatex.SetTextSize(root.gStyle.GetLabelSize())
     self.tlatex.SetTextSize(0.04*canvasToPad1FontScalingFactor)
     self.tlatex.SetTextAlign(12)
     self.tlatex.DrawLatex(root.gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
     self.tlatex.SetTextAlign(32)
-    #self.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
-    caption1 = self.caption1
-    if caption1 != "":
-        caption1 += ": "
-    self.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption1+self.title)
+    self.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
+    #self.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,"#sqrt{{s}}={0}, L={1:.1f} fb^{{-1}}".format(self.energyStr,self.lumi))
 
     self.tlatex.SetTextAlign(32)
-    self.tlatex.DrawLatex(self.legPos[0]-0.01,0.820,self.lumiStr)
+    if (self.lumi != 0):
+      self.tlatex.DrawLatex(self.legPos[0]-0.01,0.820,self.lumiStr)
+    if (self.lumi == 0):
+      self.tlatex.SetTextSize(0.04)
+      self.tlatex.DrawLatex(self.legPos[0]-0.03,0.850,"#sqrt{s}=7 TeV L =  5.0 fb^{-1} ")
+      self.tlatex.DrawLatex(self.legPos[0]-0.03,0.770,"#sqrt{s}=8 TeV L = 19.8 fb^{-1}")
+            
     energyStr = self.energyStr
     if re.search(r"[\d]TeV",energyStr):
       energyStr = energyStr.replace("TeV"," TeV")
-    self.tlatex.DrawLatex(self.legPos[0]-0.01,0.875,"#sqrt{s} = "+self.energyStr)
-
-    #self.tlatex.SetTextAlign(12)
-    #self.tlatex.DrawLatex(root.gStyle.GetPadLeftMargin()+0.04,0.865,self.caption1)
+    if (self.energyStr != ""):
+      self.tlatex.DrawLatex(self.legPos[0]-0.01,0.875,"#sqrt{s} = "+self.energyStr)
 
     pad2.cd()
     self.tlatex.SetTextSize(self.pullsHist.GetYaxis().GetLabelSize())
@@ -2440,19 +2487,126 @@ class RooModelPlotter:
     tlatex.SetTextAlign(12)
     tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
     tlatex.SetTextAlign(32)
-    #tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
-    caption1 = self.caption1
-    if caption1 != "":
-        caption1 += ": "
-    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption1+self.title)
-    tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.875,"#sqrt{s} = "+self.energyStr)
-    tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.825,self.lumiStr)
+    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
+    if (self.energyStr != ""):
+      tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.875,"#sqrt{s} = "+self.energyStr)
+    if (self.lumi != 0):
+      tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.825,self.lumiStr)
+
     tlatex.SetTextAlign(12)
     tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.875,"#chi^{{2}}/NDF = {0:.2g}".format(float(chi2)/ndf))
     tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.825,"#mu = {0:.2f} #pm {1:.2f}".format(mean,meanErr))
     tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.775,"#sigma = {0:.2f} #pm {1:.2f}".format(sigma,sigmaErr))
+    saveAs(self.canvas,filenameNoExt)
+
+
+  def makeBkgSubHist(self,frame,histPlotName,pdfPlotName):
+
+    """
+    Makes bkg subtracted hist which is (data-fit)
+    where fit is the average value of the PDF within the data histogram bin.
+    """
+    hist = frame.findObject(histPlotName)
+    curve = frame.findObject(pdfPlotName)
+    assert(hist)
+    assert(curve)
+
+    nBins = self.binning.numBins()
+    lowB  = self.binning.lowBound() 
+    highB = self.binning.highBound() 
+   
+    if (self.rangename):
+      binWidth = (highB - lowB) / nBins
+      lowB  = self.xVar.getBinning(self.rangename).lowBound()
+      highB = self.xVar.getBinning(self.rangename).highBound()
+      nBins = (highB - lowB)/binWidth
+
+
+    # Histograms to compute the bkg subtracted histogram
+    bkgSubHistData = root.TH1F("bkgSubHistData_"+histPlotName+"_"+pdfPlotName,"",
+                               int(nBins), lowB, highB
+                               )
+
+    bkgSubHistFit = root.TH1F("bkgSubHistFit_"+histPlotName+"_"+pdfPlotName,"",
+                              int(nBins), lowB, highB
+                              )
+
+
+    x = root.Double(0.)
+    y = root.Double(0.)
+
+    curve.GetPoint(0,x,y) # Get Curve Start X
+    xCurveMin = float(x)
+    curve.GetPoint(curve.GetN()-1,x,y) # Get Curve End X
+    xCurveMax = float(x)
+
+    iBin = 1
+    for i in range(1,self.binning.numBins()+1):
+      hist.GetPoint(i-1,x,y)
+      diff = float(y)
+      if (float(x) < lowB or float(x) > highB):
+        continue
+      #print("hist bin: %10i, x: %10.2f, y: %10.2f" % (iBin,float(x),float(y)))
+      if x > xCurveMin and x < xCurveMax:
+        curvePoint = curve.interpolate(x)
+        diff -= curvePoint
+        #print(" curve interpolation: %10.2f" % (curvePoint))
+      else:
+        diff = 0.
+        #print(" Warning: x outside of curve range: [ %10.2f %10.2f ]" % (xCurveMin,xCurveMax))
+      #print(" diff: %10.2f" % (diff))
+
+      bkgSubHistData.SetBinContent(iBin,float(y))
+
+      bkgSubHistFit.SetBinContent(iBin,curvePoint)
+      bkgSubHistFit.SetBinError(iBin,0) # assuming the error on the fit is negligible
+
+      iBin += 1
+
+    # Construct the bkg subtracted histogram
+    bkgSubHist = bkgSubHistData.Clone("bkgSubHist")
+    bkgSubHist.Sumw2()
+    bkgSubHist.Add(bkgSubHistFit,-1)
+    
+    return bkgSubHist
+  
+
+  def drawBkgSub(self,filenameNoExt):
+
+    self.canvas.SetLogy(0)
+    self.canvas.cd()
+  
+    self.frameBkgSub.SetMinimum(-100)
+    self.frameBkgSub.SetMaximum(+200)
+    self.frameBkgSub.Draw()
+    self.bkgSubHist.Draw("histo same")
+    self.bkgSubHist.Draw("pe same")
+    self.frameBkgSub.Draw("same")
+    self.legBkgSub.Draw()
+
+    # Text
+    self.tlatex.SetTextSize(0.04)
+    self.tlatex.SetTextAlign(12)
+    self.tlatex.DrawLatex(root.gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+    self.tlatex.SetTextAlign(32)
+    self.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
+
+    self.tlatex.SetTextAlign(32)
+    if (self.lumi != 0):
+      self.tlatex.DrawLatex(self.legPos[0]-0.01,0.820,self.lumiStr)
+    if (self.lumi == 0):
+      self.tlatex.SetTextSize(0.04)
+      self.tlatex.DrawLatex(self.legPos[0]-0.03,0.850,"#sqrt{s}=7 TeV L =  5.0 fb^{-1} ")
+      self.tlatex.DrawLatex(self.legPos[0]-0.03,0.770,"#sqrt{s}=8 TeV L = 19.8 fb^{-1}")
+            
+    energyStr = self.energyStr
+    if re.search(r"[\d]TeV",energyStr):
+      energyStr = energyStr.replace("TeV"," TeV")
+    if (self.energyStr != ""):
+      self.tlatex.DrawLatex(self.legPos[0]-0.01,0.875,"#sqrt{s} = "+self.energyStr)
 
     saveAs(self.canvas,filenameNoExt)
+
 
   def getProperSigPdfAndComponent(self,var,data,pdf,n):
     nData = data.sumEntries()
@@ -2478,11 +2632,22 @@ class RooModelPlotter:
     assert(hist)
     assert(curve)
 
+    nBins = self.binning.numBins()
+    lowB  = self.binning.lowBound() 
+    highB = self.binning.highBound() 
+   
+    if (self.rangename):
+      binWidth = (highB - lowB) / nBins
+      lowB  = self.xVar.getBinning(self.rangename).lowBound()
+      highB = self.xVar.getBinning(self.rangename).highBound()
+      nBins = (highB - lowB)/binWidth
+
+
     pullsHist = root.TH1F("pulls_"+histPlotName+"_"+pdfPlotName,"",
-            self.binning.numBins(),
-            self.binning.lowBound(),
-            self.binning.highBound()
-        )
+                          int(nBins), lowB, highB
+                          )
+    #print "pullsHist", pullsHist.GetNbinsX(), pullsHist.GetXaxis().GetXmin(), pullsHist.GetXaxis().GetXmax()
+      
     x = root.Double(0.)
     y = root.Double(0.)
 
@@ -2491,20 +2656,25 @@ class RooModelPlotter:
     curve.GetPoint(curve.GetN()-1,x,y) # Get Curve End X
     xCurveMax = float(x)
 
+    iBin = 1
     for i in range(1,self.binning.numBins()+1):
       hist.GetPoint(i-1,x,y)
       pull = float(y)
-      #print("hist bin: %10i, x: %10.2f, y: %10.2f" % (i,float(x),float(y)))
+      if (float(x) < lowB or float(x) > highB):
+        continue
+      #print("hist bin: %10i, x: %10.2f, y: %10.2f" % (iBin,float(x),float(y)))
       if x > xCurveMin and x < xCurveMax:
         curvePoint = curve.interpolate(x)
         pull -= curvePoint
         pull /= sqrt(curvePoint)
-      #  print(" curve interpolation: %10.2f" % (curvePoint))
+        #print(" curve interpolation: %10.2f" % (curvePoint))
       else:
         pull = 0.
-        print(" Warning: x outside of curve range: [ %10.2f %10.2f ]" % (xCurveMin,xCurveMax))
+        #print(" Warning: x outside of curve range: [ %10.2f %10.2f ]" % (xCurveMin,xCurveMax))
       #print(" pull: %10.2f" % (pull))
-      pullsHist.SetBinContent(i,pull)
+      pullsHist.SetBinContent(iBin,pull)
+      iBin += 1
+      
     return pullsHist
 
   def addPDFNormError(self,pad):
