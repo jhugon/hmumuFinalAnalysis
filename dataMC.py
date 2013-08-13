@@ -87,10 +87,8 @@ if args.disableMCErrors:
 anotateText2 = ""
 anotateText3 = "Analysis A"
 
-#anotateText = "80 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"
-#anotateText = "110 GeV < m_{#mu#mu} < 160 GeV; p_{T,#mu#mu}<20 GeV"
-#anotateText = "80 GeV < m_{#mu#mu} < 160 GeV"
-anotateText = "110 GeV < m_{#mu#mu} < 170 GeV"
+#anotateText = "110 GeV/c^{2} < M(#mu#mu) < 170 GeV/c^{2}"
+anotateText = "M(#mu#mu) #in [110,170] GeV/c^{2}"
 #if args.n2JetMassOnly or args.n2JetVBFTight or args.n2JetGFTight or args.n2JetVBFLoose or args.n01JetMassOnly:
 #  anotateText = ""
 
@@ -122,7 +120,7 @@ if args.n2JetVBFTight:
   CUTS+=" && jetLead_pt>40. && jetSub_pt>30. && ptMiss<40. && dijetMass > 650. && deltaEtaJets>3.5"
 
 if args.n2JetVBFLoose:
-  anotateText2 = "2-Jet VBF Loose"
+  anotateText2 = "2-Jet Loose"
   CUTS+=" && jetLead_pt>40. && jetSub_pt>30. && ptMiss<40. && !(dijetMass > 650. && deltaEtaJets>3.5) && !(dijetMass>250. && dimuonPt>50.)"
 
 if args.n2JetGFTight:
@@ -135,11 +133,11 @@ GLOBALCOUNTER=0
 histNames = {}
 if True:
     if args.n2JetVBFTight or args.n2JetGFTight or args.n2JetVBFLoose:
-      histNames["dimuonMass"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,170.],"nbins":24}#,"ylimits":[0.1,5e5]}
+      histNames["dimuonMass"] = {"xlabel":"M(#mu#mu) [GeV/c^{2}]","xlimits":[110.0,170.],"nbins":24}#,"ylimits":[0.1,5e5]}
     elif not args.n2Jet:
-      histNames["dimuonMass"] = {"xlabel":"m_{#mu#mu} [GeV/c^{2}]","xlimits":[110.0,170.],"nbins":60}#,"ylimits":[0.1,5e5]}
+      histNames["dimuonMass"] = {"xlabel":"M(#mu#mu) [GeV/c^{2}]","xlimits":[110.0,170.],"nbins":60}#,"ylimits":[0.1,5e5]}
     if not ( args.n2JetVBFTight or args.n2JetGFTight or args.n2JetVBFLoose or args.n2JetMassOnly or args.n01JetMassOnly):
-      histNames["dimuonPt"] = {"xlabel":"p_{T,#mu#mu} [GeV/c]","xlimits":[0.0,200.0],"nbins":20}#,"ylimits":[0.1,1e5]}
+      histNames["dimuonPt"] = {"xlabel":"p_{T}(#mu#mu) [GeV/c]","xlimits":[0.0,200.0],"nbins":20}#,"ylimits":[0.1,1e5]}
 #    histNames["dimuonY"] = {"xlabel":"y_{#mu#mu}","xlimits":[-2.2,2.2],"nbins":22}#,"ylimits":[0.1,3e6]}
 #    histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1,1],"nbins":20}#,"ylimits":[0.1,3e6]}
     #histNames["muonLead_pt"] = {"xlabel":"Leading Muon p_{T} [GeV/c]","xlimits":[25.,150.],"nbins":25}#,"ylimits":[0.1,3e6]}
@@ -150,9 +148,9 @@ if True:
     #histNames["nJets"] = {"xlabel":"N_{jets}","xlimits":[-0.5,5.5],"nbins":6}#,"ylimits":[0.1,3e6]}
     #histNames["ptMiss"] = {"xlabel":"Missing p_{T} [GeV/c]","xlimits":[0.0,300.0],"nbins":12}#,"ylimits":[0.1,3e6]}
     if not (args.n01Jet or args.n2JetMassOnly or args.n2JetVBFTight or args.n2JetGFTight or args.n2JetVBFLoose or args.n01JetMassOnly):
-      histNames["deltaEtaJets"] = {"xlabel":"#Delta#eta(j_{1},j_{2})","xlimits":[0.0,7.0],"nbins":14}#,"ylimits":[0.1,3e6]}
+      histNames["deltaEtaJets"] = {"xlabel":"|#Delta#eta(jj)|","xlimits":[0.0,7.0],"nbins":14}#,"ylimits":[0.1,3e6]}
 
-      histNames["dijetMass"] = {"xlabel":"m_{jj} [GeV/c^{2}]","xlimits":[0.,1000.],"nbins":20}#,"ylimits":[0.1,5e5]}
+      histNames["dijetMass"] = {"xlabel":"M(jj) [GeV/c^{2}]","xlimits":[0.,1000.],"nbins":20}#,"ylimits":[0.1,5e5]}
     #histNames["dijetPt"] = {"xlabel":"p_{T,jj} [GeV/c]","xlimits":[0.0,1000.0],"nbins":50}#,"ylimits":[0.1,1e5]}
     #histNames["dijetY"] = {"xlabel":"y_{jj}","xlimits":[-5.0,5.0],"nbins":20}#,"ylimits":[0.1,3e6]}
 
@@ -568,7 +566,9 @@ for histName in bkgDatasetList[0].hists:
 
     tlatex.SetTextSize(0.04)
     tlatex.SetTextAlign(33)
+    tlatex.SetTextSize(0.035)
     tlatex.DrawLatex(legLeftPos-0.02,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
+    tlatex.SetTextSize(0.04)
     tlatex.DrawLatex(legLeftPos-0.02,0.77,anotateText2)
     tlatex.DrawLatex(legLeftPos-0.02,0.72,anotateText3)
     #tlatex.SetTextAlign(23)
