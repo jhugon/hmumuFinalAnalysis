@@ -906,7 +906,8 @@ class Analysis:
       self.debug += tmpDebug
 
     else:
-      self.dataCountsTotal += doSigInject(self.datHistTotal,sigInject,sigInjectMass)
+      self.datHistTotal, signalCountsAdded = doSigInject(self.datHistTotal,sigInject,sigInjectMass)
+      self.dataCountsTotal += signalCountsAdded
 
       tmpBakParams, self.bakNormTup, tmpDebug = makePDFBak(
                                     analysis+energyStr,histToUseForBak,
@@ -1000,10 +1001,11 @@ class Analysis:
         binWidth = 0.1
         nBins = int((tmpBinning.highBound()-tmpBinning.lowBound())/binWidth)
         dimuonMass.setBins(nBins)
+
         toyDataset = bakPDF.generateBinned(root.RooArgSet(dimuonMass),int(self.dataCountsTotal))
       else:
         toyDataset = bakPDF.generate(root.RooArgSet(dimuonMass),int(self.dataCountsTotal))
-      doSigInject(toyDataset,sigInject,sigInjectMass)
+      toyDataset, tmpSilly = doSigInject(toyDataset,sigInject,sigInjectMass)
       toyDataset.SetName("data_obs")
       toyDataset.SetTitle("Toy Data")
       self.datHistTotal = toyDataset
@@ -1052,7 +1054,7 @@ class Analysis:
 
   def doSigInject(self,dataHist,sigStrength,sigMass):
     if sigStrength <= 0.0:
-        return 0
+        return dataHist, 0
     dimuonMass = self.dimuonMass
     w = root.RooWorkspace("tmpWorkspace"+str(random.randint(0,10000)))
     self.sigInjectWorkspaces.append(w)
@@ -1082,11 +1084,35 @@ class Analysis:
         signalDatasetTmp = signalPdfSumTmp.generate(root.RooArgSet(dimuonMass))
         dataHist.append(signalDatasetTmp)
       else:
-        print("Error: doSigInject RooDataHist treatment not implemented! Exiting.")
-        #sys.exit(1)
-      signalPdfSumTmp.Print("v")
-      signalDatasetTmp.Print("v")
-      return signalDatasetTmp.sumEntries()
+        binning = dimuonMass.getBinning()
+        th1Data = root.TH1F("tmpTH1Data"+name+"_"+self.analysis+self.energyStr,
+                            "tmpTH1Data"+name+"_"+self.analysis+self.energyStr,
+                            binning.numBins(), binning.lowBound(),binning.highBound()
+                            )
+        th1Signal = th1Data.Clone(th1Data.GetName()+"_Signal")
+        signalDatasetTmp = signalPdfSumTmp.generateBinned(root.RooArgSet(dimuonMass))
+        signalDatasetTmp.fillHistogram(th1Signal,root.RooArgList(dimuonMass))
+        dataHist.fillHistogram(th1Data,root.RooArgList(dimuonMass))
+        #print ("#"*200)
+        #print("dataHist RooDataHist: ")
+        #dataHist.Print()
+        #print("data TH1: ")
+        #th1Data.Print()
+        #print("signal RooDataHist: ")
+        #signalDatasetTmp.Print()
+        #print("signal TH1: ")
+        #th1Signal.Print()
+
+        th1Data.Add(th1Signal)
+        dataHist = root.RooDataHist(dataHist.GetName(),dataHist.GetTitle(),
+                                        root.RooArgList(dimuonMass),th1Data
+                                      )
+        #print("After adding in signal:")
+        #print("dataHist RooDataHist: ")
+        #dataHist.Print()
+        #print("data TH1: ")
+        #th1Data.Print()
+      return dataHist, signalDatasetTmp.sumEntries()
     else:
       for h,name in zip(self.sigHistsRaw,self.sigNames):
         counts = getIntegralAll(h,boundaries=self.massBounds)
@@ -1113,7 +1139,7 @@ class Analysis:
           tmpHist.Reset()
           rooData.fillHistogram(tmpHist,root.RooArgList(dimuonMass))
           dataHist.Add(tmpHist)
-      return sum(countsList)
+      return dataHist, sum(countsList)
 
   def getRooDataSet(self,name,observables,aroundZ=False):
     tmpFLoc = self.directory+name+".root"
@@ -1768,6 +1794,7 @@ if __name__ == "__main__":
   #dataDict["7TeV"] = []
   dataDict["14TeV"] = []
   lumiList = [20,30,50,100,150,200,250,300,400,500,600,750,1000,1500,2000,3000]
+  lumiList = [300,3000]
 
   controlRegionVeryLow=[60,110]
   controlRegionLow=[110,120]

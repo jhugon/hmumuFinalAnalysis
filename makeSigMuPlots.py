@@ -834,7 +834,7 @@ if __name__ == "__main__":
       ytitle = "Expected Significance"
       xlimits=[0.,1700.]
       ylimits=[0.,6.0]
-      xlimits=[0.,3200.]
+      xlimits=[10.,3200.]
       ylimits=[0.,8.0]
       incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,caption3=caption3,ylabel=ytitle,energyStr=energyStr,showObs=showObs,xlabel=xlabel,xlimits=xlimits,ylimits=ylimits,yToFind=[3.,5.])
       saveAs(canvas,outDir+"sig"+plotName+"_"+period)

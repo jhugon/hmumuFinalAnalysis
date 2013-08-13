@@ -302,6 +302,7 @@ class ShapePlotter:
     dimuonMass = root.RooRealVar("dimuonMass","M(#mu#mu) [GeV/c^{2}]",110,170)
     #dimuonMass = root.RooRealVar("dimuonMass","M(#mu#mu) [GeV/c^{2}]",115,130)
     datasetSoB = None
+    th1DatasetSoB = None
     signalPdfList = []
     signalPdfCoeffList = []
 
@@ -343,28 +344,53 @@ class ShapePlotter:
       print dname
       dataset = self.datasets[dname]
 
-      # construct the weight (making sure the total num events stays the same)
-      SoBWeight = root.RooRealVar("SoBWeight_"+name,"SoB Weight",1)
-      SoBWeight.setVal( self.SoB[dname] * nevents / sumsobdotevents )
-      #SoBWeight.setVal( self.SoSpB[dname] * nevents / sumsospbdotevents )
+      dataset_withWeights = None
+      if dataset.InheritsFrom("RooDataSet"):
+        # construct the weight (making sure the total num events stays the same)
+        SoBWeight = root.RooRealVar("SoBWeight_"+name,"SoB Weight",1)
+        SoBWeight.setVal( self.SoB[dname] * nevents / sumsobdotevents )
+        #SoBWeight.setVal( self.SoSpB[dname] * nevents / sumsospbdotevents )
 
-      # the set containing the observable and the weight
-      observablesForRooDatasetWeight = root.RooArgSet(dimuonMass,
-                                                      SoBWeight)
+        # the set containing the observable and the weight
+        observablesForRooDatasetWeight = root.RooArgSet(dimuonMass,
+                                                        SoBWeight)
 
-      # constructing the dataset with a weight
-      dataset.addColumn( SoBWeight )
-      dataset_withWeights = root.RooDataSet(dname + "_withWeights",
-                                            dname + "_withWeights",
-                                            observablesForRooDatasetWeight,
-                                            root.RooFit.Import(dataset),
-                                            root.RooFit.WeightVar(SoBWeight)
-                                            )
-      # merging the datasets
-      if datasetSoB == None:
-        datasetSoB  = dataset_withWeights.Clone("datasetSoB")
+        # constructing the dataset with a weight
+        dataset.addColumn( SoBWeight )
+        dataset_withWeights = root.RooDataSet(dname + "_withWeights",
+                                              dname + "_withWeights",
+                                              observablesForRooDatasetWeight,
+                                              root.RooFit.Import(dataset),
+                                              root.RooFit.WeightVar(SoBWeight)
+                                              )
+        # merging the datasets
+        if datasetSoB == None:
+          datasetSoB  = dataset_withWeights.Clone("datasetSoB")
+        else:
+          datasetSoB.append(dataset_withWeights)
       else:
-        datasetSoB.append(dataset_withWeights)
+        binning = dimuonMass.getBinning()
+        nBins = int(binning.highBound()-binning.lowBound())
+        binWidthTmp = (binning.highBound()-binning.lowBound())/float(binning.numBins())
+        th1Data = root.TH1F("tmpTH1Data"+dname,
+                            "tmpTH1Data"+dname,
+                            nBins, binning.lowBound(),binning.highBound()
+                            )
+        dataset.fillHistogram(th1Data,root.RooArgList(dimuonMass))
+        th1Data.Scale(self.SoB[dname] * nevents / sumsobdotevents)
+
+        # merging the datasets
+        if th1DatasetSoB == None:
+          th1DatasetSoB  = th1Data.Clone("th1DatasetSoB")
+        else:
+          th1DatasetSoB.Add(th1DatasetSoB)
+
+      if datasetSoB == None and th1DatasetSoB != None:
+        datasetSoB = root.RooDataHist("datasetSoB",
+                                              "datasetSoB",
+                                              root.RooArgList(dimuonMass),
+                                              th1DatasetSoB
+                                              )
 
       #id+=1
       #if id > 5:
@@ -398,6 +424,13 @@ class ShapePlotter:
                                   #root.RooArgList(*signalPdfList),
                                   #root.RooArgList(*signalPdfCoeffList)
                                   )
+
+    signalPdfSumCdf = signalPdfSum.createCdf(root.RooArgSet(dimuonMass))
+    nVals = 10
+    for i in range(nVals):
+      val = 120.+i*10./nVals
+      dimuonMass.setVal(val)
+      print "Signal CDF for m={0:4.1f}: {1:6.4f}".format(val,signalPdfSumCdf.getVal())
 
     # fit with new values from Anna 13 Jun 2013
     InvPolMass = root.RooRealVar("InvPolMass","InvPolMass", 91.187, 30., 105.)
@@ -436,16 +469,16 @@ class ShapePlotter:
     rmp.draw(savename+"_"+self.energyStr+"_"+self.massStr+"_SoB")
     self.rmpList.append(rmp)
 
-    zoom = "zoom"
-    dimuonMass.setRange(zoom,120,135)
-    rmp = RooModelPlotter(dimuonMass,bakPDF,datasetSoB,fr,
-                          title,self.energyStr,self.lumi,
-                          None,None,50,signalPdfSum,"Signal m_{H}=126 GeV #times 50",
-                          zoom
-                          )
+    #zoom = "zoom"
+    #dimuonMass.setRange(zoom,120,135)
+    #rmp = RooModelPlotter(dimuonMass,bakPDF,datasetSoB,fr,
+    #                      title,self.energyStr,self.lumi,
+    #                      None,None,50,signalPdfSum,"Signal m_{H}=126 GeV #times 50",
+    #                      zoom
+    #                      )
 
-    rmp.draw(savename+"_"+self.energyStr+"_"+self.massStr+"_zoomedat126_SoB")
-    self.rmpList.append(rmp)
+    #rmp.draw(savename+"_"+self.energyStr+"_"+self.massStr+"_zoomedat126_SoB")
+    #self.rmpList.append(rmp)
 
 
 
