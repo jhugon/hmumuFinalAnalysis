@@ -2201,7 +2201,7 @@ def fitDGFindQuantiles(hist,level):
     return quants
         
 class RooModelPlotter:
-  def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None,RangeName=""):
+  def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None,RangeName="",canvas=None,caption1=""):
     self.xVar = xVar
     self.pdf = pdf
     self.data = data
@@ -2214,6 +2214,7 @@ class RooModelPlotter:
     self.nSignal = nSignal
     nowStr = str(int(time.time()*1e6))
     self.nowStr = nowStr
+    self.caption1 = caption1
 
     self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(lumi)
 
@@ -2229,10 +2230,8 @@ class RooModelPlotter:
     nBins = self.binning.numBins()
     binWidth = (self.binning.highBound()-self.binning.lowBound())/nBins
 
-    #print "TEST"
-    #print nBins,binWidth, self.binning.highBound(),self.binning.lowBound()
-
-    canvas = root.TCanvas("canvas"+nowStr)
+    if canvas == None:
+      canvas = root.TCanvas("canvas"+nowStr)
     self.canvas = canvas
 
     self.tlatex = root.TLatex()
@@ -2471,8 +2470,11 @@ class RooModelPlotter:
     self.tlatex.SetTextAlign(12)
     self.tlatex.DrawLatex(root.gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
     self.tlatex.SetTextAlign(32)
-    self.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
-    #self.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,"#sqrt{{s}}={0}, L={1:.1f} fb^{{-1}}".format(self.energyStr,self.lumi))
+    #self.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
+    caption1 = self.caption1
+    if caption1 != "":
+        caption1 += ": "
+    self.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption1+self.title)
 
     self.tlatex.SetTextAlign(32)
     if (self.lumi != 0):
@@ -2536,12 +2538,13 @@ class RooModelPlotter:
     tlatex.SetTextAlign(12)
     tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
     tlatex.SetTextAlign(32)
-    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
-    if (self.energyStr != ""):
-      tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.875,"#sqrt{s} = "+self.energyStr)
-    if (self.lumi != 0):
-      tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.825,self.lumiStr)
-
+    #tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
+    caption1 = self.caption1
+    if caption1 != "":
+        caption1 += ": "
+    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption1+self.title)
+    tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.875,"#sqrt{s} = "+self.energyStr)
+    tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.825,self.lumiStr)
     tlatex.SetTextAlign(12)
     tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.875,"#chi^{{2}}/NDF = {0:.2g}".format(float(chi2)/ndf))
     tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.825,"#mu = {0:.2f} #pm {1:.2f}".format(mean,meanErr))

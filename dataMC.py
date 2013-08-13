@@ -544,7 +544,8 @@ for histName in bkgDatasetList[0].hists:
 
     tlatex.SetTextSize(0.03)
     tlatex.SetTextAlign(22)
-    tlatex.DrawLatex(0.55,0.75,anotateText)
+    if histBaseName != "dimuonMass":
+      tlatex.DrawLatex(0.55,0.75,anotateText)
     tlatex.DrawLatex(0.55,0.55,anotateText2)
     tlatex.DrawLatex(0.55,0.6,anotateText3)
   elif scaleHiggsPos == "ll" or scaleHiggsPos == "ul":
@@ -555,7 +556,8 @@ for histName in bkgDatasetList[0].hists:
 
     tlatex.SetTextSize(0.04)
     tlatex.SetTextAlign(23)
-    tlatex.DrawLatex(0.55,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
+    if histBaseName != "dimuonMass":
+      tlatex.DrawLatex(0.55,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
     tlatex.DrawLatex(0.55,0.72,anotateText2)
     tlatex.DrawLatex(0.55,0.77,anotateText3)
   else:
@@ -567,7 +569,8 @@ for histName in bkgDatasetList[0].hists:
     tlatex.SetTextSize(0.04)
     tlatex.SetTextAlign(33)
     tlatex.SetTextSize(0.035)
-    tlatex.DrawLatex(legLeftPos-0.02,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
+    if histBaseName != "dimuonMass":
+      tlatex.DrawLatex(legLeftPos-0.02,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
     tlatex.SetTextSize(0.04)
     tlatex.DrawLatex(legLeftPos-0.02,0.77,anotateText2)
     tlatex.DrawLatex(legLeftPos-0.02,0.72,anotateText3)

@@ -93,7 +93,7 @@ class ShapePlotter:
       xhigh = binning.highBound()
       #mMuMu.setRange("shapePlot",xlow,xhigh)
       mMuMu.setBins(int((xhigh-xlow)/binWidth))
-      mMuMu.SetTitle("m_{#mu#mu} [GeV/c^{2}]")
+      mMuMu.SetTitle("M(#mu#mu) [GeV/c^{2}]")
 
       saveName = outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName
       saveName = re.sub(r"([\d]+)\.[\d]+",r"\1",saveName)
@@ -258,7 +258,7 @@ titleMap = {
 
   "Jet2CutsVBFPass":"2-Jet VBF Tight",
   "Jet2CutsGFPass":"2-Jet GF Tight",
-  "Jet2CutsFailVBFGF":"2-Jet VBF Loose",
+  "Jet2CutsFailVBFGF":"2-Jet Loose",
 
   "Jet2SplitCutsGFSplit" : "2-Jet Combination",
   "CombSplitAll" : "H#rightarrow#mu#mu Combination",

@@ -100,7 +100,7 @@ titleMap = {
 
   "Jet2CutsVBFPass":"2-Jet VBF Tight",
   "Jet2CutsGFPass":"2-Jet GF Tight",
-  "Jet2CutsFailVBFGF":"2-Jet VBF Loose",
+  "Jet2CutsFailVBFGF":"2-Jet Loose",
 
   "Jet2SplitCutsGFSplit" : "2-Jet Combination",
   "CombSplitAll" : "Combination",
@@ -588,6 +588,7 @@ class PValuePlotTogether:
 if __name__ == "__main__":
 
   dirName = "statsInput/"
+  #dirName = "/data/uftrig01b/digiovan/baselinePP/exppluspolin_fixEff_DiffMeans_unbinned_loosePUID_fixBkgVBFFit_syst_22Jan2013ReReco_assProd/statsInputUltimate/"
   
   outDir = "statsOutput/"
   
