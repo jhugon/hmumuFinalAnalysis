@@ -54,6 +54,9 @@ HISTNAME="mDiMu"
 
 TOYSBINNED=True
 
+# Scale Factor for narrow gaussian width
+RESSF=1.0
+
 if args.cutOpt:
   USEGPANNA = False
 
@@ -572,7 +575,8 @@ def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=True)
     sigFits = signalPars('fitresults',
                          prodMode,
                          energy,
-                         category)
+                         category,
+                         resSF=RESSF)
     
     par_meanG1, par_widthG1, par_meanG2, par_widthG2, par_mixGG = sigFits.getPars()
     if (par_widthG2>par_widthG1):

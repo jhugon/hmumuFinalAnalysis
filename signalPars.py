@@ -18,12 +18,13 @@ from helpers import *
 
 class signalPars:
    
-   def __init__(self,folder,process,benergy,cat,massLow=115.,massHigh=160.):
+   def __init__(self,folder,process,benergy,cat,massLow=115.,massHigh=160.,resSF=1.):
       # this is the folder where all the extrapolation
       # parameters are contained
       self.folder   = folder
       # process should be GluGlu or VBF
       self.process  = process
+      self.resSF = resSF
 
       # this is to match Justin's definitions without
       # obliging him to rewrite his code
@@ -136,6 +137,8 @@ class signalPars:
          parValue = func.Eval(mass)
          #print parname, mass, parValue
          parameter['%s' % mass] = float(parValue)
+         if parname == "widthG1":
+           parameter['%s' % mass] = parameter['%s' % mass]*self.resSF
 
       return parameter
 
