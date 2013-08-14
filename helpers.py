@@ -220,6 +220,24 @@ def doubleGauss(x,par):
   
   return scale*dgauss
   #return meanG1 + widthG1*x[0]
+
+def makeTGraphFromList(x,y,graph):
+  """
+    Fills a TGraph from lists of floats
+    Two input methods:
+    1) x is the list of x vals, y is list of y vals
+    2) y=None, x is a list of lists/tuples of x,y values
+  """
+  iGraph = 0
+  if y == None:
+    for p in x:
+      graph.SetPoint(iGraph,p[0],p[1])
+      iGraph += 1
+  else:
+    assert(len(x)==len(y))
+    for px,py in zip(x,y):
+      graph.SetPoint(iGraph,px,py)
+      iGraph += 1
   
 def fit2DResHist(hist,color):
   histName = hist.GetName()
