@@ -408,7 +408,7 @@ def getDataMu2(fileString,matchString=r".*_([-\d.]+)\.txt\.mu\.root",dontMatchSt
   return result
 
 class RelativePlot:
-  def __init__(self,dataPoints, canvas, legend, caption, ylabel="Error on #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV",doMuExtraPlot=False,horizLines=[],drawErrBands=True,yToFind=[],xToFind=[]):
+  def __init__(self,dataPoints, canvas, legend, caption, ylabel="Error on #sigma/#sigma_{SM}", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",caption4="",caption5="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV",doMuExtraPlot=False,horizLines=[],drawErrBands=True,yToFind=[],xToFind=[]):
     errGraph = root.TGraph()
     #errGraph.SetLineStyle(2)
     errGraph.SetLineColor(root.kRed)
@@ -578,6 +578,9 @@ class RelativePlot:
     tlatex.SetTextAlign(12)
     tlatex.DrawLatex(gStyle.GetPadLeftMargin()+0.03,0.88,caption2)
     tlatex.DrawLatex(gStyle.GetPadLeftMargin()+0.03,0.82,caption3)
+    tlatex.SetTextAlign(32)
+    tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.88,caption4)
+    tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.82,caption5)
 
     for g in self.vertLines:
       g.Draw("l")
@@ -756,6 +759,8 @@ if __name__ == "__main__":
 
     caption2 = ""
     caption3 = ""
+    caption4 = ""
+    caption5 = ""
     if energyStr == '':
       pass
     elif energyStr == "7P8TeV":
@@ -809,7 +814,7 @@ if __name__ == "__main__":
         xlabel="m_{H} [GeV/c^{2}]"
         xlimits=[]
         ylimits=[]
-      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,caption3=caption3,ylabel=ytitle,energyStr=energyStr,doMuExtraPlot=doMuExtraPlot,showObs=showObs,xlabel=xlabel,drawErrBands=drawErrBands,xlimits=xlimits,ylimits=ylimits)
+      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,caption3=caption3,ylabel=ytitle,energyStr=energyStr,doMuExtraPlot=doMuExtraPlot,showObs=showObs,xlabel=xlabel,drawErrBands=drawErrBands,xlimits=xlimits,ylimits=ylimits,caption4=caption4,caption5=caption5)
       saveAs(canvas,outDir+"mu"+plotName+"_"+period)
 
       if args.higgsMass:
@@ -820,7 +825,7 @@ if __name__ == "__main__":
       #print data
       doMuExtraPlot=True
       drawErrBands=False
-      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,caption3=caption3,ylabel=ytitle,energyStr=energyStr,doMuExtraPlot=doMuExtraPlot,showObs=showObs,xlabel=xlabel,drawErrBands=drawErrBands,xlimits=xlimits,ylimits=ylimits,xToFind=[300.,3000.])
+      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,caption3=caption3,ylabel=ytitle,energyStr=energyStr,doMuExtraPlot=doMuExtraPlot,showObs=showObs,xlabel=xlabel,drawErrBands=drawErrBands,xlimits=xlimits,ylimits=ylimits,caption4=caption4,caption5=caption5,xToFind=[300.,3000.])
       saveAs(canvas,outDir+"mu2"+plotName+"_"+period)
 
       data = getDataSig(dirName+plotName+"_"+period+"_*.txt*")
@@ -836,7 +841,7 @@ if __name__ == "__main__":
       ylimits=[0.,6.0]
       xlimits=[10.,3200.]
       ylimits=[0.,8.0]
-      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,caption3=caption3,ylabel=ytitle,energyStr=energyStr,showObs=showObs,xlabel=xlabel,xlimits=xlimits,ylimits=ylimits,yToFind=[3.,5.])
+      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,caption3=caption3,ylabel=ytitle,energyStr=energyStr,showObs=showObs,xlabel=xlabel,xlimits=xlimits,ylimits=ylimits,caption4=caption4,caption5=caption5,yToFind=[3.,5.])
       saveAs(canvas,outDir+"sig"+plotName+"_"+period)
 
     ## All p-values together plot

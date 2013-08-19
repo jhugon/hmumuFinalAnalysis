@@ -251,7 +251,7 @@ def getData(fileString,matchString=r"_([-\d.]+)\.txt\.out",dontMatchStrings=[],d
   return result
 
 class RelativePlot:
-  def __init__(self,dataPoints, canvas, legend, caption, ylabel="95% CL Limit on #sigma/#sigma_{SM} (H#rightarrow#mu#mu)", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],horizLines=[],showObs=False,energyStr="8TeV"):
+  def __init__(self,dataPoints, canvas, legend, caption, ylabel="95% CL Limit on #sigma/#sigma_{SM} (H#rightarrow#mu#mu)", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],horizLines=[],showObs=False,energyStr="8TeV",caption4=""):
     expGraph = root.TGraph()
     expGraph.SetLineStyle(2)
     expGraph.SetMarkerStyle(20)
@@ -349,6 +349,8 @@ class RelativePlot:
     tlatex.SetTextAlign(12)
     tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.88,caption2)
     tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.82,caption3)
+    tlatex.SetTextAlign(32)
+    tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.88,caption4)
 
     tlatex.SetTextAlign(32)
     tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption)
@@ -686,7 +688,9 @@ if __name__ == "__main__":
       if len(data)<=1:
         continue
       xlabel="Integrated Luminosity [fb^{-1}]"
+      ylabel="95% CL Limit on #sigma/#sigma_{SM} (H#rightarrow#mu#mu)"
       caption3 = ""
+      caption4 = ""
       if args.bdtCut:
         xlimits = [-0.9,1.0]
         xlabel="BDT Discriminant Cut"
@@ -747,5 +751,14 @@ if __name__ == "__main__":
       #elif period == "14TeV":
       #  title = "Standard Model H#rightarrow#mu#mu"
       title = titleMap[plotName]
-      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStrWrite,xlabel=xlabel,caption3=caption3,showObs=args.higgsMass,xlimits=xlimits,vertLines=vertLines,horizLines=horizLines)
+      #title = "GF Only "+title
+      #ylabel="95% CL Limit on #sigma/#sigma_{SM} (GF H#rightarrow#mu#mu)"
+      #caption4 = "#sigma_{VBF}= #sigma_{WH}= #sigma_{ZH}= 0"
+      #title = "VBF Only "+title
+      #ylabel="95% CL Limit on #sigma/#sigma_{SM} (VBF H#rightarrow#mu#mu)"
+      #caption4 = "#sigma_{GF}= #sigma_{WH}= #sigma_{ZH}= 0"
+      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStrWrite,xlabel=xlabel,caption3=caption3,showObs=args.higgsMass,xlimits=xlimits,vertLines=vertLines,horizLines=horizLines,ylabel=ylabel,caption4=caption4)
       saveAs(canvas,outDir+plotName+"_"+energyStr)
+      #saveAs(canvas,outDir+"gfOnly_"+plotName+"_"+energyStr)
+      #saveAs(canvas,outDir+"vbfOnly_"+plotName+"_"+energyStr)
+
