@@ -74,8 +74,10 @@ class BiasStudy:
     ### Make Bak Pdfs
 
     self.truePdfName = "true"+catName+energyStr
-    self.truePdfTitle = "#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}"
-    self.truePdfFunc = makeCards.makePDFBakExpMOverSq
+    #self.truePdfTitle = "#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}"
+    #self.truePdfFunc = makeCards.makePDFBakExpMOverSq
+    self.truePdfTitle ="Voigtian+Exp" 
+    self.truePdfFunc = makeCards.makePDFBakOld
     self.truePdfFunc(self.truePdfName,self.realData,dimuonMass,110,170,wTrueImport,dimuonMassZ,self.realDataZ)
     self.truePdf = self.wTrue.pdf("bak")
     self.truePdf.SetName(self.truePdfName)
@@ -89,20 +91,23 @@ class BiasStudy:
     self.pdfAltList = []
     self.pdfAltwList = []
     self.pdfAltNameList = [
-        "ExpLog",
-        "MOverSq",
-        "BakOld",
+        #"ExpLog",
+        #"MOverSq",
+        #"BakOld",
+        "BakExpMOverSq",
     ]
     self.pdfAltTitleMap = {
-        "ExpLog":"Exp(p_{1}m^{2}+p_{2}m+p_{3}ln(m))",
-        "ExpMOverSq":"#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}",
-        "MOverSq":"#frac{m}{(m-p_{1})^{2}}",
-        "BakOld":"Voigtian+Exp",
+        #"ExpLog":"Exp(p_{1}m^{2}+p_{2}m+p_{3}ln(m))",
+        #"ExpMOverSq":"#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}",
+        #"MOverSq":"#frac{m}{(m-p_{1})^{2}}",
+        #"BakOld":"Voigtian+Exp",
+        "BakExpMOverSq":"#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}",
     }
     self.pdfAltFuncList = [
-        makeCards.makePDFBakExpLog,
-        makeCards.makePDFBakMOverSq,
-        makeCards.makePDFBakOld,
+        #makeCards.makePDFBakExpLog,
+        #makeCards.makePDFBakMOverSq,
+        #makeCards.makePDFBakOld,
+        makeCards.makePDFBakExpMOverSq,
     ]
     for pdfAltName,pdfAltFunc in zip(self.pdfAltNameList,self.pdfAltFuncList):
       pdfName = "alt"+catName+energyStr+"_"+pdfAltName
@@ -342,8 +347,8 @@ if __name__ == "__main__":
   jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
-  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
@@ -369,7 +374,7 @@ if __name__ == "__main__":
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
   logFile.write("# {0}\n\n".format(now))
   for category in categories:
-    bs = BiasStudy(category,dataFns8TeV,"8TeV",20)
+    bs = BiasStudy(category,dataFns8TeV,"8TeV",1000)
     logFile.write(bs.outStr)
     bs.plot(outDir+"bias_")
     
