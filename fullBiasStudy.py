@@ -46,6 +46,12 @@ class BiasStudy:
     canvas = root.TCanvas()
     self.canvas = canvas
 
+    # Hack to Make makePDFBakOld work
+    self.minMassZ = 88.
+    self.maxMassZ = 94.
+    dimuonMassZ = root.RooRealVar("dimuonMass","dimuonMass",self.minMassZ,self.maxMassZ)
+    self.dimuonMassZ = dimuonMassZ
+
     ### Load data
     
     self.dataTree = root.TChain()
@@ -60,18 +66,23 @@ class BiasStudy:
                                       )
     self.nData = self.realData.sumEntries()
 
+    self.realDataZ = root.RooDataSet("realDataZ"+catName+energyStr,
+                                    "realDataZ"+catName+energyStr,
+                                        self.dataTree,root.RooArgSet(dimuonMassZ)
+                                      )
+
     ### Make Bak Pdfs
 
     self.truePdfName = "true"+catName+energyStr
     self.truePdfTitle = "#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}"
     self.truePdfFunc = makeCards.makePDFBakExpMOverSq
-    self.truePdfFunc(self.truePdfName,self.realData,dimuonMass,110,170,wTrueImport)
+    self.truePdfFunc(self.truePdfName,self.realData,dimuonMass,110,170,wTrueImport,dimuonMassZ,self.realDataZ)
     self.truePdf = self.wTrue.pdf("bak")
     self.truePdf.SetName(self.truePdfName)
     self.truePdf.SetTitle("True PDF "+self.truePdfTitle)
 
     self.trueToyPdfName = "trueToy"+catName+energyStr
-    self.truePdfFunc(self.trueToyPdfName,self.realData,dimuonMass,110,170,wTrueToyImport)
+    self.truePdfFunc(self.trueToyPdfName,self.realData,dimuonMass,110,170,wTrueToyImport,dimuonMassZ,self.realDataZ)
     self.trueToyPdf = self.wTrueToy.pdf("bak")
     self.trueToyPdf.SetName(self.trueToyPdfName)
 
@@ -80,7 +91,7 @@ class BiasStudy:
     self.pdfAltNameList = [
         "ExpLog",
         "MOverSq",
-        #"BakOld",
+        "BakOld",
     ]
     self.pdfAltTitleMap = {
         "ExpLog":"Exp(p_{1}m^{2}+p_{2}m+p_{3}ln(m))",
@@ -91,12 +102,12 @@ class BiasStudy:
     self.pdfAltFuncList = [
         makeCards.makePDFBakExpLog,
         makeCards.makePDFBakMOverSq,
-        #makeCards.makePDFBakOld,
+        makeCards.makePDFBakOld,
     ]
     for pdfAltName,pdfAltFunc in zip(self.pdfAltNameList,self.pdfAltFuncList):
       pdfName = "alt"+catName+energyStr+"_"+pdfAltName
       wAlt = root.RooWorkspace("wAlt"+catName+energyStr+"_"+pdfAltName)
-      pdfAltFunc(pdfName,self.realData,dimuonMass,110,170,getattr(wAlt,"import"))
+      pdfAltFunc(pdfName,self.realData,dimuonMass,110,170,getattr(wAlt,"import"),dimuonMassZ,self.realDataZ)
       altPdf = wAlt.pdf("bak")
       altPdf.SetName(pdfName)
       self.pdfAltList.append(altPdf)
@@ -164,7 +175,7 @@ class BiasStudy:
                            PRINTLEVEL
                          )
         if plotThisToy:
-          trueToySBPdf.plotOn(frame,root.RooFit.LineColor(1))
+          trueToySBPdf.plotOn(frame,root.RooFit.LineColor(6))
           #trueToySBPdf.plotOn(frame,root.RooFit.Components(root.RooArgSet(self.trueToyPdf)),root.RooFit.LineColor(1),root.RooFit.LineStyle(2))
         nTrueToy = self.nSigVar.getVal()
         errTrueToy = self.nSigVar.getError()
@@ -192,6 +203,7 @@ class BiasStudy:
         if plotThisToy:
           frame.Draw()
           canvas.SaveAs("output/debug_"+catName+"_"+energyStr+"_"+str(hmass)+"_"+str(iToy)+".png")
+      del toyData
 
     for hmass in self.sigMasses:
       outStr +=  "mass: "+str(hmass)+'\n'
@@ -250,9 +262,11 @@ class BiasStudy:
       tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
       tlatex.SetTextAlign(12)
       tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.truePdfTitle)
-      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"All Alternate PDF Pulls")
+      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"All Alternate PDFs")
       tlatex.SetTextAlign(32)
       tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+      line = self.setYMaxAndDrawVertLines(hist,median(self.data[hmass]['pullAll']))
+      canvas.RedrawAxis()
       saveAs(canvas,outputPrefix+self.catName+"_"+str(hmass)+"_All")
       canvas.Clear()
 
@@ -270,13 +284,15 @@ class BiasStudy:
         tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfAltTitleMap[pdfAltName])
         tlatex.SetTextAlign(32)
         tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+        line = self.setYMaxAndDrawVertLines(hist,median(self.data[hmass][pdfAltName]['pull']))
+        canvas.RedrawAxis()
         saveAs(canvas,outputPrefix+self.catName+"_"+str(hmass)+"_"+pdfAltName)
         canvas.Clear()
 
     for pdfAltName in self.pdfAltNameList:
       minx = 115
       maxx = 155
-      axisHist = root.TH2F("axishist"+str(iHist),"",1,minx,maxx,1,-3,3)
+      axisHist = root.TH2F("axishist"+str(iHist),"",1,minx,maxx,1,-1,1)
       setHistTitles(axisHist,"M_{H} [GeV/c^{2}]","Median[(N_{sig}(Alt)-N_{sig}(Ref))/#DeltaN_{sig}(Alt)]")
       graph = root.TGraph()
       graphBand = root.TGraphErrors()
@@ -306,6 +322,18 @@ class BiasStudy:
       saveAs(canvas,outputPrefix+self.catName+"_"+pdfAltName)
       canvas.Clear()
 
+  def setYMaxAndDrawVertLines(self,hist,x):
+    ymax = 0.
+    for i in range(1,hist.GetXaxis().GetNbins()+1):
+      ymax = max(ymax,hist.GetBinContent(i))
+    ymax * 1.5
+    hist.GetYaxis().SetRangeUser(0.,ymax*1.5)
+    line = root.TLine()
+    line.SetLineColor(root.kRed)
+    line.SetLineWidth(3)
+    line.DrawLine(x,0,x,ymax*1.05)
+    return line
+
 if __name__ == "__main__":
   outDir = "output/"
 
@@ -314,12 +342,12 @@ if __name__ == "__main__":
   jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
-  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
@@ -341,7 +369,7 @@ if __name__ == "__main__":
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
   logFile.write("# {0}\n\n".format(now))
   for category in categories:
-    bs = BiasStudy(category,dataFns8TeV,"8TeV",1000)
+    bs = BiasStudy(category,dataFns8TeV,"8TeV",20)
     logFile.write(bs.outStr)
     bs.plot(outDir+"bias_")
     
