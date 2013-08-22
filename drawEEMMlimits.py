@@ -140,8 +140,8 @@ if __name__ == "__main__":
 
   ###########################################################################
 
-  eeDataFile = open("table_limit_hee.csv")
-  mmDataFile = open("xsbr.txt")
+  eeDataFile = open("etc/limits_xsbr_hee.csv")
+  mmDataFile = open("etc/limits_xsbr_hmm.txt")
   eeDataReader = csv.reader(eeDataFile)
   massList = []
   mmMassList = []

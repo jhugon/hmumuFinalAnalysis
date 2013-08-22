@@ -8,6 +8,7 @@ parser.add_option("-m","--higgsMass", help="Makes plots v. Higgs Mass",action="s
 parser.add_option("--signalInject", help="Sets a caption saying that signal was injected with strength",type=float,default=0.0)
 parser.add_option("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
 parser.add_option("-p","--printLimits", help="Just Print The Limits",action="store_true",default=False)
+parser.add_option("--xs", help="Limit on XS*BR",action="store_true",default=False)
 args, fakeargs = parser.parse_args()
 
 from helpers import *
@@ -17,6 +18,7 @@ import re
 import os.path
 from copy import deepcopy
 from array import array
+import sys
 
 from xsec import *
 
@@ -246,12 +248,37 @@ def getData(fileString,matchString=r"_([-\d.]+)\.txt\.out",dontMatchStrings=[],d
         continue
     if thisPoint.count(-10.0)>0:
         continue
+    if args.xs and args.higgsMass:
+      matchEn = re.match(r".+_([1478P]+TeV)_.+",fname)
+      if not matchEn:
+        print("Error:Trying to make XS*BR limits w.r.t. higgs Mass, can't match energy for filename: "+fname)
+        print("Exiting.")
+        sys.exit(1)
+      energy = matchEn.group(1)
+      energyOrig = energy
+      if energy == "7P8TeV":
+        energy = "8TeV"
+      elif not (energy == "8TeV" or energy == "7TeV" or energy == "14TeV"):
+        print("Error:Trying to make XS*BR limits w.r.t. higgs Mass, don't recognize energy '"+energy+"' for filename: "+fname)
+        print("Exiting.")
+        sys.exit(1)
+      xsForPoint = xsec['ggHmumu'+xNum+'_'+energy]
+      xsForPoint += xsec['vbfHmumu'+xNum+'_'+energy]
+      xsForPoint += xsec['whHmumu'+xNum+'_'+energy]
+      xsForPoint += xsec['zhHmumu'+xNum+'_'+energy]
+      outStr = thisPoint[0]+" "
+      for i in range(1,7):
+        thisPoint[i] = str(float(thisPoint[i])*xsForPoint)
+        outStr += "{0:10.5f} ".format(float(thisPoint[i]))
+      outStr += energyOrig
+      print outStr
     #print thisPoint
     result.append(thisPoint)
+      
   return result
 
 class RelativePlot:
-  def __init__(self,dataPoints, canvas, legend, caption, ylabel="95% CL Limit on #sigma/#sigma_{SM} (H#rightarrow#mu#mu)", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV"):
+  def __init__(self,dataPoints, canvas, legend, caption, ylabel="95% CL Limit on #sigma/#sigma_{SM} (H#rightarrow#mu#mu)", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV",caption4=""):
     expGraph = root.TGraph()
     expGraph.SetLineStyle(2)
     expGraph.SetMarkerStyle(20)
@@ -341,6 +368,8 @@ class RelativePlot:
     tlatex.SetTextAlign(12)
     tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.88,caption2)
     tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.82,caption3)
+    tlatex.SetTextAlign(32)
+    tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.88,caption4)
 
     tlatex.SetTextAlign(32)
     tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption)
@@ -672,7 +701,13 @@ if __name__ == "__main__":
       if len(data)<=1:
         continue
       xlabel="Integrated Luminosity [fb^{-1}]"
+      ylabel="95% CL Limit on #sigma/#sigma_{SM} (H#rightarrow#mu#mu)"
+      if args.xs:
+        ylabel="95% CL Limit on #sigma #times BR (H#rightarrow#mu#mu) [pb]"
+        if energyStr == "7P8TeV":
+          ylabel="95% CL Limit on #sigma(8 TeV) #times BR (H#rightarrow#mu#mu) [pb]"
       caption3 = ""
+      caption4 = ""
       if args.bdtCut:
         xlimits = [-0.9,1.0]
         xlabel="BDT Discriminant Cut"
@@ -729,8 +764,18 @@ if __name__ == "__main__":
       #elif period == "14TeV":
       #  title = "Standard Model H#rightarrow#mu#mu"
       title = titleMap[plotName]
-      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStrWrite,xlabel=xlabel,caption3=caption3,showObs=args.higgsMass,xlimits=xlimits,vertLines = vertLines)
+      #title = "GF Only "+title
+      #ylabel="95% CL Limit on #sigma/#sigma_{SM} (GF H#rightarrow#mu#mu)"
+      #caption4 = "#sigma_{VBF}= #sigma_{WH}= #sigma_{ZH}= 0"
+      #title = "VBF Only "+title
+      #ylabel="95% CL Limit on #sigma/#sigma_{SM} (VBF H#rightarrow#mu#mu)"
+      #caption4 = "#sigma_{GF}= #sigma_{WH}= #sigma_{ZH}= 0"
+      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStrWrite,xlabel=xlabel,caption3=caption3,showObs=args.higgsMass,xlimits=xlimits,vertLines = vertLines,ylabel=ylabel,caption4=caption4)
       saveAs(canvas,outDir+plotName+"_"+energyStr)
+      #saveAs(canvas,outDir+"gfOnly_"+plotName+"_"+energyStr)
+      #saveAs(canvas,outDir+"vbfOnly_"+plotName+"_"+energyStr)
+      if args.xs:
+        saveAs(canvas,outDir+"xsbr_"+plotName+"_"+energyStr)
 
     if not mplGood:
         continue

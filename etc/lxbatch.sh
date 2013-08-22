@@ -52,26 +52,40 @@ combine -M MaxLikelihoodFit --rMin -150 --rMax 150 --plots --saveNormalizations 
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
-# only positive mu... not really good choice. Commenting it out
-#combine -M ChannelCompatibilityCheck --saveFitResult --rMax 150 $FILENAME >> logCCC
-#mv higgsCombineTest.ChannelCompatibilityCheck.*.root ../$FILENAME.CCC.root
-
-#rm -f roostats*
-#rm -f higgsCombineTest*.root
-
 combine -M ChannelCompatibilityCheck --saveFitResult --rMin -150 --rMax 150 $FILENAME >> logCCC2
 mv higgsCombineTest.ChannelCompatibilityCheck.*.root ../$FILENAME.CCC2.root
 
 rm -f roostats*
 rm -f higgsCombineTest*.root
-cp $FILENAME.out ..
-cp $FILENAME.mu ..
-cp $FILENAME.sig ..
+
+####New Coupligs and LH Scan Stuff
+#
+#mv $FILENAME hmm.txt
+#
+#text2workspace.py hmm.txt -m 125 -D data_obs -P HiggsAnalysis.CombinedLimit.PhysicsModel:floatingXSHiggs --PO modes=ggH,qqH --PO ggHRange=-20:20 --PO qqHRange=-40:40 -o wsQQvGG.root
+#
+#combine -M MultiDimFit --algo=singles --cl=0.68 wsQQvGG.root >& $FILENAME.profileQQvGG
+#mv higgsCombineTest*.root $FILENAME.profileQQvGG.root
+#
+#combine -M MultiDimFit --algo=grid --points=5000 --fastScan wsQQvGG.root >& $FILENAME.lhGridQQvGG
+#mv higgsCombineTest*.root $FILENAME.lhGridQQvGG.root
+#
+#combine -M MultiDimFit --algo=grid --points=1000 --fastScan --rMin=-30 --rMax=30 hmm.txt >& $FILENAME.lhGridR
+#mv higgsCombineTest*.root $FILENAME.lhGridR.root
+#
+##### What I think is supposed to happen to get ggH and VBF only limits profiling other modes
+##### But I'm not sure if it works at all!!
+#
+#mv $FILENAME hmm.txt
+#text2workspace.py hmm.txt -m 125 -D data_obs -P HiggsAnalysis.CombinedLimit.PhysicsModel:floatingXSHiggs --PO modes=ggH --PO ggHRange=-50:50 -o wsGGOnly.root
+#text2workspace.py hmm.txt -m 125 -D data_obs -P HiggsAnalysis.CombinedLimit.PhysicsModel:floatingXSHiggs --PO modes=qqH --PO qqHRange=-50:50 -o wsQQOnly.root
+#combine -M Asymptotic wsGGOnly.root >& $FILENAME.out.GGOnly
+#combine -M Asymptotic wsQQOnly.root >& $FILENAME.out.QQOnly
+
+#########################################################3
+
+cp $FILENAME.* ..
 cp mlfit.root ../$FILENAME.root
-#for subname in *_fit_s.png; do
-#  cp $subname ../${FILENAME%$TXTSUFFIX}_$subname
-#done
-#cp $FILENAME.expsig ..
 
 echo "done"
 date
