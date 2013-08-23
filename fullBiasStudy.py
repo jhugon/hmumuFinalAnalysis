@@ -7,6 +7,7 @@ import sys
 import os
 import re
 import math
+import cPickle
 import ROOT as root
 root.gSystem.Load('libRooFit')
 root.gROOT.SetBatch(True)
@@ -27,121 +28,216 @@ canvas = root.TCanvas()
 
 class BiasStudy:
   #def __init__(self,category,dataFiles,energyStr):
-  def __init__(self,category,dataFileNames,energyStr,nToys=10):
-    self.catName = category[0]
-    self.catCuts = category[1]
-    catName = self.catName
-    self.energyStr = energyStr
-    self.nToys = nToys
-    self.dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",110.,170.)
-    dimuonMass = self.dimuonMass
-    dimuonMass.setRange("low",110,120) # Silly ranges for old fit functionality
-    dimuonMass.setRange("high",130,170)
-    dimuonMass.setRange("signal",120,130)
-    dimuonMass.setRange("signalfit",110,140)
-    self.wTrue = root.RooWorkspace("wTrue")
-    self.wTrueToy = root.RooWorkspace("wTrueToy")
-    wTrueImport = getattr(self.wTrue,"import")
-    wTrueToyImport = getattr(self.wTrueToy,"import")
-    canvas = root.TCanvas()
-    self.canvas = canvas
-
-    # Hack to Make makePDFBakOld work
-    self.minMassZ = 88.
-    self.maxMassZ = 94.
-    dimuonMassZ = root.RooRealVar("dimuonMass","dimuonMass",self.minMassZ,self.maxMassZ)
-    self.dimuonMassZ = dimuonMassZ
-
-    ### Load data
-    
-    self.dataTree = root.TChain()
-    for i in dataFileNames:
-      self.dataTree.Add(i+"/outtree"+self.catName)
-    self.dataTree.SetCacheSize(10000000);
-    self.dataTree.AddBranchToCache("*");
-
-    self.realData = root.RooDataSet("realData"+catName+energyStr,
-                                    "realData"+catName+energyStr,
-                                        self.dataTree,root.RooArgSet(dimuonMass)
-                                      )
-    self.nData = self.realData.sumEntries()
-
-    self.realDataZ = root.RooDataSet("realDataZ"+catName+energyStr,
-                                    "realDataZ"+catName+energyStr,
-                                        self.dataTree,root.RooArgSet(dimuonMassZ)
-                                      )
-
-    ### Make Bak Pdfs
-
-    self.truePdfName = "true"+catName+energyStr
-    #self.truePdfTitle = "#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}"
-    #self.truePdfFunc = makeCards.makePDFBakExpMOverSq
-    self.truePdfTitle ="Voigtian+Exp" 
-    self.truePdfFunc = makeCards.makePDFBakOld
-    self.truePdfFunc(self.truePdfName,self.realData,dimuonMass,110,170,wTrueImport,dimuonMassZ,self.realDataZ)
-    self.truePdf = self.wTrue.pdf("bak")
-    self.truePdf.SetName(self.truePdfName)
-    self.truePdf.SetTitle("True PDF "+self.truePdfTitle)
-
-    self.trueToyPdfName = "trueToy"+catName+energyStr
-    self.truePdfFunc(self.trueToyPdfName,self.realData,dimuonMass,110,170,wTrueToyImport,dimuonMassZ,self.realDataZ)
-    self.trueToyPdf = self.wTrueToy.pdf("bak")
-    self.trueToyPdf.SetName(self.trueToyPdfName)
-
-    self.pdfAltList = []
-    self.pdfAltwList = []
-    self.pdfAltNameList = [
-        #"ExpLog",
-        #"MOverSq",
-        #"BakOld",
-        "BakExpMOverSq",
-    ]
-    self.pdfAltTitleMap = {
-        #"ExpLog":"Exp(p_{1}m^{2}+p_{2}m+p_{3}ln(m))",
-        #"ExpMOverSq":"#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}",
-        #"MOverSq":"#frac{m}{(m-p_{1})^{2}}",
-        #"BakOld":"Voigtian+Exp",
-        "BakExpMOverSq":"#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}",
-    }
-    self.pdfAltFuncList = [
-        #makeCards.makePDFBakExpLog,
-        #makeCards.makePDFBakMOverSq,
-        #makeCards.makePDFBakOld,
-        makeCards.makePDFBakExpMOverSq,
-    ]
-    for pdfAltName,pdfAltFunc in zip(self.pdfAltNameList,self.pdfAltFuncList):
-      pdfName = "alt"+catName+energyStr+"_"+pdfAltName
-      wAlt = root.RooWorkspace("wAlt"+catName+energyStr+"_"+pdfAltName)
-      pdfAltFunc(pdfName,self.realData,dimuonMass,110,170,getattr(wAlt,"import"),dimuonMassZ,self.realDataZ)
-      altPdf = wAlt.pdf("bak")
-      altPdf.SetName(pdfName)
-      self.pdfAltList.append(altPdf)
-      self.pdfAltwList.append(wAlt)
-
-    self.nBakVar = root.RooRealVar("nBak","N_{B}",self.nData/2.,self.nData*2)
-
-    ### Now load Signal PDFs
-    
+  def __init__(self,category,dataFileNames,energyStr,nToys=10,pklOutFnBase="output/biasData",inputPkl=None):
     self.sigMasses = range(115,156,5)
     self.sigMasses = [125,150]
-    self.sigPdfs = []
-    self.wSigs = []
-    for hmass in self.sigMasses:
-      wSig = root.RooWorkspace("signal"+catName+energyStr+str(hmass))
-      makeCards.makePDFSigNew(catName+energyStr,"sig_ggH",dimuonMass,float(hmass),
-                              getattr(wSig,"import")
-                             )
-      sigPdf = wSig.pdf("ggH")
-      sigPdf.SetName("sigPDF_"+str(hmass)+"_"+catName+energyStr)
-      self.sigPdfs.append(sigPdf)
-      self.wSigs.append(wSig)
+    ## Try to load data from pkl file
+    if inputPkl != None:
+      try:
+        inputPklF = open(inputPkl)
+        self.data = cPickle.load(inputPklF)
+        inputPklF.close()
+        self.pdfAltNameList = self.data['meta']['pdfAltNameList']
+        self.pdfAltNameList = self.data['meta']['pdfAltNameList']
+        self.nToys = self.data['meta']['nToys']
+        self.nData = self.data['meta']['nData']
+        self.catName = self.data['meta']['catName']
+        self.energyStr = self.data['meta']['energyStr']
+        energyStr = self.energyStr
+        self.truePdfName = self.data['meta']['truePdfName']
+        self.truePdfTitle = self.data['meta']['truePdfTitle']
+        self.sigMasses = self.data['meta']['sigMasses']
+      except Exception, err:
+        print("Error loading data from pkl file: "+str(inputPkl))
+        print(err)
+        self.data = None
+    else:
+      self.catName = category[0]
+      self.catCuts = category[1]
+      self.energyStr = energyStr
+      self.nToys = nToys
+      self.pklOutFn = pklOutFnBase+"_"+self.catName+"_"+energyStr+".pkl"
+      self.data = None
+    catName = self.catName
+    canvas = root.TCanvas()
+    self.canvas = canvas
+    ## Run
+    if self.data==None:
+      data = {'meta':{}}
+      self.data = data
+      data['meta']['sigMasses'] = self.sigMasses
+      self.dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",110.,170.)
+      dimuonMass = self.dimuonMass
+      dimuonMass.setRange("low",110,120) # Silly ranges for old fit functionality
+      dimuonMass.setRange("high",130,170)
+      dimuonMass.setRange("signal",120,130)
+      dimuonMass.setRange("signalfit",110,140)
+      self.wTrue = root.RooWorkspace("wTrue")
+      self.wTrueToy = root.RooWorkspace("wTrueToy")
+      wTrueImport = getattr(self.wTrue,"import")
+      wTrueToyImport = getattr(self.wTrueToy,"import")
 
-    for i in self.sigPdfs:
-      i.Print()
+      # Hack to Make makePDFBakOld work
+      self.minMassZ = 88.
+      self.maxMassZ = 94.
+      dimuonMassZ = root.RooRealVar("dimuonMass","dimuonMass",self.minMassZ,self.maxMassZ)
+      self.dimuonMassZ = dimuonMassZ
 
-    self.nSigVar = root.RooRealVar("nSig","N_{S}",-self.nData/4.,self.nData/4)
+      ### Load data
+      
+      self.dataTree = root.TChain()
+      for i in dataFileNames:
+        self.dataTree.Add(i+"/outtree"+self.catName)
+      self.dataTree.SetCacheSize(10000000);
+      self.dataTree.AddBranchToCache("*");
 
-    ### Make results data structure and begin log
+      self.realData = root.RooDataSet("realData"+catName+energyStr,
+                                      "realData"+catName+energyStr,
+                                          self.dataTree,root.RooArgSet(dimuonMass)
+                                        )
+      self.nData = self.realData.sumEntries()
+
+      self.realDataZ = root.RooDataSet("realDataZ"+catName+energyStr,
+                                      "realDataZ"+catName+energyStr,
+                                          self.dataTree,root.RooArgSet(dimuonMassZ)
+                                        )
+
+      ### Make Bak Pdfs
+
+      self.truePdfName = "true"+catName+energyStr
+      self.truePdfTitle = "#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}"
+      data['meta']['truePdfName'] = self.truePdfName
+      data['meta']['truePdfTitle'] = self.truePdfTitle
+      self.truePdfFunc = makeCards.makePDFBakExpMOverSq
+      #self.truePdfTitle ="Voigtian+Exp" 
+      #self.truePdfFunc = makeCards.makePDFBakOld
+      self.truePdfFunc(self.truePdfName,self.realData,dimuonMass,110,170,wTrueImport,dimuonMassZ,self.realDataZ)
+      self.truePdf = self.wTrue.pdf("bak")
+      self.truePdf.SetName(self.truePdfName)
+      self.truePdf.SetTitle("True PDF "+self.truePdfTitle)
+
+      self.trueToyPdfName = "trueToy"+catName+energyStr
+      self.truePdfFunc(self.trueToyPdfName,self.realData,dimuonMass,110,170,wTrueToyImport,dimuonMassZ,self.realDataZ)
+      self.trueToyPdf = self.wTrueToy.pdf("bak")
+      self.trueToyPdf.SetName(self.trueToyPdfName)
+
+      self.pdfAltList = []
+      self.pdfAltwList = []
+      self.pdfAltNameList = [
+          "ExpLog",
+          "MOverSq",
+          "BakOld",
+          #"BakExpMOverSq",
+      ]
+      self.pdfAltFuncList = [
+          makeCards.makePDFBakExpLog,
+          makeCards.makePDFBakMOverSq,
+          makeCards.makePDFBakOld,
+          #makeCards.makePDFBakExpMOverSq,
+      ]
+      data['meta']['pdfAltNameList'] = self.pdfAltNameList
+      for pdfAltName,pdfAltFunc in zip(self.pdfAltNameList,self.pdfAltFuncList):
+        pdfName = "alt"+catName+energyStr+"_"+pdfAltName
+        wAlt = root.RooWorkspace("wAlt"+catName+energyStr+"_"+pdfAltName)
+        pdfAltFunc(pdfName,self.realData,dimuonMass,110,170,getattr(wAlt,"import"),dimuonMassZ,self.realDataZ)
+        altPdf = wAlt.pdf("bak")
+        altPdf.SetName(pdfName)
+        self.pdfAltList.append(altPdf)
+        self.pdfAltwList.append(wAlt)
+
+      self.nBakVar = root.RooRealVar("nBak","N_{B}",self.nData/2.,self.nData*2)
+
+      ### Now load Signal PDFs
+      
+      self.sigPdfs = []
+      self.wSigs = []
+      for hmass in self.sigMasses:
+        wSig = root.RooWorkspace("signal"+catName+energyStr+str(hmass))
+        makeCards.makePDFSigNew(catName+energyStr,"sig_ggH",dimuonMass,float(hmass),
+                                getattr(wSig,"import")
+                               )
+        sigPdf = wSig.pdf("ggH")
+        sigPdf.SetName("sigPDF_"+str(hmass)+"_"+catName+energyStr)
+        self.sigPdfs.append(sigPdf)
+        self.wSigs.append(wSig)
+
+      for i in self.sigPdfs:
+        i.Print()
+
+      self.nSigVar = root.RooRealVar("nSig","N_{S}",-self.nData/4.,self.nData/4)
+
+      ### Make results data structure and begin log
+
+      data['meta']['nToys'] = self.nToys
+      data['meta']['nData'] = self.nData
+      data['meta']['catName'] = self.catName
+      data['meta']['energyStr'] = self.energyStr
+
+      for hmass in self.sigMasses:
+        data[hmass] = {}
+        data[hmass]['zTrue'] = []
+        data[hmass]['pullAll'] = []
+        for pdfAltName in self.pdfAltNameList:
+          data[hmass][pdfAltName] = {'z':[],'pull':[]}
+
+      ### Toy Loop
+
+      for iToy in range(self.nToys):
+        toyData = self.truePdf.generate(root.RooArgSet(dimuonMass),int(self.nData))
+        toyData.SetName("toyData"+catName+energyStr+str(iToy))
+        plotThisToy = (iToy % 10 == 0)
+        saveThisData = (iToy % 100 == 99)
+        for hmass,sigPdf in zip(self.sigMasses,self.sigPdfs):
+          frame = None 
+          if plotThisToy:
+            frame = dimuonMass.frame()
+            toyData.plotOn(frame)
+  
+          trueToySBPdf = root.RooAddPdf("SBTrue"+catName+energyStr+str(hmass)+"_"+str(iToy),"",
+                              root.RooArgList(self.trueToyPdf,sigPdf),
+                              root.RooArgList(self.nBakVar,self.nSigVar)
+                          )
+          trueToySBPdf.fitTo(toyData,
+                             PRINTLEVEL
+                           )
+          if plotThisToy:
+            trueToySBPdf.plotOn(frame,root.RooFit.LineColor(6))
+            #trueToySBPdf.plotOn(frame,root.RooFit.Components(root.RooArgSet(self.trueToyPdf)),root.RooFit.LineColor(1),root.RooFit.LineStyle(2))
+          nTrueToy = self.nSigVar.getVal()
+          errTrueToy = self.nSigVar.getError()
+          if errTrueToy != 0.:
+            data[hmass]['zTrue'].append(nTrueToy/errTrueToy)
+          for pdfAlt,pdfAltName,color in zip(self.pdfAltList,self.pdfAltNameList,range(2,len(self.pdfAltList)+2)):
+              altSBPdf = root.RooAddPdf("SB"+pdfAltName+catName+energyStr+str(hmass)+"_"+str(iToy),"",
+                              root.RooArgList(pdfAlt,sigPdf),
+                              root.RooArgList(self.nBakVar,self.nSigVar)
+                          )
+              altSBPdf.fitTo(toyData,
+                              PRINTLEVEL
+                              )
+              if plotThisToy:
+                altSBPdf.plotOn(frame,root.RooFit.LineColor(color))
+                #altSBPdf.plotOn(frame,root.RooFit.Components(root.RooArgSet(pdfAlt)),root.RooFit.LineColor(color),root.RooFit.LineStyle(2))
+              nAlt = self.nSigVar.getVal()
+              errAlt = self.nSigVar.getError()
+              if errAlt == 0.:
+                  continue
+              pull = (nTrueToy-nAlt)/errAlt
+              data[hmass][pdfAltName]['z'].append(nAlt/errAlt)
+              data[hmass][pdfAltName]['pull'].append(pull)
+              data[hmass]['pullAll'].append(pull)
+          if plotThisToy:
+            frame.Draw()
+            canvas.SaveAs("output/debug_"+catName+"_"+energyStr+"_"+str(hmass)+"_"+str(iToy)+".png")
+          if saveThisData:
+            pklTmpFile = open(self.pklOutFn+"."+str(iToy),'w')
+            cPickle.dump(data,pklTmpFile)
+            pklTmpFile.close()
+        del toyData
+
+      pklFile = open(self.pklOutFn,'w')
+      cPickle.dump(data,pklFile)
+      pklFile.close()
 
     outStr = "#"*80+"\n"
     outStr = "#"*80+"\n"
@@ -151,64 +247,7 @@ class BiasStudy:
     outStr += "nData Events: {0}\n".format(self.nData)
     outStr += "\n"
 
-    data = {}
-    self.data = data
-    for hmass in self.sigMasses:
-      data[hmass] = {}
-      data[hmass]['zTrue'] = []
-      data[hmass]['pullAll'] = []
-      for pdfAltName in self.pdfAltNameList:
-        data[hmass][pdfAltName] = {'z':[],'pull':[]}
-
-    ### Toy Loop
-
-    for iToy in range(self.nToys):
-      toyData = self.truePdf.generate(root.RooArgSet(dimuonMass),int(self.nData))
-      toyData.SetName("toyData"+catName+energyStr+str(iToy))
-      plotThisToy = (iToy % 10 == 0)
-      for hmass,sigPdf in zip(self.sigMasses,self.sigPdfs):
-        frame = None 
-        if plotThisToy:
-          frame = dimuonMass.frame()
-          toyData.plotOn(frame)
-  
-        trueToySBPdf = root.RooAddPdf("SBTrue"+catName+energyStr+str(hmass)+"_"+str(iToy),"",
-                            root.RooArgList(self.trueToyPdf,sigPdf),
-                            root.RooArgList(self.nBakVar,self.nSigVar)
-                        )
-        trueToySBPdf.fitTo(toyData,
-                           PRINTLEVEL
-                         )
-        if plotThisToy:
-          trueToySBPdf.plotOn(frame,root.RooFit.LineColor(6))
-          #trueToySBPdf.plotOn(frame,root.RooFit.Components(root.RooArgSet(self.trueToyPdf)),root.RooFit.LineColor(1),root.RooFit.LineStyle(2))
-        nTrueToy = self.nSigVar.getVal()
-        errTrueToy = self.nSigVar.getError()
-        if errTrueToy != 0.:
-          data[hmass]['zTrue'].append(nTrueToy/errTrueToy)
-        for pdfAlt,pdfAltName,color in zip(self.pdfAltList,self.pdfAltNameList,range(2,len(self.pdfAltList)+2)):
-            altSBPdf = root.RooAddPdf("SB"+pdfAltName+catName+energyStr+str(hmass)+"_"+str(iToy),"",
-                            root.RooArgList(pdfAlt,sigPdf),
-                            root.RooArgList(self.nBakVar,self.nSigVar)
-                        )
-            altSBPdf.fitTo(toyData,
-                            PRINTLEVEL
-                            )
-            if plotThisToy:
-              altSBPdf.plotOn(frame,root.RooFit.LineColor(color))
-              #altSBPdf.plotOn(frame,root.RooFit.Components(root.RooArgSet(pdfAlt)),root.RooFit.LineColor(color),root.RooFit.LineStyle(2))
-            nAlt = self.nSigVar.getVal()
-            errAlt = self.nSigVar.getError()
-            if errAlt == 0.:
-                continue
-            pull = (nTrueToy-nAlt)/errAlt
-            data[hmass][pdfAltName]['z'].append(nAlt/errAlt)
-            data[hmass][pdfAltName]['pull'].append(pull)
-            data[hmass]['pullAll'].append(pull)
-        if plotThisToy:
-          frame.Draw()
-          canvas.SaveAs("output/debug_"+catName+"_"+energyStr+"_"+str(hmass)+"_"+str(iToy)+".png")
-      del toyData
+    data = self.data
 
     for hmass in self.sigMasses:
       outStr +=  "mass: "+str(hmass)+'\n'
@@ -224,6 +263,12 @@ class BiasStudy:
     self.outStr = outStr
 
   def plot(self,outputPrefix):
+    self.pdfAltTitleMap = {
+        "ExpLog":"Exp(p_{1}m^{2}+p_{2}m+p_{3}ln(m))",
+        "MOverSq":"#frac{m}{(m-p_{1})^{2}}",
+        "BakOld":"Voigtian+Exp",
+        "BakExpMOverSq":"#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}",
+    }
     titleMap = {
       "Jets01PassPtG10BB": "0,1-Jet Tight BB",
       "Jets01PassPtG10BO": "0,1-Jet Tight BO",
@@ -268,6 +313,7 @@ class BiasStudy:
       tlatex.SetTextAlign(12)
       tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.truePdfTitle)
       tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"All Alternate PDFs")
+      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
       tlatex.SetTextAlign(32)
       tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
       line = self.setYMaxAndDrawVertLines(hist,median(self.data[hmass]['pullAll']))
@@ -287,6 +333,7 @@ class BiasStudy:
         tlatex.SetTextAlign(12)
         tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.truePdfTitle)
         tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfAltTitleMap[pdfAltName])
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
         tlatex.SetTextAlign(32)
         tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
         line = self.setYMaxAndDrawVertLines(hist,median(self.data[hmass][pdfAltName]['pull']))
@@ -347,11 +394,11 @@ if __name__ == "__main__":
   jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
-  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
@@ -373,10 +420,17 @@ if __name__ == "__main__":
   logFile = open(outDir+"biasStudy.log",'w')
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
   logFile.write("# {0}\n\n".format(now))
-  for category in categories:
-    bs = BiasStudy(category,dataFns8TeV,"8TeV",1000)
-    logFile.write(bs.outStr)
-    bs.plot(outDir+"bias_")
+  inputPklFiles = glob.glob(outDir+"*.pkl")
+  if len(inputPklFiles)>0:
+    for inputPkl in inputPklFiles:
+      bs = BiasStudy(None,None,None,None,inputPkl=inputPkl)
+      logFile.write(bs.outStr)
+      bs.plot(outDir+"bias_")
+  else:
+    for category in categories:
+      bs = BiasStudy(category,dataFns8TeV,"8TeV",10)
+      logFile.write(bs.outStr)
+      bs.plot(outDir+"bias_")
     
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
   logFile.write("\n\n# {0}\n".format(now))
