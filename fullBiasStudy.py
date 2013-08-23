@@ -116,12 +116,20 @@ class BiasStudy:
       for hmass in self.sigMasses:
         outStr +=  "mass: "+str(hmass)+'\n'
         dataH = data[refPdfName][hmass]
-        outStr +=  "  True Z Scores:   {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataH['zTrue']),stddev(dataH['zTrue']),median(dataH['zTrue']))
+        shapiroStat, shapiroP = scipy.stats.shapiro(dataH['zTrue'])
+        sumChi2 = sum(dataH['chi2True'])
+        sumNDF = sum(dataH['ndfTrue'])
+        outStr +=  "  True Z Scores:   {0:.2f} +/- {1:.2f}  Median: {2:.2f}    S-W Normal p-Val: {3:.3g}\n".format(mean(dataH['zTrue']),stddev(dataH['zTrue']),median(dataH['zTrue']),shapiroP)
+        outStr +=  "  True Fit Prob:   {0:.2f},                              chi2: {1:.2f}  NDF: {2}\n".format(scipy.stats.chi2.sf(sumChi2,sumNDF),sumChi2,sumNDF)
         outStr +=  "  All Pulls:       {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataH['pullAll']),stddev(dataH['pullAll']),median(dataH['pullAll']))
         for pdfAltName in self.pdfAltNamesDict[refPdfName]:
           dataHA = dataH[pdfAltName]
+          shapiroStat, shapiroP = scipy.stats.shapiro(dataHA['z'])
+          sumChi2 = sum(dataHA['chi2'])
+          sumNDF = sum(dataHA['ndf'])
           outStr +=  "  "+pdfAltName+":\n"
-          outStr +=  "    Z Scores:      {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataHA['z']),stddev(dataHA['z']),median(dataHA['z']))
+          outStr +=  "    Z Scores:      {0:.2f} +/- {1:.2f}  Median: {2:.2f}    S-W Normal p-Val: {3:.3g}\n".format(mean(dataHA['z']),stddev(dataHA['z']),median(dataHA['z']),shapiroP)
+          outStr +=  "    Fit Prob:      {0:.2f},                              chi2: {1:.2f}  NDF: {2}\n".format(scipy.stats.chi2.sf(sumChi2,sumNDF),sumChi2,sumNDF)
           outStr +=  "    Pulls:         {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataHA['pull']),stddev(dataHA['pull']),median(dataHA['pull']))
     print outStr
     self.outStr = outStr
@@ -203,9 +211,6 @@ class BiasStudy:
         sigPdfs.append(sigPdf)
         wSigs.append(wSig)
 
-      for i in sigPdfs:
-        i.Print()
-
       nSigVar = root.RooRealVar("nSig","N_{S}",-nData/4.,nData/4)
 
       ### Make results data structure and begin log
@@ -274,8 +279,9 @@ class BiasStudy:
               nAlt = nSigVar.getVal()
               errAlt = nSigVar.getError()
               if errAlt == 0.:
-                  continue
-              pull = (nTrueToy-nAlt)/errAlt
+                  pull = -1e9
+              else:
+                  pull = (nTrueToy-nAlt)/errAlt
               data[truePdfName][hmass][pdfAltName]['n'].append(nAlt)
               data[truePdfName][hmass][pdfAltName]['err'].append(errAlt)
               data[truePdfName][hmass][pdfAltName]['chi2'].append(altChi2Var.getVal())
@@ -527,6 +533,50 @@ class BiasStudy:
           saveAs(canvas,outputPrefix+self.catName+"_"+str(hmass)+"_errNvPull_Ref"+refPdfName+"_Alt"+pdfAltName)
           canvas.Clear()
 
+    ###### QQ plot
+    #for hmass in self.sigMasses:
+    #  allZTrues = []
+    #  allZAlts = []
+    #  for refPdfName in self.refPdfNameList:
+    #    allZTrues.extend(self.data[refPdfName][hmass]['zTrue'])
+    #    for pdfAltName in self.pdfAltNamesDict[refPdfName]:
+    #      allZAlts.extend(self.data[refPdfName][hmass][pdfAltName]['z'])
+    #  zRefQQ = scipy.stats.probplot(allZTrues)
+    #  zAltQQ = scipy.stats.probplot(allZAlts)
+    #  refGraph = root.TGraph()
+    #  altGraph = root.TGraph()
+    #  oneGraph = root.TGraph()
+    #  oneGraph.SetPoint(0,-2,-2)
+    #  oneGraph.SetPoint(1,2,2)
+    #  refGraph.SetLineColor(root.kRed)
+    #  altGraph.SetLineColor(root.kBlue)
+    #  refGraph.SetMarkerColor(root.kRed)
+    #  altGraph.SetMarkerColor(root.kBlue)
+    #  iGraph = 0
+    #  for x,y in zip(*zRefQQ[0]):
+    #    refGraph.SetPoint(iGraph,x,y)
+    #    iGraph += 1
+    #  iGraph = 0
+    #  for x,y in zip(*zAltQQ[0]):
+    #    altGraph.SetPoint(iGraph,x,y)
+    #    iGraph += 1
+    #  hist = root.TH2F("hist"+str(iHist),"",1,-3.,3.,1,-3.,3.)
+    #  iHist += 1
+    #  setHistTitles(hist,"Gaussian Expected Quantiles","Gaussian Observed Quantiles")
+    #  hist.Draw()
+    #  oneGraph.Draw("L")
+    #  refGraph.Draw("LP")
+    #  altGraph.Draw("LP")
+    #  tlatex.SetTextAlign(12)
+    #  tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+    #  tlatex.SetTextAlign(12)
+    #  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"m_{H} = "+str(hmass)+" GeV/c^{2}")
+    #  tlatex.SetTextAlign(32)
+    #  tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+    #  canvas.RedrawAxis()
+    #  saveAs(canvas,outputPrefix+self.catName+"_"+str(hmass)+"_QQ")
+    #  canvas.Clear()
+
   def setYMaxAndDrawVertLines(self,hist,x):
     ymax = 0.
     for i in range(1,hist.GetXaxis().GetNbins()+1):
@@ -549,12 +599,12 @@ if __name__ == "__main__":
   jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
-  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
@@ -583,7 +633,7 @@ if __name__ == "__main__":
       bs.plot(outDir+"bias_")
   else:
     for category in categories:
-      bs = BiasStudy(category,dataFns8TeV,"8TeV",5)
+      bs = BiasStudy(category,dataFns8TeV,"8TeV",100)
       logFile.write(bs.outStr)
       bs.plot(outDir+"bias_")
     
