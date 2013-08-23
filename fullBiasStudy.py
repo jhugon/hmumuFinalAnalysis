@@ -30,6 +30,7 @@ canvas = root.TCanvas()
 class BiasStudy:
   #def __init__(self,category,dataFiles,energyStr):
   def __init__(self,category,dataFileNames,energyStr,nToys=10,pklOutFnBase="output/biasData",inputPkl=None):
+    self.dataFileNames = dataFileNames
     self.sigMasses = range(115,156,5)
     self.sigMasses = [125,150]
     ## Try to load data from pkl file
@@ -46,7 +47,6 @@ class BiasStudy:
         self.energyStr = self.data['meta']['energyStr']
         energyStr = self.energyStr
         self.truePdfNameStr = self.data['meta']['truePdfName']
-        self.truePdfTitle = self.data['meta']['truePdfTitle']
         self.sigMasses = self.data['meta']['sigMasses']
       except Exception, err:
         print("Error loading data from pkl file: "+str(inputPkl))
@@ -64,9 +64,53 @@ class BiasStudy:
     self.canvas = canvas
     ## Run
     if self.data==None:
+      self.runStudy()
+
+    outStr = "#"*80+"\n"
+    outStr = "#"*80+"\n"
+    outStr += "\n"+self.catName +"  "+self.energyStr + "\n\n"
+
+    outStr += "nToys: {0}\n".format(self.nToys)
+    outStr += "nData Events: {0}\n".format(self.nData)
+    outStr += "\n"
+
+    data = self.data
+
+    for hmass in self.sigMasses:
+      outStr +=  "mass: "+str(hmass)+'\n'
+      dataH = data[hmass]
+      outStr +=  "  True Z Scores:   {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataH['zTrue']),stddev(dataH['zTrue']),median(dataH['zTrue']))
+      outStr +=  "  All Pulls:       {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataH['pullAll']),stddev(dataH['pullAll']),median(dataH['pullAll']))
+      for pdfAltName in self.pdfAltNameList:
+        dataHA = dataH[pdfAltName]
+        outStr +=  "  "+pdfAltName+":\n"
+        outStr +=  "    Z Scores:      {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataHA['z']),stddev(dataHA['z']),median(dataHA['z']))
+        outStr +=  "    Pulls:         {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataHA['pull']),stddev(dataHA['pull']),median(dataHA['pull']))
+    print outStr
+    self.outStr = outStr
+
+  def runStudy(self):
       data = {'meta':{}}
       self.data = data
       data['meta']['sigMasses'] = self.sigMasses
+      catName = self.catName
+      energyStr = self.energyStr
+      self.truePdfName = "true"+catName+energyStr
+      self.truePdfNameStr = "ExpMOverSq"
+      self.truePdfFunc = makeCards.makePDFBakExpMOverSq
+      self.pdfAltNameList = [
+          "ExpLog",
+          "MOverSq",
+          "Old",
+          "ExpMOverSq",
+      ]
+      self.pdfAltFuncList = [
+          makeCards.makePDFBakExpLog,
+          makeCards.makePDFBakMOverSq,
+          makeCards.makePDFBakOld,
+          makeCards.makePDFBakExpMOverSq,
+      ]
+
       self.dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",110.,170.)
       dimuonMass = self.dimuonMass
       dimuonMass.setRange("low",110,120) # Silly ranges for old fit functionality
@@ -87,7 +131,7 @@ class BiasStudy:
       ### Load data
       
       self.dataTree = root.TChain()
-      for i in dataFileNames:
+      for i in self.dataFileNames:
         self.dataTree.Add(i+"/outtree"+self.catName)
       self.dataTree.SetCacheSize(10000000);
       self.dataTree.AddBranchToCache("*");
@@ -105,18 +149,11 @@ class BiasStudy:
 
       ### Make Bak Pdfs
 
-      self.truePdfName = "true"+catName+energyStr
-      self.truePdfNameStr = "BakExpMOverSq"
-      self.truePdfTitle = "#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}"
       data['meta']['truePdfName'] = self.truePdfNameStr
-      data['meta']['truePdfTitle'] = self.truePdfTitle
-      self.truePdfFunc = makeCards.makePDFBakExpMOverSq
-      #self.truePdfTitle ="Voigtian+Exp" 
-      #self.truePdfFunc = makeCards.makePDFBakOld
       self.truePdfFunc(self.truePdfName,self.realData,dimuonMass,110,170,wTrueImport,dimuonMassZ,self.realDataZ)
       self.truePdf = self.wTrue.pdf("bak")
       self.truePdf.SetName(self.truePdfName)
-      self.truePdf.SetTitle("True PDF "+self.truePdfTitle)
+      self.truePdf.SetTitle("True PDF ")
 
       self.trueToyPdfName = "trueToy"+catName+energyStr
       self.truePdfFunc(self.trueToyPdfName,self.realData,dimuonMass,110,170,wTrueToyImport,dimuonMassZ,self.realDataZ)
@@ -125,18 +162,6 @@ class BiasStudy:
 
       self.pdfAltList = []
       self.pdfAltwList = []
-      self.pdfAltNameList = [
-          "ExpLog",
-          "MOverSq",
-          "BakOld",
-          #"BakExpMOverSq",
-      ]
-      self.pdfAltFuncList = [
-          makeCards.makePDFBakExpLog,
-          makeCards.makePDFBakMOverSq,
-          makeCards.makePDFBakOld,
-          #makeCards.makePDFBakExpMOverSq,
-      ]
       data['meta']['pdfAltNameList'] = self.pdfAltNameList
       for pdfAltName,pdfAltFunc in zip(self.pdfAltNameList,self.pdfAltFuncList):
         pdfName = "alt"+catName+energyStr+"_"+pdfAltName
@@ -261,35 +286,13 @@ class BiasStudy:
       cPickle.dump(data,pklFile)
       pklFile.close()
 
-    outStr = "#"*80+"\n"
-    outStr = "#"*80+"\n"
-    outStr += "\n"+self.catName +"  "+self.energyStr + "\n\n"
-
-    outStr += "nToys: {0}\n".format(self.nToys)
-    outStr += "nData Events: {0}\n".format(self.nData)
-    outStr += "\n"
-
-    data = self.data
-
-    for hmass in self.sigMasses:
-      outStr +=  "mass: "+str(hmass)+'\n'
-      dataH = data[hmass]
-      outStr +=  "  True Z Scores:   {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataH['zTrue']),stddev(dataH['zTrue']),median(dataH['zTrue']))
-      outStr +=  "  All Pulls:       {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataH['pullAll']),stddev(dataH['pullAll']),median(dataH['pullAll']))
-      for pdfAltName in self.pdfAltNameList:
-        dataHA = dataH[pdfAltName]
-        outStr +=  "  "+pdfAltName+":\n"
-        outStr +=  "    Z Scores:      {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataHA['z']),stddev(dataHA['z']),median(dataHA['z']))
-        outStr +=  "    Pulls:         {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataHA['pull']),stddev(dataHA['pull']),median(dataHA['pull']))
-    print outStr
-    self.outStr = outStr
 
   def plot(self,outputPrefix):
-    self.pdfAltTitleMap = {
+    self.pdfTitleMap = {
         "ExpLog":"Exp(p_{1}m^{2}+p_{2}m+p_{3}ln(m))",
         "MOverSq":"#frac{m}{(m-p_{1})^{2}}",
-        "BakOld":"Voigtian+Exp",
-        "BakExpMOverSq":"#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}",
+        "Old":"Voigtian+Exp",
+        "ExpMOverSq":"#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}",
     }
     titleMap = {
       "Jets01PassPtG10BB": "0,1-Jet Tight BB",
@@ -335,7 +338,7 @@ class BiasStudy:
       tlatex.SetTextAlign(12)
       tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
       tlatex.SetTextAlign(12)
-      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.truePdfTitle)
+      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[self.truePdfNameStr])
       tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"All Alternate PDFs")
       tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
       tlatex.SetTextAlign(32)
@@ -355,8 +358,8 @@ class BiasStudy:
         tlatex.SetTextAlign(12)
         tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
         tlatex.SetTextAlign(12)
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.truePdfTitle)
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfAltTitleMap[pdfAltName])
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[self.truePdfNameStr])
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
         tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
         tlatex.SetTextAlign(32)
         tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -391,8 +394,8 @@ class BiasStudy:
       tlatex.SetTextAlign(12)
       tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
       tlatex.SetTextAlign(12)
-      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.truePdfTitle)
-      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfAltTitleMap[pdfAltName])
+      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[self.truePdfNameStr])
+      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
       tlatex.SetTextAlign(32)
       tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
       canvas.RedrawAxis()
@@ -410,7 +413,7 @@ class BiasStudy:
       tlatex.SetTextAlign(12)
       tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
       tlatex.SetTextAlign(12)
-      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.truePdfTitle)
+      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[self.truePdfNameStr])
       tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"m_{H} = "+str(hmass)+" GeV/c^{2}")
       tlatex.SetTextAlign(32)
       tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -429,7 +432,7 @@ class BiasStudy:
         tlatex.SetTextAlign(12)
         tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
         tlatex.SetTextAlign(12)
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Alternate PDF: "+self.pdfAltTitleMap[pdfAltName])
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
         tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"m_{H} = "+str(hmass)+" GeV/c^{2}")
         tlatex.SetTextAlign(32)
         tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -467,8 +470,8 @@ class BiasStudy:
         tlatex.SetTextAlign(12)
         tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
         tlatex.SetTextAlign(12)
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.truePdfTitle)
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfAltTitleMap[pdfAltName])
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[self.truePdfNameStr])
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
         tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
         tlatex.SetTextAlign(32)
         tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -506,8 +509,8 @@ class BiasStudy:
         tlatex.SetTextAlign(12)
         tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
         tlatex.SetTextAlign(12)
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.truePdfTitle)
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfAltTitleMap[pdfAltName])
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[self.truePdfNameStr])
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
         tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
         tlatex.SetTextAlign(32)
         tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -571,7 +574,7 @@ if __name__ == "__main__":
       bs.plot(outDir+"bias_")
   else:
     for category in categories:
-      bs = BiasStudy(category,dataFns8TeV,"8TeV",10)
+      bs = BiasStudy(category,dataFns8TeV,"8TeV",3)
       logFile.write(bs.outStr)
       bs.plot(outDir+"bias_")
     
