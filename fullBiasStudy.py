@@ -176,15 +176,20 @@ class BiasStudy:
       for hmass in self.sigMasses:
         data[hmass] = {}
         data[hmass]['zTrue'] = []
+        data[hmass]['nTrue'] = []
+        data[hmass]['chi2True'] = []
+        data[hmass]['ndfTrue'] = []
+        data[hmass]['errTrue'] = []
         data[hmass]['pullAll'] = []
         for pdfAltName in self.pdfAltNameList:
-          data[hmass][pdfAltName] = {'z':[],'pull':[]}
+          data[hmass][pdfAltName] = {'z':[],'pull':[],'n':[],'err':[],'chi2':[],'ndf':[]}
 
       ### Toy Loop
 
       for iToy in range(self.nToys):
         toyData = self.truePdf.generate(root.RooArgSet(dimuonMass),int(self.nData))
         toyData.SetName("toyData"+catName+energyStr+str(iToy))
+        toyDataHist = toyData.binnedClone("toyDataHist"+catName+energyStr+str(iToy))
         plotThisToy = (iToy % 10 == 0)
         saveThisData = (iToy % 100 == 99)
         for hmass,sigPdf in zip(self.sigMasses,self.sigPdfs):
@@ -200,11 +205,18 @@ class BiasStudy:
           trueToySBPdf.fitTo(toyData,
                              PRINTLEVEL
                            )
+          chi2TrueToyVar = trueToySBPdf.createChi2(toyDataHist)
+          ndfTrue = dimuonMass.getBins() - 1  # b/c roofit normalizes
+          ndfTrue -= trueToySBPdf.getParameters(toyDataHist).getSize()
           if plotThisToy:
             trueToySBPdf.plotOn(frame,root.RooFit.LineColor(6))
             #trueToySBPdf.plotOn(frame,root.RooFit.Components(root.RooArgSet(self.trueToyPdf)),root.RooFit.LineColor(1),root.RooFit.LineStyle(2))
           nTrueToy = self.nSigVar.getVal()
           errTrueToy = self.nSigVar.getError()
+          data[hmass]['nTrue'].append(nTrueToy)
+          data[hmass]['errTrue'].append(errTrueToy)
+          data[hmass]['chi2True'].append(chi2TrueToyVar.getVal())
+          data[hmass]['ndfTrue'].append(ndfTrue)
           if errTrueToy != 0.:
             data[hmass]['zTrue'].append(nTrueToy/errTrueToy)
           for pdfAlt,pdfAltName,color in zip(self.pdfAltList,self.pdfAltNameList,range(2,len(self.pdfAltList)+2)):
@@ -215,6 +227,9 @@ class BiasStudy:
               altSBPdf.fitTo(toyData,
                               PRINTLEVEL
                               )
+              altChi2Var = altSBPdf.createChi2(toyDataHist)
+              ndfAlt = dimuonMass.getBins() - 1  # b/c roofit normalizes
+              ndfAlt -= altSBPdf.getParameters(toyDataHist).getSize()
               if plotThisToy:
                 altSBPdf.plotOn(frame,root.RooFit.LineColor(color))
                 #altSBPdf.plotOn(frame,root.RooFit.Components(root.RooArgSet(pdfAlt)),root.RooFit.LineColor(color),root.RooFit.LineStyle(2))
@@ -223,6 +238,10 @@ class BiasStudy:
               if errAlt == 0.:
                   continue
               pull = (nTrueToy-nAlt)/errAlt
+              data[hmass][pdfAltName]['n'].append(nAlt)
+              data[hmass][pdfAltName]['err'].append(errAlt)
+              data[hmass][pdfAltName]['chi2'].append(altChi2Var.getVal())
+              data[hmass][pdfAltName]['ndf'].append(ndfAlt)
               data[hmass][pdfAltName]['z'].append(nAlt/errAlt)
               data[hmass][pdfAltName]['pull'].append(pull)
               data[hmass]['pullAll'].append(pull)
@@ -400,7 +419,7 @@ if __name__ == "__main__":
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
   dataFns8TeV = [
@@ -428,7 +447,7 @@ if __name__ == "__main__":
       bs.plot(outDir+"bias_")
   else:
     for category in categories:
-      bs = BiasStudy(category,dataFns8TeV,"8TeV",10)
+      bs = BiasStudy(category,dataFns8TeV,"8TeV",100)
       logFile.write(bs.outStr)
       bs.plot(outDir+"bias_")
     
