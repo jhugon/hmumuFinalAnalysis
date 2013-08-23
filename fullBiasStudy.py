@@ -166,7 +166,7 @@ class BiasStudy:
 
       ### Make Bak Pdfs
 
-      truePdfFunc(truePdfName,realData,dimuonMass,110,170,wTrueImport,dimuonMassZ,realDataZ)
+      truePdfFunc(truePdfName+catName+energyStr,realData,dimuonMass,110,170,wTrueImport,dimuonMassZ,realDataZ)
       truePdf = wTrue.pdf("bak")
       truePdf.SetName(truePdfName)
       truePdf.SetTitle("True PDF ")
@@ -553,9 +553,9 @@ if __name__ == "__main__":
   #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
   dataFns8TeV = [
@@ -583,7 +583,7 @@ if __name__ == "__main__":
       bs.plot(outDir+"bias_")
   else:
     for category in categories:
-      bs = BiasStudy(category,dataFns8TeV,"8TeV",3)
+      bs = BiasStudy(category,dataFns8TeV,"8TeV",5)
       logFile.write(bs.outStr)
       bs.plot(outDir+"bias_")
     
