@@ -337,7 +337,7 @@ class BiasStudy:
     for refPdfName in self.refPdfNameList:
       ##### Pull plots 1D
       for hmass in self.sigMasses:
-        if len(self.pdfAltNamesDict[refPdfName]>1):
+        if len(self.pdfAltNamesDict[refPdfName])>1:
           hist = root.TH1F("hist"+str(iHist),"",30,-3,3)
           setHistTitles(hist,"(N_{sig}(Alt)-N_{sig}(Ref))/#DeltaN_{sig}(Alt)","N_{Toys}")
           iHist += 1
