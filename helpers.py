@@ -2212,7 +2212,7 @@ def fitDGFindQuantiles(hist,level):
     return quants
         
 class RooModelPlotter:
-  def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None,RangeName="",canvas=None,caption1=""):
+  def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None,RangeName="",canvas=None,caption1="",caption2=""):
     self.xVar = xVar
     self.pdf = pdf
     self.data = data
@@ -2226,6 +2226,7 @@ class RooModelPlotter:
     nowStr = str(int(time.time()*1e6))
     self.nowStr = nowStr
     self.caption1 = caption1
+    self.caption2 = caption2
 
     self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(lumi)
 
@@ -2500,6 +2501,9 @@ class RooModelPlotter:
       energyStr = energyStr.replace("TeV"," TeV")
     if (self.energyStr != ""):
       self.tlatex.DrawLatex(self.legPos[0]-0.01,0.875,"#sqrt{s} = "+self.energyStr)
+
+    if self.caption2 != "":
+      self.tlatex.DrawLatex(self.legPos[0]-0.01,0.765,self.caption2)
 
     pad2.cd()
     self.tlatex.SetTextSize(self.pullsHist.GetYaxis().GetLabelSize())
