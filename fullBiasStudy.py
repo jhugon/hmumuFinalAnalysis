@@ -88,18 +88,22 @@ class BiasStudy:
       data['meta']['nToys'] = self.nToys
       data['meta']['catName'] = self.catName
       data['meta']['energyStr'] = self.energyStr
-      self.dataTree = root.TChain()
       self.iPklAutoSave = 1
-      for i in self.dataFileNames:
-        self.dataTree.Add(i+"/outtree"+self.catName)
-      self.dataTree.SetCacheSize(10000000);
-      self.dataTree.AddBranchToCache("*");
+      nProcesses = 4
+      nJobs = 4
+      if nToys < 20:
+        nJobs = 1
       for refPdfName in self.refPdfNameList:
-        self.runStudy(refPdfName)
+        pdfAltNameList = self.pdfAltNamesDict[refPdfName]
+        for iJob in range(nJobs):
+          studyResults = self.runStudy(self.catName,self.energyStr,refPdfName,pdfAltNameList,self.dataFileNames,self.sigMasses,iJob=iJob,toysPerJob=nToys)
+          self.mergeDicts(data,studyResults)
+        print "length of zTrue: ", len(data[refPdfName][125]['zTrue'])
       pklFile = open(self.pklOutFn,'w')
       cPickle.dump(data,pklFile)
       pklFile.close()
 
+    self.nData = self.data['meta']['nData']
     outStr = "#"*80+"\n"
     outStr = "#"*80+"\n"
     outStr += "\n"+self.catName +"  "+self.energyStr + "\n\n"
@@ -133,12 +137,60 @@ class BiasStudy:
     print outStr
     self.outStr = outStr
 
-  def runStudy(self,truePdfName):
-      data = self.data
-      catName = self.catName
-      energyStr = self.energyStr
+  def mergeDicts(self,data,newData):
+    newDataKeys = newData.keys()
+    dataKeys = data.keys()
+    for key in newDataKeys:
+      if key == 'meta':
+        data[key]['nData'] = newData[key]['nData']
+      elif not (key in dataKeys):
+        data[key] = newData[key]
+      else:
+        masses = sorted(newData[key].keys())
+        massesOld = sorted(data[key].keys())
+        assert(len(masses)==len(massesOld))
+        for old,new in zip(masses,massesOld):
+          if old != new:
+            print "masses not equal:",old,new
+            assert(False)
+        for mass in masses:
+          subkeys = sorted(newData[key][mass])
+          subkeysOld = sorted(data[key][mass])
+          assert(len(subkeys) == len(subkeysOld))
+          for old,new in zip(subkeys,subkeysOld):
+            if old != new:
+              print "subkeys not equal:",old,new
+              assert(False)
+          for subkey in subkeys:
+            if type(newData[key][mass][subkey])==list:
+              assert(type(data[key][mass][subkey])==list)
+              data[key][mass][subkey].extend(newData[key][mass][subkey])
+            else:
+              subsubkeys = sorted(newData[key][mass][subkey])
+              subsubkeysOld = sorted(data[key][mass][subkey])
+              assert(len(subsubkeys) == len(subsubkeysOld))
+              for old,new in zip(subsubkeys,subsubkeysOld):
+                if old != new:
+                  print "subsubkeys not equal:",old,new
+                  assert(False)
+              for subsubkey in subsubkeys:
+                assert(type(data[key][mass][subkey][subsubkey])==list)
+                assert(type(newData[key][mass][subkey][subsubkey])==list)
+                data[key][mass][subkey][subsubkey].extend(newData[key][mass][subkey][subsubkey])
+
+  def runStudy(self,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sigMasses,iJob=-1,toysPerJob=50):
+      """
+        Pure function so that we can do multiprocessing!!
+      """
+
+      randomGenerator = root.RooRandom.randomGenerator()
+      randomGenerator.SetSeed(10001+iJob)
+      dataTree = root.TChain()
+      for i in dataFileNames:
+        dataTree.Add(i+"/outtree"+catName)
+      dataTree.SetCacheSize(10000000);
+      dataTree.AddBranchToCache("*");
       truePdfFunc = getattr(makeCards,"makePDFBak"+truePdfName)
-      pdfAltNameList = self.pdfAltNamesDict[truePdfName]
       pdfAltFuncList = [ getattr(makeCards,"makePDFBak"+i) for i in pdfAltNameList]
 
       dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",110.,170.)
@@ -161,14 +213,12 @@ class BiasStudy:
       
       realData = root.RooDataSet("realData"+catName+energyStr,
                                       "realData"+catName+energyStr,
-                                          self.dataTree,root.RooArgSet(dimuonMass)
+                                          dataTree,root.RooArgSet(dimuonMass)
                                         )
       nData = realData.sumEntries()
-      self.nData = nData
-      data['meta']['nData'] = self.nData
       realDataZ = root.RooDataSet("realDataZ"+catName+energyStr,
                                       "realDataZ"+catName+energyStr,
-                                          self.dataTree,root.RooArgSet(dimuonMassZ)
+                                          dataTree,root.RooArgSet(dimuonMassZ)
                                         )
 
       ### Make Bak Pdfs
@@ -224,7 +274,6 @@ class BiasStudy:
       nBakVar = root.RooRealVar("nBak","N_{B}",nData/2.,nData*2)
 
       ### Now load Signal PDFs
-      sigMasses = self.sigMasses
       sigPdfs = []
       wSigs = []
       for hmass in sigMasses:
@@ -240,6 +289,8 @@ class BiasStudy:
       nSigVar = root.RooRealVar("nSig","N_{S}",-nData/4.,nData/4)
 
       ### Make results data structure and begin log
+      data = {}
+      data['meta'] = {'nData':nData}
       data[truePdfName] = {}
       for hmass in sigMasses:
         data[truePdfName][hmass] = {}
@@ -256,17 +307,11 @@ class BiasStudy:
 
       ### Toy Loop
 
-      for iToy in range(self.nToys):
+      for iToy in range(toysPerJob):
         toyData = truePdf.generate(root.RooArgSet(dimuonMass),int(nData))
         toyData.SetName("toyData"+catName+energyStr+str(iToy))
         toyDataHist = toyData.binnedClone("toyDataHist"+catName+energyStr+str(iToy))
-        plotThisToy = (iToy % 10 == 0)
-        saveThisData = (iToy % 100 == 99)
         for hmass,sigPdf in zip(sigMasses,sigPdfs):
-          frame = None 
-          if plotThisToy:
-            frame = dimuonMass.frame()
-            toyData.plotOn(frame)
           # Check Chi^2 for ref background only fit
           trueToyPdf.fitTo(toyData,
                              PRINTLEVEL
@@ -287,9 +332,6 @@ class BiasStudy:
           chi2TrueToyVar = trueToySBPdf.createChi2(toyDataHist)
           ndfTrue = dimuonMass.getBins() - 1  # b/c roofit normalizes
           ndfTrue -= trueToySBPdf.getParameters(toyDataHist).getSize()
-          if plotThisToy:
-            trueToySBPdf.plotOn(frame,root.RooFit.LineColor(6))
-            #trueToySBPdf.plotOn(frame,root.RooFit.Components(root.RooArgSet(trueToyPdf)),root.RooFit.LineColor(1),root.RooFit.LineStyle(2))
           nTrueToy = nSigVar.getVal()
           errTrueToy = nSigVar.getError()
           data[truePdfName][hmass]['nTrue'].append(nTrueToy)
@@ -309,9 +351,6 @@ class BiasStudy:
               altChi2Var = altSBPdf.createChi2(toyDataHist)
               ndfAlt = dimuonMass.getBins() - 1  # b/c roofit normalizes
               ndfAlt -= altSBPdf.getParameters(toyDataHist).getSize()
-              if plotThisToy:
-                altSBPdf.plotOn(frame,root.RooFit.LineColor(color))
-                #altSBPdf.plotOn(frame,root.RooFit.Components(root.RooArgSet(pdfAlt)),root.RooFit.LineColor(color),root.RooFit.LineStyle(2))
               nAlt = nSigVar.getVal()
               errAlt = nSigVar.getError()
               if errAlt == 0.:
@@ -325,15 +364,6 @@ class BiasStudy:
               data[truePdfName][hmass][pdfAltName]['z'].append(nAlt/errAlt)
               data[truePdfName][hmass][pdfAltName]['pull'].append(pull)
               data[truePdfName][hmass]['pullAll'].append(pull)
-          if plotThisToy:
-            frame.Draw()
-            canvas.SaveAs("output/debug_"+catName+"_"+energyStr+"_"+str(hmass)+"_"+str(iToy)+".png")
-          if saveThisData:
-            pklTmpFile = open(self.pklOutFn+"."+str(self.iPklAutoSave),'w')
-            self.iPklAutoSave += 1
-            cPickle.dump(data,pklTmpFile)
-            pklTmpFile.close()
-    
           #if truePdfName == "Old":
           #  print "**************************************************************"
           #  print "True PDF Parameters:"
@@ -345,6 +375,7 @@ class BiasStudy:
           #  print "**************************************************************"
         del toyData
         del toyDataHist
+      return data
 
   def plot(self,outputPrefix):
     self.pdfTitleMap = {
@@ -1031,7 +1062,7 @@ if __name__ == "__main__":
       bs.plot(outDir+"bias_")
   else:
     for category in categories:
-      bs = BiasStudy(category,dataFns8TeV,"8TeV",100)
+      bs = BiasStudy(category,dataFns8TeV,"8TeV",5)
       logFile.write(bs.outStr)
       bs.plot(outDir+"bias_")
     
