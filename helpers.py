@@ -200,6 +200,16 @@ def setPDFfromFR(fr,PDF,data):
             #else:
                 #print "Potential Problem: No Coefficient Matching Found"
 
+def rooArgSet2List(x):
+  itr = x.createIterator()
+  result = []
+  while True:
+    ele = itr.Next()
+    if ele:
+      result.append(ele)
+    else:
+      break
+  return result
 
 def doubleGauss(x,par):
   meanG1  = par[0]

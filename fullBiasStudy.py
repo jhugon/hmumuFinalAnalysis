@@ -64,8 +64,8 @@ class BiasStudy:
     ## Run
     if self.data==None:
       self.refPdfNameList = [
-          "ExpLog",
-          "MOverSq",
+      #    "ExpLog",
+      #    "MOverSq",
           "Old",
           "ExpMOverSq",
       ]
@@ -74,8 +74,8 @@ class BiasStudy:
           "MOverSq":["ExpMOverSq"],
           "Old":["ExpMOverSq"],
           "ExpMOverSq":[          
-                            "ExpLog",
-                            "MOverSq",
+          #                  "ExpLog",
+          #                  "MOverSq",
                             "Old",
                         ],
       }
@@ -177,11 +177,33 @@ class BiasStudy:
       truePdf = wTrue.pdf("bak")
       truePdf.SetName(truePdfName)
       truePdf.SetTitle("True PDF ")
+      truePdf.fitTo(realData,
+                             PRINTLEVEL
+                           )
 
       trueToyPdfName = "trueToy"+catName+energyStr
       truePdfFunc(trueToyPdfName,realData,dimuonMass,110,170,wTrueToyImport,dimuonMassZ,realDataZ)
       trueToyPdf = wTrueToy.pdf("bak")
       trueToyPdf.SetName(trueToyPdfName)
+
+      # Make sure Voigt params are set to True vals and constant
+      if truePdfName == "Old":
+        for xTrue in rooArgSet2List(truePdf.getParameters(realData)):
+          if not ("voit" in xTrue.GetName()):
+            continue
+          for xToy in rooArgSet2List(trueToyPdf.getParameters(realData)):
+            trueMatch = re.match(r".*(_voit.*)",xTrue.GetName()) 
+            toyMatch = re.match(r".*(_voit.*)",xToy.GetName()) 
+            assert(trueMatch)
+            if not toyMatch:
+                continue
+            trueBaseName = trueMatch.group(1)
+            toyBaseName = toyMatch.group(1)
+            if not ( trueBaseName == toyBaseName ):
+              continue
+            xToy.setVal(xTrue.getVal())
+            xTrue.setConstant(True)
+            xToy.setConstant(True)
 
       pdfAltList = []
       pdfAltwList = []
@@ -191,6 +213,11 @@ class BiasStudy:
         pdfAltFunc(pdfName,realData,dimuonMass,110,170,getattr(wAlt,"import"),dimuonMassZ,realDataZ)
         altPdf = wAlt.pdf("bak")
         altPdf.SetName(pdfName)
+        # Make sure Voigt params are constant
+        if pdfAltName == "Old":
+          for x in rooArgSet2List(altPdf.getParameters(realData)):
+            if "voit" in x.GetName():
+              x.setConstant(True)
         pdfAltList.append(altPdf)
         pdfAltwList.append(wAlt)
 
@@ -218,6 +245,8 @@ class BiasStudy:
         data[truePdfName][hmass] = {}
         data[truePdfName][hmass]['zTrue'] = []
         data[truePdfName][hmass]['nTrue'] = []
+        data[truePdfName][hmass]['chi2BOnly'] = []
+        data[truePdfName][hmass]['ndfBOnly'] = []
         data[truePdfName][hmass]['chi2True'] = []
         data[truePdfName][hmass]['ndfTrue'] = []
         data[truePdfName][hmass]['errTrue'] = []
@@ -288,7 +317,7 @@ class BiasStudy:
               if errAlt == 0.:
                   pull = -1e9
               else:
-                  pull = (nTrueToy-nAlt)/errAlt
+                  pull = (nAlt-nTrueToy)/errAlt
               data[truePdfName][hmass][pdfAltName]['n'].append(nAlt)
               data[truePdfName][hmass][pdfAltName]['err'].append(errAlt)
               data[truePdfName][hmass][pdfAltName]['chi2'].append(altChi2Var.getVal())
@@ -304,6 +333,16 @@ class BiasStudy:
             self.iPklAutoSave += 1
             cPickle.dump(data,pklTmpFile)
             pklTmpFile.close()
+    
+          #if truePdfName == "Old":
+          #  print "**************************************************************"
+          #  print "True PDF Parameters:"
+          #  for x in rooArgSet2List(truePdf.getParameters(realData)):
+          #      x.Print()
+          #  print "True Toy PDF Parameters:"
+          #  for x in rooArgSet2List(trueToyPdf.getParameters(realData)):
+          #      x.Print()
+          #  print "**************************************************************"
         del toyData
         del toyDataHist
 
@@ -851,6 +890,46 @@ class BiasStudy:
     #      saveAs(canvas,outputPrefix+self.catName+"_"+str(hmass)+"_NAltvNRef_Ref"+refPdfName+"_Alt"+pdfAltName)
     #      canvas.Clear()
 
+      ##### Chi2 B-Only Prob Plots
+      for hmass in self.sigMasses:
+        hist = root.TH1F("hist"+str(iHist),"",20,0,1)
+        setHistTitles(hist,"#chi^{2} p-Value of Background Only Fit","N_{Toys}")
+        iHist += 1
+        for chi2,ndf in zip(self.data[refPdfName][hmass]['chi2BOnly'],self.data[refPdfName][hmass]['ndfBOnly']):
+            hist.Fill(scipy.stats.chi2.sf(chi2,ndf))
+        hist.Draw()
+        tlatex.SetTextAlign(12)
+        tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+        tlatex.SetTextAlign(12)
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"m_{H} = "+str(hmass)+" GeV/c^{2}")
+        tlatex.SetTextAlign(32)
+        tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+        self.setYMaxAndDrawVertLines(hist,None)
+        canvas.RedrawAxis()
+        saveAs(canvas,outputPrefix+self.catName+"_"+str(hmass)+"_Chi2BOnly_Ref"+refPdfName)
+        canvas.Clear()
+
+        for pdfAltName in self.pdfAltNamesDict[refPdfName]:
+          hist = root.TH1F("hist"+str(iHist),"",20,0,1)
+          setHistTitles(hist,"#chi^{2} p-Value of Fit","N_{Toys}")
+          iHist += 1
+          for chi2,ndf in zip(self.data[refPdfName][hmass][pdfAltName]['chi2'],self.data[refPdfName][hmass][pdfAltName]['ndf']):
+            hist.Fill(scipy.stats.chi2.sf(chi2,ndf))
+          hist.Draw()
+          tlatex.SetTextAlign(12)
+          tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+          tlatex.SetTextAlign(12)
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
+          tlatex.SetTextAlign(32)
+          tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+          self.setYMaxAndDrawVertLines(hist,None)
+          canvas.RedrawAxis()
+          saveAs(canvas,outputPrefix+self.catName+"_"+str(hmass)+"_Chi2_Ref"+refPdfName+"_Alt"+pdfAltName)
+          canvas.Clear()
+
     ####### QQ plot
     #for hmass in self.sigMasses:
     #  allZTrues = []
@@ -918,11 +997,11 @@ if __name__ == "__main__":
   jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
-  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
@@ -952,7 +1031,7 @@ if __name__ == "__main__":
       bs.plot(outDir+"bias_")
   else:
     for category in categories:
-      bs = BiasStudy(category,dataFns8TeV,"8TeV",1000)
+      bs = BiasStudy(category,dataFns8TeV,"8TeV",100)
       logFile.write(bs.outStr)
       bs.plot(outDir+"bias_")
     
