@@ -13,6 +13,10 @@ root.gSystem.Load('libRooFit')
 root.gROOT.SetBatch(True)
 import scipy.stats
 
+from multiprocessing import Pool
+import itertools
+from itertools import repeat as itrRepeat
+
 from helpers import *
 import makeCards
 
@@ -27,158 +31,7 @@ PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 
 canvas = root.TCanvas()
 
-class BiasStudy:
-  #def __init__(self,category,dataFiles,energyStr):
-  def __init__(self,category,dataFileNames,energyStr,nToys=10,pklOutFnBase="output/biasData",inputPkl=None):
-    self.dataFileNames = dataFileNames
-    self.sigMasses = range(115,156,5)
-    self.sigMasses = [125,150]
-    ## Try to load data from pkl file
-    if inputPkl != None:
-      try:
-        inputPklF = open(inputPkl)
-        self.data = cPickle.load(inputPklF)
-        inputPklF.close()
-        self.refPdfNameList = self.data['meta']['refPdfNameList']
-        self.pdfAltNamesDict = self.data['meta']['pdfAltNamesDict']
-        self.nToys = self.data['meta']['nToys']
-        self.nData = self.data['meta']['nData']
-        self.catName = self.data['meta']['catName']
-        self.energyStr = self.data['meta']['energyStr']
-        energyStr = self.energyStr
-        self.sigMasses = self.data['meta']['sigMasses']
-      except Exception, err:
-        print("Error loading data from pkl file: "+str(inputPkl))
-        print(err)
-        self.data = None
-    else:
-      self.catName = category[0]
-      self.catCuts = category[1]
-      self.energyStr = energyStr
-      self.nToys = nToys
-      self.pklOutFn = pklOutFnBase+"_"+self.catName+"_"+energyStr+".pkl"
-      self.data = None
-    catName = self.catName
-    canvas = root.TCanvas()
-    self.canvas = canvas
-    ## Run
-    if self.data==None:
-      self.refPdfNameList = [
-      #    "ExpLog",
-      #    "MOverSq",
-          "Old",
-          "ExpMOverSq",
-      ]
-      self.pdfAltNamesDict = {
-          "ExpLog":["ExpMOverSq"],
-          "MOverSq":["ExpMOverSq"],
-          "Old":["ExpMOverSq"],
-          "ExpMOverSq":[          
-          #                  "ExpLog",
-          #                  "MOverSq",
-                            "Old",
-                        ],
-      }
-
-      self.data = {'meta':{}}
-      data = self.data
-      data['meta']['sigMasses'] = self.sigMasses
-      data['meta']['refPdfNameList'] = self.refPdfNameList
-      data['meta']['pdfAltNamesDict'] = self.pdfAltNamesDict
-      data['meta']['nToys'] = self.nToys
-      data['meta']['catName'] = self.catName
-      data['meta']['energyStr'] = self.energyStr
-      self.iPklAutoSave = 1
-      nProcesses = 4
-      nJobs = 4
-      if nToys < 20:
-        nJobs = 1
-      for refPdfName in self.refPdfNameList:
-        pdfAltNameList = self.pdfAltNamesDict[refPdfName]
-        for iJob in range(nJobs):
-          studyResults = self.runStudy(self.catName,self.energyStr,refPdfName,pdfAltNameList,self.dataFileNames,self.sigMasses,iJob=iJob,toysPerJob=nToys)
-          self.mergeDicts(data,studyResults)
-        print "length of zTrue: ", len(data[refPdfName][125]['zTrue'])
-      pklFile = open(self.pklOutFn,'w')
-      cPickle.dump(data,pklFile)
-      pklFile.close()
-
-    self.nData = self.data['meta']['nData']
-    outStr = "#"*80+"\n"
-    outStr = "#"*80+"\n"
-    outStr += "\n"+self.catName +"  "+self.energyStr + "\n\n"
-
-    outStr += "nToys: {0}\n".format(self.nToys)
-    outStr += "nData Events: {0}\n".format(self.nData)
-    outStr += "\n"
-
-    data = self.data
-
-    for refPdfName in self.refPdfNameList:
-      outStr +=  "Reference PDF: "+str(refPdfName)+'\n'
-      for hmass in self.sigMasses:
-        outStr +=  "mass: "+str(hmass)+'\n'
-        dataH = data[refPdfName][hmass]
-        shapiroStat, shapiroP = scipy.stats.shapiro(dataH['zTrue'])
-        sumChi2 = sum(dataH['chi2True'])
-        sumNDF = sum(dataH['ndfTrue'])
-        outStr +=  "  True Z Scores:   {0:.2f} +/- {1:.2f}  Median: {2:.2f}    S-W Normal p-Val: {3:.3g}\n".format(mean(dataH['zTrue']),stddev(dataH['zTrue']),median(dataH['zTrue']),shapiroP)
-        outStr +=  "  True Fit Prob:   {0:.3g},                              chi2: {1:.2f}  NDF: {2}\n".format(scipy.stats.chi2.sf(sumChi2,sumNDF),sumChi2,sumNDF)
-        outStr +=  "  All Pulls:       {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataH['pullAll']),stddev(dataH['pullAll']),median(dataH['pullAll']))
-        for pdfAltName in self.pdfAltNamesDict[refPdfName]:
-          dataHA = dataH[pdfAltName]
-          shapiroStat, shapiroP = scipy.stats.shapiro(dataHA['z'])
-          sumChi2 = sum(dataHA['chi2'])
-          sumNDF = sum(dataHA['ndf'])
-          outStr +=  "  "+pdfAltName+":\n"
-          outStr +=  "    Z Scores:      {0:.2f} +/- {1:.2f}  Median: {2:.2f}    S-W Normal p-Val: {3:.3g}\n".format(mean(dataHA['z']),stddev(dataHA['z']),median(dataHA['z']),shapiroP)
-          outStr +=  "    Fit Prob:      {0:.3g},                              chi2: {1:.2f}  NDF: {2}\n".format(scipy.stats.chi2.sf(sumChi2,sumNDF),sumChi2,sumNDF)
-          outStr +=  "    Pulls:         {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataHA['pull']),stddev(dataHA['pull']),median(dataHA['pull']))
-    print outStr
-    self.outStr = outStr
-
-  def mergeDicts(self,data,newData):
-    newDataKeys = newData.keys()
-    dataKeys = data.keys()
-    for key in newDataKeys:
-      if key == 'meta':
-        data[key]['nData'] = newData[key]['nData']
-      elif not (key in dataKeys):
-        data[key] = newData[key]
-      else:
-        masses = sorted(newData[key].keys())
-        massesOld = sorted(data[key].keys())
-        assert(len(masses)==len(massesOld))
-        for old,new in zip(masses,massesOld):
-          if old != new:
-            print "masses not equal:",old,new
-            assert(False)
-        for mass in masses:
-          subkeys = sorted(newData[key][mass])
-          subkeysOld = sorted(data[key][mass])
-          assert(len(subkeys) == len(subkeysOld))
-          for old,new in zip(subkeys,subkeysOld):
-            if old != new:
-              print "subkeys not equal:",old,new
-              assert(False)
-          for subkey in subkeys:
-            if type(newData[key][mass][subkey])==list:
-              assert(type(data[key][mass][subkey])==list)
-              data[key][mass][subkey].extend(newData[key][mass][subkey])
-            else:
-              subsubkeys = sorted(newData[key][mass][subkey])
-              subsubkeysOld = sorted(data[key][mass][subkey])
-              assert(len(subsubkeys) == len(subsubkeysOld))
-              for old,new in zip(subsubkeys,subsubkeysOld):
-                if old != new:
-                  print "subsubkeys not equal:",old,new
-                  assert(False)
-              for subsubkey in subsubkeys:
-                assert(type(data[key][mass][subkey][subsubkey])==list)
-                assert(type(newData[key][mass][subkey][subsubkey])==list)
-                data[key][mass][subkey][subsubkey].extend(newData[key][mass][subkey][subsubkey])
-
-  def runStudy(self,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sigMasses,iJob=-1,toysPerJob=50):
+def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sigMasses,toysPerJob):
       """
         Pure function so that we can do multiprocessing!!
       """
@@ -319,8 +172,8 @@ class BiasStudy:
           chi2TrueToyVar = trueToyPdf.createChi2(toyDataHist)
           ndfTrue = dimuonMass.getBins() - 1  # b/c roofit normalizes
           ndfTrue -= trueToyPdf.getParameters(toyDataHist).getSize()
-          data[truePdfName][hmass]['chi2BOnly'].append(chi2TrueToyVar.getVal())
-          data[truePdfName][hmass]['ndfBOnly'].append(ndfTrue)
+          chi2BOnlyVal = chi2TrueToyVar.getVal()
+          ndfBOnlyVal = ndfTrue
           # Now Create S+B PDF and fit for real
           trueToySBPdf = root.RooAddPdf("SBTrue"+catName+energyStr+str(hmass)+"_"+str(iToy),"",
                               root.RooArgList(trueToyPdf,sigPdf),
@@ -334,12 +187,15 @@ class BiasStudy:
           ndfTrue -= trueToySBPdf.getParameters(toyDataHist).getSize()
           nTrueToy = nSigVar.getVal()
           errTrueToy = nSigVar.getError()
+          if errTrueToy == 0.:
+            continue
           data[truePdfName][hmass]['nTrue'].append(nTrueToy)
           data[truePdfName][hmass]['errTrue'].append(errTrueToy)
           data[truePdfName][hmass]['chi2True'].append(chi2TrueToyVar.getVal())
           data[truePdfName][hmass]['ndfTrue'].append(ndfTrue)
-          if errTrueToy != 0.:
-            data[truePdfName][hmass]['zTrue'].append(nTrueToy/errTrueToy)
+          data[truePdfName][hmass]['zTrue'].append(nTrueToy/errTrueToy)
+          data[truePdfName][hmass]['chi2BOnly'].append(chi2BOnlyVal)
+          data[truePdfName][hmass]['ndfBOnly'].append(ndfBOnlyVal)
           for pdfAlt,pdfAltName,color in zip(pdfAltList,pdfAltNameList,range(2,len(pdfAltList)+2)):
               altSBPdf = root.RooAddPdf("SB"+pdfAltName+catName+energyStr+str(hmass)+"_"+str(iToy),"",
                               root.RooArgList(pdfAlt,sigPdf),
@@ -354,9 +210,8 @@ class BiasStudy:
               nAlt = nSigVar.getVal()
               errAlt = nSigVar.getError()
               if errAlt == 0.:
-                  pull = -1e9
-              else:
-                  pull = (nAlt-nTrueToy)/errAlt
+                continue
+              pull = (nAlt-nTrueToy)/errAlt
               data[truePdfName][hmass][pdfAltName]['n'].append(nAlt)
               data[truePdfName][hmass][pdfAltName]['err'].append(errAlt)
               data[truePdfName][hmass][pdfAltName]['chi2'].append(altChi2Var.getVal())
@@ -376,6 +231,170 @@ class BiasStudy:
         del toyData
         del toyDataHist
       return data
+
+def runStudyStar(argList):
+  return runStudy(*argList)
+
+
+class BiasStudy:
+  #def __init__(self,category,dataFiles,energyStr):
+  def __init__(self,category,dataFileNames,energyStr,nToys=10,pklOutFnBase="output/biasData",inputPkl=None,processPool=None):
+    self.dataFileNames = dataFileNames
+    self.sigMasses = range(115,156,5)
+    self.sigMasses = [125,150]
+    ## Try to load data from pkl file
+    if inputPkl != None:
+      try:
+        inputPklF = open(inputPkl)
+        self.data = cPickle.load(inputPklF)
+        inputPklF.close()
+        self.refPdfNameList = self.data['meta']['refPdfNameList']
+        self.pdfAltNamesDict = self.data['meta']['pdfAltNamesDict']
+        self.nToys = self.data['meta']['nToys']
+        self.nData = self.data['meta']['nData']
+        self.catName = self.data['meta']['catName']
+        self.energyStr = self.data['meta']['energyStr']
+        energyStr = self.energyStr
+        self.sigMasses = self.data['meta']['sigMasses']
+      except Exception, err:
+        print("Error loading data from pkl file: "+str(inputPkl))
+        print(err)
+        self.data = None
+    else:
+      self.catName = category[0]
+      self.catCuts = category[1]
+      self.energyStr = energyStr
+      self.nToys = nToys
+      self.pklOutFn = pklOutFnBase+"_"+self.catName+"_"+energyStr+".pkl"
+      self.data = None
+    catName = self.catName
+    canvas = root.TCanvas()
+    self.canvas = canvas
+    ## Run
+    if self.data==None:
+      self.refPdfNameList = [
+      #    "ExpLog",
+      #    "MOverSq",
+          "Old",
+          "ExpMOverSq",
+      ]
+      self.pdfAltNamesDict = {
+          "ExpLog":["ExpMOverSq"],
+          "MOverSq":["ExpMOverSq"],
+          "Old":["ExpMOverSq"],
+          "ExpMOverSq":[          
+          #                  "ExpLog",
+          #                  "MOverSq",
+                            "Old",
+                        ],
+      }
+
+      self.data = {'meta':{}}
+      data = self.data
+      data['meta']['sigMasses'] = self.sigMasses
+      data['meta']['refPdfNameList'] = self.refPdfNameList
+      data['meta']['pdfAltNamesDict'] = self.pdfAltNamesDict
+      data['meta']['nToys'] = self.nToys
+      data['meta']['catName'] = self.catName
+      data['meta']['energyStr'] = self.energyStr
+      self.iPklAutoSave = 1
+      nProcesses = 6
+      nJobs = 6 
+      if processPool == None:
+        processPool = Pool(processes=nProcesses)
+      if nToys < 50:
+        nJobs = 5
+      if nToys < 20:
+        nJobs = 2
+      for refPdfName,iRefPdfName in zip(self.refPdfNameList,range(len(self.refPdfNameList))):
+        pdfAltNameList = self.pdfAltNamesDict[refPdfName]
+        mapResults = processPool.map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(int(nToys/nJobs))))
+        # Replace above line with below to run non-parralel version
+        #mapResults = map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(int(nToys/nJobs))))
+        for jobResults in mapResults:
+          self.mergeDicts(data,jobResults)
+        if iRefPdfName != len(self.refPdfNameList)-1:
+          pklFile = open(self.pklOutFn+"."+str(iRefPdfName),'w')
+          cPickle.dump(data,pklFile)
+          pklFile.close()
+      pklFile = open(self.pklOutFn,'w')
+      cPickle.dump(data,pklFile)
+      pklFile.close()
+
+    self.nData = self.data['meta']['nData']
+    outStr = "#"*80+"\n"
+    outStr = "#"*80+"\n"
+    outStr += "\n"+self.catName +"  "+self.energyStr + "\n\n"
+
+    outStr += "nToys: {0}\n".format(self.nToys)
+    outStr += "nData Events: {0}\n".format(self.nData)
+    outStr += "\n"
+
+    data = self.data
+
+    for refPdfName in self.refPdfNameList:
+      outStr +=  "Reference PDF: "+str(refPdfName)+'\n'
+      for hmass in self.sigMasses:
+        outStr +=  "mass: "+str(hmass)+'\n'
+        dataH = data[refPdfName][hmass]
+        shapiroStat, shapiroP = scipy.stats.shapiro(dataH['zTrue'])
+        sumChi2 = sum(dataH['chi2True'])
+        sumNDF = sum(dataH['ndfTrue'])
+        outStr +=  "  True Z Scores:   {0:.2f} +/- {1:.2f}  Median: {2:.2f}    S-W Normal p-Val: {3:.3g}\n".format(mean(dataH['zTrue']),stddev(dataH['zTrue']),median(dataH['zTrue']),shapiroP)
+        outStr +=  "  True Fit Prob:   {0:.3g},                              chi2: {1:.2f}  NDF: {2}\n".format(scipy.stats.chi2.sf(sumChi2,sumNDF),sumChi2,sumNDF)
+        outStr +=  "  All Pulls:       {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataH['pullAll']),stddev(dataH['pullAll']),median(dataH['pullAll']))
+        for pdfAltName in self.pdfAltNamesDict[refPdfName]:
+          dataHA = dataH[pdfAltName]
+          shapiroStat, shapiroP = scipy.stats.shapiro(dataHA['z'])
+          sumChi2 = sum(dataHA['chi2'])
+          sumNDF = sum(dataHA['ndf'])
+          outStr +=  "  "+pdfAltName+":\n"
+          outStr +=  "    Z Scores:      {0:.2f} +/- {1:.2f}  Median: {2:.2f}    S-W Normal p-Val: {3:.3g}\n".format(mean(dataHA['z']),stddev(dataHA['z']),median(dataHA['z']),shapiroP)
+          outStr +=  "    Fit Prob:      {0:.3g},                              chi2: {1:.2f}  NDF: {2}\n".format(scipy.stats.chi2.sf(sumChi2,sumNDF),sumChi2,sumNDF)
+          outStr +=  "    Pulls:         {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataHA['pull']),stddev(dataHA['pull']),median(dataHA['pull']))
+    print outStr
+    self.outStr = outStr
+
+  def mergeDicts(self,data,newData):
+    newDataKeys = newData.keys()
+    dataKeys = data.keys()
+    for key in newDataKeys:
+      if key == 'meta':
+        data[key]['nData'] = newData[key]['nData']
+      elif not (key in dataKeys):
+        data[key] = newData[key]
+      else:
+        masses = sorted(newData[key].keys())
+        massesOld = sorted(data[key].keys())
+        assert(len(masses)==len(massesOld))
+        for old,new in zip(masses,massesOld):
+          if old != new:
+            print "masses not equal:",old,new
+            assert(False)
+        for mass in masses:
+          subkeys = sorted(newData[key][mass])
+          subkeysOld = sorted(data[key][mass])
+          assert(len(subkeys) == len(subkeysOld))
+          for old,new in zip(subkeys,subkeysOld):
+            if old != new:
+              print "subkeys not equal:",old,new
+              assert(False)
+          for subkey in subkeys:
+            if type(newData[key][mass][subkey])==list:
+              assert(type(data[key][mass][subkey])==list)
+              data[key][mass][subkey].extend(newData[key][mass][subkey])
+            else:
+              subsubkeys = sorted(newData[key][mass][subkey])
+              subsubkeysOld = sorted(data[key][mass][subkey])
+              assert(len(subsubkeys) == len(subsubkeysOld))
+              for old,new in zip(subsubkeys,subsubkeysOld):
+                if old != new:
+                  print "subsubkeys not equal:",old,new
+                  assert(False)
+              for subsubkey in subsubkeys:
+                assert(type(data[key][mass][subkey][subsubkey])==list)
+                assert(type(newData[key][mass][subkey][subsubkey])==list)
+                data[key][mass][subkey][subsubkey].extend(newData[key][mass][subkey][subsubkey])
 
   def plot(self,outputPrefix):
     self.pdfTitleMap = {
@@ -1028,11 +1047,11 @@ if __name__ == "__main__":
   jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
-  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
@@ -1061,8 +1080,9 @@ if __name__ == "__main__":
       logFile.write(bs.outStr)
       bs.plot(outDir+"bias_")
   else:
+    processPool = Pool(processes=6)
     for category in categories:
-      bs = BiasStudy(category,dataFns8TeV,"8TeV",5)
+      bs = BiasStudy(category,dataFns8TeV,"8TeV",1000,processPool=processPool)
       logFile.write(bs.outStr)
       bs.plot(outDir+"bias_")
     
