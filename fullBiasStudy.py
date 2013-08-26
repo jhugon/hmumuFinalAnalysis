@@ -347,6 +347,7 @@ class BiasStudy:
           iHist += 1
           for pull in self.data[refPdfName][hmass]['pullAll']:
               hist.Fill(pull)
+          medianPull = median(self.data[refPdfName][hmass]['pullAll'])
           hist.Draw()
           tlatex.SetTextAlign(12)
           tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
@@ -354,9 +355,11 @@ class BiasStudy:
           tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
           tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"All Alternate PDFs")
           tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.60,"Median: {0:.2f}".format(medianPull))
           tlatex.SetTextAlign(32)
           tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
-          line = self.setYMaxAndDrawVertLines(hist,median(self.data[refPdfName][hmass]['pullAll']))
+          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"{0:.2f}".format(medianPull))
+          line = self.setYMaxAndDrawVertLines(hist,medianPull)
           canvas.RedrawAxis()
           saveAs(canvas,outputPrefix+self.catName+"_"+str(hmass)+"_AllPulls_Ref"+refPdfName)
           canvas.Clear()
@@ -367,6 +370,7 @@ class BiasStudy:
           iHist += 1
           for pull in self.data[refPdfName][hmass][pdfAltName]['pull']:
               hist.Fill(pull)
+          medianPull = median(self.data[refPdfName][hmass][pdfAltName]['pull'])
           hist.Draw()
           tlatex.SetTextAlign(12)
           tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
@@ -374,9 +378,10 @@ class BiasStudy:
           tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
           tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
           tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.60,"Median: {0:.2f}".format(medianPull))
           tlatex.SetTextAlign(32)
           tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
-          line = self.setYMaxAndDrawVertLines(hist,median(self.data[refPdfName][hmass][pdfAltName]['pull']))
+          line = self.setYMaxAndDrawVertLines(hist,medianPull)
           canvas.RedrawAxis()
           saveAs(canvas,outputPrefix+self.catName+"_"+str(hmass)+"_Pulls_Ref"+refPdfName+"_Alt"+pdfAltName)
           canvas.Clear()
@@ -445,8 +450,9 @@ class BiasStudy:
           tlatex.SetTextAlign(12)
           tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
           tlatex.SetTextAlign(12)
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"m_{H} = "+str(hmass)+" GeV/c^{2}")
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
           tlatex.SetTextAlign(32)
           tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
           self.setYMaxAndDrawVertLines(hist,None)
@@ -631,7 +637,7 @@ if __name__ == "__main__":
       bs.plot(outDir+"bias_")
   else:
     for category in categories:
-      bs = BiasStudy(category,dataFns8TeV,"8TeV",100)
+      bs = BiasStudy(category,dataFns8TeV,"8TeV",1000)
       logFile.write(bs.outStr)
       bs.plot(outDir+"bias_")
     
