@@ -51,13 +51,27 @@ titleMap = {
   "Jet2CutsFailVBFGF":"2-Jet Loose",
 }
 
-def makePDFBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=3):
+def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
     debug = ""
     debug += "### makePDFBakExpMOverSq: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
     debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
 
     channelName = name
+
+    if order == None:
+      if "Jets01PassPtG10BB" in name:
+        order = 6
+      elif "Jets01PassPtG10BO" in name:
+        order = 9
+      elif "Jet2CutsVBFPass" in name:
+        order = 5
+      elif "Jet2CutsGFPass" in name:
+        order = 5
+      elif "Jet2CutsFailVBFGF" in name:
+        order = 5
+      else:
+        order = 6
 
     rooParamList = []
     rooArgList = root.RooArgList()
@@ -158,12 +172,12 @@ class OrderStudy:
       self.outStr += "\n\n"
       for pdfBaseName in ["Bernstein"]:
         data[pdfBaseName] = {}
-        for order in range(1,8):
+        for order in range(1,9):
           data[pdfBaseName][order] = {}
           w = root.RooWorkspace("w"+pdfBaseName+str(order))
           wImport = getattr(w,"import")
           pdfName = pdfBaseName+str(order)
-          pdfFunc = globals()["makePDF"+pdfBaseName]
+          pdfFunc = globals()["makePDFBak"+pdfBaseName]
           pdfFunc(pdfName+catName+energyStr,realData,dimuonMass,110,170,wImport,dimuonMassZ,realDataZ,order=order)
           pdf = w.pdf("bak")
           fr = pdf.fitTo(realData,
@@ -178,13 +192,15 @@ class OrderStudy:
           rmp.draw(outPrefix+"_"+catName+"_"+pdfBaseName+str(order))
 
           pdf.SetName(pdfName)
+        
+          ndfFunc = rooPdfNFreeParams(pdf,realData)
 
           chi2Var = pdf.createChi2(realDataHist)
           chi2 = chi2Var.getVal()
           ndf = dimuonMass.getBins() - 1  # b/c roofit normalizes
-          ndf -= pdf.getParameters(realData).getSize()
+          ndf -= ndfFunc
           nll = fr.minNll()
-          self.outStr+= "{0:15} chi2: {1:.2f} ndf: {2:.0f} nll: {3:.3g}\n".format(pdfName,chi2,ndf,nll)
+          #self.outStr+= "{0:15} chi2: {1:.2f} ndf: {2:.0f} nll: {3:.3g}\n".format(pdfName,chi2,ndf,nll)
 
           self.rmpList.append(rmp)
           self.pdfList.append(pdf)
@@ -192,11 +208,12 @@ class OrderStudy:
           data[pdfBaseName][order]['chi2'] = chi2
           data[pdfBaseName][order]['ndf'] = ndf
           data[pdfBaseName][order]['nll'] = nll
-          data[pdfBaseName][order]['ndfFunc'] = self.getNDF(pdfBaseName,order)
+          data[pdfBaseName][order]['ndfFunc'] = ndfFunc
 
 
+      self.latexStr = ""
       for pdfBaseName in ["Bernstein"]:
-        tableStr =  "\n\n"+pdfBaseName
+        tableStr =  catName+" "+energyStr+"\n"+pdfBaseName
         tableStr += "\n\n"+r"\begin{tabular}{|l|c|c|c|c|} \hline" + "\n"
         tableStr += r"Degree (d) & Goodness & NLL$_d$ & -2$\Delta$NLL(d+1,d) & $p_{\chi^2}$(d+1,d) \\"+" \n"
         tableStr += r" & of Fit  &  & &  \\ \hline \hline" + "\n"
@@ -219,7 +236,34 @@ class OrderStudy:
           else:
             tableStr += "{0} & {1:.3g} & {2:.0f} & - & - ".format(order,gof,nll)+r" \\ \hline" + "\n"
         tableStr += r"\end{tabular}" + "\n\n"
-        self.outStr += tableStr
+        self.latexStr += tableStr
+      for pdfBaseName in ["Bernstein"]:
+        self.outStr +=  "\n\n"+"\n"+pdfBaseName+"\n\n"
+        self.outStr += "{0:>4} {1:>10} {2:>10} {3:>10} {4:>10} ".format("d","GOF","NLL","-2DeltaNLL","pChi2")+"\n"
+        foundGoodOne = False
+        for order in sorted(data[pdfBaseName].keys()):
+          tmpDat = data[pdfBaseName][order]
+          tmpDatP1 = False
+          if data[pdfBaseName].has_key(order+1):
+            tmpDatP1 = data[pdfBaseName][order+1]
+          tmpDat = data[pdfBaseName][order]
+          gof = scipy.stats.chi2.sf(tmpDat['chi2'],tmpDat['ndf'])
+          nll = tmpDat['nll']
+          ndfFunc = tmpDat['ndfFunc']
+          if tmpDatP1:
+            nllP1 = tmpDatP1['nll']
+            ndfFuncP1 = tmpDatP1['ndfFunc']
+            deltaNdfFunc = ndfFuncP1-ndfFunc
+            deltaNLL = -2.*(nllP1-nll)
+            pDeltaNLL = scipy.stats.chi2.sf(deltaNLL,deltaNdfFunc)
+            foundGoodStr = ""
+            if not foundGoodOne and pDeltaNLL > 0.05:
+              foundGoodStr = "*"
+              foundGoodOne = True
+            self.outStr += "{0:4} {1:10.3g} {2:10.0f} {3:10.2f} {4:10.3g} {5}".format(order,gof,nll,deltaNLL,pDeltaNLL,foundGoodStr)+ "\n"
+          else:
+            self.outStr += "{0:4} {1:10.3g} {2:10.0f} {3:>10} {4:>10} ".format(order,gof,nll,'-','-')+"\n"
+        self.outStr +=  "\n\n"
 
       print self.outStr
 
@@ -239,6 +283,7 @@ if __name__ == "__main__":
   jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
+  categoriesAll = ["BB","BO","BE","OO","OE","EE"]
   categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
   categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
@@ -263,6 +308,7 @@ if __name__ == "__main__":
   dataFns8TeV = [dataDir+i+".root" for i in dataFns8TeV]
 
   logFile = open(outDir+"orderStudy.log",'w')
+  texFile = open(outDir+"orderStudy.tex",'w')
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
   logFile.write("# {0}\n\n".format(now))
   inputPklFiles = glob.glob(outDir+"*.pkl")
@@ -270,9 +316,11 @@ if __name__ == "__main__":
   for category in categories:
     osy = OrderStudy(category,"8TeV",dataFns8TeV,outPrefix=outDir+"order_Shape")
     logFile.write(osy.outStr)
+    texFile.write(osy.latexStr)
     orderStudyList.append(osy)
     
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
   logFile.write("\n\n# {0}\n".format(now))
   logFile.close()
+  texFile.close()
   

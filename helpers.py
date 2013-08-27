@@ -211,6 +211,14 @@ def rooArgSet2List(x):
       break
   return result
 
+def rooPdfNFreeParams(pdf,data):
+  paramList = rooArgSet2List(pdf.getParameters(data))
+  n = 0
+  for i in paramList:
+    if not i.isConstant():
+        n += 1
+  return n
+
 def doubleGauss(x,par):
   meanG1  = par[0]
   widthG1 = par[1]

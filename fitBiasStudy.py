@@ -29,13 +29,11 @@ from numpy import std as stddev
 PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 #PRINTLEVEL = root.RooFit.PrintLevel(1) #For MINUIT
 
-canvas = root.TCanvas()
-
 def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sigMasses,toysPerJob):
       """
         Pure function so that we can do multiprocessing!!
       """
-
+      plotEveryNToys = 10
       randomGenerator = root.RooRandom.randomGenerator()
       randomGenerator.SetSeed(10001+iJob)
       dataTree = root.TChain()
@@ -47,6 +45,7 @@ def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sig
       pdfAltFuncList = [ getattr(makeCards,"makePDFBak"+i) for i in pdfAltNameList]
 
       dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",110.,170.)
+      dimuonMass.setBins(60)
       dimuonMass.setRange("low",110,120) # Silly ranges for old fit functionality
       dimuonMass.setRange("high",130,170)
       dimuonMass.setRange("signal",120,130)
@@ -55,6 +54,12 @@ def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sig
       wTrueToy = root.RooWorkspace("wTrueToy")
       wTrueImport = getattr(wTrue,"import")
       wTrueToyImport = getattr(wTrueToy,"import")
+
+      canvas = root.TCanvas("canvas"+catName+energyStr+truePdfName+str(iJob))
+      tlatex = root.TLatex()
+      tlatex.SetNDC()
+      tlatex.SetTextFont(root.gStyle.GetLabelFont())
+      tlatex.SetTextSize(0.04)
 
       # Hack to Make makePDFBakOld work
       minMassZ = 88.
@@ -164,14 +169,19 @@ def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sig
         toyData = truePdf.generate(root.RooArgSet(dimuonMass),int(nData))
         toyData.SetName("toyData"+catName+energyStr+str(iToy))
         toyDataHist = toyData.binnedClone("toyDataHist"+catName+energyStr+str(iToy))
+        plotThisToy = (iToy % plotEveryNToys == 0)
         for hmass,sigPdf in zip(sigMasses,sigPdfs):
+          frame = None 
+          if plotThisToy:
+            frame = dimuonMass.frame()
+            toyData.plotOn(frame)
           # Check Chi^2 for ref background only fit
           trueToyPdf.fitTo(toyData,
                              PRINTLEVEL
                            )
           chi2TrueToyVar = trueToyPdf.createChi2(toyDataHist)
           ndfTrue = dimuonMass.getBins() - 1  # b/c roofit normalizes
-          ndfTrue -= trueToyPdf.getParameters(toyDataHist).getSize()
+          ndfTrue -= rooPdfNFreeParams(trueToyPdf,toyDataHist)
           chi2BOnlyVal = chi2TrueToyVar.getVal()
           ndfBOnlyVal = ndfTrue
           # Now Create S+B PDF and fit for real
@@ -184,7 +194,7 @@ def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sig
                            )
           chi2TrueToyVar = trueToySBPdf.createChi2(toyDataHist)
           ndfTrue = dimuonMass.getBins() - 1  # b/c roofit normalizes
-          ndfTrue -= trueToySBPdf.getParameters(toyDataHist).getSize()
+          ndfTrue -= rooPdfNFreeParams(trueToySBPdf,toyDataHist)
           nTrueToy = nSigVar.getVal()
           errTrueToy = nSigVar.getError()
           if errTrueToy == 0.:
@@ -196,6 +206,8 @@ def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sig
           data[truePdfName][hmass]['zTrue'].append(nTrueToy/errTrueToy)
           data[truePdfName][hmass]['chi2BOnly'].append(chi2BOnlyVal)
           data[truePdfName][hmass]['ndfBOnly'].append(ndfBOnlyVal)
+          if plotThisToy:
+            trueToySBPdf.plotOn(frame,root.RooFit.LineColor(6))
           for pdfAlt,pdfAltName,color in zip(pdfAltList,pdfAltNameList,range(2,len(pdfAltList)+2)):
               altSBPdf = root.RooAddPdf("SB"+pdfAltName+catName+energyStr+str(hmass)+"_"+str(iToy),"",
                               root.RooArgList(pdfAlt,sigPdf),
@@ -206,7 +218,7 @@ def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sig
                               )
               altChi2Var = altSBPdf.createChi2(toyDataHist)
               ndfAlt = dimuonMass.getBins() - 1  # b/c roofit normalizes
-              ndfAlt -= altSBPdf.getParameters(toyDataHist).getSize()
+              ndfAlt -= rooPdfNFreeParams(altSBPdf,toyDataHist)
               nAlt = nSigVar.getVal()
               errAlt = nSigVar.getError()
               if errAlt == 0.:
@@ -219,6 +231,22 @@ def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sig
               data[truePdfName][hmass][pdfAltName]['z'].append(nAlt/errAlt)
               data[truePdfName][hmass][pdfAltName]['pull'].append(pull)
               data[truePdfName][hmass]['pullAll'].append(pull)
+              if plotThisToy:
+                altSBPdf.plotOn(frame,root.RooFit.LineColor(color))
+          if plotThisToy:
+            frame.Draw()
+            frame.SetTitle("")
+            frame.GetYaxis().SetTitle("Events / 1 GeV/c^{2}")
+            tlatex.SetTextAlign(12)
+            tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+            tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Ref PDF: "+truePdfName)
+            tlatex.SetTextAlign(32)
+            tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,catName+" "+energyStr)
+            tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Ref B-Only GOF: {0:.2f}".format(scipy.stats.chi2.sf(chi2BOnlyVal,ndfBOnlyVal)))
+            tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.80,"Ref B-Only #chi^{{2}}/NDF: {0:.2f}".format(chi2BOnlyVal/ndfBOnlyVal))
+            tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Ref S+B GOF: {0:.2f}".format(scipy.stats.chi2.sf(chi2TrueToyVar.getVal(),ndfTrue)))
+            tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.70,"Ref S+B #chi^{{2}}/NDF: {0:.2f}".format(chi2TrueToyVar.getVal()/ndfTrue))
+            canvas.SaveAs("output/debug_"+catName+"_"+energyStr+"_"+str(hmass)+"_Job"+str(iJob)+"_Toy"+str(iToy)+".png")
           #if truePdfName == "Old":
           #  print "**************************************************************"
           #  print "True PDF Parameters:"
@@ -305,7 +333,7 @@ class BiasStudy:
       if nToys < 50:
         nJobs = 5
       if nToys < 20:
-        nJobs = 2
+        nJobs = 1
       for refPdfName,iRefPdfName in zip(self.refPdfNameList,range(len(self.refPdfNameList))):
         pdfAltNameList = self.pdfAltNamesDict[refPdfName]
         mapResults = processPool.map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(int(nToys/nJobs))))
@@ -651,9 +679,9 @@ class BiasStudy:
         tlatex.SetTextAlign(32)
         tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
         tmpDat = self.data[refPdfName][hmass]['zTrue']
-        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Median: {0:.1f}".format(median(tmpDat)))
-        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Mean: {0:.1f}".format(mean(tmpDat)))
-        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.65,"#sigma: {0:.1f}".format(stddev(tmpDat)))
+        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Median: {0:.2f}".format(median(tmpDat)))
+        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Mean: {0:.2f}".format(mean(tmpDat)))
+        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.65,"#sigma: {0:.2f}".format(stddev(tmpDat)))
         tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.55,"N_{{out of hist}}: {0:.0f}".format(hist.GetBinContent(0)+hist.GetBinContent(hist.GetNbinsX()+1)))
         self.setYMaxAndDrawVertLines(hist,None)
         canvas.RedrawAxis()
@@ -676,9 +704,9 @@ class BiasStudy:
           tlatex.SetTextAlign(32)
           tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
           tmpDat = self.data[refPdfName][hmass][pdfAltName]['z']
-          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Median: {0:.1f}".format(median(tmpDat)))
-          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Mean: {0:.1f}".format(mean(tmpDat)))
-          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.65,"#sigma: {0:.1f}".format(stddev(tmpDat)))
+          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Median: {0:.2f}".format(median(tmpDat)))
+          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Mean: {0:.2f}".format(mean(tmpDat)))
+          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.65,"#sigma: {0:.2f}".format(stddev(tmpDat)))
           tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.55,"N_{{out of hist}}: {0:.1f}".format(hist.GetBinContent(0)+hist.GetBinContent(hist.GetNbinsX()+1)))
           self.setYMaxAndDrawVertLines(hist,None)
           canvas.RedrawAxis()
@@ -1048,11 +1076,11 @@ if __name__ == "__main__":
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
   categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
@@ -1082,7 +1110,7 @@ if __name__ == "__main__":
   else:
     processPool = Pool(processes=6)
     for category in categories:
-      bs = BiasStudy(category,dataFns8TeV,"8TeV",1000,processPool=processPool)
+      bs = BiasStudy(category,dataFns8TeV,"8TeV",50,processPool=processPool)
       logFile.write(bs.outStr)
       bs.plot(outDir+"bias_")
     
