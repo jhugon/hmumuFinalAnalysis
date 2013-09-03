@@ -69,7 +69,7 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
       elif "Jet2CutsGFPass" in name:
         order = 5
       elif "Jet2CutsFailVBFGF" in name:
-        order = 5
+        order = 4
       else:
         order = 6
 
@@ -172,7 +172,8 @@ class OrderStudy:
       self.outStr += "\n\n"
       for pdfBaseName in ["Bernstein"]:
         data[pdfBaseName] = {}
-        for order in range(1,9):
+        #for order in range(1,9):
+        for order in range(1,11):
           data[pdfBaseName][order] = {}
           w = root.RooWorkspace("w"+pdfBaseName+str(order))
           wImport = getattr(w,"import")
@@ -284,13 +285,13 @@ if __name__ == "__main__":
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
-  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
   categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
   dataFns8TeV = [

@@ -19,6 +19,7 @@ from itertools import repeat as itrRepeat
 
 from helpers import *
 import makeCards
+import fitOrderChooser
 
 from numpy import mean, median, corrcoef, percentile
 from numpy import std as stddev
@@ -41,8 +42,17 @@ def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sig
         dataTree.Add(i+"/outtree"+catName)
       dataTree.SetCacheSize(10000000);
       dataTree.AddBranchToCache("*");
-      truePdfFunc = getattr(makeCards,"makePDFBak"+truePdfName)
-      pdfAltFuncList = [ getattr(makeCards,"makePDFBak"+i) for i in pdfAltNameList]
+      truePdfFunc = None
+      if truePdfName == "Bernstein":
+        truePdfFunc = getattr(fitOrderChooser,"makePDFBak"+truePdfName)
+      else:
+        truePdfFunc = getattr(makeCards,"makePDFBak"+truePdfName)
+      pdfAltFuncList = []
+      for i in pdfAltNameList:
+        if i == "Bernstein":
+          pdfAltFuncList.append(getattr(fitOrderChooser,"makePDFBak"+i))
+        else:
+          pdfAltFuncList.append(getattr(makeCards,"makePDFBak"+i))
 
       dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",110.,170.)
       dimuonMass.setBins(60)
@@ -303,8 +313,9 @@ class BiasStudy:
       self.refPdfNameList = [
       #    "ExpLog",
       #    "MOverSq",
-          "Old",
-          "ExpMOverSq",
+      #    "Old",
+      #    "ExpMOverSq",
+          "Bernstein",
       ]
       self.pdfAltNamesDict = {
           "ExpLog":["ExpMOverSq"],
@@ -313,6 +324,10 @@ class BiasStudy:
           "ExpMOverSq":[          
           #                  "ExpLog",
           #                  "MOverSq",
+                            "Old",
+                        ],
+          "Bernstein":[          
+                            "ExpMOverSq",
                             "Old",
                         ],
       }
@@ -430,6 +445,7 @@ class BiasStudy:
         "MOverSq":"#frac{m}{(m-p_{1})^{2}}",
         "Old":"Voigtian+Exp",
         "ExpMOverSq":"#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}",
+        "Bernstein":"Bernstein",
     }
     titleMap = {
       "Jets01PassPtG10BB": "0,1-Jet Tight BB",
@@ -1110,7 +1126,7 @@ if __name__ == "__main__":
   else:
     processPool = Pool(processes=6)
     for category in categories:
-      bs = BiasStudy(category,dataFns8TeV,"8TeV",50,processPool=processPool)
+      bs = BiasStudy(category,dataFns8TeV,"8TeV",500,processPool=processPool)
       logFile.write(bs.outStr)
       bs.plot(outDir+"bias_")
     

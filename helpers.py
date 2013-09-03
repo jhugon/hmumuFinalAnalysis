@@ -10,6 +10,7 @@ from math import sqrt
 from math import log10
 import math
 import numpy
+import scipy
 import array
 import sys
 import time
@@ -1511,6 +1512,37 @@ class CompareTwoHistsAndData:
     self.tlatex.DrawLatex(0.33,0.96,PRELIMINARYSTRING)
     self.tlatex.DrawLatex(0.75,0.96,"#sqrt{s}=%s, L=%.1f fb^{-1}" % (energyStr,lumi))
 
+def jacknife(a,func,d=1):
+  """
+    Returns jacknife estimators of f, error on f, and bias of f 
+    a must be a 1D list or array
+    f must be a function that takes a list or array
+    d is the number of samples to delete (as in delete-d jacknife)
+  """
+  a = numpy.array(a)
+  estimate = func(a)
+  n = len(a)
+  if d < 1 or d > n:
+    print("Error: jacknife: d="+str(d)+" is is out of bounds for n: "+str(n))
+    sys.exit(1)
+  elif d == 1:
+    jnEstimates = numpy.zeros(n)
+    bools = numpy.ones(n,dtype=numpy.bool)
+    for i in range(n):
+      bools[i] = False
+      jnEstimates[i] = func(a[bools])
+      bools[i] = True
+    jnEstimate = numpy.sum(jnEstimates)/n
+    jnBias = estimate-jnEstimate
+    jnError = jnEstimates-jnEstimate
+    jnError = numpy.power(jnError,2)
+    jnError = numpy.sum(jnError)
+    jnError *= (n-1)/float(n)
+    jnError = numpy.sqrt(jnError)
+    return jnEstimate, jnError, jnBias
+  else:
+    return None
+
 def makeBootstrapHist(hist,outHist,entries=None):
  outHist.Reset()
  samples = entries
@@ -2865,12 +2897,17 @@ if __name__ == "__main__":
 
   root.gROOT.SetBatch(True)
   print("Running helpers.py")
-  eff = EfficiencyReader()
-  print eff
-  eff.plot("fitresults")
   
-  #f1 = root.TFile("input/V00-01-10/ggHmumu125_8TeV.root")
-  #t1 = f1.Get("outtree")
-  #t1.Draw("dimuonMass >> h1","dimuonMass > 110. && dimuonMass < 170. && dimuonPt > 10.")
-  #h1 = root.gDirectory.Get("h1")
-  #print fitDGFindQuantiles(h1,0.683)
+
+  zs = []
+  f = numpy.mean
+  for iToy in range(100):
+    sample = numpy.random.normal(0.,1.,(100))
+    est = f(sample)
+    jnEst, jnErr, jnBias = jacknife(sample,f)
+    zs.append((est)/jnErr)
+
+  print("Mean and std Z-score for 100 experiments: ",numpy.mean(zs),numpy.std(zs))
+  #print "median: ",numpy.median(sample)
+  #print jacknife(sample,numpy.median)
+
