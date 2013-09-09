@@ -29,34 +29,37 @@ cp $FILENAME $DIRNAME/
 cp $ROOTFILENAME $DIRNAME/
 cd $DIRNAME
 
-echo "executing combine -M Asymptotic --rMax 150 $FILENAME >& $FILENAME.out"
+RMAX=150
+RMIN=-150
 
-combine -M Asymptotic --rMax 150 $FILENAME >& $FILENAME.out
+echo "executing combine -M Asymptotic --rMax $RMAX $FILENAME >& $FILENAME.out"
 
-echo "executing combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif >& $FILENAME.sig"
+combine -M Asymptotic --rMax $RMAX $FILENAME >& $FILENAME.out
 
-combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif >& $FILENAME.sig
+echo "executing combine -M ProfileLikelihood --rMax $RMAX -d $FILENAME --signif >& $FILENAME.sig"
+
+combine -M ProfileLikelihood --rMax $RMAX -d $FILENAME --signif >& $FILENAME.sig
 rm -f roostats*
 rm -f higgsCombineTest*.root
 
-#echo "executing combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig"
+#echo "executing combine -M ProfileLikelihood --rMax $RMAX -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig"
 #
-#combine -M ProfileLikelihood --rMax 150 -d $FILENAME --signif --expectSignal=1 -t -1 >& $FILENAME.expsig
+#combine -M ProfileLikelihood --rMax $RMAX -d $FILENAME --signif --expectSignal=1 -t -1 >& $FILENAME.expsig
 ##combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig
 #rm -f roostats*
 #rm -f higgsCombineTest*.root
 
-echo "executing combine -M MaxLikelihoodFit --rMin -150 --rMax 150 --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
+#echo "executing combine -M MaxLikelihoodFit --rMin $RMIN --rMax $RMAX --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
+#
+#combine -M MaxLikelihoodFit --rMin $RMIN --rMax $RMAX --plots --saveNormalizations $FILENAME >& $FILENAME.mu
+#rm -f roostats*
+#rm -f higgsCombineTest*.root
 
-combine -M MaxLikelihoodFit --rMin -150 --rMax 150 --plots --saveNormalizations $FILENAME >& $FILENAME.mu
-rm -f roostats*
-rm -f higgsCombineTest*.root
-
-combine -M ChannelCompatibilityCheck --saveFitResult --rMin -150 --rMax 150 $FILENAME >> logCCC2
-mv higgsCombineTest.ChannelCompatibilityCheck.*.root ../$FILENAME.CCC2.root
-
-rm -f roostats*
-rm -f higgsCombineTest*.root
+#combine -M ChannelCompatibilityCheck --saveFitResult --rMin $RMIN --rMax $RMAX $FILENAME >> logCCC2
+#mv higgsCombineTest.ChannelCompatibilityCheck.*.root ../$FILENAME.CCC2.root
+#
+#rm -f roostats*
+#rm -f higgsCombineTest*.root
 
 ####New Coupligs and LH Scan Stuff
 #

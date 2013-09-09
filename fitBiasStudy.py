@@ -54,10 +54,12 @@ def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sig
         else:
           pdfAltFuncList.append(getattr(makeCards,"makePDFBak"+i))
 
-      dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",110.,170.)
+      #dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",110.,170.)
+      dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",110.,160.)
       dimuonMass.setBins(60)
       dimuonMass.setRange("low",110,120) # Silly ranges for old fit functionality
-      dimuonMass.setRange("high",130,170)
+      #dimuonMass.setRange("high",130,170)
+      dimuonMass.setRange("high",130,160)
       dimuonMass.setRange("signal",120,130)
       dimuonMass.setRange("signalfit",110,140)
       dimuonMass.setRange("annaRegion",123.5,127.5)
@@ -296,13 +298,16 @@ def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sig
 def runStudyStar(argList):
   return runStudy(*argList)
 
+################################################################################################
+################################################################################################
+################################################################################################
 
 class BiasStudy:
   #def __init__(self,category,dataFiles,energyStr):
   def __init__(self,category,dataFileNames,energyStr,nToys=10,pklOutFnBase="output/biasData",inputPkl=None,processPool=None):
     self.dataFileNames = dataFileNames
     self.sigMasses = range(115,156,5)
-    self.sigMasses = [125,150]
+    self.sigMasses = [115,125,130,135,140,145,150]
     ## Try to load data from pkl file
     if inputPkl != None:
       try:
@@ -1278,12 +1283,12 @@ if __name__ == "__main__":
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
   categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
   dataFns8TeV = [
@@ -1312,7 +1317,7 @@ if __name__ == "__main__":
   else:
     processPool = Pool(processes=6)
     for category in categories:
-      bs = BiasStudy(category,dataFns8TeV,"8TeV",100,processPool=processPool)
+      bs = BiasStudy(category,dataFns8TeV,"8TeV",1000,processPool=processPool)
       logFile.write(bs.outStr)
       bs.plot(outDir+"bias_")
     
