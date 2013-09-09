@@ -3,8 +3,8 @@ import ROOT as root
 import helpers
 
 lumiDict={}
-#lumiDict["8TeV"] = 19.39 #2012AARecovBCD
-lumiDict["8TeV"] = 19.79 #2012ABCD 22Jan2013
+#lumiDict["8TeV"] = 19.79 #2012ABCD 22Jan2013 HF-Lumi
+lumiDict["8TeV"] = 19.712 #2012ABCD 22Jan2013 Pixel-Lumi
 lumiDict["7TeV"] = 5.05 #2011AB
 
 #LUMI=0.807 #2012A
@@ -279,8 +279,10 @@ class NuisanceMap:
       self.wh[e] = helpers.readCSVXS("etc/wH_"+e+".csv")
       self.zh[e] = helpers.readCSVXS("etc/zH_"+e+".csv")
     self.lumi = {
-        "14TeV" : 1.044,
-        "8TeV" : 1.044,
+        #"14TeV" : 1.044,    # 2012 HF-Lumi
+        #"8TeV" : 1.044,    # 2012 HF-Lumi
+        "14TeV" : 1.026,    # 2012 Pixel-Lumi
+        "8TeV" : 1.026,    # 2012 Pixel-Lumi
         "7TeV" : 1.022,
         }
     self.JES = {
