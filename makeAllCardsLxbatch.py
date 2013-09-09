@@ -29,7 +29,7 @@ print '----------------------------------------------------------------------\n'
 # ====================
 
 PWD = os.getenv('PWD')
-massrange = drange(115, 160.5, 1)
+massrange = drange(115, 155.5, 1)
 #massrange = drange(125, 127.5, 1)
 for mass in massrange:
 
