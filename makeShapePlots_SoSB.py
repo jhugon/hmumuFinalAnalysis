@@ -4,11 +4,14 @@ import optparse
 parser = optparse.OptionParser(description="Makes Shape Diagnostic Plots from Datacards")
 parser.add_option("--signalInject", help="Sets a caption saying that signal was injected with strength",type=float,default=20.0)
 parser.add_option("-b","--binWidthOverride", help="Overrides the default bin widths and sets all binning to this widht [GeV]",type=float,default=0.0)
+parser.add_option("-m","--mass", help="Overrides the default mass value = 125 GeV/c2",type=float,default=125.0)
 #parser.add_option("--plotSignalStrength", help="Plots a signal bump with this strength",type=float,default=5.0)
 #parser.add_option("--plotSignalBottom", help="Plots a signal bump on the bottom (bool)",action="store_true",default=True)
 #parser.add_option("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
 #parser.add_option("-r","--rebinOverride", help="Rebin All plots with this rebinning, overriding all internal configuration",type=int,default=0)
 args, fakeargs = parser.parse_args()
+
+#print args, fakeargs
 
 from helpers import *
 from xsec import *
@@ -89,12 +92,17 @@ class ModelPlotter:
     self.rangename = None
     # Main Frame
     frame       = xVar.frame(root.RooFit.Title(""))
+    # simply cloning the frame did not work for me... :-(
+    # working around it
+    frameBkgSub = xVar.frame(root.RooFit.Title("BkgSub"))
 
     if (RangeName):
       self.rangename = RangeName
       frame = xVar.frame(root.RooFit.Title(""),root.RooFit.Range(self.rangename))
+      frameBkgSub = xVar.frame(root.RooFit.Title("BkgSub"),root.RooFit.Range(self.rangename))
 
     self.frame = frame
+    self.frameBkgSub = frameBkgSub
     data.plotOn(frame,graphDrawOptArg,binningArg)
       
     if backgroundPDFName != None:
@@ -107,6 +115,12 @@ class ModelPlotter:
 
     data.plotOn(frame,graphDrawOptArg,binningArg,tmpDataHistNameArg)
 
+    # filling it with white points for the sig PDF normalization
+    data.plotOn(frameBkgSub,graphDrawOptArg,
+                root.RooFit.MarkerColor(root.kWhite),
+                root.RooFit.LineColor(root.kWhite),
+                binningArg,tmpDataHistNameArg)
+
 
     frame.SetTitle("")
     frame.GetXaxis().SetLabelSize(0)
@@ -116,12 +130,19 @@ class ModelPlotter:
         0.85*frame.GetYaxis().GetTitleOffset()
         )
 
+    frameBkgSub.SetTitle("")
+    frameBkgSub.GetYaxis().SetLabelSize(0.04)
+    frameBkgSub.GetYaxis().SetTitleSize(0.055*0.9)
+    frameBkgSub.GetYaxis().SetTitleOffset(
+        1.1*frameBkgSub.GetYaxis().GetTitleOffset()
+        )
     
     unitMatch =  re.search(r"GeV([\s]*/[\s]*c\^\{2\}|[\s]*/[\s]*c)?",xtitle)
     units = ""
     if unitMatch:
       units = " "+unitMatch.group(0)
     frame.SetYTitle("Events/"+str(binWidth)+units)
+    frameBkgSub.SetYTitle("Events/"+str(binWidth)+units)
 
     # Pulls Frame
     pullsHist = self.makePullPlotHist(frame,tmpDataHistName,tmpBakPDFName)
@@ -145,6 +166,17 @@ class ModelPlotter:
     self.pullsHist.GetYaxis().SetLabelSize(0.097)
     self.pullsHist.GetYaxis().SetTitleOffset(0.70*0.9)
 
+    # Bkg Sub Hist
+    bkgSubHist = self.makeBkgSubHist(frame,tmpDataHistName,tmpBakPDFName)
+    bkgSubHist.SetLineColor(root.kGray+2)
+    bkgSubHist.SetLineWidth(2)
+    bkgSubHist.SetFillColor(root.kGray)
+    bkgSubHist.SetFillStyle(1001)
+    setHistTitles(bkgSubHist,xtitle,"Data-Bkg Fit Model")
+    self.bkgSubHist = bkgSubHist
+
+    bkgSubDataHist = root.RooDataHist("data_men_fit","",
+                                      root.RooArgList(xVar),bkgSubHist)    
 
     # add the signal PDF if it is there
     if signalPDFName != None and signalPdf == None:
@@ -166,6 +198,7 @@ class ModelPlotter:
                             )
 
         sigPdfToDraw.plotOn(frame,      lineDrawOptArg,sigLineColorArg,lineWidthArg,componentToDraw),
+        sigPdfToDraw.plotOn(frameBkgSub,lineDrawOptArg,sigLineColorArg,lineWidthArg,componentToDraw)
       
         
     # Legend
@@ -191,11 +224,19 @@ class ModelPlotter:
     self.leg.AddEntry(self.phonyDatLegHist,"Data","lp")
     self.leg.AddEntry(self.phonyFitLegHist,"Background Model","lf")
 
+    legPosBkgSub = [0.64,0.72,0.92,0.88]
+    self.legBkgSub = root.TLegend(*legPosBkgSub)
+    self.legBkgSub.SetFillColor(0)
+    self.legBkgSub.SetLineColor(0)
+    self.legBkgSub.AddEntry(self.bkgSubHist,"Data - Background Model","lf")
+
     if signalPdf != None:
       if signalLegEntry != None:
         self.leg.AddEntry(self.phonySigLegHist,signalLegEntry,"l")
+        self.legBkgSub.AddEntry(self.phonySigLegHist,signalLegEntry,"l")
       else:
         self.leg.AddEntry(self.phonySigLegHist,"Signal","l")
+        self.legBkgSub.AddEntry(self.phonySigLegHist,"Signal","l")
 
 
   def draw(self,filenameNoExt):
@@ -384,6 +425,113 @@ class ModelPlotter:
     return pullsHist
 
 
+  def makeBkgSubHist(self,frame,histPlotName,pdfPlotName):
+
+    """
+    Makes bkg subtracted hist which is (data-fit)
+    where fit is the average value of the PDF within the data histogram bin.
+    """
+    hist = frame.findObject(histPlotName)
+    curve = frame.findObject(pdfPlotName)
+    assert(hist)
+    assert(curve)
+
+    nBins = self.binning.numBins()
+    lowB  = self.binning.lowBound() 
+    highB = self.binning.highBound() 
+   
+    if (self.rangename):
+      binWidth = (highB - lowB) / nBins
+      lowB  = self.xVar.getBinning(self.rangename).lowBound()
+      highB = self.xVar.getBinning(self.rangename).highBound()
+      nBins = (highB - lowB)/binWidth
+
+
+    # Histograms to compute the bkg subtracted histogram
+    bkgSubHistData = root.TH1F("bkgSubHistData_"+histPlotName+"_"+pdfPlotName,"",
+                               int(nBins), lowB, highB
+                               )
+
+    bkgSubHistFit = root.TH1F("bkgSubHistFit_"+histPlotName+"_"+pdfPlotName,"",
+                              int(nBins), lowB, highB
+                              )
+
+
+    x = root.Double(0.)
+    y = root.Double(0.)
+
+    curve.GetPoint(0,x,y) # Get Curve Start X
+    xCurveMin = float(x)
+    curve.GetPoint(curve.GetN()-1,x,y) # Get Curve End X
+    xCurveMax = float(x)
+
+    iBin = 1
+    for i in range(1,self.binning.numBins()+1):
+      hist.GetPoint(i-1,x,y)
+      diff = float(y)
+      if (float(x) < lowB or float(x) > highB):
+        continue
+      #print("hist bin: %10i, x: %10.2f, y: %10.2f" % (iBin,float(x),float(y)))
+      if x > xCurveMin and x < xCurveMax:
+        curvePoint = curve.interpolate(x)
+        diff -= curvePoint
+        #print(" curve interpolation: %10.2f" % (curvePoint))
+      else:
+        diff = 0.
+        #print(" Warning: x outside of curve range: [ %10.2f %10.2f ]" % (xCurveMin,xCurveMax))
+      #print(" diff: %10.2f" % (diff))
+
+      bkgSubHistData.SetBinContent(iBin,float(y))
+
+      bkgSubHistFit.SetBinContent(iBin,curvePoint)
+      bkgSubHistFit.SetBinError(iBin,0) # assuming the error on the fit is negligible
+
+      iBin += 1
+
+    # Construct the bkg subtracted histogram
+    bkgSubHist = bkgSubHistData.Clone("bkgSubHist")
+    bkgSubHist.Sumw2()
+    bkgSubHist.Add(bkgSubHistFit,-1)
+    
+    return bkgSubHist
+  
+
+  def drawBkgSub(self,filenameNoExt):
+
+    self.canvas.SetLogy(0)
+    self.canvas.cd()
+  
+    self.frameBkgSub.SetMinimum(-100)
+    self.frameBkgSub.SetMaximum(+200)
+    self.frameBkgSub.Draw()
+    self.bkgSubHist.Draw("histo same")
+    self.bkgSubHist.Draw("pe same")
+    self.frameBkgSub.Draw("same")
+    self.legBkgSub.Draw()
+
+    # Text
+    self.tlatex.SetTextSize(0.04)
+    self.tlatex.SetTextAlign(12)
+    self.tlatex.DrawLatex(root.gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+    self.tlatex.SetTextAlign(32)
+    self.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
+
+    self.tlatex.SetTextAlign(32)
+    if (self.lumi != 0):
+      self.tlatex.DrawLatex(self.legPos[0]-0.01,0.820,self.lumiStr)
+    if (self.lumi == 0):
+      self.tlatex.SetTextSize(0.04)
+      self.tlatex.DrawLatex(self.legPos[0]-0.03,0.850,"#sqrt{s}=7 TeV L =  5.0 fb^{-1} ")
+      self.tlatex.DrawLatex(self.legPos[0]-0.03,0.770,"#sqrt{s}=8 TeV L = 19.7 fb^{-1}")
+            
+    energyStr = self.energyStr
+    if re.search(r"[\d]TeV",energyStr):
+      energyStr = energyStr.replace("TeV"," TeV")
+    if (self.energyStr != ""):
+      self.tlatex.DrawLatex(self.legPos[0]-0.01,0.875,"#sqrt{s} = "+self.energyStr)
+
+    saveAs(self.canvas,filenameNoExt)
+
 
 
 class ShapePlotter:
@@ -512,7 +660,7 @@ class ShapePlotter:
                             nSignal=nSignal,signalPdf=sigPDF,
                             signalLegEntry=signalLegEntry
                             )
-      rmp.draw(saveName)
+      rmp.draw("")#saveName)
 
       #Pull Distribution Time
       saveNameSplit = os.path.split(saveName)
@@ -543,15 +691,15 @@ class ShapePlotter:
       nSig   = sigInt.getVal()*(nSignal/signalInject) # this remove the signalInjection
 
       # for debugging purposes
-      print "%s %f %f %f %f %f %f %f" % (channelNameOrig,
-                                         nBak,
-                                         nSig,
-                                         nSig/nBak,
-                                         nSig/(nSig+nBak),
-                                         nSignal/signalInject,
-                                         nSignal,
-                                         nBackground
-                                         )
+      #print "%s %f %f %f %f %f %f %f" % (channelNameOrig,
+      #                                   nBak,
+      #                                   nSig,
+      #                                   nSig/nBak,
+      #                                   nSig/(nSig+nBak),
+      #                                   nSignal/signalInject,
+      #                                   nSignal,
+      #                                   nBackground
+      #                                   )
 
       self.SoSB     [channelNameOrig] = nSig/(nSig+nBak)
       self.events   [channelNameOrig] = nDataTotal
@@ -644,7 +792,7 @@ class ShapePlotter:
 
     
 
-  def drawSoSB(self,name="sosbtest",title="",vetoList=[],folder=""):
+  def drawSoSB(self,higgs_mass,name="sosbtest",title="",vetoList=[],folder=""):
 
     # sum the datasets with weights and plot them
     # define the x-axis variable
@@ -791,7 +939,7 @@ class ShapePlotter:
                        None,None,
                        self.signalInject, # sum pdf already norm to num events (you can check it if you put 1)
                        signalPdfSum,
-                       "Signal m_{H}=125 GeV #times %d" % ( self.signalInject )
+                       "Signal m_{H}=%.0f GeV #times %d" % ( higgs_mass, self.signalInject )
                        )
 
     savename = outDir + name
@@ -799,6 +947,23 @@ class ShapePlotter:
     rmp.draw(savename+"_"+self.energyStr+self.massStr+"_SoSB")
     self.rmpList.append(rmp)
 
+
+    zoom = "zoom"
+    dimuonMass.setRange(zoom,120,135)
+    rmp = ModelPlotter(dimuonMass,
+                       bakPdfSum,
+                       datasetSoSB,
+                       self.fitresult,
+                       title,self.energyStr,self.lumi,
+                       None,None,
+                       5., # hardcoded
+                       signalPdfSum,
+                       "Signal m_{H}=%.0f GeV #times 5" % (higgs_mass), #hardcoded
+                       zoom
+                       )
+
+    rmp.drawBkgSub(savename+"_"+self.energyStr+self.massStr+"_SoSB_bkgSub")
+    self.rmpList.append(rmp)
 
 
 #~48 Charactars Max
@@ -891,8 +1056,12 @@ titleMap = {
 
         
 if __name__ == "__main__":
+
   #root.gROOT.SetBatch(True)
 
+  higgs_mass = args.mass
+  print "S/(S+B) Weighted Distribution for Higgs mass = %s" % higgs_mass
+  
   dataDir = "statsCards/"
   outDir  = "shapes/"
   fitDir  = "statsInput/"
@@ -907,7 +1076,7 @@ if __name__ == "__main__":
     if re.search("P[\d.]+TeV",fn):
         continue
 
-    if ("125" not in fn):
+    if (str(higgs_mass) not in fn):
         continue
     if ("CombSplitAll" not in fn):
       continue
@@ -981,7 +1150,8 @@ if __name__ == "__main__":
 
   # merge
   print "Drawing the full combination"
-  sp_merged.drawSoSB("mMuMu_CombSplitAll7P8",
+  sp_merged.drawSoSB(higgs_mass,
+                     "mMuMu_CombSplitAll7P8",
                      "S/(S+B) Weighted",
                      [], outDir)
 

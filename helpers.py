@@ -2550,7 +2550,8 @@ class RooModelPlotter:
     self.tlatex.SetTextAlign(12)
     self.tlatex.DrawLatex(0.18,0.41,"#chi^{{2}}/NDF: {0:.3g}".format(self.chi2))
 
-    saveAs(self.canvas,filenameNoExt)
+    if (filenameNoExt != ""):
+      saveAs(self.canvas,filenameNoExt)
 
   def drawPulls(self,filenameNoExt):
     self.canvas.cd()
