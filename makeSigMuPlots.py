@@ -13,6 +13,7 @@ import ROOT as root
 import glob
 import re
 import os.path
+import cPickle
 
 from xsec import *
 
@@ -206,7 +207,7 @@ comparisonMap = {
 #######################################
 
 # Do match and don't match w/o extensions.  \.expsig and \.sig are added automatically
-def getDataSig(fileString,matchString=r"_([-\d.]+)\.txt",dontMatchStrings=[],doSort=True,getPValue=False):
+def getDataSig(fileString,matchString=r"_([-\d.]+)\.txt",dontMatchStrings=[],doSort=True,getPValue=False,xMax=1e20):
   def sortfun(s):
     match = re.search(matchString,s)
     result = 1e12
@@ -236,6 +237,8 @@ def getDataSig(fileString,matchString=r"_([-\d.]+)\.txt",dontMatchStrings=[],doS
     xNum = -10.0
     if match:
       xNum = match.group(1)
+      if float(xNum) > xMax:
+        continue
     for line in tmpF:
       obsMatch = None
       if getPValue:
@@ -270,7 +273,7 @@ def getDataSig(fileString,matchString=r"_([-\d.]+)\.txt",dontMatchStrings=[],doS
   #print result
   return result
 
-def getDataMu(fileString,matchString=r"_([-\d.]+)\.txt\.mu",dontMatchStrings=[],doSort=True):
+def getDataMu(fileString,matchString=r"_([-\d.]+)\.txt\.mu",dontMatchStrings=[],doSort=True,xMax=1e20):
   def sortfun(s):
     match = re.search(matchString,s)
     result = 1e12
@@ -299,6 +302,8 @@ def getDataMu(fileString,matchString=r"_([-\d.]+)\.txt\.mu",dontMatchStrings=[],
     xNum = -10.0
     if match:
       xNum = match.group(1)
+      if float(xNum) > xMax:
+        continue
     for line in tmpF:
       #obsMatch = re.search(r"Best fit r:[\s]+([.\deE-]+)[\s]+([.\deE-]+)/+([.\deE-]+)",line)
       obsMatch = re.search(r"Best fit r:[\s]+([.\deE-]+)[\s]+\-([.\deE-]+)/\+([.\deE-]+)",line)
@@ -589,6 +594,8 @@ if __name__ == "__main__":
 
   dirName = "statsInput/"
   #dirName = "/data/uftrig01b/digiovan/baselinePP/exppluspolin_fixEff_DiffMeans_unbinned_loosePUID_fixBkgVBFFit_syst_22Jan2013ReReco_assProd/statsInputUltimate/"
+  #dirName = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_6_1_1/Results/hmumuFinalAnalysis/statsInput/"
+  #dirName = "/data/uftrig01b/digiovan/baselinePP/m110to160_pixelLumi/hmumuFinalAnalysis/statsInput/"
   
   outDir = "statsOutput/"
   
@@ -596,8 +603,10 @@ if __name__ == "__main__":
   root.gROOT.SetBatch(True)
   setStyle()
   canvas = root.TCanvas()
+  xMax=1e20
   if not args.higgsMass:
     canvas.SetLogx(1)
+    xMax=155.
   canvas.SetLogy(0)
   
   ylimits=[]
@@ -647,7 +656,7 @@ if __name__ == "__main__":
       data = None
       doMuExtraPlot=True
       showObs=False
-      data = getDataMu(dirName+plotName+"_"+period+"_*.txt*")
+      data = getDataMu(dirName+plotName+"_"+period+"_*.txt*",xMax=xMax)
       if len(data)<=1 or not args.higgsMass:
         continue
       title = "Standard Model H#rightarrow#mu#mu"
@@ -751,8 +760,12 @@ if __name__ == "__main__":
         if plotName in vetos:
             continue
 
-        data = getDataSig(dirName+plotName+"_"+period+"_*.txt*",getPValue=True)
+        data = getDataSig(dirName+plotName+"_"+period+"_*.txt*",getPValue=True,xMax=xMax)
         pValueDict[plotName] = data
+        if plotName == "CombSplitAll" and period=="7P8TeV":
+          pklFile = open("pValuesCombSplitAll7P8TeV.pkl","w")
+          cPickle.dump(data,pklFile)
+          pklFile.close()
       pValueAllPlot = PValuePlotTogether(pValueDict,canvas,caption2=caption2,caption3=caption3,energyStr=energyStr)
       saveAs(canvas,outDir+"pValues_"+saveName+period)
     canvas.SetLogy(0)

@@ -16,6 +16,7 @@ import ROOT as root
 import glob
 import re
 import os.path
+import cPickle
 from copy import deepcopy
 from array import array
 import sys
@@ -192,7 +193,7 @@ comparisonMap = {
 
 #######################################
 
-def getData(fileString,matchString=r"_([-\d.]+)\.txt\.out",dontMatchStrings=[],doSort=True):
+def getData(fileString,matchString=r"_([-\d.]+)\.txt\.out",dontMatchStrings=[],doSort=True,xMax=1.0e20):
   def sortfun(s):
     match = re.search(matchString,s)
     result = 1e12
@@ -224,6 +225,8 @@ def getData(fileString,matchString=r"_([-\d.]+)\.txt\.out",dontMatchStrings=[],d
     xNum = -10.0
     if match:
       xNum = match.group(1)
+      if float(xNum) > xMax:
+        continue
     for line in tmpF:
       obsMatch = re.search(r"Observed[\s]Limit:[^.\d]*< ([.\deE]+)",line)
       low2sigMatch = re.search(r"Expected.*2\.5.:[^.\d]*< ([.\deE]+)",line)
@@ -595,6 +598,8 @@ if __name__ == "__main__":
 
   dirName = "statsInput/"
   #dirName = "/data/uftrig01b/digiovan/baselinePP/exppluspolin_fixEff_DiffMeans_unbinned_loosePUID_fixBkgVBFFit_syst_22Jan2013ReReco_assProd/statsInputUltimate/"
+  #dirName = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_6_1_1/Results/hmumuFinalAnalysis/statsInput/"
+  #dirName = "/data/uftrig01b/digiovan/baselinePP/m110to160_pixelLumi/hmumuFinalAnalysis/statsInput/"
   
   outDir = "statsOutput/"
   
@@ -695,7 +700,14 @@ if __name__ == "__main__":
     legend.SetFillColor(0)
     legend.SetLineColor(0)
     for plotName in plots:
-      data = getData(dirName+plotName+"_"+energyStr+"_*.txt.out")
+      xMax = 1e20
+      if args.higgsMass:
+        xMax = 155.
+      data = getData(dirName+plotName+"_"+energyStr+"_*.txt.out",xMax=xMax)
+      if plotName == "CombSplitAll" and period=="7P8TeV":
+        pklFile = open("limitsCombSplitAll7P8TeV.pkl","w")
+        cPickle.dump(data,pklFile)
+        pklFile.close()
       xlimits = []
       vertLines = []
       if len(data)<=1:
