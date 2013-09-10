@@ -277,11 +277,10 @@ class GlobalSigEvaluator:
 
 if __name__ == "__main__":
   os.chdir("playWithLEE/")
-  #os.chdir("playWithLEE/nonVBFPassBB8TeVOnly/")
   gse = GlobalSigEvaluator("Add*.root")
   gse.drawHist()
   #gse.drawGraphs()
-  sigLocal = 2.84096
+  sigLocal = 2.27435
   print "for local significance: %.3f" % sigLocal
   print "global significance is:"
   for sig0 in [0.25,0.5,1.,1.5,2.]:

@@ -6,6 +6,7 @@ parser.add_option("--signalInject", help="Inject Signal with Strength into data_
 parser.add_option("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
 parser.add_option("-m","--higgsMass", help="Makes plots v. Higgs Mass",action="store_true",default=False)
 parser.add_option("-p","--pValue", help="Makes p-value plots instead of significance",action="store_true",default=False)
+parser.add_option("--latex", help="Prints out a latex table of p-values",action="store_true",default=False)
 args, fakeargs = parser.parse_args()
 
 from helpers import *
@@ -768,4 +769,73 @@ if __name__ == "__main__":
           pklFile.close()
       pValueAllPlot = PValuePlotTogether(pValueDict,canvas,caption2=caption2,caption3=caption3,energyStr=energyStr)
       saveAs(canvas,outDir+"pValues_"+saveName+period)
+      if args.latex and saveName=="Final" and period=="7P8TeV":
+        from scipy.stats import norm
+        allMasses = set()
+        for comb in pValueDict:
+          for mass in pValueDict[comb]:
+            if not mass[0] in allMasses:
+                allMasses.add(mass[0])
+        for mass in sorted(list(allMasses)):
+            combP = -1
+            combS = -1
+            nonVBFP = -1
+            nonVBFS = -1
+            vbfP = -1
+            vbfS = -1
+            if pValueDict.has_key("CombSplitAll"):
+              for i in pValueDict["CombSplitAll"]:
+                if i[0] == mass:
+                  combP = float(i[1])
+                  combS = norm.isf(combP)
+                  break
+            if pValueDict.has_key("Jet2SplitCutsGFSplit"):
+              for i in pValueDict["Jet2SplitCutsGFSplit"]:
+                if i[0] == mass:
+                  vbfP = float(i[1])
+                  vbfS = norm.isf(vbfP)
+                  break
+            if pValueDict.has_key("Jets01SplitCatAll"):
+              for i in pValueDict["Jets01SplitCatAll"]:
+                if i[0] == mass:
+                  nonVBFP = float(i[1])
+                  nonVBFS = norm.isf(nonVBFP)
+                  break
+            if combP > 0.:
+              combP = "{0:.1e}".format(combP)
+              match = re.match(r"([\d.]+)e([+-])([\d]+)",combP)
+              if match:
+                sign = match.group(2)
+                if sign == "+":
+                    sign = ""
+                combP = "$"+match.group(1)+r"\times 10^{"+sign+"{0:.0f}".format(float(match.group(3)))+"}$"
+              combS = "{0:.1f}".format(combS)
+            else:
+              combP = "-"
+              combS = "-"
+            if nonVBFP > 0.:
+              nonVBFP = "{0:.1e}".format(nonVBFP)
+              match = re.match(r"([\d.]+)e([+-])([\d]+)",nonVBFP)
+              if match:
+                sign = match.group(2)
+                if sign == "+":
+                    sign = ""
+                nonVBFP = "$"+match.group(1)+r"\times 10^{"+sign+"{0:.0f}".format(float(match.group(3)))+"}$"
+              nonVBFS = "{0:.1f}".format(nonVBFS)
+            else:
+              nonVBFP = "-"
+              nonVBFS = "-"
+            if vbfP > 0.:
+              vbfP = "{0:.1e}".format(vbfP)
+              match = re.match(r"([\d.]+)e([+-])([\d]+)",vbfP)
+              if match:
+                sign = match.group(2)
+                if sign == "+":
+                    sign = ""
+                vbfP = "$"+match.group(1)+r"\times 10^{"+sign+"{0:.0f}".format(float(match.group(3)))+"}$"
+              vbfS = "{0:.1f}".format(vbfS)
+            else:
+              vbfP = "-"
+              vbfS = "-"
+            print("{0:.0f} & {1:3} & {2:3} & {3:3} & {4:10} & {5:10} & {6:10} \\\\\n\\hline".format(float(mass),combS,nonVBFS,vbfS,combP,nonVBFP,vbfP))
     canvas.SetLogy(0)

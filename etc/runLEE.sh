@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ntoys=5
-ijobStart=6
+ijobStart=0
 njobs=50
 
 #chmod +x lxbatch_LEE.sh

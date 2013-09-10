@@ -669,6 +669,14 @@ if __name__ == "__main__":
       f = re.sub(".*/","",f)
       f += ":"
       print(("{0:"+maxLen+"}  {1:4.1f}  {2:4.2f}  {3:4.1f} {4:4.1f} {5:4.1f} {6:4.1f}").format(f,data[1],data[4],data[3],data[5],data[2],data[6]))
+      #massStr = f[20:23]
+      #exp = float(data[4])
+      #obs = float(data[1])
+      #p1sig = float(data[5])-exp
+      #p2sig = float(data[6])-exp
+      #m1sig = exp-float(data[3])
+      #m2sig = exp-float(data[2])
+      #print(("{0:4} & {1:4.1f} & {2:4.1f} & ${{}}^{{+{3:4.1f}}}_{{-{4:3.1f}}}$ & ${{}}^{{+{5:4.1f}}}_{{-{6:4.1f}}}$ \\\\\n\\hline").format(massStr,exp,obs,p1sig,m1sig,p2sig,m2sig))
     print
     sys.exit(0)
   
