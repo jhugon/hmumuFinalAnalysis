@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from singleHelpers import *
 from helpers import *
 import ROOT as root
 import glob
@@ -277,7 +278,7 @@ if __name__ == "__main__":
 
   caption1 = ""
   caption2 = "H#rightarrowe^{+}e^{-} L = 19.6 fb^{-1}"
-  caption3 = "H#rightarrow#mu^{+}#mu^{-} L = 19.8 fb^{-1}"
+  caption3 = "H#rightarrow#mu^{+}#mu^{-} L = 19.7 fb^{-1}"
   caption4 = "#sqrt{s} = 8 TeV"
   
   tlatex = root.TLatex()
