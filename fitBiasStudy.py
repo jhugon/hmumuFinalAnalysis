@@ -108,6 +108,27 @@ def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sig
       trueToyPdf = wTrueToy.pdf("bak")
       trueToyPdf.SetName(trueToyPdfName)
 
+      # Debug plot for fit to data
+      frame = dimuonMass.frame()
+      realDataHist = realData.binnedClone("realDataHist"+catName+energyStr+str(iJob))
+      chi2RealDataVar = truePdf.createChi2(realDataHist)
+      ndfRealData = dimuonMass.getBins() - 1  # b/c roofit normalizes
+      ndfRealData -= rooPdfNFreeParams(truePdf,realDataHist)
+      realData.plotOn(frame)
+      truePdf.plotOn(frame,root.RooFit.Range('low,signal,high'),root.RooFit.NormRange('low,signal,high'))
+      frame.Draw()
+      frame.SetTitle("")
+      frame.GetYaxis().SetTitle("Events / 1 GeV/c^{2}")
+      tlatex.SetTextAlign(12)
+      tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
+      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Ref PDF: "+truePdfName)
+      tlatex.SetTextAlign(32)
+      tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,catName+" "+energyStr)
+      tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Ref. Fit to Obs. Data")
+      tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.80,"Ref. GOF: {0:.2f}".format(scipy.stats.chi2.sf(chi2RealDataVar.getVal(),ndfRealData)))
+      tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Ref. #chi^{{2}}/NDF: {0:.2f}".format(chi2RealDataVar.getVal()/ndfRealData))
+      canvas.SaveAs("output/debug_RealData_"+truePdfName+"_"+catName+"_"+energyStr+"_Job"+str(iJob)+".png")
+
       # Make sure Voigt params are set to True vals and constant
       if truePdfName == "Old":
         for xTrue in rooArgSet2List(truePdf.getParameters(realData)):
@@ -281,7 +302,7 @@ def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sig
             tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.80,"Ref B-Only #chi^{{2}}/NDF: {0:.2f}".format(chi2BOnlyVal/ndfBOnlyVal))
             tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Ref S+B GOF: {0:.2f}".format(scipy.stats.chi2.sf(chi2TrueToyVar.getVal(),ndfTrue)))
             tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.70,"Ref S+B #chi^{{2}}/NDF: {0:.2f}".format(chi2TrueToyVar.getVal()/ndfTrue))
-            canvas.SaveAs("output/debug_"+catName+"_"+energyStr+"_"+str(hmass)+"_Job"+str(iJob)+"_Toy"+str(iToy)+".png")
+            canvas.SaveAs("output/debug_"+truePdfName+"_"+catName+"_"+energyStr+"_"+str(hmass)+"_Job"+str(iJob)+"_Toy"+str(iToy)+".png")
           #if truePdfName == "Old":
           #  print "**************************************************************"
           #  print "True PDF Parameters:"
@@ -307,7 +328,7 @@ class BiasStudy:
   def __init__(self,category,dataFileNames,energyStr,nToys=10,pklOutFnBase="output/biasData",inputPkl=None,processPool=None):
     self.dataFileNames = dataFileNames
     self.sigMasses = range(115,156,5)
-    self.sigMasses = [115,125,130,135,140,145,150]
+    self.sigMasses = [120,125,130,135,140,145,150]
     ## Try to load data from pkl file
     if inputPkl != None:
       try:
@@ -1282,11 +1303,13 @@ if __name__ == "__main__":
   jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
-  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
-  #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
-  #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  categoriesAll = ["BB","BO","BE","OO","OE","EE"]
+
+  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
+  categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
@@ -1317,7 +1340,7 @@ if __name__ == "__main__":
   else:
     processPool = Pool(processes=6)
     for category in categories:
-      bs = BiasStudy(category,dataFns8TeV,"8TeV",1000,processPool=processPool)
+      bs = BiasStudy(category,dataFns8TeV,"8TeV",100,processPool=processPool)
       logFile.write(bs.outStr)
       bs.plot(outDir+"bias_")
     
