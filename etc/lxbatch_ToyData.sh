@@ -20,8 +20,9 @@ date
 
 FILENAME=$1
 echo "input filename: "$FILENAME
-higgsmass=${FILENAME##*_}
-higgsmass=${FILENAME%.txt}
+higgsmass=$FILENAME
+higgsmass=${higgsmass##*_}
+higgsmass=${higgsmass%.txt}
 echo "higgs mass: "$higgsmass
 runname="_"${FILENAME%_*}
 echo "runname: "$runname
