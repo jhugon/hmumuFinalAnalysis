@@ -323,6 +323,11 @@ def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,d
 
     pdfMmumu = root.RooAddPdf("bak","bak",root.RooArgList(voitMmumu,expMmumu),root.RooArgList(mixParam))
 
+    if ('Jet2CutsVBFPass' in name ):
+      debug += "###  fixing mixParam to 0. for Jet2CutsVBFPass\n"
+      mixParam.setVal(0.)
+      mixParam.setConstant(True)
+
     # Just For Z-Peak Part
     assert(dimuonMassZ != None)
     assert(rooDatasetZ != None)
@@ -357,6 +362,10 @@ def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,d
       for param in rooParamList:
         param.setConstant(False)
       voitWidth.setConstant(True)
+
+    if ('Jet2CutsVBFPass' in name ):
+      mixParam.setVal(0.)
+      mixParam.setConstant(True)
 
     if workspaceImportFn != None:
       workspaceImportFn(pdfMmumu)

@@ -5,6 +5,7 @@ from ROOT import gSystem
 import datetime
 import sys
 import os
+import os.path
 import re
 import math
 import cPickle
@@ -29,6 +30,36 @@ from numpy import std as stddev
 #root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.ERROR)
 PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 #PRINTLEVEL = root.RooFit.PrintLevel(1) #For MINUIT
+
+TITLEMAP = {
+  "Jets01PassPtG10BB": "0,1-Jet Tight BB",
+  "Jets01PassPtG10BO": "0,1-Jet Tight BO",
+  "Jets01PassPtG10BE": "0,1-Jet Tight BE",
+  "Jets01PassPtG10OO": "0,1-Jet Tight OO",
+  "Jets01PassPtG10OE": "0,1-Jet Tight OE",
+  "Jets01PassPtG10EE": "0,1-Jet Tight EE",
+  "Jets01PassCatAll" : "0,1-Jet Tight Combination",
+                        
+  "Jets01FailPtG10BB": "0,1-Jet Loose BB",
+  "Jets01FailPtG10BO": "0,1-Jet Loose BO",
+  "Jets01FailPtG10BE": "0,1-Jet Loose BE",
+  "Jets01FailPtG10OO": "0,1-Jet Loose OO",
+  "Jets01FailPtG10OE": "0,1-Jet Loose OE",
+  "Jets01FailPtG10EE": "0,1-Jet Loose EE",
+  "Jets01FailCatAll" : "0,1-Jet Loose Combination",
+
+  "Jet2CutsVBFPass":"2-Jet VBF Tight",
+  "Jet2CutsGFPass":"2-Jet GF Tight",
+  "Jet2CutsFailVBFGF":"2-Jet Loose",
+}
+
+PDFTITLEMAP = {
+    "ExpLog":"Exp(p_{1}m^{2}+p_{2}m+p_{3}ln(m))",
+    "MOverSq":"#frac{m}{(m-p_{1})^{2}}",
+    "Old":"Voigtian+Exp",
+    "ExpMOverSq":"#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}",
+    "Bernstein":"Bernstein",
+}
 
 def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sigMasses,toysPerJob):
       """
@@ -56,7 +87,8 @@ def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sig
 
       #dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",110.,170.)
       dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",110.,160.)
-      dimuonMass.setBins(60)
+      #dimuonMass.setBins(60)
+      dimuonMass.setBins(50)
       dimuonMass.setRange("low",110,120) # Silly ranges for old fit functionality
       #dimuonMass.setRange("high",130,170)
       dimuonMass.setRange("high",130,160)
@@ -107,6 +139,27 @@ def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sig
       truePdfFunc(trueToyPdfName,realData,dimuonMass,110,170,wTrueToyImport,dimuonMassZ,realDataZ)
       trueToyPdf = wTrueToy.pdf("bak")
       trueToyPdf.SetName(trueToyPdfName)
+
+      # Debug plot for fit to data
+      frame = dimuonMass.frame()
+      realDataHist = realData.binnedClone("realDataHist"+catName+energyStr+str(iJob))
+      chi2RealDataVar = truePdf.createChi2(realDataHist)
+      ndfRealData = dimuonMass.getBins() - 1  # b/c roofit normalizes
+      ndfRealData -= rooPdfNFreeParams(truePdf,realDataHist)
+      realData.plotOn(frame)
+      truePdf.plotOn(frame,root.RooFit.Range('low,signal,high'),root.RooFit.NormRange('low,signal,high'))
+      frame.Draw()
+      frame.SetTitle("")
+      frame.GetYaxis().SetTitle("Events / 1 GeV/c^{2}")
+      tlatex.SetTextAlign(12)
+      tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
+      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Ref PDF: "+truePdfName)
+      tlatex.SetTextAlign(32)
+      tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,catName+" "+energyStr)
+      tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Ref. Fit to Obs. Data")
+      tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.80,"Ref. GOF: {0:.2f}".format(scipy.stats.chi2.sf(chi2RealDataVar.getVal(),ndfRealData)))
+      tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Ref. #chi^{{2}}/NDF: {0:.2f}".format(chi2RealDataVar.getVal()/ndfRealData))
+      canvas.SaveAs("output/debug_RealData_"+truePdfName+"_"+catName+"_"+energyStr+"_Job"+str(iJob)+".png")
 
       # Make sure Voigt params are set to True vals and constant
       if truePdfName == "Old":
@@ -281,7 +334,7 @@ def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sig
             tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.80,"Ref B-Only #chi^{{2}}/NDF: {0:.2f}".format(chi2BOnlyVal/ndfBOnlyVal))
             tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Ref S+B GOF: {0:.2f}".format(scipy.stats.chi2.sf(chi2TrueToyVar.getVal(),ndfTrue)))
             tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.70,"Ref S+B #chi^{{2}}/NDF: {0:.2f}".format(chi2TrueToyVar.getVal()/ndfTrue))
-            canvas.SaveAs("output/debug_"+catName+"_"+energyStr+"_"+str(hmass)+"_Job"+str(iJob)+"_Toy"+str(iToy)+".png")
+            canvas.SaveAs("output/debug_"+truePdfName+"_"+catName+"_"+energyStr+"_"+str(hmass)+"_Job"+str(iJob)+"_Toy"+str(iToy)+".png")
           #if truePdfName == "Old":
           #  print "**************************************************************"
           #  print "True PDF Parameters:"
@@ -307,7 +360,8 @@ class BiasStudy:
   def __init__(self,category,dataFileNames,energyStr,nToys=10,pklOutFnBase="output/biasData",inputPkl=None,processPool=None):
     self.dataFileNames = dataFileNames
     self.sigMasses = range(115,156,5)
-    self.sigMasses = [115,125,130,135,140,145,150]
+    self.sigMasses = [120,125,130,135,140,145,150]
+    self.sigMasses = [125,150]
     ## Try to load data from pkl file
     if inputPkl != None:
       try:
@@ -468,41 +522,13 @@ class BiasStudy:
                 data[key][mass][subkey][subsubkey].extend(newData[key][mass][subkey][subsubkey])
 
   def plot(self,outputPrefix):
-    self.pdfTitleMap = {
-        "ExpLog":"Exp(p_{1}m^{2}+p_{2}m+p_{3}ln(m))",
-        "MOverSq":"#frac{m}{(m-p_{1})^{2}}",
-        "Old":"Voigtian+Exp",
-        "ExpMOverSq":"#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}",
-        "Bernstein":"Bernstein",
-    }
-    titleMap = {
-      "Jets01PassPtG10BB": "0,1-Jet Tight BB",
-      "Jets01PassPtG10BO": "0,1-Jet Tight BO",
-      "Jets01PassPtG10BE": "0,1-Jet Tight BE",
-      "Jets01PassPtG10OO": "0,1-Jet Tight OO",
-      "Jets01PassPtG10OE": "0,1-Jet Tight OE",
-      "Jets01PassPtG10EE": "0,1-Jet Tight EE",
-      "Jets01PassCatAll" : "0,1-Jet Tight Combination",
-                            
-      "Jets01FailPtG10BB": "0,1-Jet Loose BB",
-      "Jets01FailPtG10BO": "0,1-Jet Loose BO",
-      "Jets01FailPtG10BE": "0,1-Jet Loose BE",
-      "Jets01FailPtG10OO": "0,1-Jet Loose OO",
-      "Jets01FailPtG10OE": "0,1-Jet Loose OE",
-      "Jets01FailPtG10EE": "0,1-Jet Loose EE",
-      "Jets01FailCatAll" : "0,1-Jet Loose Combination",
-    
-      "Jet2CutsVBFPass":"2-Jet VBF Tight",
-      "Jet2CutsGFPass":"2-Jet GF Tight",
-      "Jet2CutsFailVBFGF":"2-Jet Loose",
-    }
 
     canvas = self.canvas
     tlatex = root.TLatex()
     tlatex.SetNDC()
     tlatex.SetTextFont(root.gStyle.GetLabelFont())
     tlatex.SetTextSize(0.04)
-    caption = titleMap[self.catName]
+    caption = TITLEMAP[self.catName]
     caption2 = ""
     caption3 = ""
     caption4 = ""
@@ -522,7 +548,7 @@ class BiasStudy:
           tlatex.SetTextAlign(12)
           tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
           tlatex.SetTextAlign(12)
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
           tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"All Alternate PDFs")
           tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
           tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.60,"Median: {0:.2f}".format(medianPull))
@@ -545,8 +571,8 @@ class BiasStudy:
           tlatex.SetTextAlign(12)
           tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
           tlatex.SetTextAlign(12)
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
           tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
           tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.60,"Median: {0:.2f}".format(medianPull))
           tlatex.SetTextAlign(32)
@@ -582,8 +608,8 @@ class BiasStudy:
         tlatex.SetTextAlign(12)
         tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
         tlatex.SetTextAlign(12)
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
         tlatex.SetTextAlign(32)
         tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
         canvas.RedrawAxis()
@@ -601,7 +627,7 @@ class BiasStudy:
         tlatex.SetTextAlign(12)
         tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
         tlatex.SetTextAlign(12)
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
         tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"m_{H} = "+str(hmass)+" GeV/c^{2}")
         tlatex.SetTextAlign(32)
         tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -620,8 +646,8 @@ class BiasStudy:
           tlatex.SetTextAlign(12)
           tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
           tlatex.SetTextAlign(12)
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
           tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
           tlatex.SetTextAlign(32)
           tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -659,8 +685,8 @@ class BiasStudy:
           tlatex.SetTextAlign(12)
           tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
           tlatex.SetTextAlign(12)
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
           tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
           tlatex.SetTextAlign(32)
           tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -698,8 +724,8 @@ class BiasStudy:
           tlatex.SetTextAlign(12)
           tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
           tlatex.SetTextAlign(12)
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
           tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
           tlatex.SetTextAlign(32)
           tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -718,7 +744,7 @@ class BiasStudy:
         tlatex.SetTextAlign(12)
         tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
         tlatex.SetTextAlign(12)
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
         tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"m_{H} = "+str(hmass)+" GeV/c^{2}")
         tlatex.SetTextAlign(32)
         tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -742,8 +768,8 @@ class BiasStudy:
           tlatex.SetTextAlign(12)
           tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
           tlatex.SetTextAlign(12)
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
           tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
           tlatex.SetTextAlign(32)
           tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -768,7 +794,7 @@ class BiasStudy:
         tlatex.SetTextAlign(12)
         tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
         tlatex.SetTextAlign(12)
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
         tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"m_{H} = "+str(hmass)+" GeV/c^{2}")
         tlatex.SetTextAlign(32)
         tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -792,8 +818,8 @@ class BiasStudy:
           tlatex.SetTextAlign(12)
           tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
           tlatex.SetTextAlign(12)
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
           tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
           tlatex.SetTextAlign(32)
           tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -821,7 +847,7 @@ class BiasStudy:
         tlatex.SetTextAlign(12)
         tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
         tlatex.SetTextAlign(12)
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
         #tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"m_{H} = "+str(hmass)+" GeV/c^{2}")
         tlatex.SetTextAlign(32)
         tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -849,8 +875,8 @@ class BiasStudy:
           tlatex.SetTextAlign(12)
           tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
           tlatex.SetTextAlign(12)
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
           #tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
           tlatex.SetTextAlign(32)
           tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -876,7 +902,7 @@ class BiasStudy:
     #    tlatex.SetTextAlign(12)
     #    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
     #    tlatex.SetTextAlign(12)
-    #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
+    #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
     #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"m_{H} = "+str(hmass)+" GeV/c^{2}")
     #    tlatex.SetTextAlign(32)
     #    tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -895,8 +921,8 @@ class BiasStudy:
     #      tlatex.SetTextAlign(12)
     #      tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
     #      tlatex.SetTextAlign(12)
-    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
-    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
+    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
     #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
     #      tlatex.SetTextAlign(32)
     #      tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -916,7 +942,7 @@ class BiasStudy:
     #    tlatex.SetTextAlign(12)
     #    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
     #    tlatex.SetTextAlign(12)
-    #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
+    #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
     #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"m_{H} = "+str(hmass)+" GeV/c^{2}")
     #    tlatex.SetTextAlign(32)
     #    tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -942,8 +968,8 @@ class BiasStudy:
     #      tlatex.SetTextAlign(12)
     #      tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
     #      tlatex.SetTextAlign(12)
-    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
-    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
+    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
     #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
     #      tlatex.SetTextAlign(32)
     #      tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -989,8 +1015,8 @@ class BiasStudy:
     #      tlatex.SetTextAlign(12)
     #      tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
     #      tlatex.SetTextAlign(12)
-    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
-    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
+    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
     #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
     #      tlatex.SetTextAlign(32)
     #      tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -1013,8 +1039,8 @@ class BiasStudy:
     #      tlatex.SetTextAlign(12)
     #      tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
     #      tlatex.SetTextAlign(12)
-    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
-    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
+    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
     #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
     #      tlatex.SetTextAlign(32)
     #      tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -1040,8 +1066,8 @@ class BiasStudy:
     #      tlatex.SetTextAlign(12)
     #      tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
     #      tlatex.SetTextAlign(12)
-    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
-    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
+    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
     #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
     #      tlatex.SetTextAlign(32)
     #      tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -1061,8 +1087,8 @@ class BiasStudy:
     #      tlatex.SetTextAlign(12)
     #      tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
     #      tlatex.SetTextAlign(12)
-    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
-    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
+    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+    #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
     #      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
     #      tlatex.SetTextAlign(32)
     #      tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -1081,7 +1107,7 @@ class BiasStudy:
         tlatex.SetTextAlign(12)
         tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
         tlatex.SetTextAlign(12)
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
         tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"m_{H} = "+str(hmass)+" GeV/c^{2}")
         tlatex.SetTextAlign(32)
         tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -1100,8 +1126,8 @@ class BiasStudy:
           tlatex.SetTextAlign(12)
           tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
           tlatex.SetTextAlign(12)
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
           tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
           tlatex.SetTextAlign(32)
           tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -1167,8 +1193,8 @@ class BiasStudy:
           tlatex.SetTextAlign(12)
           tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
           tlatex.SetTextAlign(12)
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
           #tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"For M(#mu#mu) #in [123.5,127.5] GeV/c^{2}")
           tlatex.SetTextAlign(32)
           tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -1194,8 +1220,8 @@ class BiasStudy:
           tlatex.SetTextAlign(12)
           tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
           tlatex.SetTextAlign(12)
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
           tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"For M(#mu#mu) #in [123.5,127.5] GeV/c^{2}")
           tlatex.SetTextAlign(32)
           tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -1221,8 +1247,8 @@ class BiasStudy:
           tlatex.SetTextAlign(12)
           tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
           tlatex.SetTextAlign(12)
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
           tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"For M(#mu#mu) #in [123.5,127.5] GeV/c^{2}")
           tlatex.SetTextAlign(32)
           tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -1250,8 +1276,8 @@ class BiasStudy:
           tlatex.SetTextAlign(12)
           tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
           tlatex.SetTextAlign(12)
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+self.pdfTitleMap[refPdfName])
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+self.pdfTitleMap[pdfAltName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
           #tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
           tlatex.SetTextAlign(32)
           tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
@@ -1274,6 +1300,58 @@ class BiasStudy:
     line.DrawLine(x,0,x,ymax*1.05)
     return line
 
+def printBiasTable(pklFileNames,refPdfName,altPdfName):
+  if len(pklFileNames)==0:
+    return
+  pklFiles = [open(i) for i in pklFileNames]
+  dataDicts = [cPickle.load(i) for i in pklFiles]
+  categories = []
+  for fn in pklFileNames:
+    fn = os.path.basename(fn)
+    fn = fn.split('_')[1]
+    categories.append(fn)
+  titles = [TITLEMAP[i] for i in categories]
+
+  hmasses = dataDicts[0]['meta']['sigMasses']
+
+  refPdfTitle = PDFTITLEMAP[refPdfName]
+  altPdfTitle = PDFTITLEMAP[altPdfName]
+
+  latexResult = "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n"
+  latexResult += ("Median Biases for \\\\ Reference Function: {0} \\\\ Alternate Function: {1}\n\n".format(refPdfTitle,altPdfTitle)).replace('#',"\\")
+  latexResult += r"\begin{tabular}{|l|"+"r|"*len(hmasses)+"} \\hline \n"
+  latexResult += r" & \multicolumn{"+str(len(hmasses))+r"}{c|}{$m_H$ [GeV/c$^2$]} \\ \hline "+"\n"
+
+
+  plainResult = "############################################################\n\n"
+  plainResult += "Median Biases for Ref: {0} Alt: {1}\n\n".format(refPdfTitle,altPdfTitle)
+
+  plainResult += "{0:20}".format("Higgs Mass: ")
+  for hmass in hmasses:
+    plainResult += "{0:10} ".format(hmass)
+    latexResult += "& {0:10} ".format(hmass)
+  plainResult += "\n"
+  latexResult += r"\\ \hline \hline"+"\n"
+
+  for iCat in reversed(sorted(range(len(categories)),key=categories.__getitem__)):
+    categoryName = categories[iCat]
+    title = titles[iCat]
+    data = dataDicts[iCat]
+    plainResult += "{0:20}".format(title)
+    latexResult += "{0:20} ".format(title)
+    for hmass in hmasses:
+      pull = data[refPdfName][hmass][altPdfName]['pull']
+      bias = median(pull)
+      plainResult += "{0:10.1%}".format(bias)
+      latexResult += ("& {0:10.1%} ".format(bias)).replace("%","\%")
+    plainResult += "\n"
+    latexResult += r"\\ \hline"+"\n"
+  plainResult += "\n\n"
+  latexResult += "\\end{tabular}\n\n"
+
+  print plainResult
+  print latexResult
+
 if __name__ == "__main__":
   outDir = "output/"
 
@@ -1282,11 +1360,13 @@ if __name__ == "__main__":
   jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
-  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  categoriesAll = ["BB","BO","BE","OO","OE","EE"]
+
+  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
@@ -1317,9 +1397,11 @@ if __name__ == "__main__":
   else:
     processPool = Pool(processes=6)
     for category in categories:
-      bs = BiasStudy(category,dataFns8TeV,"8TeV",1000,processPool=processPool)
+      bs = BiasStudy(category,dataFns8TeV,"8TeV",100,processPool=processPool)
       logFile.write(bs.outStr)
       bs.plot(outDir+"bias_")
+  inputPklFiles = glob.glob(outDir+"*.pkl")
+  printBiasTable(inputPklFiles,"Old","ExpMOverSq")
     
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
   logFile.write("\n\n# {0}\n".format(now))
