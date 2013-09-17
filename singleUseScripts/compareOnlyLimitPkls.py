@@ -12,8 +12,8 @@ root.gStyle.SetMarkerSize(0.9)
 
 ###############################################################33
 
-limits160F = open("limitsCombSplitAll7P8TeV_bugEff.pkl")
-limits170F = open("limitsCombSplitAll7P8TeV_fixEff.pkl")
+limits160F = open("limitsCombSplitAll7P8TeV_voigtExp.pkl")
+limits170F = open("limitsCombSplitAll7P8TeV_default.pkl")
 
 limits160 = cPickle.load(limits160F)
 limits170 = cPickle.load(limits170F)
@@ -33,6 +33,9 @@ twoSig160G.SetLineStyle(0)
 for i,entry in zip(range(len(limits160)),limits160):
 
   mass = float(entry[0])
+
+  if (mass==155):
+    continue
   obs160G.SetPoint(i,mass,float(entry[1]))
 
   median = float(entry[4])
@@ -49,6 +52,8 @@ for i,entry in zip(range(len(limits160)),limits160):
 
   #print 
 for i,entry in zip(range(len(limits170)),limits170):
+  if (float(entry[0])==155):
+    continue
   obs170G.SetPoint(i,float(entry[0]),float(entry[1]))
   exp170G.SetPoint(i,float(entry[0]),float(entry[4]))
 
@@ -90,10 +95,10 @@ obs160G.Draw("LP")
 leg = root.TLegend(0.172,0.905,0.73,0.585)
 leg.SetLineColor(0)
 leg.SetFillColor(0)
-leg.AddEntry(obs160G,"Observed M(#mu#mu), efficiency #in [110,160] GeV/c^{2}","lp")
-leg.AddEntry(exp160G,"Expected M(#mu#mu), efficiency #in [110,160] GeV/c^{2}","l")
-leg.AddEntry(obs170G,"Observed M(#mu#mu), efficiency #in [110,170] GeV/c^{2}","lp")
-leg.AddEntry(exp170G,"Expected M(#mu#mu), efficiency #in [110,170] GeV/c^{2}","l")
+leg.AddEntry(obs160G,"Observed M(#mu#mu), Voigt+Exp #in [110,160] GeV/c^{2}","lp")
+leg.AddEntry(exp160G,"Expected M(#mu#mu), Voigt+Exp #in [110,160] GeV/c^{2}","l")
+leg.AddEntry(obs170G,"Observed M(#mu#mu), Default #in [110,160] GeV/c^{2}","lp")
+leg.AddEntry(exp170G,"Expected M(#mu#mu), Default #in [110,160] GeV/c^{2}","l")
 leg.Draw()
 
 tlatex.SetTextAlign(12)
@@ -101,5 +106,5 @@ tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
 tlatex.SetTextAlign(32)
 tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,"H#rightarrow#mu#mu Combination 2011+2012")
 
-saveAs(canvas,"output/limitsCompare")
+saveAs(canvas,"output/limitsCompare_m110to160_functions")
 
