@@ -58,6 +58,20 @@ PDFTITLEMAP = {
 ################################################################################################
 ################################################################################################
 
+def setYMaxAndDrawVertLines(hist,x=None):
+  ymax = 0.
+  for i in range(1,hist.GetXaxis().GetNbins()+1):
+    ymax = max(ymax,hist.GetBinContent(i))
+  ymax * 1.5
+  hist.GetYaxis().SetRangeUser(0.,ymax*1.5)
+  if x == None:
+      return
+  line = root.TLine()
+  line.SetLineColor(root.kRed)
+  line.SetLineWidth(3)
+  line.DrawLine(x,0,x,ymax*1.05)
+  return line
+
 def getData(refDir,altDir):
   refFns = glob.glob(refDir+"*.muToys.root")
   altFns = glob.glob(altDir+"*.muToys.root")
@@ -145,8 +159,10 @@ def getData(refDir,altDir):
       
 
 if __name__ == "__main__":
-  inputRefDir= "/afs/cern.ch/user/j/jhugon/work/private/stats/CMSSW_6_1_1/finalAnalysisVoigtExp110160/statsCards/"
-  inputAltDir= "/afs/cern.ch/user/j/jhugon/work/private/stats/CMSSW_6_1_1/finalAnalysis/statsCards/"
+  inputRefDir= "/afs/cern.ch/user/j/jhugon/work/private/stats/CMSSW_6_1_1/finalAnalysisVoigtExp110160/statsCards/bad/"
+  inputAltDir= "/afs/cern.ch/user/j/jhugon/work/private/stats/CMSSW_6_1_1/finalAnalysis/statsCards/bad/"
+  outputPrefix = "statsOutput/biasComb_"
+
   data = getData(inputRefDir,inputAltDir)
 
   refMus = [toy['muRef'] for toy in data]
@@ -157,6 +173,183 @@ if __name__ == "__main__":
   altZs = [toy['muAlt']/toy['muErrAlt'] for toy in data]
 
   pulls = [(toy['muAlt']-toy['muRef'])/toy['muErrRef'] for toy in data]
+
+  PRELIMINARYSTRING="CMS Internal"
+  
+  canvas = root.TCanvas()
+  tlatex = root.TLatex()
+  tlatex.SetNDC()
+  tlatex.SetTextFont(root.gStyle.GetLabelFont())
+  tlatex.SetTextSize(0.04)
+  caption = "H#rightarrow#mu#mu Combination"
+  caption2 = ""
+  caption3 = ""
+  caption4 = ""
+  iHist = 0
+
+  hmass = 125.
+  refPdfName="Old"
+  pdfAltName="ExpMOverSq"
+
+  ## Pull Plot
+  hist = root.TH1F("hist"+str(iHist),"",60,-3,3)
+  setHistTitles(hist,"(N_{sig}(Alt)-N_{sig}(Ref))/#DeltaN_{sig}(Alt)","N_{Toys}")
+  iHist += 1
+  for pull in pulls:
+      hist.Fill(pull)
+  hist.Draw()
+  tlatex.SetTextAlign(12)
+  tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+  tlatex.SetTextAlign(12)
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.60,"Median: {0:.2f}".format(median(pulls)))
+  tlatex.SetTextAlign(32)
+  tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+  line = setYMaxAndDrawVertLines(hist,median(pulls))
+  canvas.RedrawAxis()
+  saveAs(canvas,outputPrefix+"_"+str(hmass)+"_Pulls_Ref"+refPdfName+"_Alt"+pdfAltName)
+  canvas.Clear()
+
+  ## Mu Ref Plot
+  hist = root.TH1F("hist"+str(iHist),"",60,-10,10)
+  setHistTitles(hist,"#mu Reference","N_{Toys}")
+  iHist += 1
+  for mu in refMus:
+      hist.Fill(mu)
+  hist.Draw()
+  tlatex.SetTextAlign(12)
+  tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+  tlatex.SetTextAlign(12)
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+  #tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
+  tlatex.SetTextAlign(32)
+  tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+  tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Median: {0:.2f}".format(median(refMus)))
+  tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Mean: {0:.2f}".format(mean(refMus)))
+  tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.65,"#sigma: {0:.2f}".format(stddev(refMus)))
+  line = setYMaxAndDrawVertLines(hist,None)
+  canvas.RedrawAxis()
+  saveAs(canvas,outputPrefix+"_"+str(hmass)+"_MuRef_Ref"+refPdfName)
+  canvas.Clear()
+
+  ## Mu Alt Plot
+  hist = root.TH1F("hist"+str(iHist),"",60,-10,10)
+  setHistTitles(hist,"#mu Alternate","N_{Toys}")
+  iHist += 1
+  for mu in altMus:
+      hist.Fill(mu)
+  hist.Draw()
+  tlatex.SetTextAlign(12)
+  tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+  tlatex.SetTextAlign(12)
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
+  tlatex.SetTextAlign(32)
+  tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+  tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Median: {0:.2f}".format(median(altMus)))
+  tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Mean: {0:.2f}".format(mean(altMus)))
+  tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.65,"#sigma: {0:.2f}".format(stddev(altMus)))
+  line = setYMaxAndDrawVertLines(hist,None)
+  canvas.RedrawAxis()
+  saveAs(canvas,outputPrefix+"_"+str(hmass)+"_MuAlt_Ref"+refPdfName+"_Alt"+pdfAltName)
+  canvas.Clear()
+
+  ## MuErr Ref Plot
+  hist = root.TH1F("hist"+str(iHist),"",30,0,10)
+  setHistTitles(hist,"#Delta#mu Reference","N_{Toys}")
+  iHist += 1
+  for mu in refErrMus:
+      hist.Fill(mu)
+  hist.Draw()
+  tlatex.SetTextAlign(12)
+  tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+  tlatex.SetTextAlign(12)
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+  #tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
+  tlatex.SetTextAlign(32)
+  tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+  tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Median: {0:.2f}".format(median(refErrMus)))
+  tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Mean: {0:.2f}".format(mean(refErrMus)))
+  tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.65,"#sigma: {0:.2f}".format(stddev(refErrMus)))
+  line = setYMaxAndDrawVertLines(hist,None)
+  canvas.RedrawAxis()
+  saveAs(canvas,outputPrefix+"_"+str(hmass)+"_MuErrRef_Ref"+refPdfName)
+  canvas.Clear()
+
+  ## MuErr Alt Plot
+  hist = root.TH1F("hist"+str(iHist),"",30,0,10)
+  setHistTitles(hist,"#Delta#mu Alternate","N_{Toys}")
+  iHist += 1
+  for mu in altErrMus:
+      hist.Fill(mu)
+  hist.Draw()
+  tlatex.SetTextAlign(12)
+  tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+  tlatex.SetTextAlign(12)
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
+  tlatex.SetTextAlign(32)
+  tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+  tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Median: {0:.2f}".format(median(altErrMus)))
+  tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Mean: {0:.2f}".format(mean(altErrMus)))
+  tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.65,"#sigma: {0:.2f}".format(stddev(altErrMus)))
+  line = setYMaxAndDrawVertLines(hist,None)
+  canvas.RedrawAxis()
+  saveAs(canvas,outputPrefix+"_"+str(hmass)+"_MuErrAlt_Ref"+refPdfName+"_Alt"+pdfAltName)
+  canvas.Clear()
+
+  ## Z Ref Plot
+  hist = root.TH1F("hist"+str(iHist),"",60,-10,10)
+  setHistTitles(hist,"#mu/#Delta#mu Reference","N_{Toys}")
+  iHist += 1
+  for mu in refZs:
+      hist.Fill(mu)
+  hist.Draw()
+  tlatex.SetTextAlign(12)
+  tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+  tlatex.SetTextAlign(12)
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+  #tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
+  tlatex.SetTextAlign(32)
+  tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+  tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Median: {0:.2f}".format(median(refZs)))
+  tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Mean: {0:.2f}".format(mean(refZs)))
+  tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.65,"#sigma: {0:.2f}".format(stddev(refZs)))
+  line = setYMaxAndDrawVertLines(hist,None)
+  canvas.RedrawAxis()
+  saveAs(canvas,outputPrefix+"_"+str(hmass)+"_Z_Ref"+refPdfName)
+  canvas.Clear()
+
+  ## Z Alt Plot
+  hist = root.TH1F("hist"+str(iHist),"",60,-10,10)
+  setHistTitles(hist,"#mu/#Delta#mu Alternate","N_{Toys}")
+  iHist += 1
+  for mu in altZs:
+      hist.Fill(mu)
+  hist.Draw()
+  tlatex.SetTextAlign(12)
+  tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+  tlatex.SetTextAlign(12)
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
+  tlatex.SetTextAlign(32)
+  tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+  tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Median: {0:.2f}".format(median(altZs)))
+  tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Mean: {0:.2f}".format(mean(altZs)))
+  tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.65,"#sigma: {0:.2f}".format(stddev(altZs)))
+  line = setYMaxAndDrawVertLines(hist,None)
+  canvas.RedrawAxis()
+  saveAs(canvas,outputPrefix+"_"+str(hmass)+"_Z_Ref"+refPdfName+"_Alt"+pdfAltName)
+  canvas.Clear()
+
 
   print "\n#########################################\n"
   print "NToys: ",len(data)
