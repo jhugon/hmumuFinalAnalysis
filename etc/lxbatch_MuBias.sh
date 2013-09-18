@@ -53,7 +53,7 @@ linkcommand="ln -s -T $toysfile toysFile.root"
 echo "running: $linkcommand"
 $linkcommand
 
-command="combine -M MaxLikelihoodFit -t $ntoys --rMin=-20 --rMax=20 --toysFile=toysFile.root -v 2 -s $iseed -m $higgsmass $FILENAME"
+command="combine -M MaxLikelihoodFit -t $ntoys --rMin=-50 --rMax=50 --toysFile=toysFile.root -v 2 -s $iseed -m $higgsmass $FILENAME"
 echo $command
 $command >& $FILENAME."$ijob".muToys
 
