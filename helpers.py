@@ -2773,8 +2773,11 @@ class RooModelPlotter:
       #print("hist bin: %10i, x: %10.2f, y: %10.2f" % (iBin,float(x),float(y)))
       if x > xCurveMin and x < xCurveMax:
         curvePoint = curve.interpolate(x)
-        pull -= curvePoint
-        pull /= sqrt(curvePoint)
+        if curvePoint == 0.:
+          pull = 0.
+        else:
+          pull -= curvePoint
+          pull /= sqrt(curvePoint)
         #print(" curve interpolation: %10.2f" % (curvePoint))
       else:
         pull = 0.

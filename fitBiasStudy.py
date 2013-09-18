@@ -59,6 +59,8 @@ PDFTITLEMAP = {
     "Old":"Voigtian+Exp",
     "ExpMOverSq":"#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}",
     "Bernstein":"Bernstein",
+    "Chebychev":"Chebychev",
+    "Polynomial":"Polynomial",
 }
 
 def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sigMasses,toysPerJob):
@@ -74,13 +76,13 @@ def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sig
       dataTree.SetCacheSize(10000000);
       dataTree.AddBranchToCache("*");
       truePdfFunc = None
-      if truePdfName == "Bernstein":
+      if truePdfName == "Bernstein" or truePdfName == "Chebychev" or truePdfName == "Polynomial":
         truePdfFunc = getattr(fitOrderChooser,"makePDFBak"+truePdfName)
       else:
         truePdfFunc = getattr(makeCards,"makePDFBak"+truePdfName)
       pdfAltFuncList = []
       for i in pdfAltNameList:
-        if i == "Bernstein":
+        if i == "Bernstein" or i == "Chebychev" or i == "Polynomial":
           pdfAltFuncList.append(getattr(fitOrderChooser,"makePDFBak"+i))
         else:
           pdfAltFuncList.append(getattr(makeCards,"makePDFBak"+i))
@@ -272,6 +274,8 @@ def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sig
           errTrueToy = nSigVar.getError()
           if errTrueToy == 0.:
             continue
+          if chi2TrueToyVar.getVal()==0.0:
+            continue
           data[truePdfName][hmass]['nTrue'].append(nTrueToy)
           data[truePdfName][hmass]['errTrue'].append(errTrueToy)
           data[truePdfName][hmass]['chi2True'].append(chi2TrueToyVar.getVal())
@@ -361,7 +365,7 @@ class BiasStudy:
     self.dataFileNames = dataFileNames
     self.sigMasses = range(115,156,5)
     self.sigMasses = [120,125,130,135,140,145,150]
-    self.sigMasses = [125,150]
+    self.sigMasses = [125,140,150]
     ## Try to load data from pkl file
     if inputPkl != None:
       try:
@@ -398,6 +402,8 @@ class BiasStudy:
           "Old",
       #    "ExpMOverSq",
       #    "Bernstein",
+      #    "Chebychev",
+      #    "Polynomial",
       ]
       self.pdfAltNamesDict = {
           "ExpLog":["ExpMOverSq"],
@@ -409,6 +415,14 @@ class BiasStudy:
                             "Old",
                         ],
           "Bernstein":[          
+                            "ExpMOverSq",
+                            "Old",
+                        ],
+          "Chebychev":[          
+                            "ExpMOverSq",
+                            "Old",
+                        ],
+          "Polynomial":[          
                             "ExpMOverSq",
                             "Old",
                         ],
@@ -1367,8 +1381,8 @@ if __name__ == "__main__":
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
   dataFns8TeV = [
@@ -1397,11 +1411,11 @@ if __name__ == "__main__":
   else:
     processPool = Pool(processes=6)
     for category in categories:
-      bs = BiasStudy(category,dataFns8TeV,"8TeV",100,processPool=processPool)
+      bs = BiasStudy(category,dataFns8TeV,"8TeV",500,processPool=processPool)
       logFile.write(bs.outStr)
       bs.plot(outDir+"bias_")
   inputPklFiles = glob.glob(outDir+"*.pkl")
-  printBiasTable(inputPklFiles,"Old","ExpMOverSq")
+  #printBiasTable(inputPklFiles,"Old","ExpMOverSq")
     
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
   logFile.write("\n\n# {0}\n".format(now))
