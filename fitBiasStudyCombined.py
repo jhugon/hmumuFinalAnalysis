@@ -14,7 +14,7 @@ root.gROOT.SetBatch(True)
 from helpers import *
 
 import scipy.stats
-from numpy import mean, median, corrcoef, percentile
+from numpy import mean, median, corrcoef, percentile,vstack
 from numpy import std as stddev
 
 #root.gErrorIgnoreLevel = root.kWarning
@@ -149,6 +149,10 @@ def getData(refDir,altDir):
             break
       assert(altTree.iToy==refTree.iToy)
       assert(altTree.iSeed==refTree.iSeed)
+      #if altTree.limitErr > 4. or altTree.limitErr < 1.:
+      #  continue
+      #if refTree.limitErr > 4. or refTree.limitErr < 1.:
+      #  continue
       point = {}
       point['muRef'] = refTree.limit
       point['muAlt'] = altTree.limit
@@ -159,8 +163,8 @@ def getData(refDir,altDir):
       
 
 if __name__ == "__main__":
-  inputRefDir= "/afs/cern.ch/user/j/jhugon/work/private/stats/CMSSW_6_1_1/finalAnalysisVoigtExp110160/statsCards/bad/"
-  inputAltDir= "/afs/cern.ch/user/j/jhugon/work/private/stats/CMSSW_6_1_1/finalAnalysis/statsCards/bad/"
+  inputRefDir= "/afs/cern.ch/user/j/jhugon/work/private/stats/CMSSW_6_1_1/finalAnalysisVoigtExp110160/statsCards/"
+  inputAltDir= "/afs/cern.ch/user/j/jhugon/work/private/stats/CMSSW_6_1_1/finalAnalysis/statsCards/"
   outputPrefix = "statsOutput/biasComb_"
 
   data = getData(inputRefDir,inputAltDir)
@@ -350,6 +354,35 @@ if __name__ == "__main__":
   saveAs(canvas,outputPrefix+"_"+str(hmass)+"_Z_Ref"+refPdfName+"_Alt"+pdfAltName)
   canvas.Clear()
 
+  ## Mu Correlation Plot
+  hist = root.TH2F("hist"+str(iHist),"",30,-10,10,30,-10,10)
+  setHistTitles(hist,"#mu Alternate","#mu Reference")
+  iHist += 1
+  #for muA,muR in zip(altMus,refMus):
+  #    hist.Fill(muA,muR)
+  #hist.Draw("col")
+  graph = root.TGraph()
+  for iPoint,muA,muR in zip(range(len(altMus)),altMus,refMus):
+      graph.SetPoint(iPoint,muA,muR)
+  hist.Draw("")
+  graph.Draw("P")
+  tlatex.SetTextAlign(12)
+  tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+  tlatex.SetTextAlign(12)
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfName])
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.60,"#rho =  {0:.3f}".format(corrcoef(altMus,refMus)[0,1]))
+  tlatex.SetTextAlign(32)
+  tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+  #tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Median: {0:.2f}".format(median(altZs)))
+  #tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Mean: {0:.2f}".format(mean(altZs)))
+  #tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.65,"#sigma: {0:.2f}".format(stddev(altZs)))
+  #line = setYMaxAndDrawVertLines(hist,None)
+  canvas.RedrawAxis()
+  saveAs(canvas,outputPrefix+"_"+str(hmass)+"_Correlation_Ref"+refPdfName+"_Alt"+pdfAltName)
+  canvas.Clear()
+
 
   print "\n#########################################\n"
   print "NToys: ",len(data)
@@ -367,6 +400,8 @@ if __name__ == "__main__":
   print "Alternate Median ErrMu: ",median(altErrMus)
   print "Alternate Mean ErrMu: ",mean(altErrMus)
   print "Alternate Sigma ErrMu: ",stddev(altErrMus)
+  print "\n#########################################\n"
+  print "Mu Alt & Mu Ref Correlation:",corrcoef(altMus,refMus)[0,1]
   print "\n#########################################\n"
   print "Reference Median Z: ",median(refZs)
   print "Reference Mean Z: ",mean(refZs)
