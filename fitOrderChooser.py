@@ -398,19 +398,21 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
         iParam += 1
       pdfDefString += "TMath::Power(@0,-@"+str(iCoefParam)+")"
   
+    debug += "#    SumPow Order: "+str(order)+"\n"
     debug += "#    pdfDefString: "+pdfDefString+"\n"
     debug += "#    pdfArgs: "+dimuonMass.GetName()+" "
     for i in rooParamList:
         debug += i.GetName()+" "
     debug += "\n"
 
-    #print
-    #print "SumPow rooDefString: "+pdfDefString
-    #for i in rooParamList:
-    #    i.Print()
-    #print
-    #rooArgList.Print()
-    #print
+    print
+    print "SumPow Order: ",order
+    print "SumPow rooDefString: "+pdfDefString
+    for i in rooParamList:
+        i.Print()
+    print
+    rooArgList.Print()
+    print
 
     pdfMmumu = root.RooGenericPdf("bak","Sum of Powers Order: "+str(order),pdfDefString,rooArgList)
 
@@ -453,6 +455,106 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
     #debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
 
     return paramList, bakNormTup, debug
+
+def makePDFBakLaurent(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+    debug = ""
+    debug += "### makePDFBakLaurent: "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
+    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
+
+    channelName = name
+
+    if order == None:
+      order = 2
+      """
+      if "Jets01PassPtG10BB" in name:
+        order = 6
+      elif "Jets01PassPtG10BO" in name:
+        order = 9
+      elif "Jet2CutsVBFPass" in name:
+        order = 5
+      elif "Jet2CutsGFPass" in name:
+        order = 5
+      elif "Jet2CutsFailVBFGF" in name:
+        order = 4
+      else:
+        order = 6
+      """
+
+    rooParamList = []
+    rooArgList = root.RooArgList(dimuonMass)
+    iParam = 1
+    pdfDefString = ""
+    for i in range(1,order+2):
+      if i != 1:
+        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Laurent Coefficient "+str(i), 0.0, 0., 1.)
+        rooArgList.add(tmpCoefArg)
+        rooParamList.append(tmpCoefArg)
+        pdfDefString += "+@"+str(iParam)+"*"
+        iParam += 1
+      tmpLPow = -4
+      for j in range(1,i+1):
+        tmpLPow += (-1)**j*(j-1)
+      pdfDefString += "TMath::Power(@0,"+str(tmpLPow)+")"
+  
+    debug += "#    Laurent Order: "+str(order)+"\n"
+    debug += "#    pdfDefString: "+pdfDefString+"\n"
+    debug += "#    pdfArgs: "+dimuonMass.GetName()+" "
+    for i in rooParamList:
+        debug += i.GetName()+" "
+    debug += "\n"
+
+    print
+    print "Laurent Order: ",order
+    print "Laurent rooDefString: "+pdfDefString
+    for i in rooParamList:
+        i.Print()
+    print
+    rooArgList.Print()
+    print
+
+    pdfMmumu = root.RooGenericPdf("bak","Laurent Order: "+str(order),pdfDefString,rooArgList)
+
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr.SetName("bak"+"_fitResult")
+    #chi2 = pdfMmumu.createChi2(rooDataset)
+
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(fr)
+
+    #Norm Time
+    bakNormTup = None
+    if False:
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(dimuonMass,"signal")
+      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
+      nSideband =  rooDataset.sumEntries(getSidebandString)
+      nData =  rooDataset.sumEntries()
+      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
+      if nData > 0:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+      else:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
+
+#    ## Debug Time
+#    frame = dimuonMass.frame()
+#    frame.SetName("bak_Plot")
+#    rooDataset.plotOn(frame)
+#    pdfMmumu.plotOn(frame)
+#    canvas = root.TCanvas()
+#    frame.Draw()
+#    canvas.SaveAs("debug_"+name+channelName+".png")
+
+    #for i in rooParamList:
+    #  debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+    #debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
+
+    return paramList, bakNormTup, debug
+
 
 #########################################################################
 #########################################################################
@@ -617,6 +719,8 @@ class OrderStudy:
         return 2*order
     if basename == "SumPow":
         return 2*order
+    if basename == "Laurent":
+        return order+1
     else:
         print "Error: getNDF: don't recognize function: "+basename
         sys.exit(1)
@@ -625,8 +729,8 @@ if __name__ == "__main__":
   canvas = root.TCanvas()
   outDir = "output/"
 
-  pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow"]
-  ordersToTry= range(1,5)
+  pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
+  ordersToTry= range(1,8)
 
   categories = []
 
@@ -638,8 +742,8 @@ if __name__ == "__main__":
   #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
