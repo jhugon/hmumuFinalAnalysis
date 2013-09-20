@@ -224,7 +224,7 @@ def makePDFBakPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
     rooParamList = []
     rooArgList = root.RooArgList()
     for i in range(order):
-      tmpArg = root.RooRealVar(channelName+"_B"+str(i),"Polynomial Coefficient "+str(i), 0.0, -1., 1.)
+      tmpArg = root.RooRealVar(channelName+"_P"+str(i),"Polynomial Coefficient "+str(i), 0.0, -1., 1.)
       rooArgList.add(tmpArg)
       rooParamList.append(tmpArg)
   
@@ -270,8 +270,200 @@ def makePDFBakPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
 
     return paramList, bakNormTup, debug
 
+def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+    debug = ""
+    debug += "### makePDFBakSumExp: "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
+    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
+
+    channelName = name
+
+    if order == None:
+      order = 2
+      """
+      if "Jets01PassPtG10BB" in name:
+        order = 6
+      elif "Jets01PassPtG10BO" in name:
+        order = 9
+      elif "Jet2CutsVBFPass" in name:
+        order = 5
+      elif "Jet2CutsGFPass" in name:
+        order = 5
+      elif "Jet2CutsFailVBFGF" in name:
+        order = 4
+      else:
+        order = 6
+      """
+
+    rooParamList = []
+    pyPdfList = []
+    rooArgExpList = root.RooArgList()
+    rooArgCoefList = root.RooArgList()
+    rooExpPdfList = root.RooArgList()
+    for i in range(order):
+      tmpExpArg = root.RooRealVar(channelName+"_E"+str(i),"Exponential Parameter "+str(i), 0.0, -1., 0.)
+      rooArgExpList.add(tmpExpArg)
+      rooParamList.append(tmpExpArg)
+      tmpExpPdf = root.RooExponential(channelName+"_ExpPdf"+str(i),"Exponential sub-Pdf "+str(i),dimuonMass,tmpExpArg)
+      rooExpPdfList.add(tmpExpPdf)
+      pyPdfList.append(tmpExpPdf)
+      if i != 0:
+        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Exponential Coefficient "+str(i), 0.0, 0., 1.)
+        rooArgCoefList.add(tmpCoefArg)
+        rooParamList.append(tmpCoefArg)
+  
+    pdfMmumu = root.RooAddPdf("bak","Sum of Exponentials Order: "+str(order),rooExpPdfList,rooArgCoefList)
+
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr.SetName("bak"+"_fitResult")
+    #chi2 = pdfMmumu.createChi2(rooDataset)
+
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(fr)
+
+    #Norm Time
+    bakNormTup = None
+    if False:
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(dimuonMass,"signal")
+      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
+      nSideband =  rooDataset.sumEntries(getSidebandString)
+      nData =  rooDataset.sumEntries()
+      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
+      if nData > 0:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+      else:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
+
+#    ## Debug Time
+#    frame = dimuonMass.frame()
+#    frame.SetName("bak_Plot")
+#    rooDataset.plotOn(frame)
+#    pdfMmumu.plotOn(frame)
+#    canvas = root.TCanvas()
+#    frame.Draw()
+#    canvas.SaveAs("debug_"+name+channelName+".png")
+
+    #for i in rooParamList:
+    #  debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+    #debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
+
+    return paramList, bakNormTup, debug
+
+def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+    debug = ""
+    debug += "### makePDFBakSumPow: "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
+    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
+
+    channelName = name
+
+    if order == None:
+      order = 2
+      """
+      if "Jets01PassPtG10BB" in name:
+        order = 6
+      elif "Jets01PassPtG10BO" in name:
+        order = 9
+      elif "Jet2CutsVBFPass" in name:
+        order = 5
+      elif "Jet2CutsGFPass" in name:
+        order = 5
+      elif "Jet2CutsFailVBFGF" in name:
+        order = 4
+      else:
+        order = 6
+      """
+
+    rooParamList = []
+    rooArgList = root.RooArgList(dimuonMass)
+    iParam = 1
+    pdfDefString = ""
+    for i in range(order):
+      tmpCoefArg = None
+      tmpPowerArg = root.RooRealVar(channelName+"_P"+str(i),"Power Parameter "+str(i), 0.0, 0., 10.)
+      rooArgList.add(tmpPowerArg)
+      rooParamList.append(tmpPowerArg)
+      iCoefParam = iParam
+      iParam += 1
+      if i != 0:
+        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Power Term Coefficient "+str(i), 0.0, 0., 1.)
+        rooArgList.add(tmpCoefArg)
+        rooParamList.append(tmpCoefArg)
+        pdfDefString += "+@"+str(iParam)+"*"
+        iParam += 1
+      pdfDefString += "TMath::Power(@0,-@"+str(iCoefParam)+")"
+  
+    debug += "#    pdfDefString: "+pdfDefString+"\n"
+    debug += "#    pdfArgs: "+dimuonMass.GetName()+" "
+    for i in rooParamList:
+        debug += i.GetName()+" "
+    debug += "\n"
+
+    #print
+    #print "SumPow rooDefString: "+pdfDefString
+    #for i in rooParamList:
+    #    i.Print()
+    #print
+    #rooArgList.Print()
+    #print
+
+    pdfMmumu = root.RooGenericPdf("bak","Sum of Powers Order: "+str(order),pdfDefString,rooArgList)
+
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr.SetName("bak"+"_fitResult")
+    #chi2 = pdfMmumu.createChi2(rooDataset)
+
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(fr)
+
+    #Norm Time
+    bakNormTup = None
+    if False:
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(dimuonMass,"signal")
+      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
+      nSideband =  rooDataset.sumEntries(getSidebandString)
+      nData =  rooDataset.sumEntries()
+      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
+      if nData > 0:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+      else:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
+
+#    ## Debug Time
+#    frame = dimuonMass.frame()
+#    frame.SetName("bak_Plot")
+#    rooDataset.plotOn(frame)
+#    pdfMmumu.plotOn(frame)
+#    canvas = root.TCanvas()
+#    frame.Draw()
+#    canvas.SaveAs("debug_"+name+channelName+".png")
+
+    #for i in rooParamList:
+    #  debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+    #debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
+
+    return paramList, bakNormTup, debug
+
+#########################################################################
+#########################################################################
+#########################################################################
+#########################################################################
+#########################################################################
+#########################################################################
+#########################################################################
+
 class OrderStudy:
-  def __init__(self,catName,energyStr,dataFileNames,outPrefix):
+  def __init__(self,catName,energyStr,dataFileNames,outPrefix,pdfsToTry,ordersToTry):
       catName = catName[0]
       randomGenerator = root.RooRandom.randomGenerator()
       randomGenerator.SetSeed(10001)
@@ -318,11 +510,9 @@ class OrderStudy:
       self.outStr += "\n\n"
       self.outStr += catName + energyStr
       self.outStr += "\n\n"
-      pdfsToTry = ["Bernstein","Chebychev","Polynomial"]
       for pdfBaseName in pdfsToTry:
         data[pdfBaseName] = {}
-        for order in range(1,6):
-        #for order in range(1,11):
+        for order in ordersToTry:
           data[pdfBaseName][order] = {}
           w = root.RooWorkspace("w"+pdfBaseName+str(order))
           wImport = getattr(w,"import")
@@ -362,7 +552,6 @@ class OrderStudy:
 
 
       self.latexStr = ""
-      #for pdfBaseName in ["Bernstein"]:
       for pdfBaseName in pdfsToTry:
         tableStr =  catName+" "+energyStr+"\n"+pdfBaseName
         tableStr += "\n\n"+r"\begin{tabular}{|l|c|c|c|c|} \hline" + "\n"
@@ -388,7 +577,7 @@ class OrderStudy:
             tableStr += "{0} & {1:.3g} & {2:.0f} & - & - ".format(order,gof,nll)+r" \\ \hline" + "\n"
         tableStr += r"\end{tabular}" + "\n\n"
         self.latexStr += tableStr
-      for pdfBaseName in ["Bernstein"]:
+      for pdfBaseName in pdfsToTry:
         self.outStr +=  "\n\n"+"\n"+pdfBaseName+"\n\n"
         self.outStr += "{0:>4} {1:>10} {2:>10} {3:>10} {4:>10} ".format("d","GOF","NLL","-2DeltaNLL","pChi2")+"\n"
         foundGoodOne = False
@@ -414,7 +603,6 @@ class OrderStudy:
             self.outStr += "{0:4} {1:10.3g} {2:10.0f} {3:10.2f} {4:10.3g} {5}".format(order,gof,nll,deltaNLL,pDeltaNLL,foundGoodStr)+ "\n"
           else:
             self.outStr += "{0:4} {1:10.3g} {2:10.0f} {3:>10} {4:>10} ".format(order,gof,nll,'-','-')+"\n"
-        self.outStr +=  "\n\n"
 
       print self.outStr
 
@@ -422,9 +610,13 @@ class OrderStudy:
     if basename == "Bernstein":
         return order+1
     if basename == "Chebychev":
-        return order
+        return order+1
     if basename == "Polynomial":
-        return order
+        return order+1
+    if basename == "SumExp":
+        return 2*order
+    if basename == "SumPow":
+        return 2*order
     else:
         print "Error: getNDF: don't recognize function: "+basename
         sys.exit(1)
@@ -432,6 +624,9 @@ class OrderStudy:
 if __name__ == "__main__":
   canvas = root.TCanvas()
   outDir = "output/"
+
+  pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow"]
+  ordersToTry= range(1,5)
 
   categories = []
 
@@ -469,7 +664,7 @@ if __name__ == "__main__":
   inputPklFiles = glob.glob(outDir+"*.pkl")
   orderStudyList = []
   for category in categories:
-    osy = OrderStudy(category,"8TeV",dataFns8TeV,outPrefix=outDir+"order_Shape")
+    osy = OrderStudy(category,"8TeV",dataFns8TeV,outDir+"order_Shape",pdfsToTry,ordersToTry)
     logFile.write(osy.outStr)
     texFile.write(osy.latexStr)
     orderStudyList.append(osy)
