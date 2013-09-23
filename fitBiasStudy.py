@@ -31,7 +31,7 @@ from numpy import std as stddev
 PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 #PRINTLEVEL = root.RooFit.PrintLevel(1) #For MINUIT
 
-NPROCS = 4
+NPROCS = 1
 
 TITLEMAP = {
   "Jets01PassPtG10BB": "0,1-Jet Tight BB",
@@ -68,13 +68,22 @@ PDFTITLEMAP = {
     "Laurent":"Laurent",
 }
 
-def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sigMasses,toysPerJob):
+def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sigMasses,toysPerJob):
       """
         Pure function so that we can do multiprocessing!!
       """
       plotEveryNToys = 10
+
+      tmpJobStr = "_job"+str(iJob)
+      if iJobGroup != None:
+        tmpJobStr = "_jobGrp"+str(iJobGroup)+tmpJobStr
+
       randomGenerator = root.RooRandom.randomGenerator()
-      randomGenerator.SetSeed(10001+iJob)
+      iSeed = 10001+iJob
+      if iJobGroup != None:
+        iSeed += 1000*iJobGroup
+      randomGenerator.SetSeed(iSeed)
+
       dataTree = root.TChain()
       for i in dataFileNames:
         dataTree.Add(i+"/outtree"+catName)
@@ -166,7 +175,7 @@ def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sig
       tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Ref. Fit to Obs. Data")
       tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.80,"Ref. GOF: {0:.2f}".format(scipy.stats.chi2.sf(chi2RealDataVar.getVal(),ndfRealData)))
       tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Ref. #chi^{{2}}/NDF: {0:.2f}".format(chi2RealDataVar.getVal()/ndfRealData))
-      canvas.SaveAs("output/debug_RealData_"+truePdfName+"_"+catName+"_"+energyStr+"_Job"+str(iJob)+".png")
+      canvas.SaveAs("output/debug_RealData_"+truePdfName+"_"+catName+"_"+energyStr+tmpJobStr+".png")
 
       # Make sure Voigt params are set to True vals and constant
       if truePdfName == "Old":
@@ -343,7 +352,7 @@ def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sig
             tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.80,"Ref B-Only #chi^{{2}}/NDF: {0:.2f}".format(chi2BOnlyVal/ndfBOnlyVal))
             tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Ref S+B GOF: {0:.2f}".format(scipy.stats.chi2.sf(chi2TrueToyVar.getVal(),ndfTrue)))
             tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.70,"Ref S+B #chi^{{2}}/NDF: {0:.2f}".format(chi2TrueToyVar.getVal()/ndfTrue))
-            canvas.SaveAs("output/debug_"+truePdfName+"_"+catName+"_"+energyStr+"_"+str(hmass)+"_Job"+str(iJob)+"_Toy"+str(iToy)+".png")
+            canvas.SaveAs("output/debug_"+truePdfName+"_"+catName+"_"+energyStr+"_"+str(hmass)+tmpJobStr+"_Toy"+str(iToy)+".png")
           #if truePdfName == "Old":
           #  print "**************************************************************"
           #  print "True PDF Parameters:"
@@ -365,9 +374,10 @@ def runStudyStar(argList):
 ################################################################################################
 
 class BiasStudy:
-  def __init__(self,category,dataFileNames,energyStr,sigMasses,refPdfNameList,pdfAltNamesDict,nToys=10,pklOutFnBase="output/biasData",inputPkl=None,processPool=None):
+  def __init__(self,category,dataFileNames,energyStr,sigMasses,refPdfNameList,pdfAltNamesDict,nToys=10,pklOutFnBase="output/biasData",inputPkl=None,processPool=None,iJobGroup=None):
     self.dataFileNames = dataFileNames
     self.sigMasses = sigMasses
+    self.iJobGroup = iJobGroup
     ## Try to load data from pkl file
     if inputPkl != None:
       try:
@@ -391,7 +401,10 @@ class BiasStudy:
       self.catCuts = category[1]
       self.energyStr = energyStr
       self.nToys = nToys
-      self.pklOutFn = pklOutFnBase+"_"+self.catName+"_"+energyStr+".pkl"
+      tmpJobStr = ""
+      if self.iJobGroup != None:
+        tmpJobStr = "_jobGrp"+str(self.iJobGroup)
+      self.pklOutFn = pklOutFnBase+"_"+self.catName+"_"+energyStr+tmpJobStr+".pkl"
       self.data = None
     catName = self.catName
     canvas = root.TCanvas()
@@ -412,13 +425,12 @@ class BiasStudy:
       self.iPklAutoSave = 1
       nProcesses = NPROCS
       nJobs = NPROCS
-      if processPool == None:
-        processPool = Pool(processes=nProcesses)
       for refPdfName,iRefPdfName in zip(self.refPdfNameList,range(len(self.refPdfNameList))):
         pdfAltNameList = self.pdfAltNamesDict[refPdfName]
-        mapResults = processPool.map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(int(nToys/nJobs))))
-        # Replace above line with below to run non-parralel version
-        #mapResults = map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(int(nToys/nJobs))))
+        if processPool == None:
+          mapResults = map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.iJobGroup),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(int(nToys/nJobs))))
+        else:
+          mapResults = processPool.map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.iJobGroup),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(int(nToys/nJobs))))
         for jobResults in mapResults:
           self.mergeDicts(data,jobResults)
         if iRefPdfName != len(self.refPdfNameList)-1:
@@ -1361,6 +1373,19 @@ def printBiasTable(pklFileNames,refPdfName,altPdfName):
   print latexResult
 
 if __name__ == "__main__":
+  helpStr = "./fitBiasStudy.py [jobGroupNumber]\n  where jobGroupNumber is an int that will be added to the random number seed (*1000) and the output pkl file name\n  if there is a jobGroupNumber, no plots or summary will be produced."
+  iJobGroup = None
+  if len(sys.argv) > 2:
+    print("Error: Too many arguments.  Run like:")
+    print(helpStr)
+    sys.exit(1)
+  elif len(sys.argv) == 2:
+    iJobGroup = int(sys.argv[1])
+    print("iJobGroup: "+str(iJobGroup))
+
+  ############################################
+  ### Define output directory
+
   outDir = "output/"
 
   ############################################
@@ -1431,7 +1456,7 @@ if __name__ == "__main__":
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   ########################################
   ### Directory and file names
@@ -1453,21 +1478,28 @@ if __name__ == "__main__":
 
   #############################################
 
+  tmpJobGroupStr = ""
+  if iJobGroup != None:
+    tmpJobGroupStr = "_jobGrp"+str(iJobGroup)
   logFile = open(outDir+"biasStudy.log",'w')
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
   logFile.write("# {0}\n\n".format(now))
   inputPklFiles = glob.glob(outDir+"*.pkl")
-  if len(inputPklFiles)>0:
+  if len(inputPklFiles)>0 and iJobGroup==None:
     for inputPkl in inputPklFiles:
+      print "Running over input pkl file: "+inputPkl
       bs = BiasStudy(None,None,None,None,None,None,None,inputPkl=inputPkl)
       logFile.write(bs.outStr)
       bs.plot(outDir+"bias_")
   else:
-    processPool = Pool(processes=NPROCS)
+    processPool = None
+    if NPROCS > 1:
+      processPool = Pool(processes=NPROCS)
     for category in categories:
-      bs = BiasStudy(category,dataFns8TeV,"8TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool)
+      bs = BiasStudy(category,dataFns8TeV,"8TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool,iJobGroup=iJobGroup)
       logFile.write(bs.outStr)
-      bs.plot(outDir+"bias_")
+      if iJobGroup == None:
+        bs.plot(outDir+"bias_")
   inputPklFiles = glob.glob(outDir+"*.pkl")
   #printBiasTable(inputPklFiles,"Old","ExpMOverSq")
     
