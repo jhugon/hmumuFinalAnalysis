@@ -82,6 +82,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
       iSeed = 10001+iJob
       if iJobGroup != None:
         iSeed += 1000*iJobGroup
+      print "iSeed: {0}".format(iSeed)
       randomGenerator.SetSeed(iSeed)
 
       dataTree = root.TChain()
@@ -105,6 +106,8 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
       dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",110.,160.)
       #dimuonMass.setBins(60)
       dimuonMass.setBins(50)
+      dimuonMass.setRange("exprange",120,160)
+      dimuonMass.setRange("whole",110,160)
       dimuonMass.setRange("low",110,120) # Silly ranges for old fit functionality
       #dimuonMass.setRange("high",130,170)
       dimuonMass.setRange("high",130,160)
@@ -475,17 +478,17 @@ class BiasStudy:
         shapiroStat, shapiroP = scipy.stats.shapiro(dataH['zTrue'])
         sumChi2 = sum(dataH['chi2True'])
         sumNDF = sum(dataH['ndfTrue'])
-        outStr +=  "  True Z Scores:   {0:.2f} +/- {1:.2f}  Median: {2:.2f}    S-W Normal p-Val: {3:.3g}\n".format(mean(dataH['zTrue']),stddev(dataH['zTrue']),median(dataH['zTrue']),shapiroP)
-        outStr +=  "  True Fit Prob:   {0:.3g},                              chi2: {1:.2f}  NDF: {2}\n".format(scipy.stats.chi2.sf(sumChi2,sumNDF),sumChi2,sumNDF)
-        outStr +=  "  All Pulls:       {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataH['pullAll']),stddev(dataH['pullAll']),median(dataH['pullAll']))
+        #outStr +=  "  True Z Scores:   {0:.2f} +/- {1:.2f}  Median: {2:.2f}    S-W Normal p-Val: {3:.3g}\n".format(mean(dataH['zTrue']),stddev(dataH['zTrue']),median(dataH['zTrue']),shapiroP)
+        #outStr +=  "  True Fit Prob:   {0:.3g},                              chi2: {1:.2f}  NDF: {2}\n".format(scipy.stats.chi2.sf(sumChi2,sumNDF),sumChi2,sumNDF)
+        #outStr +=  "  All Pulls:       {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataH['pullAll']),stddev(dataH['pullAll']),median(dataH['pullAll']))
         for pdfAltName in self.pdfAltNamesDict[refPdfName]:
           dataHA = dataH[pdfAltName]
           shapiroStat, shapiroP = scipy.stats.shapiro(dataHA['z'])
           sumChi2 = sum(dataHA['chi2'])
           sumNDF = sum(dataHA['ndf'])
           outStr +=  "  "+pdfAltName+":\n"
-          outStr +=  "    Z Scores:      {0:.2f} +/- {1:.2f}  Median: {2:.2f}    S-W Normal p-Val: {3:.3g}\n".format(mean(dataHA['z']),stddev(dataHA['z']),median(dataHA['z']),shapiroP)
-          outStr +=  "    Fit Prob:      {0:.3g},                              chi2: {1:.2f}  NDF: {2}\n".format(scipy.stats.chi2.sf(sumChi2,sumNDF),sumChi2,sumNDF)
+          #outStr +=  "    Z Scores:      {0:.2f} +/- {1:.2f}  Median: {2:.2f}    S-W Normal p-Val: {3:.3g}\n".format(mean(dataHA['z']),stddev(dataHA['z']),median(dataHA['z']),shapiroP)
+          #outStr +=  "    Fit Prob:      {0:.3g},                              chi2: {1:.2f}  NDF: {2}\n".format(scipy.stats.chi2.sf(sumChi2,sumNDF),sumChi2,sumNDF)
           outStr +=  "    Pulls:         {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataHA['pull']),stddev(dataHA['pull']),median(dataHA['pull']))
     print outStr
     self.outStr = outStr
@@ -1270,7 +1273,6 @@ class BiasStudy:
     return line
 
 def mergeDicts(data,newData,multiJob=False):
-  print "running mergeDicts"
   newDataKeys = newData.keys()
   dataKeys = data.keys()
   for key in newDataKeys:
@@ -1527,18 +1529,15 @@ if __name__ == "__main__":
       # Identify basenames to combine job groups
       basenames = set()
       for inputPklFn in inputPklFiles:
-        match = re.match(r"(.+)[\d]+\.pkl",inputPklFn)
+        match = re.match(r"(.+jobGrp)[\d]+\.pkl",inputPklFn)
         assert(match)
         tmpBase = match.group(1)
-        print tmpBase
         if not (tmpBase+"*.pkl") in basenames:
             basenames.add((tmpBase+"*.pkl"))
       for globStr in basenames:
         fns = glob.glob(globStr)
         resultData = None
-        print("globStr: "+globStr)
         for tmpFn in fns:
-          print("tmpFn: "+tmpFn)
           tmpF = open(tmpFn)
           tmpD = cPickle.load(tmpF)
           if resultData == None:

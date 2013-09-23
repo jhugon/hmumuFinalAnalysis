@@ -300,9 +300,8 @@ def makePDFBakMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
 
     return paramList, bakNormTup, debug
 
-
-
 def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None):
+    #print "GP's debug line *******************************************************\n"
     debug = ""
     debug += "### makePDFBakOld: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -312,21 +311,18 @@ def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,d
 
     voitWidth = root.RooRealVar(channelName+"_voitWidth","voitWidth",2.4952)
     voitWidth.setConstant(True)
-    voitmZ = root.RooRealVar(channelName+"_voitmZ","voitmZ",85,95)
-    voitSig = root.RooRealVar(channelName+"_voitSig","voitSig",0.0,30.0)
+    voitmZ = root.RooRealVar(channelName+"_voitmZ","voitmZ",91,85,95)
+    voitSig = root.RooRealVar(channelName+"_voitSig","voitSig",1.5,0.0,30.0)
     voitMmumu = root.RooVoigtian("bak_voitMmumu","voitMmumu",dimuonMass,voitmZ,voitWidth,voitSig)
 
-    expParam = root.RooRealVar(channelName+"_expParam","expParam",-1,0)
-    expMmumu = root.RooExponential("bak_expMmumu","expMmumu",dimuonMass,expParam)
+    expParam = root.RooRealVar(channelName+"_expParam","expParam",0.1,-5,5)
+    #expMmumu = root.RooExponential("bak_expMmumu","expMmumu",dimuonMass,expParam*expParam)
+    # Generic PDF
+    expMmumu = root.RooGenericPdf("bak_expMmumu","expMmumu","TMath::Exp(-1*@0*@1*@1)",root.RooArgList(dimuonMass,expParam))
 
-    mixParam = root.RooRealVar(channelName+"_mixParam","mixParam",0,1)
+    mixParam = root.RooRealVar(channelName+"_mixParam","mixParam",0.5,0,1)
 
     pdfMmumu = root.RooAddPdf("bak","bak",root.RooArgList(voitMmumu,expMmumu),root.RooArgList(mixParam))
-
-    if ('Jet2CutsVBFPass' in name ):
-      debug += "###  fixing mixParam to 0. for Jet2CutsVBFPass\n"
-      mixParam.setVal(0.)
-      mixParam.setConstant(True)
 
     # Just For Z-Peak Part
     assert(dimuonMassZ != None)
@@ -348,10 +344,12 @@ def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,d
 
     # Back to everywhere else
 
-    expMmumu.fitTo(rooDataset,root.RooFit.Range("high"),root.RooFit.SumW2Error(False),PRINTLEVEL)
-    expParam.setConstant(True)
-    
-    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    #expMmumu.fitTo(rooDataset,root.RooFit.Range("high"),root.RooFit.SumW2Error(False),PRINTLEVEL)
+    expMmumu.fitTo(rooDataset,root.RooFit.Range("exprange"),root.RooFit.SumW2Error(False),PRINTLEVEL)
+    #expParam.setConstant(True)
+   
+    #fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("whole"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
@@ -362,10 +360,6 @@ def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,d
       for param in rooParamList:
         param.setConstant(False)
       voitWidth.setConstant(True)
-
-    if ('Jet2CutsVBFPass' in name ):
-      mixParam.setVal(0.)
-      mixParam.setConstant(True)
 
     if workspaceImportFn != None:
       workspaceImportFn(pdfMmumu)
@@ -407,6 +401,7 @@ def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,d
     debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
 
     return paramList, bakNormTup, debug
+
 
 def makePDFSigCBPlusGaus(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,channelName,forceMean=-1.,sigInject=0):
 
@@ -764,6 +759,8 @@ class Analysis:
     self.maxMass = maxMass
     #dimuonMass = root.RooRealVar("dimuonMass","dimuonMass",minMass,maxMass)
     dimuonMass = root.RooRealVar("dimuonMass","dimuonMass",minMass,maxMass)
+    dimuonMass.setRange("exprange",120.,controlRegionHigh[1])
+    dimuonMass.setRange("whole",controlRegionLow[0],controlRegionHigh[1])
     dimuonMass.setRange("low",controlRegionLow[0],controlRegionLow[1])
     dimuonMass.setRange("high",controlRegionHigh[0],controlRegionHigh[1])
     dimuonMass.setRange("signal",controlRegionLow[1],controlRegionHigh[0])
