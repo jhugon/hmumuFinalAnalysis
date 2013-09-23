@@ -380,22 +380,37 @@ class BiasStudy:
     self.iJobGroup = iJobGroup
     ## Try to load data from pkl file
     if inputPkl != None:
-      try:
-        inputPklF = open(inputPkl)
-        self.data = cPickle.load(inputPklF)
-        inputPklF.close()
-        self.refPdfNameList = self.data['meta']['refPdfNameList']
-        self.pdfAltNamesDict = self.data['meta']['pdfAltNamesDict']
-        self.nToys = self.data['meta']['nToys']
-        self.nData = self.data['meta']['nData']
-        self.catName = self.data['meta']['catName']
-        self.energyStr = self.data['meta']['energyStr']
-        energyStr = self.energyStr
-        self.sigMasses = self.data['meta']['sigMasses']
-      except Exception, err:
-        print("Error loading data from pkl file: "+str(inputPkl))
-        print(err)
-        self.data = None
+      if type(inputPkl) == str:
+        try:
+          inputPklF = open(inputPkl)
+          self.data = cPickle.load(inputPklF)
+          inputPklF.close()
+          self.refPdfNameList = self.data['meta']['refPdfNameList']
+          self.pdfAltNamesDict = self.data['meta']['pdfAltNamesDict']
+          self.nToys = self.data['meta']['nToys']
+          self.nData = self.data['meta']['nData']
+          self.catName = self.data['meta']['catName']
+          self.energyStr = self.data['meta']['energyStr']
+          energyStr = self.energyStr
+          self.sigMasses = self.data['meta']['sigMasses']
+        except Exception, err:
+          print("Error loading data from pkl file: "+str(inputPkl))
+          print(err)
+          self.data = None
+      elif type(inputPkl)==dict:
+          self.data = inputPkl
+          self.refPdfNameList = self.data['meta']['refPdfNameList']
+          self.pdfAltNamesDict = self.data['meta']['pdfAltNamesDict']
+          self.nToys = self.data['meta']['nToys']
+          self.nData = self.data['meta']['nData']
+          self.catName = self.data['meta']['catName']
+          self.energyStr = self.data['meta']['energyStr']
+          energyStr = self.energyStr
+          self.sigMasses = self.data['meta']['sigMasses']
+      else:
+          print("Error: unexpected type for input pickle filename or dict: "+type(inputPkl))
+          print("Exiting.")
+          sys.exit(1)
     else:
       self.catName = category[0]
       self.catCuts = category[1]
@@ -432,7 +447,7 @@ class BiasStudy:
         else:
           mapResults = processPool.map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.iJobGroup),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(int(nToys/nJobs))))
         for jobResults in mapResults:
-          self.mergeDicts(data,jobResults)
+          mergeDicts(data,jobResults)
         if iRefPdfName != len(self.refPdfNameList)-1:
           pklFile = open(self.pklOutFn+"."+str(iRefPdfName),'w')
           cPickle.dump(data,pklFile)
@@ -474,47 +489,6 @@ class BiasStudy:
           outStr +=  "    Pulls:         {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataHA['pull']),stddev(dataHA['pull']),median(dataHA['pull']))
     print outStr
     self.outStr = outStr
-
-  def mergeDicts(self,data,newData):
-    newDataKeys = newData.keys()
-    dataKeys = data.keys()
-    for key in newDataKeys:
-      if key == 'meta':
-        data[key]['nData'] = newData[key]['nData']
-      elif not (key in dataKeys):
-        data[key] = newData[key]
-      else:
-        masses = sorted(newData[key].keys())
-        massesOld = sorted(data[key].keys())
-        assert(len(masses)==len(massesOld))
-        for old,new in zip(masses,massesOld):
-          if old != new:
-            print "masses not equal:",old,new
-            assert(False)
-        for mass in masses:
-          subkeys = sorted(newData[key][mass])
-          subkeysOld = sorted(data[key][mass])
-          assert(len(subkeys) == len(subkeysOld))
-          for old,new in zip(subkeys,subkeysOld):
-            if old != new:
-              print "subkeys not equal:",old,new
-              assert(False)
-          for subkey in subkeys:
-            if type(newData[key][mass][subkey])==list:
-              assert(type(data[key][mass][subkey])==list)
-              data[key][mass][subkey].extend(newData[key][mass][subkey])
-            else:
-              subsubkeys = sorted(newData[key][mass][subkey])
-              subsubkeysOld = sorted(data[key][mass][subkey])
-              assert(len(subsubkeys) == len(subsubkeysOld))
-              for old,new in zip(subsubkeys,subsubkeysOld):
-                if old != new:
-                  print "subsubkeys not equal:",old,new
-                  assert(False)
-              for subsubkey in subsubkeys:
-                assert(type(data[key][mass][subkey][subsubkey])==list)
-                assert(type(newData[key][mass][subkey][subsubkey])==list)
-                data[key][mass][subkey][subsubkey].extend(newData[key][mass][subkey][subsubkey])
 
   def plot(self,outputPrefix):
 
@@ -1295,6 +1269,51 @@ class BiasStudy:
     line.DrawLine(x,0,x,ymax*1.05)
     return line
 
+def mergeDicts(data,newData,multiJob=False):
+  print "running mergeDicts"
+  newDataKeys = newData.keys()
+  dataKeys = data.keys()
+  for key in newDataKeys:
+    if key == 'meta':
+      data[key]['nData'] = newData[key]['nData']
+      if multiJob:
+        data[key]['nToys'] += newData[key]['nToys']
+    elif not (key in dataKeys):
+      data[key] = newData[key]
+    else:
+      masses = sorted(newData[key].keys())
+      massesOld = sorted(data[key].keys())
+      assert(len(masses)==len(massesOld))
+      for old,new in zip(masses,massesOld):
+        if old != new:
+          print "masses not equal:",old,new
+          assert(False)
+      for mass in masses:
+        subkeys = sorted(newData[key][mass])
+        subkeysOld = sorted(data[key][mass])
+        assert(len(subkeys) == len(subkeysOld))
+        for old,new in zip(subkeys,subkeysOld):
+          if old != new:
+            print "subkeys not equal:",old,new
+            assert(False)
+        for subkey in subkeys:
+          if type(newData[key][mass][subkey])==list:
+            assert(type(data[key][mass][subkey])==list)
+            data[key][mass][subkey].extend(newData[key][mass][subkey])
+          else:
+            subsubkeys = sorted(newData[key][mass][subkey])
+            subsubkeysOld = sorted(data[key][mass][subkey])
+            assert(len(subsubkeys) == len(subsubkeysOld))
+            for old,new in zip(subsubkeys,subsubkeysOld):
+              if old != new:
+                print "subsubkeys not equal:",old,new
+                assert(False)
+            for subsubkey in subsubkeys:
+              assert(type(data[key][mass][subkey][subsubkey])==list)
+              assert(type(newData[key][mass][subkey][subsubkey])==list)
+              data[key][mass][subkey][subsubkey].extend(newData[key][mass][subkey][subsubkey])
+
+
 def printBiasTable(pklFileNames,refPdfName,altPdfName):
   if len(pklFileNames)==0:
     return
@@ -1486,11 +1505,50 @@ if __name__ == "__main__":
   logFile.write("# {0}\n\n".format(now))
   inputPklFiles = glob.glob(outDir+"*.pkl")
   if len(inputPklFiles)>0 and iJobGroup==None:
+    foundJobGroupPkl = False
+    foundNotJobGroupPkl = False
     for inputPkl in inputPklFiles:
-      print "Running over input pkl file: "+inputPkl
-      bs = BiasStudy(None,None,None,None,None,None,None,inputPkl=inputPkl)
-      logFile.write(bs.outStr)
-      bs.plot(outDir+"bias_")
+      if "_jobGrp" in inputPkl:
+        foundJobGroupPkl = True
+      else:
+        foundNotJobGroupPkl = True
+    if foundNotJobGroupPkl and foundJobGroupPkl:
+        print "Error: found .pkl files containing '_jobGrp' and not containing '_jobGrp'."
+        print "  Can only process one or the other.  "
+        print "  Please delete one or the other and try again. Exiting."
+        sys.exit(1)
+    if foundNotJobGroupPkl:
+      for inputPkl in inputPklFiles:
+        print "Running over input pkl file: "+inputPkl
+        bs = BiasStudy(None,None,None,None,None,None,None,inputPkl=inputPkl)
+        logFile.write(bs.outStr)
+        bs.plot(outDir+"bias_")
+    else:
+      # Identify basenames to combine job groups
+      basenames = set()
+      for inputPklFn in inputPklFiles:
+        match = re.match(r"(.+)[\d]+\.pkl",inputPklFn)
+        assert(match)
+        tmpBase = match.group(1)
+        print tmpBase
+        if not (tmpBase+"*.pkl") in basenames:
+            basenames.add((tmpBase+"*.pkl"))
+      for globStr in basenames:
+        fns = glob.glob(globStr)
+        resultData = None
+        print("globStr: "+globStr)
+        for tmpFn in fns:
+          print("tmpFn: "+tmpFn)
+          tmpF = open(tmpFn)
+          tmpD = cPickle.load(tmpF)
+          if resultData == None:
+            resultData = tmpD 
+          else:
+            mergeDicts(resultData,tmpD,True)
+          tmpF.close()
+        bs = BiasStudy(None,None,None,None,None,None,None,inputPkl=resultData)
+        logFile.write(bs.outStr)
+        bs.plot(outDir+"bias_")
   else:
     processPool = None
     if NPROCS > 1:
