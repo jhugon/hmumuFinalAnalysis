@@ -31,6 +31,8 @@ from numpy import std as stddev
 PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 #PRINTLEVEL = root.RooFit.PrintLevel(1) #For MINUIT
 
+NPROCS = 4
+
 TITLEMAP = {
   "Jets01PassPtG10BB": "0,1-Jet Tight BB",
   "Jets01PassPtG10BO": "0,1-Jet Tight BO",
@@ -408,14 +410,10 @@ class BiasStudy:
       data['meta']['catName'] = self.catName
       data['meta']['energyStr'] = self.energyStr
       self.iPklAutoSave = 1
-      nProcesses = 6
-      nJobs = 6 
+      nProcesses = NPROCS
+      nJobs = NPROCS
       if processPool == None:
         processPool = Pool(processes=nProcesses)
-      if nToys < 50:
-        nJobs = 5
-      if nToys < 20:
-        nJobs = 1
       for refPdfName,iRefPdfName in zip(self.refPdfNameList,range(len(self.refPdfNameList))):
         pdfAltNameList = self.pdfAltNamesDict[refPdfName]
         mapResults = processPool.map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(int(nToys/nJobs))))
@@ -1375,7 +1373,7 @@ if __name__ == "__main__":
 
   refPdfNameList = [
           "Old",
-          "ExpMOverSq",
+ #         "ExpMOverSq",
       #    "ExpLog",
       #    "MOverSq",
       #    "Bernstein",
@@ -1465,7 +1463,7 @@ if __name__ == "__main__":
       logFile.write(bs.outStr)
       bs.plot(outDir+"bias_")
   else:
-    processPool = Pool(processes=6)
+    processPool = Pool(processes=NPROCS)
     for category in categories:
       bs = BiasStudy(category,dataFns8TeV,"8TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool)
       logFile.write(bs.outStr)
