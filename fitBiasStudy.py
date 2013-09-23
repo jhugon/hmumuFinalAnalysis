@@ -61,6 +61,9 @@ PDFTITLEMAP = {
     "Bernstein":"Bernstein",
     "Chebychev":"Chebychev",
     "Polynomial":"Polynomial",
+    "SumExp":"Sum of Exponentials",
+    "SumPow":"Sum of Power Functions",
+    "Laurent":"Laurent",
 }
 
 def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sigMasses,toysPerJob):
@@ -76,13 +79,13 @@ def runStudy(iJob,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sig
       dataTree.SetCacheSize(10000000);
       dataTree.AddBranchToCache("*");
       truePdfFunc = None
-      if truePdfName == "Bernstein" or truePdfName == "Chebychev" or truePdfName == "Polynomial":
+      if truePdfName == "Bernstein" or truePdfName == "Chebychev" or truePdfName == "Polynomial" or truePdfName == "SumExp" or truePdfName == "SumPow" or truePdfName == "Laurent":
         truePdfFunc = getattr(fitOrderChooser,"makePDFBak"+truePdfName)
       else:
         truePdfFunc = getattr(makeCards,"makePDFBak"+truePdfName)
       pdfAltFuncList = []
       for i in pdfAltNameList:
-        if i == "Bernstein" or i == "Chebychev" or i == "Polynomial":
+        if i == "Bernstein" or i == "Chebychev" or i == "Polynomial" or i == "SumExp" or i == "SumPow" or i == "Laurent":
           pdfAltFuncList.append(getattr(fitOrderChooser,"makePDFBak"+i))
         else:
           pdfAltFuncList.append(getattr(makeCards,"makePDFBak"+i))
@@ -360,12 +363,9 @@ def runStudyStar(argList):
 ################################################################################################
 
 class BiasStudy:
-  #def __init__(self,category,dataFiles,energyStr):
-  def __init__(self,category,dataFileNames,energyStr,nToys=10,pklOutFnBase="output/biasData",inputPkl=None,processPool=None):
+  def __init__(self,category,dataFileNames,energyStr,sigMasses,refPdfNameList,pdfAltNamesDict,nToys=10,pklOutFnBase="output/biasData",inputPkl=None,processPool=None):
     self.dataFileNames = dataFileNames
-    self.sigMasses = range(115,156,5)
-    self.sigMasses = [120,125,130,135,140,145,150]
-    self.sigMasses = [125,140,150]
+    self.sigMasses = sigMasses
     ## Try to load data from pkl file
     if inputPkl != None:
       try:
@@ -396,37 +396,8 @@ class BiasStudy:
     self.canvas = canvas
     ## Run
     if self.data==None:
-      self.refPdfNameList = [
-      #    "ExpLog",
-      #    "MOverSq",
-          "Old",
-      #    "ExpMOverSq",
-      #    "Bernstein",
-      #    "Chebychev",
-      #    "Polynomial",
-      ]
-      self.pdfAltNamesDict = {
-          "ExpLog":["ExpMOverSq"],
-          "MOverSq":["ExpMOverSq"],
-          "Old":["ExpMOverSq"],
-          "ExpMOverSq":[          
-          #                  "ExpLog",
-          #                  "MOverSq",
-                            "Old",
-                        ],
-          "Bernstein":[          
-                            "ExpMOverSq",
-                            "Old",
-                        ],
-          "Chebychev":[          
-                            "ExpMOverSq",
-                            "Old",
-                        ],
-          "Polynomial":[          
-                            "ExpMOverSq",
-                            "Old",
-                        ],
-      }
+      self.refPdfNameList = refPdfNameList
+      self.pdfAltNamesDict = pdfAltNamesDict
 
       self.data = {'meta':{}}
       data = self.data
@@ -1327,6 +1298,11 @@ def printBiasTable(pklFileNames,refPdfName,altPdfName):
   titles = [TITLEMAP[i] for i in categories]
 
   hmasses = dataDicts[0]['meta']['sigMasses']
+  #newhmasses = []
+  #for hmass in hmasses:
+  #  if hmass == 125 or hmass == 150 or hmass == 118 or hmass == 153:
+  #    newhmasses.append(hmass)
+  #hmasses = newhmasses
 
   refPdfTitle = PDFTITLEMAP[refPdfName]
   altPdfTitle = PDFTITLEMAP[altPdfName]
@@ -1342,12 +1318,32 @@ def printBiasTable(pklFileNames,refPdfName,altPdfName):
 
   plainResult += "{0:20}".format("Higgs Mass: ")
   for hmass in hmasses:
-    plainResult += "{0:10} ".format(hmass)
+    plainResult += "{0:10}".format(hmass)
     latexResult += "& {0:10} ".format(hmass)
   plainResult += "\n"
   latexResult += r"\\ \hline \hline"+"\n"
 
-  for iCat in reversed(sorted(range(len(categories)),key=categories.__getitem__)):
+  sorted01PJetCatIs = []
+  sorted01FJetCatIs = []
+  sorted2JetCatIs = []
+  for iCat,cat in zip(range(len(categories)),categories):
+    if "Jets01P" in cat:
+        print cat,iCat, True
+        sorted01PJetCatIs.append(iCat)
+    elif "Jets01F" in cat:
+        print cat,iCat, True
+        sorted01FJetCatIs.append(iCat)
+    else:
+        print cat,iCat, False
+        sorted2JetCatIs.append(iCat)
+  sorted01PJetCatIs = sorted(sorted01PJetCatIs,key=categories.__getitem__)
+  sorted01FJetCatIs = sorted(sorted01FJetCatIs,key=categories.__getitem__)
+  sorted2JetCatIs = reversed(sorted(sorted2JetCatIs,key=categories.__getitem__))
+  sortedCatIs = []
+  sortedCatIs.extend(list(sorted01PJetCatIs))
+  sortedCatIs.extend(list(sorted01FJetCatIs))
+  sortedCatIs.extend(list(sorted2JetCatIs))
+  for iCat in sortedCatIs:
     categoryName = categories[iCat]
     title = titles[iCat]
     data = dataDicts[iCat]
@@ -1369,20 +1365,78 @@ def printBiasTable(pklFileNames,refPdfName,altPdfName):
 if __name__ == "__main__":
   outDir = "output/"
 
-  categories = []
+  ############################################
+  ### Define number of toys to run over
+
+  nToys = 100
+
+  ############################################
+  ### Define which reference functions to use
+
+  refPdfNameList = [
+          "Old",
+          "ExpMOverSq",
+      #    "ExpLog",
+      #    "MOverSq",
+      #    "Bernstein",
+      #    "Chebychev",
+      #    "Polynomial",
+  ]
+  ###############################################
+  ### Define which alternate functions to test
+  ### for each given reference function
+
+  pdfAltNamesDict = {
+      "ExpLog":["ExpMOverSq"],
+      "MOverSq":["ExpMOverSq"],
+      "Old":["ExpMOverSq"],
+      "ExpMOverSq":[          
+                        "Old",
+                    ],
+      "Bernstein":[          
+                        "ExpMOverSq",
+                        "Old",
+                    ],
+      "Chebychev":[          
+                        "ExpMOverSq",
+                        "Old",
+                    ],
+      "Polynomial":[          
+                        "ExpMOverSq",
+                        "Old",
+                    ],
+  }
+
+  ########################################
+  ### Define which masses to run over
+
+  #sigMasses = range(115,156,5)
+  #sigMasses = [120,125,130,135,140,145,150]
+  sigMasses = [115,125,130,150,155]
+  sigMasses = [125,150]
+
+  ########################################
 
   jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
+  categories = []
+
+  ########################################
+  ### Define which categories to run over
 
   #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+
+  ########################################
+  ### Directory and file names
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
   dataFns8TeV = [
@@ -1399,19 +1453,21 @@ if __name__ == "__main__":
   dataFns7TeV = [dataDir+i+".root" for i in dataFns7TeV]
   dataFns8TeV = [dataDir+i+".root" for i in dataFns8TeV]
 
+  #############################################
+
   logFile = open(outDir+"biasStudy.log",'w')
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
   logFile.write("# {0}\n\n".format(now))
   inputPklFiles = glob.glob(outDir+"*.pkl")
   if len(inputPklFiles)>0:
     for inputPkl in inputPklFiles:
-      bs = BiasStudy(None,None,None,None,inputPkl=inputPkl)
+      bs = BiasStudy(None,None,None,None,None,None,None,inputPkl=inputPkl)
       logFile.write(bs.outStr)
       bs.plot(outDir+"bias_")
   else:
     processPool = Pool(processes=6)
     for category in categories:
-      bs = BiasStudy(category,dataFns8TeV,"8TeV",500,processPool=processPool)
+      bs = BiasStudy(category,dataFns8TeV,"8TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool)
       logFile.write(bs.outStr)
       bs.plot(outDir+"bias_")
   inputPklFiles = glob.glob(outDir+"*.pkl")
