@@ -60,6 +60,7 @@ PDFTITLEMAP = {
     "MOverSq":"#frac{m}{(m-p_{1})^{2}}",
     "Old":"Voigtian+Exp",
     "ExpMOverSq":"#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}",
+    "ExpMOverSqP0":"#frac{Exp(p_{1}m)}{(m-p_{2})}(#frac{1}{(m-p_{2})}+p_{3}^{2}m})",
     "Bernstein":"Bernstein",
     "Chebychev":"Chebychev",
     "Polynomial":"Polynomial",
@@ -1419,7 +1420,8 @@ if __name__ == "__main__":
 
   refPdfNameList = [
           "Old",
- #         "ExpMOverSq",
+          "ExpMOverSq",
+      #    "ExpMOverSqP0",
       #    "ExpLog",
       #    "MOverSq",
       #    "Bernstein",
@@ -1435,6 +1437,10 @@ if __name__ == "__main__":
       "MOverSq":["ExpMOverSq"],
       "Old":["ExpMOverSq"],
       "ExpMOverSq":[          
+                        "Old",
+                    ],
+      "ExpMOverSqP0":[          
+                        "ExpMOverSq",
                         "Old",
                     ],
       "Bernstein":[          

@@ -238,6 +238,80 @@ def makePDFBakExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
 
     return paramList, bakNormTup, debug
 
+def makePDFBakExpMOverSqP0(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None):
+    debug = ""
+    debug += "### makePDFBakExpMOverSqP0: "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
+    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
+
+    channelName = name
+
+
+    # new values from Anna 13 Jun 2013
+    EXPPOLP0_1 = root.RooRealVar(channelName+"_EXPPOLP0_1","EXPPOLP0_1", 92, 30., 105.)
+    EXPPOLP0_2 = root.RooRealVar(channelName+"_EXPPOLP0_2","EXPPOLP0_2", -0.5, -2.5, 2.5)
+    EXPPOLP0_3 = root.RooRealVar(channelName+"_EXPPOLP0_3","EXPPOLP0_3", 1., -5., 5.)
+  
+    #if ('Jet2CutsVBFPass' in name ):
+    #  debug += "###  fixing InvPolMass to Z pdg value\n"
+    #  InvPolMass.setConstant(True)
+
+    pdfMmumu = root.RooGenericPdf("bak","TMath::Exp(-@0*@2*@2)/(@0-@1)*(1./(@0-@1)+@3*@3*@0)",root.RooArgList(dimuonMass,EXPPOLP0_1,EXPPOLP0_2,EXPPOLP0_3))
+
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr.SetName("bak"+"_fitResult")
+    #chi2 = pdfMmumu.createChi2(rooDataset)
+
+    rooParamList = [EXPPOLP0_1,EXPPOLP0_2,EXPPOLP0_3]
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+
+    #for param in rooParamList:
+    #    param.setConstant(not FREEBAKPARAMS)
+    #    if ('Jet2CutsVBFPass' in name ):
+    #      InvPolMass.setConstant(True)
+
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(fr)
+
+    #Norm Time
+    bakNormTup = None
+    if True:
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(dimuonMass,"signal")
+      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
+      nSideband =  rooDataset.sumEntries(getSidebandString)
+      nData =  rooDataset.sumEntries()
+      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
+      if nData > 0:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+      else:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
+   #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
+    #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
+
+    #rooDataset2 = rooDataset.reduce(root.RooFit.CutRange("low,signal,high"))
+    #rooDataset2.SetName("bak_TemplateNoVeryLow")
+    #if workspaceImportFn != None:
+    #  workspaceImportFn(rooDataset2)
+
+#    ## Debug Time
+#    frame = dimuonMass.frame()
+#    frame.SetName("bak_Plot")
+#    rooDataset.plotOn(frame)
+#    pdfMmumu.plotOn(frame)
+#    canvas = root.TCanvas()
+#    frame.Draw()
+#    canvas.SaveAs("debug_"+name+channelName+".png")
+
+    for i in rooParamList:
+      debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+    debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
+
+    return paramList, bakNormTup, debug
+
+
 def makePDFBakMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None):
     debug = ""
     debug += "### makePDFBakMOverSq: "+name+"\n"
