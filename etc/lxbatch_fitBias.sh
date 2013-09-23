@@ -5,6 +5,8 @@ source cmsset_default.sh
 export SCRAM_ARCH=slc5_amd64_gcc462
 echo "SCRAM_ARCH is $SCRAM_ARCH"
 cd $LS_SUBCWD
+# getting out of annoying etc/ directory!
+cd ..
 echo "In Directory: "
 pwd
 eval `scramv1 runtime -sh`

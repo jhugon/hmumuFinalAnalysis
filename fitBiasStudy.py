@@ -60,7 +60,7 @@ PDFTITLEMAP = {
     "MOverSq":"#frac{m}{(m-p_{1})^{2}}",
     "Old":"Voigtian+Exp",
     "ExpMOverSq":"#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}",
-    "ExpMOverSqP0":"#frac{Exp(p_{1}m)}{(m-p_{2})}(#frac{1}{(m-p_{2})}+p_{3}^{2}m})",
+    "ExpMOverSqP0":"#frac{Exp(-p_{1}^{2}m)}{(m-p_{2})}*(#frac{1}{m-p_{2}}+p_{3}^{2}m)",
     "Bernstein":"Bernstein",
     "Chebychev":"Chebychev",
     "Polynomial":"Polynomial",
@@ -1488,7 +1488,8 @@ if __name__ == "__main__":
   ########################################
   ### Directory and file names
 
-  dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
+  #dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
+  dataDir = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
   dataFns8TeV = [
     "SingleMuRun2012Av1-22Jan2013",
     "SingleMuRun2012Bv1-22Jan2013",
