@@ -575,12 +575,12 @@ class OrderStudy:
       dataTree.SetCacheSize(10000000);
       dataTree.AddBranchToCache("*");
 
-      dimuonMass = root.RooRealVar("dimuonMass","M(#mu#mu) [GeV/c^{2}]",110.,170.)
+      dimuonMass = root.RooRealVar("dimuonMass","M(#mu#mu) [GeV/c^{2}]",110.,160.)
       dimuonMass.setRange("low",110,120) # Silly ranges for old fit functionality
-      dimuonMass.setRange("high",130,170)
+      dimuonMass.setRange("high",130,160)
       dimuonMass.setRange("signal",120,130)
       dimuonMass.setRange("signalfit",110,140)
-      dimuonMass.setBins(60)
+      dimuonMass.setBins(50)
 
       # Hack to Make makePDFBakOld work
       minMassZ = 88.
@@ -612,6 +612,9 @@ class OrderStudy:
       self.outStr += "\n\n"
       self.outStr += catName + energyStr
       self.outStr += "\n\n"
+      self.latexStrDetail = ""
+      self.outStrDetail = "##############################################################\n\n"
+      self.outStrDetail += catName + energyStr + "\n\n"
       for pdfBaseName in pdfsToTry:
         data[pdfBaseName] = {}
         for order in ordersToTry:
@@ -620,9 +623,11 @@ class OrderStudy:
           wImport = getattr(w,"import")
           pdfName = pdfBaseName+str(order)
           pdfFunc = globals()["makePDFBak"+pdfBaseName]
-          pdfFunc(pdfName+catName+energyStr,realData,dimuonMass,110,170,wImport,dimuonMassZ,realDataZ,order=order)
+          tmpParamList,tmpNormTup,tmpDebug = pdfFunc(pdfName+catName+energyStr,realData,dimuonMass,110,160,wImport,dimuonMassZ,realDataZ,order=order)
           pdf = w.pdf("bak")
-          fr = pdf.fitTo(realData,
+          fr = pdf.fitTo(realData, 
+                             #root.RooFit.Hesse(True), 
+                             #root.RooFit.Minos(True), # Doesn't Help, just makes it run longer
                              root.RooFit.Save(True),
                              PRINTLEVEL
                            )
@@ -632,6 +637,14 @@ class OrderStudy:
                             caption2=pdfBaseName+" Order "+str(order)
                             )
           rmp.draw(outPrefix+"_"+catName+"_"+pdfBaseName+str(order))
+          floatParsFinal = fr.floatParsFinal()
+          self.outStrDetail += "\n{0}\n".format(pdf.GetTitle())
+          #self.outStrDetail += tmpDebug + "\n"
+          for i in range(floatParsFinal.getSize()):
+            parTitle = floatParsFinal.at(i).GetTitle()
+            parVal = floatParsFinal.at(i).getVal()
+            parErr = floatParsFinal.at(i).getError()
+            self.outStrDetail += "  {0:30}: {1:10.3g} +/- {2:10.3g}\n".format(parTitle,parVal,parErr)
 
           pdf.SetName(pdfName)
         
@@ -729,8 +742,9 @@ if __name__ == "__main__":
   canvas = root.TCanvas()
   outDir = "output/"
 
-  pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
-  ordersToTry= range(1,8)
+  #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
+  pdfsToTry = ["Bernstein","SumExp","SumPow"]
+  ordersToTry= range(1,6)
 
   categories = []
 
@@ -762,6 +776,7 @@ if __name__ == "__main__":
   dataFns8TeV = [dataDir+i+".root" for i in dataFns8TeV]
 
   logFile = open(outDir+"orderStudy.log",'w')
+  logDetailFile = open(outDir+"orderStudyDetail.log",'w')
   texFile = open(outDir+"orderStudy.tex",'w')
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
   logFile.write("# {0}\n\n".format(now))
@@ -770,11 +785,13 @@ if __name__ == "__main__":
   for category in categories:
     osy = OrderStudy(category,"8TeV",dataFns8TeV,outDir+"order_Shape",pdfsToTry,ordersToTry)
     logFile.write(osy.outStr)
+    logDetailFile.write(osy.outStrDetail)
     texFile.write(osy.latexStr)
     orderStudyList.append(osy)
     
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
   logFile.write("\n\n# {0}\n".format(now))
   logFile.close()
+  logDetailFile.close()
   texFile.close()
   
