@@ -53,7 +53,7 @@ titleMap = {
 
 def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
     debug = ""
-    debug += "### makePDFBakExpMOverSq: "+name+"\n"
+    debug += "### makePDFBakBernstein: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
     debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
 
@@ -75,7 +75,7 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     rooParamList = []
     rooArgList = root.RooArgList()
-    for i in range(order):
+    for i in range(order+1):
       tmpArg = root.RooRealVar(channelName+"_B"+str(i),"Bernstein Coefficient "+str(i), 0.0, 0., 1.)
       rooArgList.add(tmpArg)
       rooParamList.append(tmpArg)
@@ -124,7 +124,7 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
 def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
     debug = ""
-    debug += "### makePDFBakExpMOverSq: "+name+"\n"
+    debug += "### makePDFBakChebychev: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
     debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
 
@@ -198,7 +198,7 @@ def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
 def makePDFBakPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
     debug = ""
-    debug += "### makePDFBakExpMOverSq: "+name+"\n"
+    debug += "### makePDFBakPolynomial: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
     debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
 
@@ -308,7 +308,7 @@ def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
       rooExpPdfList.add(tmpExpPdf)
       pyPdfList.append(tmpExpPdf)
       if i != 0:
-        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Exponential Coefficient "+str(i), 0.0, 0., 1.)
+        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Exponential Coefficient "+str(i), 0.0, -1., 1.)
         rooArgCoefList.add(tmpCoefArg)
         rooParamList.append(tmpCoefArg)
   
@@ -391,7 +391,7 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
       iCoefParam = iParam
       iParam += 1
       if i != 0:
-        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Power Term Coefficient "+str(i), 0.0, 0., 1.)
+        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Power Term Coefficient "+str(i), 0.0, -1., 1.)
         rooArgList.add(tmpCoefArg)
         rooParamList.append(tmpCoefArg)
         pdfDefString += "+@"+str(iParam)+"*"
@@ -487,7 +487,7 @@ def makePDFBakLaurent(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
     pdfDefString = ""
     for i in range(1,order+2):
       if i != 1:
-        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Laurent Coefficient "+str(i), 0.0, 0., 1.)
+        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Laurent Coefficient "+str(i), 0.0, -1., 1.)
         rooArgList.add(tmpCoefArg)
         rooParamList.append(tmpCoefArg)
         pdfDefString += "+@"+str(iParam)+"*"
@@ -687,9 +687,9 @@ class OrderStudy:
             deltaNdfFunc = ndfFuncP1-ndfFunc
             deltaNLL = -2.*(nllP1-nll)
             pDeltaNLL = scipy.stats.chi2.sf(deltaNLL,deltaNdfFunc)
-            tableStr += "{0} & {1:.3g} & {2:.0f} & {3:.2f} & {4:.3g} ".format(order,gof,nll,deltaNLL,pDeltaNLL)+r" \\ \hline" + "\n"
+            tableStr += "{0} & {1:.3g} & {2:.2f} & {3:.2f} & {4:.3g} ".format(order,gof,-nll,deltaNLL,pDeltaNLL)+r" \\ \hline" + "\n"
           else:
-            tableStr += "{0} & {1:.3g} & {2:.0f} & - & - ".format(order,gof,nll)+r" \\ \hline" + "\n"
+            tableStr += "{0} & {1:.3g} & {2:.2f} & - & - ".format(order,gof,nll)+r" \\ \hline" + "\n"
         tableStr += r"\end{tabular}" + "\n\n"
         self.latexStr += tableStr
       for pdfBaseName in pdfsToTry:
@@ -715,9 +715,9 @@ class OrderStudy:
             if not foundGoodOne and pDeltaNLL > 0.05:
               foundGoodStr = "*"
               foundGoodOne = True
-            self.outStr += "{0:4} {1:10.3g} {2:10.0f} {3:10.2f} {4:10.3g} {5}".format(order,gof,nll,deltaNLL,pDeltaNLL,foundGoodStr)+ "\n"
+            self.outStr += "{0:4} {1:10.3g} {2:10.2f} {3:10.2f} {4:10.3g} {5}".format(order,gof,-nll,deltaNLL,pDeltaNLL,foundGoodStr)+ "\n"
           else:
-            self.outStr += "{0:4} {1:10.3g} {2:10.0f} {3:>10} {4:>10} ".format(order,gof,nll,'-','-')+"\n"
+            self.outStr += "{0:4} {1:10.3g} {2:10.2f} {3:>10} {4:>10} ".format(order,gof,-nll,'-','-')+"\n"
 
       print self.outStr
 
@@ -725,15 +725,15 @@ class OrderStudy:
     if basename == "Bernstein":
         return order+1
     if basename == "Chebychev":
-        return order+1
+        return order
     if basename == "Polynomial":
-        return order+1
+        return order
     if basename == "SumExp":
         return 2*order
     if basename == "SumPow":
         return 2*order
     if basename == "Laurent":
-        return order+1
+        return order
     else:
         print "Error: getNDF: don't recognize function: "+basename
         sys.exit(1)
@@ -743,8 +743,8 @@ if __name__ == "__main__":
   outDir = "output/"
 
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
-  pdfsToTry = ["Bernstein","SumExp","SumPow"]
-  ordersToTry= range(1,6)
+  pdfsToTry = ["Bernstein","SumExp","SumPow","Laurent"]
+  ordersToTry= range(1,7)
 
   categories = []
 
@@ -754,11 +754,12 @@ if __name__ == "__main__":
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
   #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
-  #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
-  #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  #categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
+  categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
   dataFns8TeV = [
@@ -785,8 +786,11 @@ if __name__ == "__main__":
   for category in categories:
     osy = OrderStudy(category,"8TeV",dataFns8TeV,outDir+"order_Shape",pdfsToTry,ordersToTry)
     logFile.write(osy.outStr)
+    logFile.flush()
     logDetailFile.write(osy.outStrDetail)
+    logDetailFile.flush()
     texFile.write(osy.latexStr)
+    texFile.flush()
     orderStudyList.append(osy)
     
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
