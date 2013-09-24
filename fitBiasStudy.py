@@ -1419,12 +1419,15 @@ if __name__ == "__main__":
   ### Define which reference functions to use
 
   refPdfNameList = [
-          "Old",
-          "ExpMOverSq",
+      #    "Old",
+      #    "ExpMOverSq",
       #    "ExpMOverSqP0",
       #    "ExpLog",
       #    "MOverSq",
-      #    "Bernstein",
+          "Bernstein",
+          "SumExp",
+          "SumPow",
+          "Laurent",
       #    "Chebychev",
       #    "Polynomial",
   ]
@@ -1446,10 +1449,33 @@ if __name__ == "__main__":
       "Bernstein":[          
                         "ExpMOverSq",
                         "Old",
+                        "SumExp",
+                        "SumPow",
+                    ],
+      "SumExp":[          
+                        "ExpMOverSq",
+                        "Old",
+                        "Bernstein",
+                        "SumPow",
+                    ],
+      "SumPow":[          
+                        "ExpMOverSq",
+                        "Old",
+                        "SumExp",
+                    ],
+      "Laurent":[          
+                        "ExpMOverSq",
+                        "Old",
+                        "Bernstein",
+                        "SumPow",
+                        "SumExp",
                     ],
       "Chebychev":[          
                         "ExpMOverSq",
                         "Old",
+                        "Bernstein",
+                        "SumPow",
+                        "SumExp",
                     ],
       "Polynomial":[          
                         "ExpMOverSq",
