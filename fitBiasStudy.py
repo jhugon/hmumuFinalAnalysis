@@ -61,6 +61,7 @@ PDFTITLEMAP = {
     "Old":"Voigtian+Exp",
     "ExpMOverSq":"#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}",
     "ExpMOverSqP0":"#frac{Exp(-p_{1}^{2}m)}{(m-p_{2})}*(#frac{1}{m-p_{2}}+p_{3}^{2}m)",
+    "ExpMOverSqP0New":"e^{-p_{1}^{2}m}/(m-p_{2})^{2}+p_{3}^{2}e^{-p_{1}^{2}m}",
     "Bernstein":"Bernstein",
     "Chebychev":"Chebychev",
     "Polynomial":"Polynomial",
