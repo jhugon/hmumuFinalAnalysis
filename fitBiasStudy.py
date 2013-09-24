@@ -477,23 +477,31 @@ class BiasStudy:
       for hmass in self.sigMasses:
         outStr +=  "mass: "+str(hmass)+'\n'
         dataH = data[refPdfName][hmass]
-        shapiroStat, shapiroP = scipy.stats.shapiro(dataH['zTrue'])
-        sumChi2 = sum(dataH['chi2True'])
-        sumNDF = sum(dataH['ndfTrue'])
+        #shapiroStat, shapiroP = scipy.stats.shapiro(dataH['zTrue'])
+        #sumChi2 = sum(dataH['chi2True'])
+        #sumNDF = sum(dataH['ndfTrue'])
         #outStr +=  "  True Z Scores:   {0:.2f} +/- {1:.2f}  Median: {2:.2f}    S-W Normal p-Val: {3:.3g}\n".format(mean(dataH['zTrue']),stddev(dataH['zTrue']),median(dataH['zTrue']),shapiroP)
         #outStr +=  "  True Fit Prob:   {0:.3g},                              chi2: {1:.2f}  NDF: {2}\n".format(scipy.stats.chi2.sf(sumChi2,sumNDF),sumChi2,sumNDF)
         #outStr +=  "  All Pulls:       {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataH['pullAll']),stddev(dataH['pullAll']),median(dataH['pullAll']))
         for pdfAltName in self.pdfAltNamesDict[refPdfName]:
           dataHA = dataH[pdfAltName]
-          shapiroStat, shapiroP = scipy.stats.shapiro(dataHA['z'])
-          sumChi2 = sum(dataHA['chi2'])
-          sumNDF = sum(dataHA['ndf'])
+          #shapiroStat, shapiroP = scipy.stats.shapiro(dataHA['z'])
+          #sumChi2 = sum(dataHA['chi2'])
+          #sumNDF = sum(dataHA['ndf'])
           outStr +=  "  "+pdfAltName+":\n"
           #outStr +=  "    Z Scores:      {0:.2f} +/- {1:.2f}  Median: {2:.2f}    S-W Normal p-Val: {3:.3g}\n".format(mean(dataHA['z']),stddev(dataHA['z']),median(dataHA['z']),shapiroP)
           #outStr +=  "    Fit Prob:      {0:.3g},                              chi2: {1:.2f}  NDF: {2}\n".format(scipy.stats.chi2.sf(sumChi2,sumNDF),sumChi2,sumNDF)
           outStr +=  "    Pulls:         {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataHA['pull']),stddev(dataHA['pull']),median(dataHA['pull']))
     print outStr
     self.outStr = outStr
+
+    self.pullSummaryDict = {}
+    for refPdfName in self.refPdfNameList:
+      self.pullSummaryDict[refPdfName] = {}
+      for pdfAltName in self.pdfAltNamesDict[refPdfName]:
+        self.pullSummaryDict[refPdfName][pdfAltName] = {}
+        for hmass in self.sigMasses:
+          self.pullSummaryDict[refPdfName][pdfAltName][hmass] = median(data[refPdfName][hmass][pdfAltName]['pull'])
 
   def plot(self,outputPrefix):
 
@@ -1395,6 +1403,49 @@ def printBiasTable(pklFileNames,refPdfName,altPdfName):
   print plainResult
   print latexResult
 
+def printBiasSummary(dataCats):
+  catNames = sorted(dataCats.keys())
+  if len(catNames) == 0:
+    return
+  plainResult = ""
+  latexResult = ""
+  for catName in catNames:
+    data = dataCats[catName]
+    refNames = sorted(data.keys())
+    allAltNames = set()
+    for refName in refNames:
+      allAltNames = allAltNames.union(data[refName].keys())
+    allAltNames = sorted(list(allAltNames))
+    plainResult += "############################################################\n"
+    plainResult += catName+" Maximum Bias\n\n"
+    plainResult += "\n{0:<15}".format("Alternate")+"{0:>15}\n".format("Reference")
+    plainResult += "{0:<15}".format("")
+    latexResult += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+    latexResult += "%% "+catName+" Maximum Bias\n\n"
+    for refName in refNames:
+      plainResult += "{0:>15}".format(refName)
+    plainResult += "\n"
+    for altName in allAltNames:
+      plainResult += "{0:<15}".format(altName)
+      for refName in refNames:
+          if not data[refName].has_key(altName):
+            plainResult += "{0:>15}".format("-")
+            continue
+          maxBias = 0.
+          absMaxBias = 0.
+          for hmass in data[refName][altName]:
+            tmpBias = data[refName][altName][hmass]
+            tmpAbsBias = abs(tmpBias)
+            if tmpAbsBias > absMaxBias:
+              maxBias = tmpBias
+              absMaxBias = tmpAbsBias
+          plainResult += "{0:>15.2%}".format(maxBias)
+      plainResult += "\n"
+    plainResult += "\n\n"
+  print plainResult
+          
+    
+
 if __name__ == "__main__":
   helpStr = "./fitBiasStudy.py [jobGroupNumber]\n  where jobGroupNumber is an int that will be added to the random number seed (*1000) and the output pkl file name\n  if there is a jobGroupNumber, no plots or summary will be produced."
   iJobGroup = None
@@ -1488,8 +1539,7 @@ if __name__ == "__main__":
   ### Define which masses to run over
 
   #sigMasses = range(115,156,5)
-  #sigMasses = [120,125,130,135,140,145,150]
-  sigMasses = [115,125,130,150,155]
+  sigMasses = [115,120,125,140,150,155]
   sigMasses = [125,150]
 
   ########################################
@@ -1503,14 +1553,15 @@ if __name__ == "__main__":
   ########################################
   ### Define which categories to run over
 
-  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
 
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   ########################################
   ### Directory and file names
@@ -1533,6 +1584,7 @@ if __name__ == "__main__":
 
   #############################################
 
+  allSummaries = {}
   tmpJobGroupStr = ""
   if iJobGroup != None:
     tmpJobGroupStr = "_jobGrp"+str(iJobGroup)
@@ -1559,6 +1611,7 @@ if __name__ == "__main__":
         bs = BiasStudy(None,None,None,None,None,None,None,inputPkl=inputPkl)
         logFile.write(bs.outStr)
         bs.plot(outDir+"bias_")
+        allSummaries[bs.catName] = bs.pullSummaryDict
     else:
       # Identify basenames to combine job groups
       basenames = set()
@@ -1582,6 +1635,7 @@ if __name__ == "__main__":
         bs = BiasStudy(None,None,None,None,None,None,None,inputPkl=resultData)
         logFile.write(bs.outStr)
         bs.plot(outDir+"bias_")
+        allSummaries[bs.catName] = bs.pullSummaryDict
   else:
     processPool = None
     if NPROCS > 1:
@@ -1591,8 +1645,10 @@ if __name__ == "__main__":
       logFile.write(bs.outStr)
       if iJobGroup == None:
         bs.plot(outDir+"bias_")
+        allSummaries[bs.catName] = bs.pullSummaryDict
   inputPklFiles = glob.glob(outDir+"*.pkl")
   #printBiasTable(inputPklFiles,"Old","ExpMOverSq")
+  printBiasSummary(allSummaries)
     
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
   logFile.write("\n\n# {0}\n".format(now))
