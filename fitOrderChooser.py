@@ -381,6 +381,7 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
 
     rooParamList = []
     rooArgList = root.RooArgList(dimuonMass)
+    coefIndexStrList = []
     iParam = 1
     pdfDefString = ""
     for i in range(order):
@@ -395,8 +396,16 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
         rooArgList.add(tmpCoefArg)
         rooParamList.append(tmpCoefArg)
         pdfDefString += "+@"+str(iParam)+"*"
+        coefIndexStrList.append("@"+str(iParam))
         iParam += 1
       pdfDefString += "TMath::Power(@0,-@"+str(iCoefParam)+")"
+
+    # now doing norm string to first term:
+    normFirstTermStr = "(1"
+    for iTerm in coefIndexStrList:
+      normFirstTermStr+= "-"+iTerm
+    normFirstTermStr += ")*"
+    pdfDefString = normFirstTermStr+pdfDefString
   
     debug += "#    SumPow Order: "+str(order)+"\n"
     debug += "#    pdfDefString: "+pdfDefString+"\n"
@@ -486,16 +495,23 @@ def makePDFBakLaurent(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
     iParam = 1
     pdfDefString = ""
     for i in range(1,order+2):
+      tmpLPow = -4
+      for j in range(1,i+1):
+        tmpLPow += (-1)**j*(j-1)
       if i != 1:
-        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Laurent Coefficient "+str(i), 0.0, -1., 1.)
+        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Laurent Coefficient for Power: "+str(tmpLPow), 0.0, -1., 1.)
         rooArgList.add(tmpCoefArg)
         rooParamList.append(tmpCoefArg)
         pdfDefString += "+@"+str(iParam)+"*"
         iParam += 1
-      tmpLPow = -4
-      for j in range(1,i+1):
-        tmpLPow += (-1)**j*(j-1)
       pdfDefString += "TMath::Power(@0,"+str(tmpLPow)+")"
+
+    # now doing norm string to first term:
+    normFirstTermStr = "(1"
+    for iTerm in range(1,len(rooParamList)+1):
+      normFirstTermStr+= "-@"+str(iTerm)
+    normFirstTermStr += ")*"
+    pdfDefString = normFirstTermStr+pdfDefString
   
     debug += "#    Laurent Order: "+str(order)+"\n"
     debug += "#    pdfDefString: "+pdfDefString+"\n"
@@ -744,7 +760,7 @@ if __name__ == "__main__":
 
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
   pdfsToTry = ["Bernstein","SumExp","SumPow","Laurent"]
-  ordersToTry= range(1,7)
+  ordersToTry= range(1,5)
 
   categories = []
 
@@ -752,13 +768,13 @@ if __name__ == "__main__":
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
-  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
-  categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+  #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
+  #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
