@@ -460,23 +460,23 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
       elif "Jets01PassPtG10BE" in name:
         order = 2
       elif "Jets01PassPtG10OO" in name:
-        order = 1
+        order = 2
       elif "Jets01PassPtG10OE" in name:
         order = 2
       elif "Jets01PassPtG10EE" in name:
-        order = 1
+        order = 2
       if "Jets01FailPtG10BB" in name:
         order = 2
       elif "Jets01FailPtG10BO" in name:
-        order = 1
+        order = 2
       elif "Jets01FailPtG10BE" in name:
-        order = 1
+        order = 2
       elif "Jets01FailPtG10OO" in name:
         order = 2
       elif "Jets01FailPtG10OE" in name:
         order = 1
       elif "Jets01FailPtG10EE" in name:
-        order = 1
+        order = 2
       elif "Jet2CutsVBFPass" in name:
         order = 1
       elif "Jet2CutsGFPass" in name:
@@ -692,7 +692,6 @@ def makePDFBakLaurent(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
 
     return paramList, bakNormTup, debug
 
-
 #########################################################################
 #########################################################################
 #########################################################################
@@ -881,7 +880,6 @@ if __name__ == "__main__":
 
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
   pdfsToTry = ["Bernstein","Chebychev","SumExp","SumPow"]
-  pdfsToTry = ["SumPow"]
   ordersToTry= range(1,4)
 
   categories = []
@@ -891,13 +889,13 @@ if __name__ == "__main__":
 
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
   #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
-  #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
-  #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
+  categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
   dataFns8TeV = [
