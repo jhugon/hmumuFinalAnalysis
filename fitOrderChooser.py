@@ -99,6 +99,18 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
       tmpArg = root.RooRealVar(channelName+"_B"+str(i),"Bernstein Coefficient "+str(i), 0.0, 0., 1.)
       rooArgList.add(tmpArg)
       rooParamList.append(tmpArg)
+
+    debug += "#    Bernstein Order: "+str(order)+"\n"
+    debug += "#    pdfArgs: "+dimuonMass.GetName()+" "
+    for i in rooParamList:
+        debug += i.GetName()+" "
+    debug += "\n"
+
+    #print
+    #print "Bernstein Order: ",order
+    #for i in rooParamList:
+    #    i.Print()
+    #print
   
     pdfMmumu = root.RooBernstein("bak","Bernstein Order: "+str(order),dimuonMass,rooArgList)
 
@@ -191,6 +203,18 @@ def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
       tmpArg = root.RooRealVar(channelName+"_B"+str(i),"Chebychev Coefficient "+str(i), 0.0, -1., 1.)
       rooArgList.add(tmpArg)
       rooParamList.append(tmpArg)
+
+    debug += "#    Chebychev Order: "+str(order)+"\n"
+    debug += "#    pdfArgs: "+dimuonMass.GetName()+" "
+    for i in rooParamList:
+        debug += i.GetName()+" "
+    debug += "\n"
+
+    print
+    print "Chebychev Order: ",order
+    for i in rooParamList:
+        i.Print()
+    print
   
     pdfMmumu = root.RooChebychev("bak","Chebychev Order: "+str(order),dimuonMass,rooArgList)
 
@@ -282,6 +306,18 @@ def makePDFBakPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
       tmpArg = root.RooRealVar(channelName+"_P"+str(i),"Polynomial Coefficient "+str(i), 0.0, -1., 1.)
       rooArgList.add(tmpArg)
       rooParamList.append(tmpArg)
+
+    debug += "#    Polynomial Order: "+str(order)+"\n"
+    debug += "#    pdfArgs: "+dimuonMass.GetName()+" "
+    for i in rooParamList:
+        debug += i.GetName()+" "
+    debug += "\n"
+
+    print
+    print "Polynomial Order: ",order
+    for i in rooParamList:
+        i.Print()
+    print
   
     pdfMmumu = root.RooPolynomial("bak","Polynomial Order: "+str(order),dimuonMass,rooArgList)
 
@@ -381,9 +417,21 @@ def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
       rooExpPdfList.add(tmpExpPdf)
       pyPdfList.append(tmpExpPdf)
       if i != 0:
-        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Exponential Coefficient "+str(i), 0.0, -1., 1.)
+        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Exponential Coefficient "+str(i), 0.0, 0., 1.)
         rooArgCoefList.add(tmpCoefArg)
         rooParamList.append(tmpCoefArg)
+
+    debug += "#    SumExp Order: "+str(order)+"\n"
+    debug += "#    pdfArgs: "+dimuonMass.GetName()+" "
+    for i in rooParamList:
+        debug += i.GetName()+" "
+    debug += "\n"
+
+    print
+    print "SumExp Order: ",order
+    for i in rooParamList:
+        i.Print()
+    print
   
     pdfMmumu = root.RooAddPdf("bak","Sum of Exponentials Order: "+str(order),rooExpPdfList,rooArgCoefList)
 
@@ -482,7 +530,7 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
       iCoefParam = iParam
       iParam += 1
       if i != 0:
-        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Power Term Coefficient "+str(i), 0.0, -1., 1.)
+        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Power Term Coefficient "+str(i), 0.0, 0., 1.)
         rooArgList.add(tmpCoefArg)
         rooParamList.append(tmpCoefArg)
         pdfDefString += "+@"+str(iParam)+"*"
@@ -849,7 +897,7 @@ class OrderStudy:
     if basename == "Bernstein":
         return order+1
     if basename == "Chebychev":
-        return order
+        return order+1
     if basename == "Polynomial":
         return order
     if basename == "SumExp":
@@ -867,7 +915,8 @@ if __name__ == "__main__":
   outDir = "output/"
 
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
-  pdfsToTry = ["Bernstein","SumExp","SumPow","Laurent"]
+  pdfsToTry = ["Bernstein","Chebychev","SumExp","SumPow","Laurent"]
+  pdfsToTry = ["Laurent"]
   ordersToTry= range(1,6)
 
   categories = []
@@ -876,14 +925,14 @@ if __name__ == "__main__":
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
-  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
   dataFns8TeV = [
