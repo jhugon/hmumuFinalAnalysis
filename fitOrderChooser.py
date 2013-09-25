@@ -613,64 +613,58 @@ def makePDFBakLaurent(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
 
     if order == None:
       if "Jets01PassPtG10BB" in name:
-        order = 1
+        order = None
       elif "Jets01PassPtG10BO" in name:
-        order = 1
+        order = None
       elif "Jets01PassPtG10BE" in name:
-        order = 1
+        order = None
       elif "Jets01PassPtG10OO" in name:
-        order = 1
+        order = None
       elif "Jets01PassPtG10OE" in name:
-        order = 1
+        order = None
       elif "Jets01PassPtG10EE" in name:
-        order = 1
+        order = None
       if "Jets01FailPtG10BB" in name:
-        order = 1
+        order = None
       elif "Jets01FailPtG10BO" in name:
-        order = 1
+        order = None
       elif "Jets01FailPtG10BE" in name:
-        order = 1
+        order = None
       elif "Jets01FailPtG10OO" in name:
-        order = 1
+        order = None
       elif "Jets01FailPtG10OE" in name:
-        order = 1
+        order = None
       elif "Jets01FailPtG10EE" in name:
-        order = 1
+        order = None
       elif "Jet2CutsVBFPass" in name:
-        order = 1
+        order = None
       elif "Jet2CutsGFPass" in name:
-        order = 1
+        order = None
       elif "Jet2CutsFailVBFGF" in name:
-        order = 1
+        order = None
       else:
-        order = 1
+        order = None
 
 
     rooParamList = []
-    rooArgList = root.RooArgList(dimuonMass)
-    iParam = 1
-    pdfDefString = ""
-    for i in range(1,order+2):
+    rooTermList = root.RooArgList()
+    pyTermList = []
+    rooExtParList = root.RooArgList()
+    for i in range(1,order+1):
+      rooArgList = root.RooArgList(dimuonMass)
       tmpLPow = -4
       for j in range(1,i+1):
         tmpLPow += (-1)**j*(j-1)
       if i != 1:
-        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Laurent Coefficient for Power: "+str(tmpLPow), 0.0, -1., 1.)
-        rooArgList.add(tmpCoefArg)
+        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Laurent Coefficient for Power: "+str(tmpLPow)+" Temrm #: "+str(i), 0.0, 0., 1.)
+        rooExtParList.add(tmpCoefArg)
         rooParamList.append(tmpCoefArg)
-        pdfDefString += "+@"+str(iParam)+"*"
-        iParam += 1
-      pdfDefString += "TMath::Power(@0,"+str(tmpLPow)+")"
+      pdfDefString = "TMath::Power(@0,"+str(tmpLPow)+")"
+      pdfTerm = root.RooGenericPdf(name+"_LauTerm"+str(i),"Laurent Term: "+str(i),pdfDefString,rooArgList)
+      pyTermList.append(pdfTerm)
+      rooTermList.add(pdfTerm)
 
-    # now doing norm string to first term:
-    normFirstTermStr = "(1"
-    for iTerm in range(1,len(rooParamList)+1):
-      normFirstTermStr+= "-@"+str(iTerm)
-    normFirstTermStr += ")*"
-    pdfDefString = normFirstTermStr+pdfDefString
-  
     debug += "#    Laurent Order: "+str(order)+"\n"
-    debug += "#    pdfDefString: "+pdfDefString+"\n"
     debug += "#    pdfArgs: "+dimuonMass.GetName()+" "
     for i in rooParamList:
         debug += i.GetName()+" "
@@ -678,14 +672,16 @@ def makePDFBakLaurent(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
 
     print
     print "Laurent Order: ",order
-    print "Laurent rooDefString: "+pdfDefString
     for i in rooParamList:
         i.Print()
     print
-    rooArgList.Print()
+    print "Laurent Term PDFs:"
+    for i in pyTermList:
+        i.Print()
     print
 
-    pdfMmumu = root.RooGenericPdf("bak","Laurent Order: "+str(order),pdfDefString,rooArgList)
+    pdfMmumu = root.RooAddPdf("bak","Laurent Order: "+str(order),rooTermList,rooExtParList)
+    pdfMmumu.Print()
 
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
@@ -915,9 +911,8 @@ if __name__ == "__main__":
   outDir = "output/"
 
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
-  pdfsToTry = ["Bernstein","Chebychev","SumExp","SumPow","Laurent"]
-  pdfsToTry = ["Laurent"]
-  ordersToTry= range(1,6)
+  pdfsToTry = ["Bernstein","Chebychev","SumExp","SumPow"]
+  ordersToTry= range(1,7)
 
   categories = []
 
@@ -927,12 +922,12 @@ if __name__ == "__main__":
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
   #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
-  #categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
-  #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
-  #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
+  categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
   dataFns8TeV = [
