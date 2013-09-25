@@ -99,7 +99,7 @@ class Param:
     else:
         return "-{0:.5g}/+{1:.5g}".format(self.lowErr,self.highErr)
 
-def makePDFBakExpLog(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None):
+def makePDFBakExpLog(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
     debug = ""
     debug += "### makePDFBakExpLog: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -164,7 +164,7 @@ def makePDFBakExpLog(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
     return paramList, bakNormTup, debug
 
 
-def makePDFBakExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None):
+def makePDFBakExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
     debug = ""
     debug += "### makePDFBakExpMOverSq: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -238,7 +238,7 @@ def makePDFBakExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
 
     return paramList, bakNormTup, debug
 
-def makePDFBakExpMOverSqP0(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None):
+def makePDFBakExpMOverSqP0(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
     debug = ""
     debug += "### makePDFBakExpMOverSqP0: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -311,7 +311,7 @@ def makePDFBakExpMOverSqP0(name,rooDataset,dimuonMass,minMass,maxMass,workspaceI
 
     return paramList, bakNormTup, debug
 
-def makePDFBakExpMOverSqP0New(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None):
+def makePDFBakExpMOverSqP0New(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
     debug = ""
     debug += "### makePDFBakExpMOverSqP0New: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -398,7 +398,7 @@ def makePDFBakExpMOverSqP0New(name,rooDataset,dimuonMass,minMass,maxMass,workspa
     return paramList, bakNormTup, debug
 
 
-def makePDFBakMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None):
+def makePDFBakMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
     debug = ""
     debug += "### makePDFBakMOverSq: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -460,7 +460,7 @@ def makePDFBakMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
 
     return paramList, bakNormTup, debug
 
-def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None):
+def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
     #print "GP's debug line *******************************************************\n"
     debug = ""
     debug += "### makePDFBakOld: "+name+"\n"
