@@ -519,7 +519,10 @@ def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,d
     if FREEBAKPARAMS:
       for param in rooParamList:
         param.setConstant(False)
-      voitWidth.setConstant(True)
+
+    voitWidth.setConstant(True)
+    voitmZ.setConstant(True)
+    voitSig.setConstant(True)
 
     if workspaceImportFn != None:
       workspaceImportFn(pdfMmumu)
@@ -1636,7 +1639,19 @@ class DataCardMaker:
       formatString += "\n"
       outfile.write(formatString.format(*formatList))
 
-      # Parameter Shape Uncertainties For Signal 
+      # Parameter (Shape) Uncertainties For Background
+      for channel,channelName in zip(self.channels,self.channelNames):
+        for nu in channel.params:
+          if "voit" in nu.name: # only constrain voigtian parameters
+            nuisanceName = nu.name
+            formatString = "{0:<25} {1:<6} {2:<10.5g} {3:<10}"
+            formatList = [nuisanceName,"param",nu.nominal,nu.getErrString()]
+            formatString += "\n"
+            #print formatString
+            #print formatList
+            outfile.write(formatString.format(*formatList))
+
+      # Parameter (Shape) Uncertainties For Signal 
       for channel,channelName in zip(self.channels,self.channelNames):
         for siglist in channel.sigParamList:
           for nu in siglist:
