@@ -201,6 +201,11 @@ def setPDFfromFR(fr,PDF,data):
             #else:
                 #print "Potential Problem: No Coefficient Matching Found"
 
+def rooObjPrintVars(obj):
+  obj.Print()
+  for i in rooArgSet2List(obj.getVariables()):
+    i.Print()
+
 def rooArgSet2List(x):
   itr = x.createIterator()
   result = []
