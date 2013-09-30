@@ -89,6 +89,7 @@ PDFTITLEMAP = PdfTitleMap({
     "ExpMOverSq":"#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}",
     "ExpMOverSqP0":"#frac{Exp(-p_{1}^{2}m)}{(m-p_{2})}*(#frac{1}{m-p_{2}}+p_{3}^{2}m)",
     "ExpMOverSqP0New":"e^{-p_{1}^{2}m}/(m-p_{2})^{2}+p_{3}^{2}e^{-p_{1}^{2}m}",
+    "ExpMOverSqPlusExpSum":"#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}+#sumExp",
     "Bernstein":"Bernstein",
     "Chebychev":"Chebychev",
     "Polynomial":"Polynomial",
@@ -138,13 +139,13 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           altPdfOrderList.append(None)
 
       truePdfFunc = None
-      if truePdfNameNoOrder == "Bernstein" or truePdfNameNoOrder == "Chebychev" or truePdfNameNoOrder == "Polynomial" or truePdfNameNoOrder == "SumExp" or truePdfNameNoOrder == "SumPow" or truePdfNameNoOrder == "Laurent":
+      if truePdfNameNoOrder == "Bernstein" or truePdfNameNoOrder == "Chebychev" or truePdfNameNoOrder == "Polynomial" or truePdfNameNoOrder == "SumExp" or truePdfNameNoOrder == "SumPow" or truePdfNameNoOrder == "Laurent" or truePdfNameNoOrder == "ExpMOverSqPlusExpSum":
         truePdfFunc = getattr(fitOrderChooser,"makePDFBak"+truePdfNameNoOrder)
       else:
         truePdfFunc = getattr(makeCards,"makePDFBak"+truePdfNameNoOrder)
       pdfAltFuncList = []
       for i in altPdfNameNoOrderList:
-        if i == "Bernstein" or i == "Chebychev" or i == "Polynomial" or i == "SumExp" or i == "SumPow" or i == "Laurent":
+        if i == "Bernstein" or i == "Chebychev" or i == "Polynomial" or i == "SumExp" or i == "SumPow" or i == "Laurent" or i == "ExpMOverSqPlusExpSum":
           pdfAltFuncList.append(getattr(fitOrderChooser,"makePDFBak"+i))
         else:
           pdfAltFuncList.append(getattr(makeCards,"makePDFBak"+i))
@@ -1517,13 +1518,13 @@ if __name__ == "__main__":
   ### Define which reference functions to use
 
   refPdfNameList = [
-          "Old",
-          "ExpMOverSq",
+      #    "Old",
+      #    "ExpMOverSq",
       #    "ExpMOverSqP0",
       #    "ExpLog",
       #    "MOverSq",
-      #    "Bernstein",
-      #    "SumExp",
+          "Bernstein",
+          "SumExp",
       #    "SumPow",
       #    "Laurent",
       #    "Chebychev",
@@ -1548,16 +1549,22 @@ if __name__ == "__main__":
                         #"4Bernstein",
                         #"5Bernstein",
                         #"6Bernstein",
-                        "ExpMOverSq",
-                        "Old",
-                        "2SumExp",
-                        "2SumPow",
+                        #"ExpMOverSq",
+                        #"Old",
+                        #"2SumExp",
+                        #"2SumPow",
+                        "1ExpMOverSqPlusExpSum",
+                        "2ExpMOverSqPlusExpSum",
+                        "3ExpMOverSqPlusExpSum",
                     ],
       "SumExp":[          
-                        "ExpMOverSq",
-                        "Old",
-                        "Bernstein",
-                        "SumPow",
+                        #"ExpMOverSq",
+                        #"Old",
+                        #"Bernstein",
+                        #"SumPow",
+                        "1ExpMOverSqPlusExpSum",
+                        "2ExpMOverSqPlusExpSum",
+                        "3ExpMOverSqPlusExpSum",
                     ],
       "SumPow":[          
                         "ExpMOverSq",
@@ -1589,7 +1596,7 @@ if __name__ == "__main__":
 
   #sigMasses = range(115,156,5)
   sigMasses = [115,120,125,140,150,155]
-  sigMasses = [125,150]
+  sigMasses = [118,125,150,153]
 
   ########################################
 
@@ -1602,9 +1609,9 @@ if __name__ == "__main__":
   ########################################
   ### Define which categories to run over
 
-  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
-  #categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
 
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
