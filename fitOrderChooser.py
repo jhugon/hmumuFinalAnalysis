@@ -806,8 +806,10 @@ class OrderStudy:
       for pdfBaseName in pdfsToTry:
         tableStr =  catName+" "+energyStr+"\n"+pdfBaseName
         tableStr += "\n\n"+r"\begin{tabular}{|l|c|c|c|c|} \hline" + "\n"
-        tableStr += r"Degree (d) & Goodness & NLL$_d$ & -2$\Delta$NLL(d+1,d) & $p_{\chi^2}$(d+1,d) \\"+" \n"
+        tableStr += r"Order & Goodness & $-\ln\mathcal{L}$ & $-2\ln\lambda$ & $p_{\chi^2}$ \\"+" \n"
+        #tableStr += r"Degree (d) & Goodness & NLL$_d$ & -2$\Delta$NLL(d+1,d) & $p_{\chi^2}$(d+1,d) \\"+" \n"
         tableStr += r" & of Fit  &  & &  \\ \hline \hline" + "\n"
+        foundGoodOne = False
         for order in sorted(data[pdfBaseName].keys()):
           tmpDat = data[pdfBaseName][order]
           tmpDatP1 = False
@@ -823,9 +825,13 @@ class OrderStudy:
             deltaNdfFunc = ndfFuncP1-ndfFunc
             deltaNLL = -2.*(nllP1-nll)
             pDeltaNLL = scipy.stats.chi2.sf(deltaNLL,deltaNdfFunc)
-            tableStr += "{0} & {1:.3g} & {2:.2f} & {3:.2f} & {4:.3g} ".format(order,gof,-nll,deltaNLL,pDeltaNLL)+r" \\ \hline" + "\n"
+            if not foundGoodOne and pDeltaNLL > 0.05:
+              foundGoodOne = True
+              tableStr += r"\bf {0} & \bf {1:.3g} & \bf {2:.2f} & \bf {3:.2f} & \bf {4:.3g} ".format(order,gof,-nll,deltaNLL,pDeltaNLL)+r" \\ \hline" + "\n"
+            else:
+              tableStr += "{0} & {1:.3g} & {2:.2f} & {3:.2f} & {4:.3g} ".format(order,gof,-nll,deltaNLL,pDeltaNLL)+r" \\ \hline" + "\n"
           else:
-            tableStr += "{0} & {1:.3g} & {2:.2f} & - & - ".format(order,gof,nll)+r" \\ \hline" + "\n"
+            tableStr += "{0} & {1:.3g} & {2:.2f} & - & - ".format(order,gof,-nll)+r" \\ \hline" + "\n"
         tableStr += r"\end{tabular}" + "\n\n"
         self.latexStr += tableStr
       for pdfBaseName in pdfsToTry:
