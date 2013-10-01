@@ -788,6 +788,191 @@ def makePDFBakExpMOverSqPlusExpSum(name,rooDataset,dimuonMass,minMass,maxMass,wo
 
     return paramList, bakNormTup, debug
 
+def makePDFBakExpMOverSqPlusBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+    debug = ""
+    debug += "### makePDFBakExpMOverSqPlusBernstein: "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
+    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
+
+    channelName = name
+
+    if order == None:
+      order = 2
+
+    # new values from Anna 13 Jun 2013
+    InvPolMass = root.RooRealVar(channelName+"_InvPolMass","InvPolMass", 91.187, 30., 105.)
+    ExpMass = root.RooRealVar(channelName+"_ExpMass","ExpMass", 0.0, -2., 2.)
+  
+    if ('Jet2CutsVBFPass' in name ):
+      debug += "###  fixing InvPolMass to Z pdg value\n"
+      InvPolMass.setConstant(True)
+
+    expMOverSqTerm = root.RooGenericPdf(channelName+"ExpMOverSqTerm","TMath::Exp(@0*@2)/(@0-@1)/(@0-@1)",root.RooArgList(dimuonMass,InvPolMass,ExpMass))
+
+    rooParamList = [InvPolMass,ExpMass]
+    rooArgList = root.RooArgList()
+    if order > 1:
+      for i in range(order):
+        tmpArg = root.RooRealVar(channelName+"_B"+str(i),"Bernstein Coefficient "+str(i), 0.0, 0., 1.)
+        rooArgList.add(tmpArg)
+        rooParamList.append(tmpArg)
+
+    pdfMmumu = None
+    bernsteinTerm = None
+    if order == 1:
+      pdfMmumu = expMOverSqTerm
+      pdfMmumu.SetName('bak')
+    else:
+      mixParam = root.RooRealVar(channelName+"mixParam",channelName+"mixParam",0.5,0.,1.)
+      rooParamList.append(mixParam)
+      bernsteinTerm = root.RooBernstein(channelName+"BernsteinTerm","Bernstein Order: "+str(order),dimuonMass,rooArgList)
+      pdfMmumu = root.RooAddPdf("bak","ExpMOverSqPlusBernstein Order: "+str(order),root.RooArgList(expMOverSqTerm,bernsteinTerm),root.RooArgList(mixParam))
+
+    debug += "#    ExpMOverSqPlusBernstein Order: "+str(order)+"\n"
+    debug += "#    pdfArgs: "+dimuonMass.GetName()+" "
+    for i in rooParamList:
+        debug += i.GetName()+" "
+    debug += "\n"
+
+    print
+    print "ExpMOverSqPlusExpSum Order: ",order
+    for i in rooParamList:
+        i.Print()
+    print
+
+
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr.SetName("bak"+"_fitResult")
+    #chi2 = pdfMmumu.createChi2(rooDataset)
+    fr.Print()
+    fr.correlationMatrix().Print()
+
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(fr)
+
+    #Norm Time
+    bakNormTup = None
+    if False:
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(dimuonMass,"signal")
+      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
+      nSideband =  rooDataset.sumEntries(getSidebandString)
+      nData =  rooDataset.sumEntries()
+      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
+      if nData > 0:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+      else:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
+
+#    ## Debug Time
+#    frame = dimuonMass.frame()
+#    frame.SetName("bak_Plot")
+#    rooDataset.plotOn(frame)
+#    pdfMmumu.plotOn(frame)
+#    canvas = root.TCanvas()
+#    frame.Draw()
+#    canvas.SaveAs("debug_"+name+channelName+".png")
+
+    #for i in rooParamList:
+    #  debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+    #debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
+
+    return paramList, bakNormTup, debug
+
+def makePDFBakBernsteinOfExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+    debug = ""
+    debug += "### makePDFBakBernsteinOfExpMOverSq: "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
+    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
+
+    channelName = name
+
+    if order == None:
+      order = 2
+
+    # new values from Anna 13 Jun 2013
+    InvPolMass = root.RooRealVar(channelName+"_InvPolMass","InvPolMass", 91.187, 30., 105.)
+    ExpMass = root.RooRealVar(channelName+"_ExpMass","ExpMass", 0.0, -2., 2.)
+  
+    if ('Jet2CutsVBFPass' in name ):
+      debug += "###  fixing InvPolMass to Z pdg value\n"
+      InvPolMass.setConstant(True)
+
+    expMOverMVar = root.RooFormulaVar(channelName+"ExpMOverMVar","TMath::Exp(@0*@2)/(@0-@1)",root.RooArgList(dimuonMass,InvPolMass,ExpMass))
+
+    rooParamList = [InvPolMass,ExpMass]
+    rooArgList = root.RooArgList()
+    #for i in range(order+1):
+    for i in range(order):
+      tmpArg = root.RooRealVar(channelName+"_B"+str(i),"Bernstein Coefficient "+str(i), 0.0, 0., 1.)
+      rooArgList.add(tmpArg)
+      rooParamList.append(tmpArg)
+
+    #pdfMmumu = root.RooBernstein("bak","BernsteinOfExpMOverSq Order: "+str(order),expMOverMVar,rooArgList)
+    pdfMmumu = root.RooPolynomial("bak","BernsteinOfExpMOverSq Order: "+str(order),expMOverMVar,rooArgList)
+
+    debug += "#    ExpMOverSqPlusBernstein Order: "+str(order)+"\n"
+    debug += "#    pdfArgs: "+dimuonMass.GetName()+" "
+    for i in rooParamList:
+        debug += i.GetName()+" "
+    debug += "\n"
+
+    print
+    print "ExpMOverSqPlusExpSum Order: ",order
+    pdfMmumu.Print()
+    for i in rooParamList:
+        i.Print()
+    print
+    print "Also formulavar: "
+    expMOverMVar.Print()
+    print
+
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr.SetName("bak"+"_fitResult")
+    #chi2 = pdfMmumu.createChi2(rooDataset)
+    fr.Print()
+    fr.correlationMatrix().Print()
+
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(fr)
+
+    #Norm Time
+    bakNormTup = None
+    if False:
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(dimuonMass,"signal")
+      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
+      nSideband =  rooDataset.sumEntries(getSidebandString)
+      nData =  rooDataset.sumEntries()
+      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
+      if nData > 0:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+      else:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
+
+#    ## Debug Time
+#    frame = dimuonMass.frame()
+#    frame.SetName("bak_Plot")
+#    rooDataset.plotOn(frame)
+#    pdfMmumu.plotOn(frame)
+#    canvas = root.TCanvas()
+#    frame.Draw()
+#    canvas.SaveAs("debug_"+name+channelName+".png")
+
+    #for i in rooParamList:
+    #  debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+    #debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
+
+    return paramList, bakNormTup, debug
+
 
 #########################################################################
 #########################################################################
@@ -978,6 +1163,8 @@ if __name__ == "__main__":
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
   pdfsToTry = ["Bernstein","Chebychev","SumExp","SumPow"]
   pdfsToTry = ['ExpMOverSqPlusExpSum']
+  pdfsToTry = ['ExpMOverSqPlusBernstein']
+  pdfsToTry = ['BernsteinOfExpMOverSq']
   ordersToTry= range(1,4)
 
   categories = []
