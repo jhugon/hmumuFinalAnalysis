@@ -1454,7 +1454,7 @@ def printBiasSummary(dataCats):
     latexResult += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
     latexResult += "%% "+catName+" Maximum Bias\n\n"
     latexResult += r"\begin{tabular}{|l|"+"r|"*len(allAltNames)+"} \\hline \n"
-    latexResult += r" & \multicolumn{"+str(len(allAltNames))+r"}{c|}{Alternate PDFs} \\ \hline "+"\n"
+    latexResult += r"Alternate PDFs & \multicolumn{"+str(len(allAltNames))+r"}{c|}{Reference PDFs} \\ \hline "+"\n"
     for refName in refNames:
       plainResult += "{0:>15}".format(refName)
       nicePdfName = PDFTITLEMAP[refName]
@@ -1546,25 +1546,33 @@ if __name__ == "__main__":
                         "Old",
                     ],
       "Bernstein":[          
-                        #"4Bernstein",
-                        #"5Bernstein",
-                        #"6Bernstein",
+                        "4Bernstein",
+                        "5Bernstein",
+                        "6Bernstein",
+                        "7Bernstein",
                         #"ExpMOverSq",
                         #"Old",
-                        #"2SumExp",
+                        "2SumExp",
+                        "3SumExp",
                         #"2SumPow",
-                        "1ExpMOverSqPlusExpSum",
-                        "2ExpMOverSqPlusExpSum",
-                        "3ExpMOverSqPlusExpSum",
+                        #"1ExpMOverSqPlusExpSum",
+                        #"2ExpMOverSqPlusExpSum",
+                        #"3ExpMOverSqPlusExpSum",
                     ],
       "SumExp":[          
                         #"ExpMOverSq",
                         #"Old",
                         #"Bernstein",
+                        "4Bernstein",
+                        "5Bernstein",
+                        "6Bernstein",
+                        "7Bernstein",
+                        "2SumExp",
+                        "3SumExp",
                         #"SumPow",
-                        "1ExpMOverSqPlusExpSum",
-                        "2ExpMOverSqPlusExpSum",
-                        "3ExpMOverSqPlusExpSum",
+                        #"1ExpMOverSqPlusExpSum",
+                        #"2ExpMOverSqPlusExpSum",
+                        #"3ExpMOverSqPlusExpSum",
                     ],
       "SumPow":[          
                         "ExpMOverSq",
@@ -1596,7 +1604,6 @@ if __name__ == "__main__":
 
   #sigMasses = range(115,156,5)
   sigMasses = [115,120,125,140,150,155]
-  sigMasses = [118,125,150,153]
 
   ########################################
 
@@ -1615,9 +1622,9 @@ if __name__ == "__main__":
 
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   ########################################
   ### Directory and file names
