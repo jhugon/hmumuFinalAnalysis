@@ -40,7 +40,7 @@ TITLEMAP = {
   "Jets01PassPtG10OO": "0,1-Jet Tight OO",
   "Jets01PassPtG10OE": "0,1-Jet Tight OE",
   "Jets01PassPtG10EE": "0,1-Jet Tight EE",
-  "Jets01PassCatAll" : "0,1-Jet Tight Combination",
+  #"Jets01PassCatAll" : "0,1-Jet Tight Combination",
                         
   "Jets01FailPtG10BB": "0,1-Jet Loose BB",
   "Jets01FailPtG10BO": "0,1-Jet Loose BO",
@@ -48,7 +48,7 @@ TITLEMAP = {
   "Jets01FailPtG10OO": "0,1-Jet Loose OO",
   "Jets01FailPtG10OE": "0,1-Jet Loose OE",
   "Jets01FailPtG10EE": "0,1-Jet Loose EE",
-  "Jets01FailCatAll" : "0,1-Jet Loose Combination",
+  #"Jets01FailCatAll" : "0,1-Jet Loose Combination",
 
   "Jet2CutsVBFPass":"2-Jet VBF Tight",
   "Jet2CutsGFPass":"2-Jet GF Tight",
@@ -1493,15 +1493,22 @@ def printBiasSummary(dataCats):
     
 
 if __name__ == "__main__":
-  helpStr = "./fitBiasStudy.py [jobGroupNumber]\n  where jobGroupNumber is an int that will be added to the random number seed (*1000) and the output pkl file name\n  if there is a jobGroupNumber, no plots or summary will be produced."
+  helpStr = "./fitBiasStudy.py [jobGroupNumber] [categoryName]\n  where jobGroupNumber is an int that will be added to the random number seed (*1000)\n    and the output pkl file name\n  if there is a jobGroupNumber, no plots or summary will be produced.\n  If categoryName is present, then only that category will be run,\n    otherwise a group of categories defined in the script will all be run."
   iJobGroup = None
-  if len(sys.argv) > 2:
+  catToRun = None
+  if len(sys.argv) > 3:
     print("Error: Too many arguments.  Run like:")
     print(helpStr)
     sys.exit(1)
-  elif len(sys.argv) == 2:
+  if len(sys.argv) >= 2:
     iJobGroup = int(sys.argv[1])
     print("iJobGroup: "+str(iJobGroup))
+  if len(sys.argv) == 3:
+    catToRun = sys.argv[2]
+    print("Running only on category: "+catToRun)
+    if not TITLEMAP.has_key(catToRun):
+      print("Error: category name '"+catToRun+"' not recognized, exiting.")
+      sys.exit(1)
 
   ############################################
   ### Define output directory
@@ -1517,13 +1524,13 @@ if __name__ == "__main__":
   ### Define which reference functions to use
 
   refPdfNameList = [
-          "Old",
-          "ExpMOverSq",
+      #    "Old",
+      #    "ExpMOverSq",
       #    "ExpMOverSqP0",
       #    "ExpLog",
       #    "MOverSq",
-      #    "Bernstein",
-      #    "SumExp",
+          "Bernstein",
+          "SumExp",
       #    "SumPow",
       #    "Laurent",
       #    "Chebychev",
@@ -1545,19 +1552,20 @@ if __name__ == "__main__":
                         "Old",
                     ],
       "Bernstein":[          
-                        #"4Bernstein",
-                        #"5Bernstein",
-                        #"6Bernstein",
-                        "ExpMOverSq",
-                        "Old",
+                        #"ExpMOverSq",
+                        #"Old",
+                        "4Bernstein",
+                        "5Bernstein",
+                        "6Bernstein",
                         "2SumExp",
-                        "2SumPow",
                     ],
       "SumExp":[          
-                        "ExpMOverSq",
-                        "Old",
-                        "Bernstein",
-                        "SumPow",
+                        #"ExpMOverSq",
+                        #"Old",
+                        "4Bernstein",
+                        "5Bernstein",
+                        "6Bernstein",
+                        "2SumExp",
                     ],
       "SumPow":[          
                         "ExpMOverSq",
@@ -1632,6 +1640,9 @@ if __name__ == "__main__":
   dataFns8TeV = [dataDir+i+".root" for i in dataFns8TeV]
 
   #############################################
+
+  if catToRun != None:
+    categories = [[catToRun,""]]
 
   allSummaries = {}
   tmpJobGroupStr = ""

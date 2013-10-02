@@ -15,8 +15,9 @@ date
 
 ijob=$1
 echo "ijob = $ijob"
+category=$2
 
-command="./fitBiasStudy.py $ijob"
+command="./fitBiasStudy.py $ijob $category"
 echo $command
 $command >& logFitBiasJob$ijob
 
