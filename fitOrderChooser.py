@@ -72,7 +72,7 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
         order = 3
       elif "Jets01PassPtG10EE" in name:
         order = 3
-      if "Jets01FailPtG10BB" in name:
+      elif "Jets01FailPtG10BB" in name:
         order = 4
       elif "Jets01FailPtG10BO" in name:
         order = 4
@@ -177,7 +177,7 @@ def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
         order = 3
       ## 0,1-Jet Fail categories have poor GOF.
       ## undershoots low-end and funny feature appears at high-end
-      if "Jets01FailPtG10BB" in name:
+      elif "Jets01FailPtG10BB" in name:
         order = None
       elif "Jets01FailPtG10BO" in name:
         order = None
@@ -280,7 +280,7 @@ def makePDFBakPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
         order = None
       elif "Jets01PassPtG10EE" in name:
         order = None
-      if "Jets01FailPtG10BB" in name:
+      elif "Jets01FailPtG10BB" in name:
         order = None
       elif "Jets01FailPtG10BO" in name:
         order = None
@@ -465,7 +465,7 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
         order = 2
       elif "Jets01PassPtG10EE" in name:
         order = 2
-      if "Jets01FailPtG10BB" in name:
+      elif "Jets01FailPtG10BB" in name:
         order = 2
       elif "Jets01FailPtG10BO" in name:
         order = 2
@@ -593,7 +593,7 @@ def makePDFBakLaurent(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
         order = None
       elif "Jets01PassPtG10EE" in name:
         order = None
-      if "Jets01FailPtG10BB" in name:
+      elif "Jets01FailPtG10BB" in name:
         order = None
       elif "Jets01FailPtG10BO" in name:
         order = None
@@ -885,7 +885,7 @@ if __name__ == "__main__":
   outDir = "output/"
 
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
-  pdfsToTry = ["SumPow"]
+  pdfsToTry = ["SumExp","Bernstein"]
   ordersToTry= range(1,7)
 
   categories = []
@@ -895,13 +895,13 @@ if __name__ == "__main__":
 
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
   categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
-  #categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
   dataFns8TeV = [
