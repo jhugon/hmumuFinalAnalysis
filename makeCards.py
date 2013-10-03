@@ -161,7 +161,7 @@ def makePDFBakExpLog(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
     debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
 
-    return paramList, bakNormTup, debug
+    return paramList, bakNormTup, debug, None
 
 
 def makePDFBakExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
@@ -236,7 +236,7 @@ def makePDFBakExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
     debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
 
-    return paramList, bakNormTup, debug
+    return paramList, bakNormTup, debug, None
 
 def makePDFBakExpMOverSqP0(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
     debug = ""
@@ -309,7 +309,7 @@ def makePDFBakExpMOverSqP0(name,rooDataset,dimuonMass,minMass,maxMass,workspaceI
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
     debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
 
-    return paramList, bakNormTup, debug
+    return paramList, bakNormTup, debug, None
 
 def makePDFBakExpMOverSqP0New(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
     debug = ""
@@ -395,7 +395,7 @@ def makePDFBakExpMOverSqP0New(name,rooDataset,dimuonMass,minMass,maxMass,workspa
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
     debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
 
-    return paramList, bakNormTup, debug
+    return paramList, bakNormTup, debug, None
 
 
 def makePDFBakMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
@@ -458,7 +458,7 @@ def makePDFBakMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
     debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
 
-    return paramList, bakNormTup, debug
+    return paramList, bakNormTup, debug, None
 
 def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
     #print "GP's debug line *******************************************************\n"
@@ -563,7 +563,7 @@ def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,d
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
     debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
 
-    return paramList, bakNormTup, debug
+    return paramList, bakNormTup, debug, None
 
 
 def makePDFSigCBPlusGaus(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,channelName,forceMean=-1.,sigInject=0):
@@ -1050,7 +1050,7 @@ class Analysis:
     else:
         self.dataCountsTotal += doSigInject(self.datHistTotal,sigInject,sigInjectMass)
 
-    tmpBakParams, self.bakNormTup, tmpDebug = makePDFBak(
+    tmpBakParams, self.bakNormTup, tmpDebug, tmpOrder = makePDFBak(
                                     analysis+energyStr,histToUseForBak,
                                     dimuonMass, minMass,maxMass,wImport,
                                     dimuonMassZ,histToUseForBakZ
