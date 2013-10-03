@@ -621,7 +621,7 @@ class BiasStudy:
         graphBand.SetPointError(0,0.,0.14)
         graphBand.SetPoint(1,maxx,0.)
         graphBand.SetPointError(1,0.,0.14)
-        graphBand.SetFillStyle(1)
+        graphBand.SetFillStyle(1001)
         graphBand.SetFillColor(root.kGreen-9)
         iHist += 1
         iGraph = 0
@@ -1452,8 +1452,8 @@ def printBiasSummary(dataCats):
     plainResult += "{0:<15}".format("")
     latexResult += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
     latexResult += "%% "+catName+" Maximum Bias\n\n"
-    latexResult += r"\begin{tabular}{|l|"+"r|"*len(allAltNames)+"} \\hline \n"
-    latexResult += r" & \multicolumn{"+str(len(allAltNames))+r"}{c|}{Alternate PDFs} \\ \hline "+"\n"
+    latexResult += r"\begin{tabular}{|l|"+"r|"*len(refNames)+"} \\hline \n"
+    latexResult += r"\multirow{2}{*}{Alternate PDFs} & \multicolumn{"+str(len(refNames))+r"}{c|}{Reference PDFs} \\ \cline{"+"2-{0}".format(len(refNames)+1)+"} "+"\n"
     for refName in refNames:
       plainResult += "{0:>15}".format(refName)
       nicePdfName = PDFTITLEMAP[refName]
