@@ -19,7 +19,7 @@ category=$2
 
 command="./fitBiasStudy.py $ijob $category"
 echo $command
-$command >& logFitBiasJob$ijob
+$command >& logFitBiasJob$ijob$category
 
 echo "done"
 date
