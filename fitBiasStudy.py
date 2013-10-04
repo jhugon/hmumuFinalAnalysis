@@ -198,7 +198,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
 
       ### Make Bak Pdfs
 
-      trashParamList, trashBakNormTup, trashDebug, trueOrder = truePdfFunc(truePdfName+catName+energyStr,realData,dimuonMass,110,170,wTrueImport,dimuonMassZ,realDataZ,order=truePdfOrder)
+      trashParamList, trashBakNormTup, trashDebug, trueOrder = truePdfFunc(truePdfName+catName+energyStr,realData,dimuonMass,110,160,wTrueImport,dimuonMassZ,realDataZ,order=truePdfOrder)
       truePdf = wTrue.pdf("bak")
       truePdf.SetName(truePdfName)
       truePdf.SetTitle("True PDF ")
@@ -207,7 +207,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
                            )
 
       trueToyPdfName = "trueToy"+catName+energyStr
-      trashParamList, trashBakNormTup, trashDebug, trueToyOrder = truePdfFunc(trueToyPdfName,realData,dimuonMass,110,170,wTrueToyImport,dimuonMassZ,realDataZ,order=truePdfOrder)
+      trashParamList, trashBakNormTup, trashDebug, trueToyOrder = truePdfFunc(trueToyPdfName,realData,dimuonMass,110,160,wTrueToyImport,dimuonMassZ,realDataZ,order=truePdfOrder)
       trueToyPdf = wTrueToy.pdf("bak")
       trueToyPdf.SetName(trueToyPdfName)
       assert(trueOrder == trueToyOrder)
@@ -258,7 +258,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
       for pdfAltName,pdfAltNameNoOrder,pdfAltOrder,pdfAltFunc in zip(pdfAltNameList,altPdfNameNoOrderList,altPdfOrderList,pdfAltFuncList):
         pdfName = "alt"+catName+energyStr+"_"+pdfAltName
         wAlt = root.RooWorkspace("wAlt"+catName+energyStr+"_"+pdfAltName)
-        pdfAltFunc(pdfName,realData,dimuonMass,110,170,getattr(wAlt,"import"),dimuonMassZ,realDataZ,order=pdfAltOrder)
+        pdfAltFunc(pdfName,realData,dimuonMass,110,160,getattr(wAlt,"import"),dimuonMassZ,realDataZ,order=pdfAltOrder)
         altPdf = wAlt.pdf("bak")
         altPdf.SetName(pdfName)
         # Make sure Voigt params are constant
