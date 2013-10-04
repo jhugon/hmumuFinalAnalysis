@@ -87,7 +87,7 @@ if args.disableMCErrors:
 anotateText2 = ""
 anotateText3 = "Analysis A"
 
-anotateText = "M(#mu#mu) #in [110,160] GeV/c^{2}"
+anotateText = "M(#mu#mu) #in [100,170] GeV/c^{2}"
 #if args.n2JetMassOnly or args.n2JetVBFTight or args.n2JetGFTight or args.n2JetVBFLoose or args.n01JetMassOnly:
 #  anotateText = ""
 
@@ -103,7 +103,7 @@ if args.outPrefix != "":
   args.outPrefix += "/"
 histDirs = [args.outPrefix]
 
-CUTS="dimuonMass < 160. && dimuonMass > 110."
+CUTS="dimuonMass < 170. && dimuonMass > 100."
 
 if args.n01Jet or args.n01JetMassOnly:
   anotateText2 = "0,1-Jet Preselection"
@@ -132,9 +132,9 @@ GLOBALCOUNTER=0
 histNames = {}
 if True:
     if args.n2JetVBFTight or args.n2JetGFTight or args.n2JetVBFLoose:
-      histNames["dimuonMass"] = {"xlabel":"M(#mu#mu) [GeV/c^{2}]","xlimits":[110.0,160.],"nbins":20}#,"ylimits":[0.1,5e5]}
+      histNames["dimuonMass"] = {"xlabel":"M(#mu#mu) [GeV/c^{2}]","xlimits":[100.0,170.],"nbins":20}#,"ylimits":[0.1,5e5]}
     elif not args.n2Jet:
-      histNames["dimuonMass"] = {"xlabel":"M(#mu#mu) [GeV/c^{2}]","xlimits":[110.0,160.],"nbins":50}#,"ylimits":[0.1,5e5]}
+      histNames["dimuonMass"] = {"xlabel":"M(#mu#mu) [GeV/c^{2}]","xlimits":[100.0,170.],"nbins":50}#,"ylimits":[0.1,5e5]}
     if not ( args.n2JetVBFTight or args.n2JetGFTight or args.n2JetVBFLoose or args.n2JetMassOnly or args.n01JetMassOnly):
       histNames["dimuonPt"] = {"xlabel":"p_{T}(#mu#mu) [GeV/c]","xlimits":[0.0,200.0],"nbins":20}#,"ylimits":[0.1,1e5]}
 #    histNames["dimuonY"] = {"xlabel":"y_{#mu#mu}","xlimits":[-2.2,2.2],"nbins":22}#,"ylimits":[0.1,3e6]}

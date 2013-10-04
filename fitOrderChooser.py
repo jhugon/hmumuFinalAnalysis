@@ -711,9 +711,9 @@ class OrderStudy:
       dataTree.SetCacheSize(10000000);
       dataTree.AddBranchToCache("*");
 
-      dimuonMass = root.RooRealVar("dimuonMass","M(#mu#mu) [GeV/c^{2}]",110.,160.)
-      dimuonMass.setRange("low",110,120) # Silly ranges for old fit functionality
-      dimuonMass.setRange("high",130,160)
+      dimuonMass = root.RooRealVar("dimuonMass","M(#mu#mu) [GeV/c^{2}]",100.,170.)
+      dimuonMass.setRange("low",100,120) # Silly ranges for old fit functionality
+      dimuonMass.setRange("high",130,170)
       dimuonMass.setRange("signal",120,130)
       dimuonMass.setRange("signalfit",110,140)
       dimuonMass.setBins(50)
@@ -759,7 +759,7 @@ class OrderStudy:
           wImport = getattr(w,"import")
           pdfName = pdfBaseName+str(order)
           pdfFunc = globals()["makePDFBak"+pdfBaseName]
-          tmpParamList,tmpNormTup,tmpDebug,tmpOrder = pdfFunc(pdfName+catName+energyStr,realData,dimuonMass,110,160,wImport,dimuonMassZ,realDataZ,order=order)
+          tmpParamList,tmpNormTup,tmpDebug,tmpOrder = pdfFunc(pdfName+catName+energyStr,realData,dimuonMass,100,170,wImport,dimuonMassZ,realDataZ,order=order)
           pdf = w.pdf("bak")
           fr = pdf.fitTo(realData, 
                              #root.RooFit.Hesse(True), 

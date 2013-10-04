@@ -271,9 +271,9 @@ if __name__ == "__main__":
   outDir = "shapes/"
   fitDir = "statsInput/"
 
-  plotRange= [110.,160]
+  plotRange= [100.,170]
   #plotRange= []
-  normRange = [110.,120.,130.,160]
+  normRange = [100.,120.,130.,170]
 
   rebin=1
 
