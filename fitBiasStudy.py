@@ -313,7 +313,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
         toyData = truePdf.generate(root.RooArgSet(dimuonMass),int(nData))
         toyData.SetName("toyData"+catName+energyStr+str(iToy))
         toyDataHist = toyData.binnedClone("toyDataHist"+catName+energyStr+str(iToy))
-        plotThisToy = (iToy % plotEveryNToys == 0)
+        plotThisToy = (iToy % plotEveryNToys == 5)
         for hmass,sigPdf in zip(sigMasses,sigPdfs):
           frame = None 
           if plotThisToy:
@@ -1365,7 +1365,9 @@ def mergeDicts(data,newData,multiJob=False):
             print "subkeys not equal:",old,new
             assert(False)
         for subkey in subkeys:
-          if type(newData[key][mass][subkey])==list:
+          if subkey == "orderTrue":
+            assert(newData[key][mass][subkey] == data[key][mass][subkey])
+          elif type(newData[key][mass][subkey])==list:
             assert(type(data[key][mass][subkey])==list)
             data[key][mass][subkey].extend(newData[key][mass][subkey])
           else:
@@ -1545,7 +1547,7 @@ if __name__ == "__main__":
 
   refPdfNameList = [
       #    "Old",
-          "ExpMOverSq",
+      #    "ExpMOverSq",
       #    "ExpMOverSqP0",
       #    "ExpLog",
       #    "MOverSq",
@@ -1574,18 +1576,30 @@ if __name__ == "__main__":
       "Bernstein":[          
                         #"ExpMOverSq",
                         #"Old",
+                        "3Bernstein",
                         "4Bernstein",
                         "5Bernstein",
                         "6Bernstein",
+                        "7Bernstein",
+                        "8Bernstein",
+                        "1SumExp",
                         "2SumExp",
+                        "3SumExp",
+                        "4SumExp",
                     ],
       "SumExp":[          
                         #"ExpMOverSq",
                         #"Old",
+                        "3Bernstein",
                         "4Bernstein",
                         "5Bernstein",
                         "6Bernstein",
+                        "7Bernstein",
+                        "8Bernstein",
+                        "1SumExp",
                         "2SumExp",
+                        "3SumExp",
+                        "4SumExp",
                     ],
       "SumPow":[          
                         "ExpMOverSq",
@@ -1617,7 +1631,6 @@ if __name__ == "__main__":
 
   #sigMasses = range(115,156,5)
   sigMasses = [115,120,125,140,150,155]
-  sigMasses = [125,150]
 
   ########################################
 
@@ -1630,21 +1643,21 @@ if __name__ == "__main__":
   ########################################
   ### Define which categories to run over
 
-  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
-  #categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
 
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   ########################################
   ### Directory and file names
 
-  dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
-  #dataDir = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
+  #dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
+  dataDir = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
   dataFns8TeV = [
     "SingleMuRun2012Av1-22Jan2013",
     "SingleMuRun2012Bv1-22Jan2013",
