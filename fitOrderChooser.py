@@ -61,37 +61,37 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     if order == None:
       if "Jets01PassPtG10BB" in name:
-        order = 4
+        order = 7
       elif "Jets01PassPtG10BO" in name:
-        order = 6
+        order = 7
       elif "Jets01PassPtG10BE" in name:
-        order = 5
+        order = 7
       elif "Jets01PassPtG10OO" in name:
-        order = 4
+        order = None
       elif "Jets01PassPtG10OE" in name:
-        order = 3
+        order = None
       elif "Jets01PassPtG10EE" in name:
-        order = 3
+        order = None
       elif "Jets01FailPtG10BB" in name:
-        order = 4
+        order = None
       elif "Jets01FailPtG10BO" in name:
-        order = 4
+        order = None
       elif "Jets01FailPtG10BE" in name:
-        order = 4
+        order = None
       elif "Jets01FailPtG10OO" in name:
-        order = 4
+        order = None
       elif "Jets01FailPtG10OE" in name:
-        order = 3
+        order = None
       elif "Jets01FailPtG10EE" in name:
-        order = 4
+        order = None
       elif "Jet2CutsVBFPass" in name:
-        order = 2
-      elif "Jet2CutsGFPass" in name:
         order = 3
-      elif "Jet2CutsFailVBFGF" in name:
-        order = 4
-      else:
+      elif "Jet2CutsGFPass" in name:
         order = 5
+      elif "Jet2CutsFailVBFGF" in name:
+        order = 7
+      else:
+        order = None
 
     rooParamList = []
     rooArgList = root.RooArgList()
@@ -164,17 +164,17 @@ def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     if order == None:
       if "Jets01PassPtG10BB" in name:
-        order = 4
+        order = None
       elif "Jets01PassPtG10BO" in name:
-        order = 6
+        order = None
       elif "Jets01PassPtG10BE" in name:
-        order = 5
+        order = None
       elif "Jets01PassPtG10OO" in name:
-        order = 4
+        order = None
       elif "Jets01PassPtG10OE" in name:
-        order = 3
+        order = None
       elif "Jets01PassPtG10EE" in name:
-        order = 3
+        order = None
       ## 0,1-Jet Fail categories have poor GOF.
       ## undershoots low-end and funny feature appears at high-end
       elif "Jets01FailPtG10BB" in name:
@@ -190,11 +190,11 @@ def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
       elif "Jets01FailPtG10EE" in name:
         order = None
       elif "Jet2CutsVBFPass" in name:
-        order = 2
+        order = None
       elif "Jet2CutsGFPass" in name:
-        order = 3
+        order = None
       elif "Jet2CutsFailVBFGF" in name:
-        order = 4
+        order = None
       else:
         order = None
 
@@ -371,7 +371,38 @@ def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
     channelName = name
 
     if order == None:
-      order = 2
+      if "Jets01PassPtG10BB" in name:
+        order = 3
+      elif "Jets01PassPtG10BO" in name:
+        order = 2
+      elif "Jets01PassPtG10BE" in name:
+        order = 2
+      elif "Jets01PassPtG10OO" in name:
+        order = None
+      elif "Jets01PassPtG10OE" in name:
+        order = None
+      elif "Jets01PassPtG10EE" in name:
+        order = None
+      elif "Jets01FailPtG10BB" in name:
+        order = None
+      elif "Jets01FailPtG10BO" in name:
+        order = None
+      elif "Jets01FailPtG10BE" in name:
+        order = None
+      elif "Jets01FailPtG10OO" in name:
+        order = None
+      elif "Jets01FailPtG10OE" in name:
+        order = None
+      elif "Jets01FailPtG10EE" in name:
+        order = None
+      elif "Jet2CutsVBFPass" in name:
+        order = 2
+      elif "Jet2CutsGFPass" in name:
+        order = 2
+      elif "Jet2CutsFailVBFGF" in name:
+        order = 2
+      else:
+        order = None
 
     rooParamList = []
     pyPdfList = []
@@ -454,37 +485,37 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
 
     if order == None:
       if "Jets01PassPtG10BB" in name:
-        order = 2
+        order = None
       elif "Jets01PassPtG10BO" in name:
-        order = 2
+        order = None
       elif "Jets01PassPtG10BE" in name:
-        order = 2
+        order = None
       elif "Jets01PassPtG10OO" in name:
-        order = 2
+        order = None
       elif "Jets01PassPtG10OE" in name:
-        order = 2
+        order = None
       elif "Jets01PassPtG10EE" in name:
-        order = 2
+        order = None
       elif "Jets01FailPtG10BB" in name:
-        order = 2
+        order = None
       elif "Jets01FailPtG10BO" in name:
-        order = 2
+        order = None
       elif "Jets01FailPtG10BE" in name:
-        order = 2
+        order = None
       elif "Jets01FailPtG10OO" in name:
-        order = 2
+        order = None
       elif "Jets01FailPtG10OE" in name:
-        order = 1
+        order = None
       elif "Jets01FailPtG10EE" in name:
-        order = 2
+        order = None
       elif "Jet2CutsVBFPass" in name:
-        order = 1
+        order = None
       elif "Jet2CutsGFPass" in name:
-        order = 1
+        order = None
       elif "Jet2CutsFailVBFGF" in name:
-        order = 1
+        order = None
       else:
-        order = 1
+        order = None
 
     rooParamList = []
     rooArgList = root.RooArgList(dimuonMass)
@@ -885,8 +916,8 @@ if __name__ == "__main__":
   outDir = "output/"
 
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
-  pdfsToTry = ["SumExp","Bernstein"]
-  ordersToTry= range(1,7)
+  pdfsToTry = ["SumExp"]
+  ordersToTry= range(1,5)
 
   categories = []
 
