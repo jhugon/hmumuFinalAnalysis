@@ -155,14 +155,13 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           pdfAltFuncList.append(getattr(makeCards,"makePDFBak"+i))
 
       #dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",110.,170.)
-      dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",110.,160.)
-      #dimuonMass.setBins(60)
-      dimuonMass.setBins(50)
-      dimuonMass.setRange("exprange",120,160)
-      dimuonMass.setRange("whole",110,160)
-      dimuonMass.setRange("low",110,120) # Silly ranges for old fit functionality
+      dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",105.,165.)
+      dimuonMass.setBins(60)
+      dimuonMass.setRange("exprange",120,165)
+      dimuonMass.setRange("whole",105,165)
+      dimuonMass.setRange("low",105,120) # Silly ranges for old fit functionality
       #dimuonMass.setRange("high",130,170)
-      dimuonMass.setRange("high",130,160)
+      dimuonMass.setRange("high",130,165)
       dimuonMass.setRange("signal",120,130)
       dimuonMass.setRange("signalfit",110,140)
       dimuonMass.setRange("annaRegion",123.5,127.5)
@@ -198,7 +197,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
 
       ### Make Bak Pdfs
 
-      trashParamList, trashBakNormTup, trashDebug, trueOrder = truePdfFunc(truePdfName+catName+energyStr,realData,dimuonMass,110,170,wTrueImport,dimuonMassZ,realDataZ,order=truePdfOrder)
+      trashParamList, trashBakNormTup, trashDebug, trueOrder = truePdfFunc(truePdfName+catName+energyStr,realData,dimuonMass,105,165,wTrueImport,dimuonMassZ,realDataZ,order=truePdfOrder)
       truePdf = wTrue.pdf("bak")
       truePdf.SetName(truePdfName)
       truePdf.SetTitle("True PDF ")
@@ -207,7 +206,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
                            )
 
       trueToyPdfName = "trueToy"+catName+energyStr
-      trashParamList, trashBakNormTup, trashDebug, trueToyOrder = truePdfFunc(trueToyPdfName,realData,dimuonMass,110,170,wTrueToyImport,dimuonMassZ,realDataZ,order=truePdfOrder)
+      trashParamList, trashBakNormTup, trashDebug, trueToyOrder = truePdfFunc(trueToyPdfName,realData,dimuonMass,105,165,wTrueToyImport,dimuonMassZ,realDataZ,order=truePdfOrder)
       trueToyPdf = wTrueToy.pdf("bak")
       trueToyPdf.SetName(trueToyPdfName)
       assert(trueOrder == trueToyOrder)
@@ -258,7 +257,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
       for pdfAltName,pdfAltNameNoOrder,pdfAltOrder,pdfAltFunc in zip(pdfAltNameList,altPdfNameNoOrderList,altPdfOrderList,pdfAltFuncList):
         pdfName = "alt"+catName+energyStr+"_"+pdfAltName
         wAlt = root.RooWorkspace("wAlt"+catName+energyStr+"_"+pdfAltName)
-        pdfAltFunc(pdfName,realData,dimuonMass,110,170,getattr(wAlt,"import"),dimuonMassZ,realDataZ,order=pdfAltOrder)
+        pdfAltFunc(pdfName,realData,dimuonMass,105,165,getattr(wAlt,"import"),dimuonMassZ,realDataZ,order=pdfAltOrder)
         altPdf = wAlt.pdf("bak")
         altPdf.SetName(pdfName)
         # Make sure Voigt params are constant

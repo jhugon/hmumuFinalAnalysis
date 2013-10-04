@@ -1900,11 +1900,11 @@ if __name__ == "__main__":
   lumiList = [lumiDict["8TeV"]]
 
   controlRegionVeryLow=[60,110]
-  controlRegionLow=[110,120]
-  controlRegionHigh=[130,160]
+  controlRegionLow=[105,120]
+  controlRegionHigh=[130,165]
   if args.higgsMass > 0.0:
-    controlRegionLow=[110,args.higgsMass-5.0]
-    controlRegionHigh=[args.higgsMass+5.0,160]
+    controlRegionLow=[105,args.higgsMass-5.0]
+    controlRegionHigh=[args.higgsMass+5.0,165]
 
   shape=True
   toyData=args.toyData
