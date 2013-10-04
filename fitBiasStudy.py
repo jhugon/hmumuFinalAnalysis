@@ -213,25 +213,26 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
       assert(trueOrder == trueToyOrder)
 
       # Debug plot for fit to data
-      frame = dimuonMass.frame()
-      realDataHist = realData.binnedClone("realDataHist"+catName+energyStr+str(iJob))
-      chi2RealDataVar = truePdf.createChi2(realDataHist)
-      ndfRealData = dimuonMass.getBins() - 1  # b/c roofit normalizes
-      ndfRealData -= rooPdfNFreeParams(truePdf,realDataHist)
-      realData.plotOn(frame)
-      truePdf.plotOn(frame,root.RooFit.Range('low,signal,high'),root.RooFit.NormRange('low,signal,high'))
-      frame.Draw()
-      frame.SetTitle("")
-      frame.GetYaxis().SetTitle("Events / 1 GeV/c^{2}")
-      tlatex.SetTextAlign(12)
-      tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
-      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Ref PDF: "+truePdfName)
-      tlatex.SetTextAlign(32)
-      tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,catName+" "+energyStr)
-      tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Ref. Fit to Obs. Data")
-      tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.80,"Ref. GOF: {0:.2f}".format(scipy.stats.chi2.sf(chi2RealDataVar.getVal(),ndfRealData)))
-      tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Ref. #chi^{{2}}/NDF: {0:.2f}".format(chi2RealDataVar.getVal()/ndfRealData))
-      canvas.SaveAs("output/debug_RealData_"+truePdfName+"_"+catName+"_"+energyStr+tmpJobStr+".png")
+      if toysPerJob > 2:
+        frame = dimuonMass.frame()
+        realDataHist = realData.binnedClone("realDataHist"+catName+energyStr+str(iJob))
+        chi2RealDataVar = truePdf.createChi2(realDataHist)
+        ndfRealData = dimuonMass.getBins() - 1  # b/c roofit normalizes
+        ndfRealData -= rooPdfNFreeParams(truePdf,realDataHist)
+        realData.plotOn(frame)
+        truePdf.plotOn(frame,root.RooFit.Range('low,signal,high'),root.RooFit.NormRange('low,signal,high'))
+        frame.Draw()
+        frame.SetTitle("")
+        frame.GetYaxis().SetTitle("Events / 1 GeV/c^{2}")
+        tlatex.SetTextAlign(12)
+        tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Ref PDF: "+truePdfName)
+        tlatex.SetTextAlign(32)
+        tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,catName+" "+energyStr)
+        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Ref. Fit to Obs. Data")
+        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.80,"Ref. GOF: {0:.2f}".format(scipy.stats.chi2.sf(chi2RealDataVar.getVal(),ndfRealData)))
+        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Ref. #chi^{{2}}/NDF: {0:.2f}".format(chi2RealDataVar.getVal()/ndfRealData))
+        canvas.SaveAs("output/debug_RealData_"+truePdfName+"_"+catName+"_"+energyStr+tmpJobStr+".png")
 
       # Make sure Voigt params are set to True vals and constant
       if truePdfName == "Old":
@@ -1574,32 +1575,34 @@ if __name__ == "__main__":
                         "Old",
                     ],
       "Bernstein":[          
+                        "ExpMOverSqP0New",
                         #"ExpMOverSq",
                         #"Old",
-                        "3Bernstein",
-                        "4Bernstein",
-                        "5Bernstein",
-                        "6Bernstein",
-                        "7Bernstein",
-                        "8Bernstein",
-                        "1SumExp",
-                        "2SumExp",
-                        "3SumExp",
-                        "4SumExp",
+                        #"3Bernstein",
+                        #"4Bernstein",
+                        #"5Bernstein",
+                        #"6Bernstein",
+                        #"7Bernstein",
+                        #"8Bernstein",
+                        #"1SumExp",
+                        #"2SumExp",
+                        #"3SumExp",
+                        #"4SumExp",
                     ],
       "SumExp":[          
+                        "ExpMOverSqP0New",
                         #"ExpMOverSq",
                         #"Old",
-                        "3Bernstein",
-                        "4Bernstein",
-                        "5Bernstein",
-                        "6Bernstein",
-                        "7Bernstein",
-                        "8Bernstein",
-                        "1SumExp",
-                        "2SumExp",
-                        "3SumExp",
-                        "4SumExp",
+                        #"3Bernstein",
+                        #"4Bernstein",
+                        #"5Bernstein",
+                        #"6Bernstein",
+                        #"7Bernstein",
+                        #"8Bernstein",
+                        #"1SumExp",
+                        #"2SumExp",
+                        #"3SumExp",
+                        #"4SumExp",
                     ],
       "SumPow":[          
                         "ExpMOverSq",
