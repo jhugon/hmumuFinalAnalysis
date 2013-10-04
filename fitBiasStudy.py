@@ -156,8 +156,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
 
       #dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",110.,170.)
       dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",100.,170.)
-      #dimuonMass.setBins(60)
-      dimuonMass.setBins(50)
+      dimuonMass.setBins(70)
       dimuonMass.setRange("exprange",120,170)
       dimuonMass.setRange("whole",100,170)
       dimuonMass.setRange("low",100,120) # Silly ranges for old fit functionality

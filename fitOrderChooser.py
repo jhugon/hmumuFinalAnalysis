@@ -61,37 +61,37 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     if order == None:
       if "Jets01PassPtG10BB" in name:
-        order = 4
+        order = None
       elif "Jets01PassPtG10BO" in name:
-        order = 6
+        order = None
       elif "Jets01PassPtG10BE" in name:
-        order = 5
+        order = None
       elif "Jets01PassPtG10OO" in name:
-        order = 4
+        order = None
       elif "Jets01PassPtG10OE" in name:
-        order = 3
+        order = None
       elif "Jets01PassPtG10EE" in name:
-        order = 3
+        order = None
       elif "Jets01FailPtG10BB" in name:
-        order = 4
+        order = None
       elif "Jets01FailPtG10BO" in name:
-        order = 4
+        order = None
       elif "Jets01FailPtG10BE" in name:
-        order = 4
+        order = None
       elif "Jets01FailPtG10OO" in name:
-        order = 4
+        order = None
       elif "Jets01FailPtG10OE" in name:
-        order = 3
+        order = None
       elif "Jets01FailPtG10EE" in name:
-        order = 4
+        order = None
       elif "Jet2CutsVBFPass" in name:
-        order = 2
+        order = None
       elif "Jet2CutsGFPass" in name:
-        order = 3
+        order = None
       elif "Jet2CutsFailVBFGF" in name:
-        order = 4
+        order = None
       else:
-        order = 5
+        order = None
 
     rooParamList = []
     rooArgList = root.RooArgList()
@@ -164,19 +164,17 @@ def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     if order == None:
       if "Jets01PassPtG10BB" in name:
-        order = 4
+        order = None
       elif "Jets01PassPtG10BO" in name:
-        order = 6
+        order = None
       elif "Jets01PassPtG10BE" in name:
-        order = 5
+        order = None
       elif "Jets01PassPtG10OO" in name:
-        order = 4
+        order = None
       elif "Jets01PassPtG10OE" in name:
-        order = 3
+        order = None
       elif "Jets01PassPtG10EE" in name:
-        order = 3
-      ## 0,1-Jet Fail categories have poor GOF.
-      ## undershoots low-end and funny feature appears at high-end
+        order = None
       elif "Jets01FailPtG10BB" in name:
         order = None
       elif "Jets01FailPtG10BO" in name:
@@ -190,11 +188,11 @@ def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
       elif "Jets01FailPtG10EE" in name:
         order = None
       elif "Jet2CutsVBFPass" in name:
-        order = 2
+        order = None
       elif "Jet2CutsGFPass" in name:
-        order = 3
+        order = None
       elif "Jet2CutsFailVBFGF" in name:
-        order = 4
+        order = None
       else:
         order = None
 
@@ -371,7 +369,38 @@ def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
     channelName = name
 
     if order == None:
-      order = 2
+      if "Jets01PassPtG10BB" in name:
+        order = 3
+      elif "Jets01PassPtG10BO" in name:
+        order = 3
+      elif "Jets01PassPtG10BE" in name:
+        order = 3
+      elif "Jets01PassPtG10OO" in name:
+        order = None
+      elif "Jets01PassPtG10OE" in name:
+        order = None
+      elif "Jets01PassPtG10EE" in name:
+        order = None
+      elif "Jets01FailPtG10BB" in name:
+        order = None
+      elif "Jets01FailPtG10BO" in name:
+        order = None
+      elif "Jets01FailPtG10BE" in name:
+        order = None
+      elif "Jets01FailPtG10OO" in name:
+        order = None
+      elif "Jets01FailPtG10OE" in name:
+        order = None
+      elif "Jets01FailPtG10EE" in name:
+        order = None
+      elif "Jet2CutsVBFPass" in name:
+        order = 2
+      elif "Jet2CutsGFPass" in name:
+        order = 2
+      elif "Jet2CutsFailVBFGF" in name:
+        order = 3
+      else:
+        order = None
 
     rooParamList = []
     pyPdfList = []
@@ -454,37 +483,37 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
 
     if order == None:
       if "Jets01PassPtG10BB" in name:
-        order = 2
+        order = None
       elif "Jets01PassPtG10BO" in name:
-        order = 2
+        order = None
       elif "Jets01PassPtG10BE" in name:
-        order = 2
+        order = None
       elif "Jets01PassPtG10OO" in name:
-        order = 2
+        order = None
       elif "Jets01PassPtG10OE" in name:
-        order = 2
+        order = None
       elif "Jets01PassPtG10EE" in name:
-        order = 2
+        order = None
       elif "Jets01FailPtG10BB" in name:
-        order = 2
+        order = None
       elif "Jets01FailPtG10BO" in name:
-        order = 2
+        order = None
       elif "Jets01FailPtG10BE" in name:
-        order = 2
+        order = None
       elif "Jets01FailPtG10OO" in name:
-        order = 2
+        order = None
       elif "Jets01FailPtG10OE" in name:
-        order = 1
+        order = None
       elif "Jets01FailPtG10EE" in name:
-        order = 2
+        order = None
       elif "Jet2CutsVBFPass" in name:
-        order = 1
+        order = None
       elif "Jet2CutsGFPass" in name:
-        order = 1
+        order = None
       elif "Jet2CutsFailVBFGF" in name:
-        order = 1
+        order = None
       else:
-        order = 1
+        order = None
 
     rooParamList = []
     rooArgList = root.RooArgList(dimuonMass)
@@ -716,7 +745,7 @@ class OrderStudy:
       dimuonMass.setRange("high",130,170)
       dimuonMass.setRange("signal",120,130)
       dimuonMass.setRange("signalfit",110,140)
-      dimuonMass.setBins(50)
+      dimuonMass.setBins(70)
 
       # Hack to Make makePDFBakOld work
       minMassZ = 88.
@@ -885,8 +914,8 @@ if __name__ == "__main__":
   outDir = "output/"
 
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
-  pdfsToTry = ["SumExp","Bernstein"]
-  ordersToTry= range(1,7)
+  pdfsToTry = ["Bernstein"]
+  ordersToTry= range(1,11)
 
   categories = []
 
@@ -904,6 +933,7 @@ if __name__ == "__main__":
   categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
+  #dataDir = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
   dataFns8TeV = [
     "SingleMuRun2012Av1-22Jan2013",
     "SingleMuRun2012Bv1-22Jan2013",
