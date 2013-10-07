@@ -1901,10 +1901,10 @@ if __name__ == "__main__":
 
   controlRegionVeryLow=[60,110]
   controlRegionLow=[110,120]
-  controlRegionHigh=[130,160]
+  controlRegionHigh=[130,170]
   if args.higgsMass > 0.0:
     controlRegionLow=[110,args.higgsMass-5.0]
-    controlRegionHigh=[args.higgsMass+5.0,160]
+    controlRegionHigh=[args.higgsMass+5.0,170]
 
   shape=True
   toyData=args.toyData
