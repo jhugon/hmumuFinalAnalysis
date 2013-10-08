@@ -61,11 +61,11 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     if order == None:
       if "Jets01PassPtG10BB" in name:
-        order = None
+        order = 5
       elif "Jets01PassPtG10BO" in name:
-        order = None
+        order = 8
       elif "Jets01PassPtG10BE" in name:
-        order = None
+        order = 5
       elif "Jets01PassPtG10OO" in name:
         order = None
       elif "Jets01PassPtG10OE" in name:
@@ -85,11 +85,11 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
       elif "Jets01FailPtG10EE" in name:
         order = None
       elif "Jet2CutsVBFPass" in name:
-        order = None
+        order = 4
       elif "Jet2CutsGFPass" in name:
-        order = None
+        order = 4
       elif "Jet2CutsFailVBFGF" in name:
-        order = None
+        order = 3
       else:
         order = None
 
@@ -914,8 +914,8 @@ if __name__ == "__main__":
   outDir = "output/"
 
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
-  pdfsToTry = ["SumExp"]
-  ordersToTry= range(1,5)
+  pdfsToTry = ["Bernstein","SumExp"]
+  ordersToTry= range(1,10)
 
   categories = []
 
