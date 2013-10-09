@@ -19,8 +19,8 @@ cd etc/
 ###############################################
 # To run each cateogory as a seperate job
 
-firstJobN=1
-lastJobN=100
+firstJobN=39
+lastJobN=110
 categories01Tight="Jets01PassPtG10BB Jets01PassPtG10BO Jets01PassPtG10BE Jets01PassPtG10OO Jets01PassPtG10OE Jets01PassPtG10EE"
 categories01Loose="Jets01FailPtG10BB Jets01FailPtG10BO Jets01FailPtG10BE Jets01FailPtG10OO Jets01FailPtG10OE Jets01FailPtG10EE"
 categories2="Jet2CutsVBFPass Jet2CutsGFPass Jet2CutsFailVBFGF"
@@ -32,7 +32,7 @@ for iJob in $(seq $firstJobN $lastJobN); do
   #for category in $categoriesAll; do
   #for category in $categories01Tight; do
   #for category in $categories2; do
-  for category in $categoriesImportant01; do
+  for category in $categoriesImportant; do
     command="bsub -q cmscaf1nd -o $fullDir/jobOutFitBiasJob$iJob$category lxbatch_fitBias.sh $iJob $category"
     echo "running: "$command
     $command

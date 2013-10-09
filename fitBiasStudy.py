@@ -557,6 +557,25 @@ class BiasStudy:
           self.pullSummaryDict[refPdfName][pdfAltName][hmass] = median(data[refPdfName][hmass][pdfAltName]['pull'])
           self.pullSummaryDict[refPdfName]['orderRef'] = data[refPdfName][hmass]['orderTrue']
 
+    self.zSigmaSummaryDict = {}
+    for refPdfName in self.refPdfNameList:
+      self.zSigmaSummaryDict[refPdfName] = {}
+      self.zSigmaSummaryDict[refPdfName]["zTrue"] = {}
+      for hmass in self.sigMasses:
+        iToyGoodList = []
+        zTrueTmpList = []
+        for iToy in range(len(data[refPdfName][hmass]['zTrue'])):
+          zTrueTmp = data[refPdfName][hmass]['zTrue'][iToy]
+          if abs(zTrueTmp) < 3.:
+            iToyGoodList.append(iToy)
+            zTrueTmpList.append(zTrueTmp)
+        self.zSigmaSummaryDict[refPdfName]["zTrue"][hmass] = stddev(zTrueTmpList)
+        for pdfAltName in self.pdfAltNamesDict[refPdfName]:
+          if not self.zSigmaSummaryDict[refPdfName].has_key(pdfAltName):
+            self.zSigmaSummaryDict[refPdfName][pdfAltName] = {}
+          for iToy in iToyGoodList:
+          self.zSigmaSummaryDict[refPdfName][pdfAltName][hmass] = stddev(data[refPdfName][hmass][pdfAltName]['z'])
+
   def plot(self,outputPrefix):
 
     canvas = self.canvas
@@ -1513,7 +1532,63 @@ def printBiasSummary(dataCats):
   print plainResult
   print latexResult
           
-    
+def printDiagnosticSummary(dataCats,dataCatsZSig):
+  catNames = sorted(dataCats.keys())
+  if len(catNames) == 0:
+    return
+  assert(len(dataCats)==len(dataCatsZSig))
+  plainResult = ""
+  for catName in catNames:
+    catTitle = TITLEMAP[catName]
+    data = dataCats[catName]
+    dataZSig = dataCatsZSig[catName]
+    refNames = sorted(data.keys())
+    allAltNames = set()
+    for refName in refNames:
+      allAltNames = allAltNames.union(data[refName].keys())
+    allAltNames = sorted(list(allAltNames))
+    allAltNames.pop(allAltNames.index("orderRef"))
+    plainResult += "############################################################\n"
+    plainResult += catName+" Maximum Bias\n\n"
+    plainResult += "\n{0:<15}".format("Alternate")+"{0:>15}".format("Reference")
+    for i in range(len(refNames)-1):
+      plainResult += "{0:>15}".format("")
+    plainResult += "{0:>15}".format("Z-Sigmas")
+    plainResult += "\n"
+    plainResult += "{0:>15}".format("")
+    for refName in refNames:
+      plainResult += "{0:>15}".format(refName,)
+      nicePdfName = PDFTITLEMAP[refName]
+    for refName in refNames:
+       maxZSig = 0.
+       for hmass in dataZSig[refName]['zTrue']:
+         maxZSig = max(dataZSig[refName]['zTrue'][hmass],maxZSig)
+       plainResult += "{0:>15.2f}".format(maxZSig)
+    plainResult += "\n"
+    for altName in allAltNames:
+      plainResult += "{0:<15}".format(altName)
+      nicePdfName = PDFTITLEMAP[altName]
+      for refName in refNames:
+          if not data[refName].has_key(altName):
+            plainResult += "{0:>15}".format("-")
+            continue
+          maxBias = 0.
+          absMaxBias = 0.
+          for hmass in data[refName][altName]:
+            tmpBias = data[refName][altName][hmass]
+            tmpAbsBias = abs(tmpBias)
+            if tmpAbsBias > absMaxBias:
+              maxBias = tmpBias
+              absMaxBias = tmpAbsBias
+          plainResult += "{0:>15.1%}".format(maxBias)
+      for refName in refNames:
+          maxZSig = 0.
+          for hmass in dataZSig[refName][altName]:
+            maxZSig = max(dataZSig[refName][altName][hmass],maxZSig)
+          plainResult += "{0:>15.2f}".format(maxZSig)
+      plainResult += "\n"
+    plainResult += "\n\n"
+  print plainResult
 
 if __name__ == "__main__":
   helpStr = "./fitBiasStudy.py [jobGroupNumber] [categoryName]\n  where jobGroupNumber is an int that will be added to the random number seed (*1000)\n    and the output pkl file name\n  if there is a jobGroupNumber, no plots or summary will be produced.\n  If categoryName is present, then only that category will be run,\n    otherwise a group of categories defined in the script will all be run."
@@ -1578,31 +1653,33 @@ if __name__ == "__main__":
                         "ExpMOverSqP0New",
                         #"ExpMOverSq",
                         #"Old",
-                        #"3Bernstein",
-                        #"4Bernstein",
-                        #"5Bernstein",
-                        #"6Bernstein",
-                        #"7Bernstein",
-                        #"8Bernstein",
-                        #"1SumExp",
-                        #"2SumExp",
-                        #"3SumExp",
-                        #"4SumExp",
+                        "3Bernstein",
+                        "4Bernstein",
+                        "5Bernstein",
+                        "6Bernstein",
+                        "7Bernstein",
+                        "8Bernstein",
+                        "9Bernstein",
+                        "1SumExp",
+                        "2SumExp",
+                        "3SumExp",
+                        "4SumExp",
                     ],
       "SumExp":[          
                         "ExpMOverSqP0New",
                         #"ExpMOverSq",
                         #"Old",
-                        #"3Bernstein",
-                        #"4Bernstein",
-                        #"5Bernstein",
-                        #"6Bernstein",
-                        #"7Bernstein",
-                        #"8Bernstein",
-                        #"1SumExp",
-                        #"2SumExp",
-                        #"3SumExp",
-                        #"4SumExp",
+                        "3Bernstein",
+                        "4Bernstein",
+                        "5Bernstein",
+                        "6Bernstein",
+                        "7Bernstein",
+                        "8Bernstein",
+                        "9Bernstein",
+                        "1SumExp",
+                        "2SumExp",
+                        "3SumExp",
+                        "4SumExp",
                     ],
       "SumPow":[          
                         "ExpMOverSq",
@@ -1681,6 +1758,7 @@ if __name__ == "__main__":
     categories = [[catToRun,""]]
 
   allSummaries = {}
+  allZSigmaSummaries = {}
   tmpJobGroupStr = ""
   if iJobGroup != None:
     tmpJobGroupStr = "_jobGrp"+str(iJobGroup)
@@ -1691,6 +1769,7 @@ if __name__ == "__main__":
   if len(inputPklFiles)>0 and iJobGroup==None:
     foundJobGroupPkl = False
     foundNotJobGroupPkl = False
+    #inputPklFiles = inputPklFiles[:5]
     for inputPkl in inputPklFiles:
       if "_jobGrp" in inputPkl:
         foundJobGroupPkl = True
@@ -1706,7 +1785,8 @@ if __name__ == "__main__":
         print "Running over input pkl file: "+inputPkl
         bs = BiasStudy(None,None,None,None,None,None,None,inputPkl=inputPkl)
         logFile.write(bs.outStr)
-        bs.plot(outDir+"bias_")
+        #bs.plot(outDir+"bias_")
+        allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
         allSummaries[bs.catName] = bs.pullSummaryDict
     else:
       # Identify basenames to combine job groups
@@ -1730,7 +1810,8 @@ if __name__ == "__main__":
           tmpF.close()
         bs = BiasStudy(None,None,None,None,None,None,None,inputPkl=resultData)
         logFile.write(bs.outStr)
-        bs.plot(outDir+"bias_")
+        #bs.plot(outDir+"bias_")
+        allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
         allSummaries[bs.catName] = bs.pullSummaryDict
   else:
     processPool = None
@@ -1740,11 +1821,13 @@ if __name__ == "__main__":
       bs = BiasStudy(category,dataFns8TeV,"8TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool,iJobGroup=iJobGroup)
       logFile.write(bs.outStr)
       if iJobGroup == None:
-        bs.plot(outDir+"bias_")
+        #bs.plot(outDir+"bias_")
+        allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
         allSummaries[bs.catName] = bs.pullSummaryDict
   inputPklFiles = glob.glob(outDir+"*.pkl")
   printBiasTable(allSummaries,"Old","ExpMOverSq")
   printBiasSummary(allSummaries)
+  printDiagnosticSummary(allSummaries,allZSigmaSummaries)
     
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
   logFile.write("\n\n# {0}\n".format(now))
