@@ -142,155 +142,152 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           altPdfNameNoOrderList.append(i)
           altPdfOrderList.append(None)
 
-      truePdfFunc = None
-      if truePdfNameNoOrder == "Bernstein" or truePdfNameNoOrder == "Chebychev" or truePdfNameNoOrder == "Polynomial" or truePdfNameNoOrder == "SumExp" or truePdfNameNoOrder == "SumPow" or truePdfNameNoOrder == "Laurent":
-        truePdfFunc = getattr(fitOrderChooser,"makePDFBak"+truePdfNameNoOrder)
-      else:
-        truePdfFunc = getattr(makeCards,"makePDFBak"+truePdfNameNoOrder)
-      pdfAltFuncList = []
-      for i in altPdfNameNoOrderList:
-        if i == "Bernstein" or i == "Chebychev" or i == "Polynomial" or i == "SumExp" or i == "SumPow" or i == "Laurent":
-          pdfAltFuncList.append(getattr(fitOrderChooser,"makePDFBak"+i))
-        else:
-          pdfAltFuncList.append(getattr(makeCards,"makePDFBak"+i))
-
-      #dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",110.,170.)
-      dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",110.,160.)
-      #dimuonMass.setBins(60)
-      dimuonMass.setBins(50)
-      dimuonMass.setRange("exprange",120,160)
-      dimuonMass.setRange("whole",110,160)
-      dimuonMass.setRange("low",110,120) # Silly ranges for old fit functionality
-      #dimuonMass.setRange("high",130,170)
-      dimuonMass.setRange("high",130,160)
-      dimuonMass.setRange("signal",120,130)
-      dimuonMass.setRange("signalfit",110,140)
-      dimuonMass.setRange("annaRegion",123.5,127.5)
-      dimuonMassArgSet = root.RooArgSet(dimuonMass)
-      wTrue = root.RooWorkspace("wTrue")
-      wTrueToy = root.RooWorkspace("wTrueToy")
-      wTrueImport = getattr(wTrue,"import")
-      wTrueToyImport = getattr(wTrueToy,"import")
-
-      canvas = root.TCanvas("canvas"+catName+energyStr+truePdfName+str(iJob))
-      tlatex = root.TLatex()
-      tlatex.SetNDC()
-      tlatex.SetTextFont(root.gStyle.GetLabelFont())
-      tlatex.SetTextSize(0.04)
+      ### Make results data structure and begin log
+      data = {}
+      data[truePdfName] = {}
 
       # Hack to Make makePDFBakOld work
       minMassZ = 88.
       maxMassZ = 94.
       dimuonMassZ = root.RooRealVar("dimuonMass","dimuonMass",minMassZ,maxMassZ)
       dimuonMassZ = dimuonMassZ
-
-      ### Load data
-      
-      realData = root.RooDataSet("realData"+catName+energyStr,
-                                      "realData"+catName+energyStr,
-                                          dataTree,root.RooArgSet(dimuonMass)
-                                        )
-      nData = realData.sumEntries()
       realDataZ = root.RooDataSet("realDataZ"+catName+energyStr,
                                       "realDataZ"+catName+energyStr,
                                           dataTree,root.RooArgSet(dimuonMassZ)
                                         )
+  
 
-      ### Make Bak Pdfs
-
-      trashParamList, trashBakNormTup, trashDebug, trueOrder = truePdfFunc(truePdfName+catName+energyStr,realData,dimuonMass,110,160,wTrueImport,dimuonMassZ,realDataZ,order=truePdfOrder)
-      truePdf = wTrue.pdf("bak")
-      truePdf.SetName(truePdfName)
-      truePdf.SetTitle("True PDF ")
-      truePdf.fitTo(realData,
-                             PRINTLEVEL
-                           )
-
-      trueToyPdfName = "trueToy"+catName+energyStr
-      trashParamList, trashBakNormTup, trashDebug, trueToyOrder = truePdfFunc(trueToyPdfName,realData,dimuonMass,110,160,wTrueToyImport,dimuonMassZ,realDataZ,order=truePdfOrder)
-      trueToyPdf = wTrueToy.pdf("bak")
-      trueToyPdf.SetName(trueToyPdfName)
-      assert(trueOrder == trueToyOrder)
-
-      # Debug plot for fit to data
-      if toysPerJob > 2:
-        frame = dimuonMass.frame()
-        realDataHist = realData.binnedClone("realDataHist"+catName+energyStr+str(iJob))
-        chi2RealDataVar = truePdf.createChi2(realDataHist)
-        ndfRealData = dimuonMass.getBins() - 1  # b/c roofit normalizes
-        ndfRealData -= rooPdfNFreeParams(truePdf,realDataHist)
-        realData.plotOn(frame)
-        truePdf.plotOn(frame,root.RooFit.Range('low,signal,high'),root.RooFit.NormRange('low,signal,high'))
-        frame.Draw()
-        frame.SetTitle("")
-        frame.GetYaxis().SetTitle("Events / 1 GeV/c^{2}")
-        tlatex.SetTextAlign(12)
-        tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Ref PDF: "+truePdfName)
-        tlatex.SetTextAlign(32)
-        tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,catName+" "+energyStr)
-        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Ref. Fit to Obs. Data")
-        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.80,"Ref. GOF: {0:.2f}".format(scipy.stats.chi2.sf(chi2RealDataVar.getVal(),ndfRealData)))
-        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Ref. #chi^{{2}}/NDF: {0:.2f}".format(chi2RealDataVar.getVal()/ndfRealData))
-        canvas.SaveAs("output/debug_RealData_"+truePdfName+"_"+catName+"_"+energyStr+tmpJobStr+".png")
-
-      # Make sure Voigt params are set to True vals and constant
-      if truePdfName == "Old":
-        for xTrue in rooArgSet2List(truePdf.getParameters(realData)):
-          if not ("voit" in xTrue.GetName()):
-            continue
-          for xToy in rooArgSet2List(trueToyPdf.getParameters(realData)):
-            trueMatch = re.match(r".*(_voit.*)",xTrue.GetName()) 
-            toyMatch = re.match(r".*(_voit.*)",xToy.GetName()) 
-            assert(trueMatch)
-            if not toyMatch:
-                continue
-            trueBaseName = trueMatch.group(1)
-            toyBaseName = toyMatch.group(1)
-            if not ( trueBaseName == toyBaseName ):
-              continue
-            xToy.setVal(xTrue.getVal())
-            xTrue.setConstant(True)
-            xToy.setConstant(True)
-
-      pdfAltList = []
-      pdfAltwList = []
-      for pdfAltName,pdfAltNameNoOrder,pdfAltOrder,pdfAltFunc in zip(pdfAltNameList,altPdfNameNoOrderList,altPdfOrderList,pdfAltFuncList):
-        pdfName = "alt"+catName+energyStr+"_"+pdfAltName
-        wAlt = root.RooWorkspace("wAlt"+catName+energyStr+"_"+pdfAltName)
-        pdfAltFunc(pdfName,realData,dimuonMass,110,160,getattr(wAlt,"import"),dimuonMassZ,realDataZ,order=pdfAltOrder)
-        altPdf = wAlt.pdf("bak")
-        altPdf.SetName(pdfName)
-        # Make sure Voigt params are constant
-        if pdfAltNameNoOrder == "Old":
-          for x in rooArgSet2List(altPdf.getParameters(realData)):
-            if "voit" in x.GetName():
-              x.setConstant(True)
-        pdfAltList.append(altPdf)
-        pdfAltwList.append(wAlt)
-
-      nBakVar = root.RooRealVar("nBak","N_{B}",nData/2.,nData*2)
-
-      ### Now load Signal PDFs
-      sigPdfs = []
-      wSigs = []
       for hmass in sigMasses:
+        truePdfFunc = None
+        if truePdfNameNoOrder == "Bernstein" or truePdfNameNoOrder == "Chebychev" or truePdfNameNoOrder == "Polynomial" or truePdfNameNoOrder == "SumExp" or truePdfNameNoOrder == "SumPow" or truePdfNameNoOrder == "Laurent":
+          truePdfFunc = getattr(fitOrderChooser,"makePDFBak"+truePdfNameNoOrder)
+        else:
+          truePdfFunc = getattr(makeCards,"makePDFBak"+truePdfNameNoOrder)
+        pdfAltFuncList = []
+        for i in altPdfNameNoOrderList:
+          if i == "Bernstein" or i == "Chebychev" or i == "Polynomial" or i == "SumExp" or i == "SumPow" or i == "Laurent":
+            pdfAltFuncList.append(getattr(fitOrderChooser,"makePDFBak"+i))
+          else:
+            pdfAltFuncList.append(getattr(makeCards,"makePDFBak"+i))
+  
+        minMass = hmass-fitMassWindow/2.
+        maxMass = hmass+fitMassWindow/2.
+        dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",minMass,maxMass)
+        dimuonMass.setBins(int(fitMassWindow))
+        dimuonMass.setRange("exprange",120,160)
+        dimuonMass.setRange("whole",110,160)
+        dimuonMass.setRange("low",110,120) # Silly ranges for old fit functionality
+        dimuonMass.setRange("high",130,160)
+        dimuonMass.setRange("signal",120,130)
+        dimuonMass.setRange("signalfit",110,140)
+        dimuonMass.setRange("annaRegion",123.5,127.5)
+        dimuonMassArgSet = root.RooArgSet(dimuonMass)
+        wTrue = root.RooWorkspace("wTrue")
+        wTrueToy = root.RooWorkspace("wTrueToy")
+        wTrueImport = getattr(wTrue,"import")
+        wTrueToyImport = getattr(wTrueToy,"import")
+  
+        canvas = root.TCanvas("canvas"+catName+energyStr+truePdfName+str(iJob))
+        tlatex = root.TLatex()
+        tlatex.SetNDC()
+        tlatex.SetTextFont(root.gStyle.GetLabelFont())
+        tlatex.SetTextSize(0.04)
+  
+        ### Load data
+        
+        realData = root.RooDataSet("realData"+catName+energyStr,
+                                        "realData"+catName+energyStr,
+                                            dataTree,root.RooArgSet(dimuonMass)
+                                          )
+        nData = realData.sumEntries()
+  
+        ### Make Bak Pdfs
+  
+        trashParamList, trashBakNormTup, trashDebug, trueOrder = truePdfFunc(truePdfName+catName+energyStr,realData,dimuonMass,minMass,maxMass,wTrueImport,dimuonMassZ,realDataZ,order=truePdfOrder,higgsMass=hmass)
+        truePdf = wTrue.pdf("bak")
+        truePdf.SetName(truePdfName)
+        truePdf.SetTitle("True PDF ")
+        truePdf.fitTo(realData,
+                               PRINTLEVEL
+                             )
+  
+        trueToyPdfName = "trueToy"+catName+energyStr
+        trashParamList, trashBakNormTup, trashDebug, trueToyOrder = truePdfFunc(trueToyPdfName,realData,dimuonMass,minMass,maxMass,wTrueToyImport,dimuonMassZ,realDataZ,order=truePdfOrder,higgsMass=hmass)
+        trueToyPdf = wTrueToy.pdf("bak")
+        trueToyPdf.SetName(trueToyPdfName)
+        assert(trueOrder == trueToyOrder)
+  
+        # Debug plot for fit to data
+        if toysPerJob > 2:
+          frame = dimuonMass.frame()
+          realDataHist = realData.binnedClone("realDataHist"+catName+energyStr+str(iJob))
+          chi2RealDataVar = truePdf.createChi2(realDataHist)
+          ndfRealData = dimuonMass.getBins() - 1  # b/c roofit normalizes
+          ndfRealData -= rooPdfNFreeParams(truePdf,realDataHist)
+          realData.plotOn(frame)
+          truePdf.plotOn(frame)
+          frame.Draw()
+          frame.SetTitle("")
+          frame.GetYaxis().SetTitle("Events / 1 GeV/c^{2}")
+          tlatex.SetTextAlign(12)
+          tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Ref PDF: "+truePdfName)
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.80,"m_{{H}}: {0:.1f}".format(hmass))
+          tlatex.SetTextAlign(32)
+          tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,catName+" "+energyStr)
+          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Ref. Fit to Obs. Data")
+          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.80,"Ref. GOF: {0:.2f}".format(scipy.stats.chi2.sf(chi2RealDataVar.getVal(),ndfRealData)))
+          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Ref. #chi^{{2}}/NDF: {0:.2f}".format(chi2RealDataVar.getVal()/ndfRealData))
+          canvas.SaveAs("output/debug_RealData_"+truePdfName+"_"+catName+"_"+energyStr+tmpJobStr+".png")
+  
+        # Make sure Voigt params are set to True vals and constant
+        if truePdfName == "Old":
+          for xTrue in rooArgSet2List(truePdf.getParameters(realData)):
+            if not ("voit" in xTrue.GetName()):
+              continue
+            for xToy in rooArgSet2List(trueToyPdf.getParameters(realData)):
+              trueMatch = re.match(r".*(_voit.*)",xTrue.GetName()) 
+              toyMatch = re.match(r".*(_voit.*)",xToy.GetName()) 
+              assert(trueMatch)
+              if not toyMatch:
+                  continue
+              trueBaseName = trueMatch.group(1)
+              toyBaseName = toyMatch.group(1)
+              if not ( trueBaseName == toyBaseName ):
+                continue
+              xToy.setVal(xTrue.getVal())
+              xTrue.setConstant(True)
+              xToy.setConstant(True)
+  
+        pdfAltList = []
+        pdfAltwList = []
+        for pdfAltName,pdfAltNameNoOrder,pdfAltOrder,pdfAltFunc in zip(pdfAltNameList,altPdfNameNoOrderList,altPdfOrderList,pdfAltFuncList):
+          pdfName = "alt"+catName+energyStr+"_"+pdfAltName
+          wAlt = root.RooWorkspace("wAlt"+catName+energyStr+"_"+pdfAltName)
+          pdfAltFunc(pdfName,realData,dimuonMass,minMass,maxMass,getattr(wAlt,"import"),dimuonMassZ,realDataZ,order=pdfAltOrder,higgsMass=hmass)
+          altPdf = wAlt.pdf("bak")
+          altPdf.SetName(pdfName)
+          # Make sure Voigt params are constant
+          if pdfAltNameNoOrder == "Old":
+            for x in rooArgSet2List(altPdf.getParameters(realData)):
+              if "voit" in x.GetName():
+                x.setConstant(True)
+          pdfAltList.append(altPdf)
+          pdfAltwList.append(wAlt)
+  
+        nBakVar = root.RooRealVar("nBak","N_{B}",nData/2.,nData*2)
+  
+        ### Now load Signal PDF
         wSig = root.RooWorkspace("signal"+catName+energyStr+str(hmass))
         makeCards.makePDFSigNew(catName+energyStr,"sig_ggH",dimuonMass,float(hmass),
                                 getattr(wSig,"import")
                                )
         sigPdf = wSig.pdf("ggH")
         sigPdf.SetName("sigPDF_"+str(hmass)+"_"+catName+energyStr)
-        sigPdfs.append(sigPdf)
-        wSigs.append(wSig)
-
-      nSigVar = root.RooRealVar("nSig","N_{S}",-nData/4.,nData/4)
-
-      ### Make results data structure and begin log
-      data = {}
-      data['meta'] = {'nData':nData}
-      data[truePdfName] = {}
-      for hmass in sigMasses:
+  
+        nSigVar = root.RooRealVar("nSig","N_{S}",-nData/4.,nData/4)
+  
+        data['meta'] = {'nData':nData}
         data[truePdfName][hmass] = {}
         data[truePdfName][hmass]['zTrue'] = []
         data[truePdfName][hmass]['nTrue'] = []
@@ -308,14 +305,13 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           data[truePdfName][hmass][pdfAltName]['chi2BOnly'] = []
           data[truePdfName][hmass][pdfAltName]['ndfBOnly'] = []
 
-      ### Toy Loop
-
-      for iToy in range(toysPerJob):
-        toyData = truePdf.generate(root.RooArgSet(dimuonMass),int(nData))
-        toyData.SetName("toyData"+catName+energyStr+str(iToy))
-        toyDataHist = toyData.binnedClone("toyDataHist"+catName+energyStr+str(iToy))
-        plotThisToy = (iToy % plotEveryNToys == 5)
-        for hmass,sigPdf in zip(sigMasses,sigPdfs):
+        ### Toy Loop
+  
+        for iToy in range(toysPerJob):
+          toyData = truePdf.generate(root.RooArgSet(dimuonMass),int(nData))
+          toyData.SetName("toyData"+catName+energyStr+str(iToy))
+          toyDataHist = toyData.binnedClone("toyDataHist"+catName+energyStr+str(iToy))
+          plotThisToy = (iToy % plotEveryNToys == 5)
           frame = None 
           if plotThisToy:
             frame = dimuonMass.frame()
@@ -404,6 +400,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
             tlatex.SetTextAlign(12)
             tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
             tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Ref PDF: "+truePdfName)
+            tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.80,"m_{{H}}: {0:.1f}".format(hmass))
             tlatex.SetTextAlign(32)
             tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,catName+" "+energyStr)
             tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Ref B-Only GOF: {0:.2f}".format(scipy.stats.chi2.sf(chi2BOnlyVal,ndfBOnlyVal)))
@@ -420,8 +417,8 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           #  for x in rooArgSet2List(trueToyPdf.getParameters(realData)):
           #      x.Print()
           #  print "**************************************************************"
-        del toyData
-        del toyDataHist
+          del toyData
+          del toyDataHist
       return data
 
 def runStudyStar(argList):
@@ -451,7 +448,7 @@ class BiasStudy:
           self.energyStr = self.data['meta']['energyStr']
           energyStr = self.energyStr
           self.sigMasses = self.data['meta']['sigMasses']
-          self.fitMassWindow = data['meta']['massFitWidth']
+          self.fitMassWindow = self.data['meta']['massFitWidth']
         except Exception, err:
           print("Error loading data from pkl file: "+str(inputPkl))
           print(err)
@@ -466,7 +463,7 @@ class BiasStudy:
           self.energyStr = self.data['meta']['energyStr']
           energyStr = self.energyStr
           self.sigMasses = self.data['meta']['sigMasses']
-          self.fitMassWindow = data['meta']['massFitWidth']
+          self.fitMassWindow = self.data['meta']['massFitWidth']
       else:
           print("Error: unexpected type for input pickle filename or dict: "+type(inputPkl))
           print("Exiting.")

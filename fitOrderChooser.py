@@ -51,16 +51,22 @@ titleMap = {
   "Jet2CutsFailVBFGF":"2-Jet Loose",
 }
 
-def getOrderToUseFromDict(dataOrds,cat,mh):
+def getOrderToUseFromDict(dataOrds,name,mh):
   assert(dataOrds != None)
-  assert(cat != None)
+  assert(name != None)
   assert(mh != None)
 
-  assert(dataOrds.has_key(cat))
+  cat = None
+  for key in dataOrds.keys():
+    if key in name:
+        cat = key
+        break
+  if cat == None:
+    raise KeyError(name)
+
   data = dataOrds[cat]
 
   if data.has_key(mh):
-    print "getOrderToUseFromDict: have mass {0} for {1} returning order {3}".format(mh,cat,data[mh])
     return data[mh]
 
   massList = data.keys()
@@ -89,7 +95,6 @@ def getOrderToUseFromDict(dataOrds,cat,mh):
     minN = data[minN]
   result = max(minP,minN)
 
-  print "getOrderToUseFromDict: don't have mass {0} for {1} returning order {3}".format(mh,cat,result)
   return result
 
 ########################################################################################
