@@ -102,7 +102,7 @@ PDFTITLEMAP = PdfTitleMap({
     "Laurent":"Laurent",
 })
 
-def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sigMasses,toysPerJob):
+def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sigMasses,fitMassWindow,toysPerJob):
       """
         Pure function so that we can do multiprocessing!!
       """
@@ -432,7 +432,7 @@ def runStudyStar(argList):
 ################################################################################################
 
 class BiasStudy:
-  def __init__(self,category,dataFileNames,energyStr,sigMasses,refPdfNameList,pdfAltNamesDict,nToys=10,pklOutFnBase="output/biasData",inputPkl=None,processPool=None,iJobGroup=None):
+  def __init__(self,category,dataFileNames,energyStr,sigMasses,refPdfNameList,pdfAltNamesDict,nToys=10,pklOutFnBase="output/biasData",inputPkl=None,processPool=None,iJobGroup=None,fitMassWindow=None):
     self.dataFileNames = dataFileNames
     self.sigMasses = sigMasses
     self.iJobGroup = iJobGroup
@@ -451,6 +451,7 @@ class BiasStudy:
           self.energyStr = self.data['meta']['energyStr']
           energyStr = self.energyStr
           self.sigMasses = self.data['meta']['sigMasses']
+          self.fitMassWindow = data['meta']['massFitWidth']
         except Exception, err:
           print("Error loading data from pkl file: "+str(inputPkl))
           print(err)
@@ -465,6 +466,7 @@ class BiasStudy:
           self.energyStr = self.data['meta']['energyStr']
           energyStr = self.energyStr
           self.sigMasses = self.data['meta']['sigMasses']
+          self.fitMassWindow = data['meta']['massFitWidth']
       else:
           print("Error: unexpected type for input pickle filename or dict: "+type(inputPkl))
           print("Exiting.")
@@ -486,6 +488,7 @@ class BiasStudy:
     if self.data==None:
       self.refPdfNameList = refPdfNameList
       self.pdfAltNamesDict = pdfAltNamesDict
+      self.fitMassWindow = fitMassWindow
 
       self.data = {'meta':{}}
       data = self.data
@@ -495,15 +498,16 @@ class BiasStudy:
       data['meta']['nToys'] = self.nToys
       data['meta']['catName'] = self.catName
       data['meta']['energyStr'] = self.energyStr
+      data['meta']['massFitWidth'] = self.fitMassWindow
       self.iPklAutoSave = 1
       nProcesses = NPROCS
       nJobs = NPROCS
       for refPdfName,iRefPdfName in zip(self.refPdfNameList,range(len(self.refPdfNameList))):
         pdfAltNameList = self.pdfAltNamesDict[refPdfName]
         if processPool == None:
-          mapResults = map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.iJobGroup),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(int(nToys/nJobs))))
+          mapResults = map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.iJobGroup),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(self.fitMassWindow),itrRepeat(int(nToys/nJobs))))
         else:
-          mapResults = processPool.map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.iJobGroup),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(int(nToys/nJobs))))
+          mapResults = processPool.map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.iJobGroup),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(self.fitMassWindow),itrRepeat(int(nToys/nJobs))))
         for jobResults in mapResults:
           mergeDicts(data,jobResults)
         if iRefPdfName != len(self.refPdfNameList)-1:
@@ -1710,7 +1714,7 @@ if __name__ == "__main__":
       #    "ExpLog",
       #    "MOverSq",
           "Bernstein",
-          "SumExp",
+      #    "SumExp",
       #    "SumPow",
       #    "Laurent",
       #    "Chebychev",
@@ -1732,7 +1736,7 @@ if __name__ == "__main__":
                         "Old",
                     ],
       "Bernstein":[          
-                        "ExpMOverSqP0New",
+                        "ExpMOverSq",
                         #"ExpMOverSq",
                         #"Old",
                         #"3Bernstein",
@@ -1791,6 +1795,7 @@ if __name__ == "__main__":
 
   #sigMasses = range(115,156,5)
   sigMasses = [115,120,125,135,150,155]
+  massWindow = 20.
 
   ########################################
 
@@ -1803,21 +1808,21 @@ if __name__ == "__main__":
   ########################################
   ### Define which categories to run over
 
-  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
 
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   ########################################
   ### Directory and file names
 
-  #dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
-  dataDir = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
+  dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
+  #dataDir = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
   dataFns8TeV = [
     "SingleMuRun2012Av1-22Jan2013",
     "SingleMuRun2012Bv1-22Jan2013",
@@ -1897,7 +1902,7 @@ if __name__ == "__main__":
     if NPROCS > 1:
       processPool = Pool(processes=NPROCS)
     for category in categories:
-      bs = BiasStudy(category,dataFns8TeV,"8TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool,iJobGroup=iJobGroup)
+      bs = BiasStudy(category,dataFns8TeV,"8TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool,iJobGroup=iJobGroup,fitMassWindow=massWindow)
       logFile.write(bs.outStr)
       if iJobGroup == None:
         bs.plot(outDir+"bias_")

@@ -102,7 +102,59 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     channelName = name
 
-    defaultOrders = None
+    # Bernstein Default Order Dict
+    # For Window Width: 20.0 GeV
+    defaultOrders = {
+      'Jet2CutsFailVBFGF': {
+        115:3,
+        120:2,
+        125:2,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsGFPass': {
+        115:2,
+        120:2,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsVBFPass': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BB': {
+        115:4,
+        120:3,
+        125:2,
+        135:2,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BE': {
+        115:3,
+        120:3,
+        125:2,
+        135:1,
+        150:1,
+        155:2,
+      },
+      'Jets01PassPtG10BO': {
+        115:3,
+        120:3,
+        125:2,
+        135:2,
+        150:1,
+        155:1,
+      },
+    }
+
     if order == None:
       order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
 
@@ -175,7 +227,59 @@ def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     channelName = name
 
-    defaultOrders = None
+    # Chebychev Default Order Dict
+    # For Window Width: 20.0 GeV
+    defaultOrders = {
+      'Jet2CutsFailVBFGF': {
+        115:3,
+        120:2,
+        125:2,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsGFPass': {
+        115:2,
+        120:2,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsVBFPass': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BB': {
+        115:4,
+        120:3,
+        125:2,
+        135:2,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BE': {
+        115:3,
+        120:3,
+        125:2,
+        135:1,
+        150:1,
+        155:2,
+      },
+      'Jets01PassPtG10BO': {
+        115:3,
+        120:3,
+        125:2,
+        135:2,
+        150:1,
+        155:1,
+      },
+    }
+
     if order == None:
       order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
 
@@ -893,7 +997,7 @@ if __name__ == "__main__":
 
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
   pdfsToTry = ["Bernstein","Chebychev"]
-  ordersToTry= range(1,5)
+  ordersToTry= range(1,6)
 
   categories = []
 
@@ -901,9 +1005,9 @@ if __name__ == "__main__":
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
-  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
-  #categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
@@ -911,7 +1015,7 @@ if __name__ == "__main__":
   categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   massWindow = 20.
-  sigMasses = [115,120,125,135,150,155]
+  signalMasses = [115,120,125,135,150,155]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
   dataFns8TeV = [
