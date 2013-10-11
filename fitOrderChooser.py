@@ -51,6 +51,11 @@ titleMap = {
   "Jet2CutsFailVBFGF":"2-Jet Loose",
 }
 
+def getOrderToUseFromDict(data):
+  pass
+
+########################################################################################
+
 def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
     debug = ""
     debug += "### makePDFBakBernstein: "+name+"\n"
@@ -698,6 +703,21 @@ def makePDFBakLaurent(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
 #########################################################################
 #########################################################################
 
+class OrderSummary(object):
+  def __init__(self,order,gof,nll,nllp1,deltaNdfFunc):
+    self.order = order
+    self.gof = gof
+    self.nll = nll
+    self.nllp1 = nllp1
+    self.m2DeltaNLL = -2.*(nllp1-nll)
+    self.deltaNdfFunc = deltaNdfFunc
+    self.pChi2 = scipy.stats.chi2.sf(self.m2DeltaNLL,self.deltaNdfFunc)
+
+  def __str__(self):
+    outStr = "{0:>4} {1:>10} {2:>10} {3:>10} {4:>10} ".format("d","GOF","NLL","-2DeltaNLL","pChi2")+"\n"
+    outStr += "{0:4} {1:10.3g} {2:10.2f} {3:10.2f} {4:10.3g}".format(self.order,self.gof,-self.nll,self.m2DeltaNLL,self.pChi2)
+    return outStr
+
 class OrderStudy:
   def __init__(self,catName,energyStr,dataFileNames,outPrefix,pdfsToTry,ordersToTry,signalMassList,massWindowWidth):
       catName = catName[0]
@@ -790,9 +810,11 @@ class OrderStudy:
             data[pdfBaseName][sigMass][order]['nll'] = nll
             data[pdfBaseName][sigMass][order]['ndfFunc'] = ndfFunc
 
+      self.summary = {}
 
       self.latexStr = ""
       for pdfBaseName in pdfsToTry:
+        self.summary[pdfBaseName] = {}
         for sigMass in signalMassList:
           tableStr =  catName+" "+energyStr+"\n"+pdfBaseName+" mH = {0:.1f}  massWindowWidth = {1:.2f} ".format(sigMass,massWindowWidth)
           tableStr += "\n\n"+r"\begin{tabular}{|l|c|c|c|c|} \hline" + "\n"
@@ -800,6 +822,7 @@ class OrderStudy:
           #tableStr += r"Degree (d) & Goodness & NLL$_d$ & -2$\Delta$NLL(d+1,d) & $p_{\chi^2}$(d+1,d) \\"+" \n"
           tableStr += r" & of Fit  &  & &  \\ \hline \hline" + "\n"
           foundGoodOne = False
+          tmpSummary = None
           for order in sorted(data[pdfBaseName][sigMass].keys()):
             tmpDat = data[pdfBaseName][sigMass][order]
             tmpDatP1 = False
@@ -818,12 +841,14 @@ class OrderStudy:
               if not foundGoodOne and pDeltaNLL > 0.05:
                 foundGoodOne = True
                 tableStr += r"\bf {0} & \bf {1:.3g} & \bf {2:.2f} & \bf {3:.2f} & \bf {4:.3g} ".format(order,gof,-nll,deltaNLL,pDeltaNLL)+r" \\ \hline" + "\n"
+                tmpSummary = OrderSummary(order,gof,nll,nllP1,deltaNdfFunc)
               else:
                 tableStr += "{0} & {1:.3g} & {2:.2f} & {3:.2f} & {4:.3g} ".format(order,gof,-nll,deltaNLL,pDeltaNLL)+r" \\ \hline" + "\n"
             else:
               tableStr += "{0} & {1:.3g} & {2:.2f} & - & - ".format(order,gof,-nll)+r" \\ \hline" + "\n"
           tableStr += r"\end{tabular}" + "\n\n"
           self.latexStr += tableStr
+          self.summary[pdfBaseName][sigMass] = tmpSummary
       for pdfBaseName in pdfsToTry:
         for sigMass in signalMassList:
           self.outStr +=  "\n\n"+catName+" "+energyStr+"\n"+pdfBaseName+" mH = {0:.1f}    massWindowWidth = {1:.2f}".format(sigMass,massWindowWidth)+"\n\n"
@@ -871,13 +896,115 @@ class OrderStudy:
     else:
         print "Error: getNDF: don't recognize function: "+basename
         sys.exit(1)
+
+def summaryWriter(summary,windowSize):
+  result = ""
+  result += "#################################\n"
+  result += "####### "+"{0:^17}".format("Window: {0:.1f}".format(windowSize))+" #######\n"
+  result += "#################################\n"
+  pdfNames = None
+  categories = sorted(summary.keys())
+  for category in categories:
+    pdfNames =  sorted(summary[category].keys())
+    break
+  sigMasses = set()
+  for pdfName in pdfNames:
+    for category in categories:
+      for sigMass in summary[category][pdfName].keys():
+        if not sigMass in sigMasses:
+          sigMasses.add(sigMass)
+  sigMasses = sorted(list(sigMasses))
+  for pdfName in pdfNames:
+    result += "\n{0}\n".format(pdfName)
+    result += "{0:20}".format("")
+    for sigMass in sigMasses:
+      result += "{0:>8.1f}".format(sigMass)
+    result += "{0:>10}".format("WrstGOF")
+    result += "\n"
+    for category in categories:
+      result += "{0:20}".format(category)
+      gofList = []
+      for sigMass in sigMasses:
+        order =  orderSummaries[category][pdfName][sigMass].order
+        gof =  orderSummaries[category][pdfName][sigMass].gof
+        result +=  "{0:>8}".format(order)
+        gofList.append(gof)
+      result += "{0:>10.3f}".format(min(gofList))
+      result += "\n"
+  return result
+
+def summaryLatex(summary,windowSize):
+  result = ""
+  pdfNames = None
+  categories = sorted(summary.keys())
+  for category in categories:
+    pdfNames =  sorted(summary[category].keys())
+    break
+  sigMasses = set()
+  for pdfName in pdfNames:
+    for category in categories:
+      for sigMass in summary[category][pdfName].keys():
+        if not sigMass in sigMasses:
+          sigMasses.add(sigMass)
+  sigMasses = sorted(list(sigMasses))
+
+  nSigMasses = len(sigMasses)
+  nCols = nSigMasses+1
+  result += "\n\n"+r"\begin{tabular}{|l|"+"c|"*nSigMasses+r"} \hline" + "\n"
+  result += r"\multicolumn{"+str(nCols)+r"}{|c|}{ \bf Optimal Reference Function Order} \\ \hline"+"\n"
+  result += r"% window width = {0} GeV/c^2".format(windowSize)+"\n"
+  for pdfName in pdfNames:
+    result += r"\multicolumn{"+str(nCols)+"}{|c|}{"+pdfName+r"} \\ \hline"+"\n"
+    result += "{0:20} ".format("")
+    for sigMass in sigMasses:
+      result += "& {0:>8.1f} ".format(sigMass)
+    result += r"\\ \hline"
+    result += "\n"
+    for category in categories:
+      result += "{0:20} ".format(titleMap[category])
+      for sigMass in sigMasses:
+        order =  orderSummaries[category][pdfName][sigMass].order
+        result +=  "& {0:>8} ".format(order)
+      result += r"\\ \hline"
+      result += "\n"
+  result += "\end{tabular}"+"\n"
+  return result
+
+def summaryDictMaker(summary,windowSize):
+  result = "\n########################################################\n"
+  pdfNames = None
+  categories = sorted(summary.keys())
+  for category in categories:
+    pdfNames =  sorted(summary[category].keys())
+    break
+  sigMasses = set()
+  for pdfName in pdfNames:
+    for category in categories:
+      for sigMass in summary[category][pdfName].keys():
+        if not sigMass in sigMasses:
+          sigMasses.add(sigMass)
+  sigMasses = sorted(list(sigMasses))
+  # Base indentation
+  ind = " "*4
+  for pdfName in pdfNames:
+    result += "\n"+ind+"# {0} Default Order Dict\n".format(pdfName)
+    result += ind+"# For Window Width: {0} GeV\n".format(windowSize)
+    result += ind+"defaultOrders = {\n"
+    for category in categories:
+      result += ind+"  "+category+": {\n"
+      for sigMass in sigMasses:
+        order =  orderSummaries[category][pdfName][sigMass].order
+        result +=  ind+"    {0}:{1},\n".format(sigMass,order)
+      result += ind+"  },\n"
+    result += ind+"}\n"
+  return result
         
 if __name__ == "__main__":
   canvas = root.TCanvas()
   outDir = "output/"
 
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
-  pdfsToTry = ["Bernstein"]
+  pdfsToTry = ["Bernstein","Chebychev"]
   ordersToTry= range(1,5)
 
   categories = []
@@ -891,12 +1018,12 @@ if __name__ == "__main__":
   #categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   massWindow = 20.
-  signalMasses = [115,135,155]
+  signalMasses = [115,120,125,135,150,155]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
   dataFns8TeV = [
@@ -920,6 +1047,7 @@ if __name__ == "__main__":
   logFile.write("# {0}\n\n".format(now))
   inputPklFiles = glob.glob(outDir+"*.pkl")
   orderStudyList = []
+  orderSummaries = {}
   for category in categories:
     osy = OrderStudy(category,"8TeV",dataFns8TeV,outDir+"order_Shape",pdfsToTry,ordersToTry,signalMasses,massWindow)
     logFile.write(osy.outStr)
@@ -929,6 +1057,11 @@ if __name__ == "__main__":
     texFile.write(osy.latexStr)
     texFile.flush()
     orderStudyList.append(osy)
+    orderSummaries[category[0]] = osy.summary
+
+  logFile.write(summaryWriter(orderSummaries,massWindow))
+  logFile.write(summaryDictMaker(orderSummaries,massWindow))
+  texFile.write(summaryLatex(orderSummaries,massWindow))
     
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
   logFile.write("\n\n# {0}\n".format(now))
