@@ -699,7 +699,7 @@ def makePDFBakLaurent(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
 #########################################################################
 
 class OrderStudy:
-  def __init__(self,catName,energyStr,dataFileNames,outPrefix,pdfsToTry,ordersToTry):
+  def __init__(self,catName,energyStr,dataFileNames,outPrefix,pdfsToTry,ordersToTry,signalMassList,massWindowWidth):
       catName = catName[0]
       randomGenerator = root.RooRandom.randomGenerator()
       randomGenerator.SetSeed(10001)
@@ -708,23 +708,6 @@ class OrderStudy:
         dataTree.Add(i+"/outtree"+catName)
       dataTree.SetCacheSize(10000000);
       dataTree.AddBranchToCache("*");
-
-      minMass = 110.
-      maxMass = 160.
-      dimuonMass = root.RooRealVar("dimuonMass","M(#mu#mu) [GeV/c^{2}]",minMass,maxMass)
-      dimuonMass.setBins(50)
-
-
-      ### Load data
-      realData = root.RooDataSet("realData"+catName+energyStr,
-                                      "realData"+catName+energyStr,
-                                          dataTree,root.RooArgSet(dimuonMass)
-                                        )
-      nData = realData.sumEntries()
-      dimuonMassZ = None
-      realDataZ=None
-
-      realDataHist = realData.binnedClone()
 
       ### Make Bak Pdfs
       self.rmpList = []
@@ -741,113 +724,134 @@ class OrderStudy:
       self.outStrDetail += catName + energyStr + "\n\n"
       for pdfBaseName in pdfsToTry:
         data[pdfBaseName] = {}
-        for order in ordersToTry:
-          data[pdfBaseName][order] = {}
-          w = root.RooWorkspace("w"+pdfBaseName+str(order))
-          wImport = getattr(w,"import")
-          pdfName = pdfBaseName+str(order)
-          pdfFunc = globals()["makePDFBak"+pdfBaseName]
-          tmpParamList,tmpNormTup,tmpDebug,tmpOrder = pdfFunc(pdfName+catName+energyStr,realData,dimuonMass,minMass,maxMass,wImport,dimuonMassZ,realDataZ,order=order)
-          pdf = w.pdf("bak")
-          fr = pdf.fitTo(realData, 
-                             #root.RooFit.Hesse(True), 
-                             #root.RooFit.Minos(True), # Doesn't Help, just makes it run longer
-                             root.RooFit.Save(True),
-                             PRINTLEVEL
-                           )
+        for sigMass in signalMassList:
+          minMass = sigMass - massWindowWidth/2.
+          maxMass = sigMass + massWindowWidth/2.
 
-          rmp = RooModelPlotter(dimuonMass,pdf,realData,fr,
-                            titleMap[catName],energyStr,lumiDict[energyStr],
-                            caption2=pdfBaseName+" Order "+str(order)
-                            )
-          rmp.draw(outPrefix+"_"+catName+"_"+pdfBaseName+str(order))
-          floatParsFinal = fr.floatParsFinal()
-          self.outStrDetail += "\n{0}\n".format(pdf.GetTitle())
-          #self.outStrDetail += tmpDebug + "\n"
-          for i in range(floatParsFinal.getSize()):
-            parTitle = floatParsFinal.at(i).GetTitle()
-            parVal = floatParsFinal.at(i).getVal()
-            parErr = floatParsFinal.at(i).getError()
-            self.outStrDetail += "  {0:30}: {1:10.3g} +/- {2:10.3g}\n".format(parTitle,parVal,parErr)
+          dimuonMass = root.RooRealVar("dimuonMass","M(#mu#mu) [GeV/c^{2}]",minMass,maxMass)
+          dimuonMass.setBins(int(massWindowWidth))
+          ### Load data
+          realData = root.RooDataSet("realData"+catName+energyStr,
+                                          "realData"+catName+energyStr,
+                                              dataTree,root.RooArgSet(dimuonMass)
+                                            )
+          nData = realData.sumEntries()
+          dimuonMassZ = None
+          realDataZ=None
+          realDataHist = realData.binnedClone()
+          data[pdfBaseName][sigMass] = {}
+          for order in ordersToTry:
+            data[pdfBaseName][sigMass][order] = {}
+            w = root.RooWorkspace("w"+pdfBaseName+str(order))
+            wImport = getattr(w,"import")
+            pdfName = pdfBaseName+str(order)
+            pdfFunc = globals()["makePDFBak"+pdfBaseName]
+            tmpParamList,tmpNormTup,tmpDebug,tmpOrder = pdfFunc(pdfName+catName+energyStr,realData,dimuonMass,minMass,maxMass,wImport,dimuonMassZ,realDataZ,order=order)
+            pdf = w.pdf("bak")
+            fr = pdf.fitTo(realData, 
+                               root.RooFit.Range(minMass,maxMass),
+                               #root.RooFit.Hesse(True), 
+                               #root.RooFit.Minos(True), # Doesn't Help, just makes it run longer
+                               root.RooFit.Save(True),
+                               PRINTLEVEL
+                             )
 
-          pdf.SetName(pdfName)
-        
-          ndfFunc = rooPdfNFreeParams(pdf,realData)
+            rmp = RooModelPlotter(dimuonMass,pdf,realData,fr,
+                              titleMap[catName],energyStr,lumiDict[energyStr],
+                              caption2=pdfBaseName+" Order "+str(order),
+                              caption3="m_{{H}}={0:.0f} GeV/c^{{2}}".format(sigMass)
+                              )
+            rmp.draw(outPrefix+"_"+catName+"_"+pdfBaseName+"_"+str(sigMass)+"_"+str(order))
+            floatParsFinal = fr.floatParsFinal()
+            self.outStrDetail += "\n{0}\n".format(pdf.GetTitle())
+            #self.outStrDetail += tmpDebug + "\n"
+            for i in range(floatParsFinal.getSize()):
+              parTitle = floatParsFinal.at(i).GetTitle()
+              parVal = floatParsFinal.at(i).getVal()
+              parErr = floatParsFinal.at(i).getError()
+              self.outStrDetail += "  {0:30}: {1:10.3g} +/- {2:10.3g}\n".format(parTitle,parVal,parErr)
 
-          chi2Var = pdf.createChi2(realDataHist)
-          chi2 = chi2Var.getVal()
-          ndf = dimuonMass.getBins() - 1  # b/c roofit normalizes
-          ndf -= ndfFunc
-          nll = fr.minNll()
-          #self.outStr+= "{0:15} chi2: {1:.2f} ndf: {2:.0f} nll: {3:.3g}\n".format(pdfName,chi2,ndf,nll)
+            pdf.SetName(pdfName)
+          
+            ndfFunc = rooPdfNFreeParams(pdf,realData)
 
-          self.rmpList.append(rmp)
-          self.pdfList.append(pdf)
-          self.frList.append(fr)
-          data[pdfBaseName][order]['chi2'] = chi2
-          data[pdfBaseName][order]['ndf'] = ndf
-          data[pdfBaseName][order]['nll'] = nll
-          data[pdfBaseName][order]['ndfFunc'] = ndfFunc
+            chi2Var = pdf.createChi2(realDataHist)
+            chi2 = chi2Var.getVal()
+            ndf = dimuonMass.getBins() - 1  # b/c roofit normalizes
+            ndf -= ndfFunc
+            nll = fr.minNll()
+            #self.outStr+= "{0:15} chi2: {1:.2f} ndf: {2:.0f} nll: {3:.3g}\n".format(pdfName,chi2,ndf,nll)
+
+            self.rmpList.append(rmp)
+            self.pdfList.append(pdf)
+            self.frList.append(fr)
+            data[pdfBaseName][sigMass][order]['chi2'] = chi2
+            data[pdfBaseName][sigMass][order]['ndf'] = ndf
+            data[pdfBaseName][sigMass][order]['nll'] = nll
+            data[pdfBaseName][sigMass][order]['ndfFunc'] = ndfFunc
 
 
       self.latexStr = ""
       for pdfBaseName in pdfsToTry:
-        tableStr =  catName+" "+energyStr+"\n"+pdfBaseName
-        tableStr += "\n\n"+r"\begin{tabular}{|l|c|c|c|c|} \hline" + "\n"
-        tableStr += r"Order & Goodness & $-\ln\mathcal{L}$ & $-2\ln\lambda$ & $p_{\chi^2}$ \\"+" \n"
-        #tableStr += r"Degree (d) & Goodness & NLL$_d$ & -2$\Delta$NLL(d+1,d) & $p_{\chi^2}$(d+1,d) \\"+" \n"
-        tableStr += r" & of Fit  &  & &  \\ \hline \hline" + "\n"
-        foundGoodOne = False
-        for order in sorted(data[pdfBaseName].keys()):
-          tmpDat = data[pdfBaseName][order]
-          tmpDatP1 = False
-          if data[pdfBaseName].has_key(order+1):
-            tmpDatP1 = data[pdfBaseName][order+1]
-          tmpDat = data[pdfBaseName][order]
-          gof = scipy.stats.chi2.sf(tmpDat['chi2'],tmpDat['ndf'])
-          nll = tmpDat['nll']
-          ndfFunc = tmpDat['ndfFunc']
-          if tmpDatP1:
-            nllP1 = tmpDatP1['nll']
-            ndfFuncP1 = tmpDatP1['ndfFunc']
-            deltaNdfFunc = ndfFuncP1-ndfFunc
-            deltaNLL = -2.*(nllP1-nll)
-            pDeltaNLL = scipy.stats.chi2.sf(deltaNLL,deltaNdfFunc)
-            if not foundGoodOne and pDeltaNLL > 0.05:
-              foundGoodOne = True
-              tableStr += r"\bf {0} & \bf {1:.3g} & \bf {2:.2f} & \bf {3:.2f} & \bf {4:.3g} ".format(order,gof,-nll,deltaNLL,pDeltaNLL)+r" \\ \hline" + "\n"
+        for sigMass in signalMassList:
+          tableStr =  catName+" "+energyStr+"\n"+pdfBaseName+" mH = {0:.1f}  massWindowWidth = {1:.2f} ".format(sigMass,massWindowWidth)
+          tableStr += "\n\n"+r"\begin{tabular}{|l|c|c|c|c|} \hline" + "\n"
+          tableStr += r"Order & Goodness & $-\ln\mathcal{L}$ & $-2\ln\lambda$ & $p_{\chi^2}$ \\"+" \n"
+          #tableStr += r"Degree (d) & Goodness & NLL$_d$ & -2$\Delta$NLL(d+1,d) & $p_{\chi^2}$(d+1,d) \\"+" \n"
+          tableStr += r" & of Fit  &  & &  \\ \hline \hline" + "\n"
+          foundGoodOne = False
+          for order in sorted(data[pdfBaseName][sigMass].keys()):
+            tmpDat = data[pdfBaseName][sigMass][order]
+            tmpDatP1 = False
+            if data[pdfBaseName][sigMass].has_key(order+1):
+              tmpDatP1 = data[pdfBaseName][sigMass][order+1]
+            tmpDat = data[pdfBaseName][sigMass][order]
+            gof = scipy.stats.chi2.sf(tmpDat['chi2'],tmpDat['ndf'])
+            nll = tmpDat['nll']
+            ndfFunc = tmpDat['ndfFunc']
+            if tmpDatP1:
+              nllP1 = tmpDatP1['nll']
+              ndfFuncP1 = tmpDatP1['ndfFunc']
+              deltaNdfFunc = ndfFuncP1-ndfFunc
+              deltaNLL = -2.*(nllP1-nll)
+              pDeltaNLL = scipy.stats.chi2.sf(deltaNLL,deltaNdfFunc)
+              if not foundGoodOne and pDeltaNLL > 0.05:
+                foundGoodOne = True
+                tableStr += r"\bf {0} & \bf {1:.3g} & \bf {2:.2f} & \bf {3:.2f} & \bf {4:.3g} ".format(order,gof,-nll,deltaNLL,pDeltaNLL)+r" \\ \hline" + "\n"
+              else:
+                tableStr += "{0} & {1:.3g} & {2:.2f} & {3:.2f} & {4:.3g} ".format(order,gof,-nll,deltaNLL,pDeltaNLL)+r" \\ \hline" + "\n"
             else:
-              tableStr += "{0} & {1:.3g} & {2:.2f} & {3:.2f} & {4:.3g} ".format(order,gof,-nll,deltaNLL,pDeltaNLL)+r" \\ \hline" + "\n"
-          else:
-            tableStr += "{0} & {1:.3g} & {2:.2f} & - & - ".format(order,gof,-nll)+r" \\ \hline" + "\n"
-        tableStr += r"\end{tabular}" + "\n\n"
-        self.latexStr += tableStr
+              tableStr += "{0} & {1:.3g} & {2:.2f} & - & - ".format(order,gof,-nll)+r" \\ \hline" + "\n"
+          tableStr += r"\end{tabular}" + "\n\n"
+          self.latexStr += tableStr
       for pdfBaseName in pdfsToTry:
-        self.outStr +=  "\n\n"+"\n"+pdfBaseName+"\n\n"
-        self.outStr += "{0:>4} {1:>10} {2:>10} {3:>10} {4:>10} ".format("d","GOF","NLL","-2DeltaNLL","pChi2")+"\n"
-        foundGoodOne = False
-        for order in sorted(data[pdfBaseName].keys()):
-          tmpDat = data[pdfBaseName][order]
-          tmpDatP1 = False
-          if data[pdfBaseName].has_key(order+1):
-            tmpDatP1 = data[pdfBaseName][order+1]
-          tmpDat = data[pdfBaseName][order]
-          gof = scipy.stats.chi2.sf(tmpDat['chi2'],tmpDat['ndf'])
-          nll = tmpDat['nll']
-          ndfFunc = tmpDat['ndfFunc']
-          if tmpDatP1:
-            nllP1 = tmpDatP1['nll']
-            ndfFuncP1 = tmpDatP1['ndfFunc']
-            deltaNdfFunc = ndfFuncP1-ndfFunc
-            deltaNLL = -2.*(nllP1-nll)
-            pDeltaNLL = scipy.stats.chi2.sf(deltaNLL,deltaNdfFunc)
-            foundGoodStr = ""
-            if not foundGoodOne and pDeltaNLL > 0.05:
-              foundGoodStr = "*"
-              foundGoodOne = True
-            self.outStr += "{0:4} {1:10.3g} {2:10.2f} {3:10.2f} {4:10.3g} {5}".format(order,gof,-nll,deltaNLL,pDeltaNLL,foundGoodStr)+ "\n"
-          else:
-            self.outStr += "{0:4} {1:10.3g} {2:10.2f} {3:>10} {4:>10} ".format(order,gof,-nll,'-','-')+"\n"
+        for sigMass in signalMassList:
+          self.outStr +=  "\n\n"+catName+" "+energyStr+"\n"+pdfBaseName+" mH = {0:.1f}    massWindowWidth = {1:.2f}".format(sigMass,massWindowWidth)+"\n\n"
+      
+          self.outStr += "{0:>4} {1:>10} {2:>10} {3:>10} {4:>10} ".format("d","GOF","NLL","-2DeltaNLL","pChi2")+"\n"
+          foundGoodOne = False
+          for order in sorted(data[pdfBaseName][sigMass].keys()):
+            tmpDat = data[pdfBaseName][sigMass][order]
+            tmpDatP1 = False
+            if data[pdfBaseName][sigMass].has_key(order+1):
+              tmpDatP1 = data[pdfBaseName][sigMass][order+1]
+            tmpDat = data[pdfBaseName][sigMass][order]
+            gof = scipy.stats.chi2.sf(tmpDat['chi2'],tmpDat['ndf'])
+            nll = tmpDat['nll']
+            ndfFunc = tmpDat['ndfFunc']
+            if tmpDatP1:
+              nllP1 = tmpDatP1['nll']
+              ndfFuncP1 = tmpDatP1['ndfFunc']
+              deltaNdfFunc = ndfFuncP1-ndfFunc
+              deltaNLL = -2.*(nllP1-nll)
+              pDeltaNLL = scipy.stats.chi2.sf(deltaNLL,deltaNdfFunc)
+              foundGoodStr = ""
+              if not foundGoodOne and pDeltaNLL > 0.05:
+                foundGoodStr = "*"
+                foundGoodOne = True
+              self.outStr += "{0:4} {1:10.3g} {2:10.2f} {3:10.2f} {4:10.3g} {5}".format(order,gof,-nll,deltaNLL,pDeltaNLL,foundGoodStr)+ "\n"
+            else:
+              self.outStr += "{0:4} {1:10.3g} {2:10.2f} {3:>10} {4:>10} ".format(order,gof,-nll,'-','-')+"\n"
 
       print self.outStr
 
@@ -891,6 +895,9 @@ if __name__ == "__main__":
   categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
+  massWindow = 20.
+  signalMasses = [115,135,155]
+
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
   dataFns8TeV = [
     "SingleMuRun2012Av1-22Jan2013",
@@ -914,7 +921,7 @@ if __name__ == "__main__":
   inputPklFiles = glob.glob(outDir+"*.pkl")
   orderStudyList = []
   for category in categories:
-    osy = OrderStudy(category,"8TeV",dataFns8TeV,outDir+"order_Shape",pdfsToTry,ordersToTry)
+    osy = OrderStudy(category,"8TeV",dataFns8TeV,outDir+"order_Shape",pdfsToTry,ordersToTry,signalMasses,massWindow)
     logFile.write(osy.outStr)
     logFile.flush()
     logDetailFile.write(osy.outStrDetail)
