@@ -51,12 +51,50 @@ titleMap = {
   "Jet2CutsFailVBFGF":"2-Jet Loose",
 }
 
-def getOrderToUseFromDict(data):
-  pass
+def getOrderToUseFromDict(dataOrds,cat,mh):
+  assert(dataOrds != None)
+  assert(cat != None)
+  assert(mh != None)
+
+  assert(dataOrds.has_key(cat))
+  data = dataOrds[cat]
+
+  if data.has_key(mh):
+    print "getOrderToUseFromDict: have mass {0} for {1} returning order {3}".format(mh,cat,data[mh])
+    return data[mh]
+
+  massList = data.keys()
+  assert(len(massList)>1)
+
+  massListP = []
+  massListN = []
+  massDiffListP = []
+  massDiffListN = []
+
+  for mass in massList:
+    mdiff = mh - mass
+    if mdiff < 0.:
+      massDiffListN.append(-mdiff)
+      massListN.append(mass)
+    else:
+      massDiffListP.append(mdiff)
+      massListP.append(mass)
+  minP = 0
+  minN = 0
+  if len(massListP)>0:
+    minP = massListP[massDiffListP.index(min(massDiffListP))]
+    minP = data[minP]
+  if len(massListN)>0:
+    minN = massListN[massDiffListN.index(min(massDiffListN))]
+    minN = data[minN]
+  result = max(minP,minN)
+
+  print "getOrderToUseFromDict: don't have mass {0} for {1} returning order {3}".format(mh,cat,result)
+  return result
 
 ########################################################################################
 
-def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None,higgsMass=None):
     debug = ""
     debug += "### makePDFBakBernstein: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -64,39 +102,9 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     channelName = name
 
+    defaultOrders = None
     if order == None:
-      if "Jets01PassPtG10BB" in name:
-        order = None
-      elif "Jets01PassPtG10BO" in name:
-        order = None
-      elif "Jets01PassPtG10BE" in name:
-        order = None
-      elif "Jets01PassPtG10OO" in name:
-        order = None
-      elif "Jets01PassPtG10OE" in name:
-        order = None
-      elif "Jets01PassPtG10EE" in name:
-        order = None
-      elif "Jets01FailPtG10BB" in name:
-        order = None
-      elif "Jets01FailPtG10BO" in name:
-        order = None
-      elif "Jets01FailPtG10BE" in name:
-        order = None
-      elif "Jets01FailPtG10OO" in name:
-        order = None
-      elif "Jets01FailPtG10OE" in name:
-        order = None
-      elif "Jets01FailPtG10EE" in name:
-        order = None
-      elif "Jet2CutsVBFPass" in name:
-        order = None
-      elif "Jet2CutsGFPass" in name:
-        order = None
-      elif "Jet2CutsFailVBFGF" in name:
-        order = None
-      else:
-        order = None
+      order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
 
     rooParamList = []
     rooArgList = root.RooArgList()
@@ -159,7 +167,7 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     return paramList, bakNormTup, debug, order
 
-def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None,higgsMass=None):
     debug = ""
     debug += "### makePDFBakChebychev: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -167,39 +175,9 @@ def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     channelName = name
 
+    defaultOrders = None
     if order == None:
-      if "Jets01PassPtG10BB" in name:
-        order = None
-      elif "Jets01PassPtG10BO" in name:
-        order = None
-      elif "Jets01PassPtG10BE" in name:
-        order = None
-      elif "Jets01PassPtG10OO" in name:
-        order = None
-      elif "Jets01PassPtG10OE" in name:
-        order = None
-      elif "Jets01PassPtG10EE" in name:
-        order = None
-      elif "Jets01FailPtG10BB" in name:
-        order = None
-      elif "Jets01FailPtG10BO" in name:
-        order = None
-      elif "Jets01FailPtG10BE" in name:
-        order = None
-      elif "Jets01FailPtG10OO" in name:
-        order = None
-      elif "Jets01FailPtG10OE" in name:
-        order = None
-      elif "Jets01FailPtG10EE" in name:
-        order = None
-      elif "Jet2CutsVBFPass" in name:
-        order = None
-      elif "Jet2CutsGFPass" in name:
-        order = None
-      elif "Jet2CutsFailVBFGF" in name:
-        order = None
-      else:
-        order = None
+      order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
 
     rooParamList = []
     rooArgList = root.RooArgList()
@@ -262,7 +240,7 @@ def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     return paramList, bakNormTup, debug, order
 
-def makePDFBakPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+def makePDFBakPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None,higgsMass=None):
     debug = ""
     debug += "### makePDFBakPolynomial: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -270,39 +248,9 @@ def makePDFBakPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
 
     channelName = name
 
+    defaultOrders = None
     if order == None:
-      if "Jets01PassPtG10BB" in name:
-        order = None
-      elif "Jets01PassPtG10BO" in name:
-        order = None
-      elif "Jets01PassPtG10BE" in name:
-        order = None
-      elif "Jets01PassPtG10OO" in name:
-        order = None
-      elif "Jets01PassPtG10OE" in name:
-        order = None
-      elif "Jets01PassPtG10EE" in name:
-        order = None
-      elif "Jets01FailPtG10BB" in name:
-        order = None
-      elif "Jets01FailPtG10BO" in name:
-        order = None
-      elif "Jets01FailPtG10BE" in name:
-        order = None
-      elif "Jets01FailPtG10OO" in name:
-        order = None
-      elif "Jets01FailPtG10OE" in name:
-        order = None
-      elif "Jets01FailPtG10EE" in name:
-        order = None
-      elif "Jet2CutsVBFPass" in name:
-        order = None
-      elif "Jet2CutsGFPass" in name:
-        order = None
-      elif "Jet2CutsFailVBFGF" in name:
-        order = None
-      else:
-        order = None
+      order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
 
     rooParamList = []
     rooArgList = root.RooArgList()
@@ -365,7 +313,7 @@ def makePDFBakPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
 
     return paramList, bakNormTup, debug, order
 
-def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None,higgsMass=None):
     debug = ""
     debug += "### makePDFBakSumExp: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -373,8 +321,9 @@ def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
 
     channelName = name
 
+    defaultOrders = None
     if order == None:
-      order = None
+      order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
 
     rooParamList = []
     pyPdfList = []
@@ -447,7 +396,7 @@ def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
 
     return paramList, bakNormTup, debug, order
 
-def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None,higgsMass=None):
     debug = ""
     debug += "### makePDFBakSumPow: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -455,39 +404,9 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
 
     channelName = name
 
+    defaultOrders = None
     if order == None:
-      if "Jets01PassPtG10BB" in name:
-        order = None
-      elif "Jets01PassPtG10BO" in name:
-        order = None
-      elif "Jets01PassPtG10BE" in name:
-        order = None
-      elif "Jets01PassPtG10OO" in name:
-        order = None
-      elif "Jets01PassPtG10OE" in name:
-        order = None
-      elif "Jets01PassPtG10EE" in name:
-        order = None
-      elif "Jets01FailPtG10BB" in name:
-        order = None
-      elif "Jets01FailPtG10BO" in name:
-        order = None
-      elif "Jets01FailPtG10BE" in name:
-        order = None
-      elif "Jets01FailPtG10OO" in name:
-        order = None
-      elif "Jets01FailPtG10OE" in name:
-        order = None
-      elif "Jets01FailPtG10EE" in name:
-        order = None
-      elif "Jet2CutsVBFPass" in name:
-        order = None
-      elif "Jet2CutsGFPass" in name:
-        order = None
-      elif "Jet2CutsFailVBFGF" in name:
-        order = None
-      else:
-        order = None
+      order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
 
     rooParamList = []
     rooArgList = root.RooArgList(dimuonMass)
@@ -575,7 +494,7 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
 
     return paramList, bakNormTup, debug, order
 
-def makePDFBakLaurent(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+def makePDFBakLaurent(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None,higgsMass=None):
     debug = ""
     debug += "### makePDFBakLaurent: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -583,40 +502,9 @@ def makePDFBakLaurent(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
 
     channelName = name
 
+    defaultOrders = None
     if order == None:
-      if "Jets01PassPtG10BB" in name:
-        order = None
-      elif "Jets01PassPtG10BO" in name:
-        order = None
-      elif "Jets01PassPtG10BE" in name:
-        order = None
-      elif "Jets01PassPtG10OO" in name:
-        order = None
-      elif "Jets01PassPtG10OE" in name:
-        order = None
-      elif "Jets01PassPtG10EE" in name:
-        order = None
-      elif "Jets01FailPtG10BB" in name:
-        order = None
-      elif "Jets01FailPtG10BO" in name:
-        order = None
-      elif "Jets01FailPtG10BE" in name:
-        order = None
-      elif "Jets01FailPtG10OO" in name:
-        order = None
-      elif "Jets01FailPtG10OE" in name:
-        order = None
-      elif "Jets01FailPtG10EE" in name:
-        order = None
-      elif "Jet2CutsVBFPass" in name:
-        order = None
-      elif "Jet2CutsGFPass" in name:
-        order = None
-      elif "Jet2CutsFailVBFGF" in name:
-        order = None
-      else:
-        order = None
-
+      order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
 
     rooParamList = []
     rooTermList = root.RooArgList()
@@ -991,7 +879,7 @@ def summaryDictMaker(summary,windowSize):
     result += ind+"# For Window Width: {0} GeV\n".format(windowSize)
     result += ind+"defaultOrders = {\n"
     for category in categories:
-      result += ind+"  "+category+": {\n"
+      result += ind+"  '"+category+"': {\n"
       for sigMass in sigMasses:
         order =  orderSummaries[category][pdfName][sigMass].order
         result +=  ind+"    {0}:{1},\n".format(sigMass,order)
@@ -1023,7 +911,7 @@ if __name__ == "__main__":
   categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   massWindow = 20.
-  signalMasses = [115,120,125,135,150,155]
+  sigMasses = [115,120,125,135,150,155]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
   dataFns8TeV = [
@@ -1068,4 +956,3 @@ if __name__ == "__main__":
   logFile.close()
   logDetailFile.close()
   texFile.close()
-  

@@ -1790,7 +1790,7 @@ if __name__ == "__main__":
   ### Define which masses to run over
 
   #sigMasses = range(115,156,5)
-  sigMasses = [115,120,125,140,150,155]
+  sigMasses = [115,120,125,135,150,155]
 
   ########################################
 
