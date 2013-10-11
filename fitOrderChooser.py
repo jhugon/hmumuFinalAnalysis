@@ -61,37 +61,37 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     if order == None:
       if "Jets01PassPtG10BB" in name:
-        order = 4
+        order = None
       elif "Jets01PassPtG10BO" in name:
-        order = 6
+        order = None
       elif "Jets01PassPtG10BE" in name:
-        order = 5
+        order = None
       elif "Jets01PassPtG10OO" in name:
-        order = 4
+        order = None
       elif "Jets01PassPtG10OE" in name:
-        order = 3
+        order = None
       elif "Jets01PassPtG10EE" in name:
-        order = 3
+        order = None
       elif "Jets01FailPtG10BB" in name:
-        order = 4
+        order = None
       elif "Jets01FailPtG10BO" in name:
-        order = 4
+        order = None
       elif "Jets01FailPtG10BE" in name:
-        order = 4
+        order = None
       elif "Jets01FailPtG10OO" in name:
-        order = 4
+        order = None
       elif "Jets01FailPtG10OE" in name:
-        order = 3
+        order = None
       elif "Jets01FailPtG10EE" in name:
-        order = 4
+        order = None
       elif "Jet2CutsVBFPass" in name:
-        order = 2
+        order = None
       elif "Jet2CutsGFPass" in name:
-        order = 3
+        order = None
       elif "Jet2CutsFailVBFGF" in name:
-        order = 4
+        order = None
       else:
-        order = 5
+        order = None
 
     rooParamList = []
     rooArgList = root.RooArgList()
@@ -114,7 +114,7 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
   
     pdfMmumu = root.RooBernstein("bak","Bernstein Order: "+str(order),dimuonMass,rooArgList)
 
-    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
@@ -164,19 +164,17 @@ def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     if order == None:
       if "Jets01PassPtG10BB" in name:
-        order = 4
+        order = None
       elif "Jets01PassPtG10BO" in name:
-        order = 6
+        order = None
       elif "Jets01PassPtG10BE" in name:
-        order = 5
+        order = None
       elif "Jets01PassPtG10OO" in name:
-        order = 4
+        order = None
       elif "Jets01PassPtG10OE" in name:
-        order = 3
+        order = None
       elif "Jets01PassPtG10EE" in name:
-        order = 3
-      ## 0,1-Jet Fail categories have poor GOF.
-      ## undershoots low-end and funny feature appears at high-end
+        order = None
       elif "Jets01FailPtG10BB" in name:
         order = None
       elif "Jets01FailPtG10BO" in name:
@@ -190,11 +188,11 @@ def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
       elif "Jets01FailPtG10EE" in name:
         order = None
       elif "Jet2CutsVBFPass" in name:
-        order = 2
+        order = None
       elif "Jet2CutsGFPass" in name:
-        order = 3
+        order = None
       elif "Jet2CutsFailVBFGF" in name:
-        order = 4
+        order = None
       else:
         order = None
 
@@ -219,7 +217,7 @@ def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
   
     pdfMmumu = root.RooChebychev("bak","Chebychev Order: "+str(order),dimuonMass,rooArgList)
 
-    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
@@ -322,7 +320,7 @@ def makePDFBakPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
   
     pdfMmumu = root.RooPolynomial("bak","Polynomial Order: "+str(order),dimuonMass,rooArgList)
 
-    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
@@ -371,7 +369,7 @@ def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
     channelName = name
 
     if order == None:
-      order = 2
+      order = None
 
     rooParamList = []
     pyPdfList = []
@@ -404,7 +402,7 @@ def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
   
     pdfMmumu = root.RooAddPdf("bak","Sum of Exponentials Order: "+str(order),rooExpPdfList,rooArgCoefList)
 
-    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
@@ -454,37 +452,37 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
 
     if order == None:
       if "Jets01PassPtG10BB" in name:
-        order = 2
+        order = None
       elif "Jets01PassPtG10BO" in name:
-        order = 2
+        order = None
       elif "Jets01PassPtG10BE" in name:
-        order = 2
+        order = None
       elif "Jets01PassPtG10OO" in name:
-        order = 2
+        order = None
       elif "Jets01PassPtG10OE" in name:
-        order = 2
+        order = None
       elif "Jets01PassPtG10EE" in name:
-        order = 2
+        order = None
       elif "Jets01FailPtG10BB" in name:
-        order = 2
+        order = None
       elif "Jets01FailPtG10BO" in name:
-        order = 2
+        order = None
       elif "Jets01FailPtG10BE" in name:
-        order = 2
+        order = None
       elif "Jets01FailPtG10OO" in name:
-        order = 2
+        order = None
       elif "Jets01FailPtG10OE" in name:
-        order = 1
+        order = None
       elif "Jets01FailPtG10EE" in name:
-        order = 2
+        order = None
       elif "Jet2CutsVBFPass" in name:
-        order = 1
+        order = None
       elif "Jet2CutsGFPass" in name:
-        order = 1
+        order = None
       elif "Jet2CutsFailVBFGF" in name:
-        order = 1
+        order = None
       else:
-        order = 1
+        order = None
 
     rooParamList = []
     rooArgList = root.RooArgList(dimuonMass)
@@ -532,7 +530,7 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
 
     pdfMmumu = root.RooGenericPdf("bak","Sum of Powers Order: "+str(order),pdfDefString,rooArgList)
 
-    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
@@ -652,7 +650,7 @@ def makePDFBakLaurent(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
     pdfMmumu = root.RooAddPdf("bak","Laurent Order: "+str(order),rooTermList,rooExtParList)
     pdfMmumu.Print()
 
-    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
@@ -711,18 +709,11 @@ class OrderStudy:
       dataTree.SetCacheSize(10000000);
       dataTree.AddBranchToCache("*");
 
-      dimuonMass = root.RooRealVar("dimuonMass","M(#mu#mu) [GeV/c^{2}]",110.,160.)
-      dimuonMass.setRange("low",110,120) # Silly ranges for old fit functionality
-      dimuonMass.setRange("high",130,160)
-      dimuonMass.setRange("signal",120,130)
-      dimuonMass.setRange("signalfit",110,140)
+      minMass = 110.
+      maxMass = 160.
+      dimuonMass = root.RooRealVar("dimuonMass","M(#mu#mu) [GeV/c^{2}]",minMass,maxMass)
       dimuonMass.setBins(50)
 
-      # Hack to Make makePDFBakOld work
-      minMassZ = 88.
-      maxMassZ = 94.
-      dimuonMassZ = root.RooRealVar("dimuonMass","dimuonMass",minMassZ,maxMassZ)
-      dimuonMassZ = dimuonMassZ
 
       ### Load data
       realData = root.RooDataSet("realData"+catName+energyStr,
@@ -730,10 +721,7 @@ class OrderStudy:
                                           dataTree,root.RooArgSet(dimuonMass)
                                         )
       nData = realData.sumEntries()
-      #realDataZ = root.RooDataSet("realDataZ"+catName+energyStr,
-      #                                "realDataZ"+catName+energyStr,
-      #                                    dataTree,root.RooArgSet(dimuonMassZ)
-      #                                  )
+      dimuonMassZ = None
       realDataZ=None
 
       realDataHist = realData.binnedClone()
@@ -759,7 +747,7 @@ class OrderStudy:
           wImport = getattr(w,"import")
           pdfName = pdfBaseName+str(order)
           pdfFunc = globals()["makePDFBak"+pdfBaseName]
-          tmpParamList,tmpNormTup,tmpDebug,tmpOrder = pdfFunc(pdfName+catName+energyStr,realData,dimuonMass,110,160,wImport,dimuonMassZ,realDataZ,order=order)
+          tmpParamList,tmpNormTup,tmpDebug,tmpOrder = pdfFunc(pdfName+catName+energyStr,realData,dimuonMass,minMass,maxMass,wImport,dimuonMassZ,realDataZ,order=order)
           pdf = w.pdf("bak")
           fr = pdf.fitTo(realData, 
                              #root.RooFit.Hesse(True), 
@@ -885,8 +873,8 @@ if __name__ == "__main__":
   outDir = "output/"
 
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
-  pdfsToTry = ["SumExp","Bernstein"]
-  ordersToTry= range(1,7)
+  pdfsToTry = ["Bernstein"]
+  ordersToTry= range(1,5)
 
   categories = []
 
@@ -894,14 +882,14 @@ if __name__ == "__main__":
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
-  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
   dataFns8TeV = [
