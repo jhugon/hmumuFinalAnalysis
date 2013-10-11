@@ -549,16 +549,9 @@ class BiasStudy:
     self.outStr = outStr
 
     self.pullSummaryDict = {}
-    for refPdfName in self.refPdfNameList:
-      self.pullSummaryDict[refPdfName] = {}
-      for pdfAltName in self.pdfAltNamesDict[refPdfName]:
-        self.pullSummaryDict[refPdfName][pdfAltName] = {}
-        for hmass in self.sigMasses:
-          self.pullSummaryDict[refPdfName][pdfAltName][hmass] = median(data[refPdfName][hmass][pdfAltName]['pull'])
-          self.pullSummaryDict[refPdfName]['orderRef'] = data[refPdfName][hmass]['orderTrue']
-
     self.zSigmaSummaryDict = {}
     for refPdfName in self.refPdfNameList:
+      self.pullSummaryDict[refPdfName] = {}
       self.zSigmaSummaryDict[refPdfName] = {}
       self.zSigmaSummaryDict[refPdfName]["zTrue"] = {}
       for hmass in self.sigMasses:
@@ -566,6 +559,10 @@ class BiasStudy:
         for pdfAltName in self.pdfAltNamesDict[refPdfName]:
           if not self.zSigmaSummaryDict[refPdfName].has_key(pdfAltName):
             self.zSigmaSummaryDict[refPdfName][pdfAltName] = {}
+          if not self.pullSummaryDict[refPdfName].has_key(pdfAltName):
+            self.pullSummaryDict[refPdfName][pdfAltName] = {}
+          self.pullSummaryDict[refPdfName][pdfAltName][hmass] = median(data[refPdfName][hmass][pdfAltName]['pull'])
+          self.pullSummaryDict[refPdfName]['orderRef'] = data[refPdfName][hmass]['orderTrue']
           self.zSigmaSummaryDict[refPdfName][pdfAltName][hmass] = stddev(data[refPdfName][hmass][pdfAltName]['z'])
 
   def plot(self,outputPrefix):
@@ -638,6 +635,7 @@ class BiasStudy:
         maxx = 160
         axisHist = root.TH2F("axishist"+str(iHist),"",1,minx,maxx,1,-1,1)
         setHistTitles(axisHist,"M_{H} [GeV/c^{2}]","Median[(N_{sig}(Alt)-N_{sig}(Ref))/#DeltaN_{sig}(Alt)]")
+        iHist += 1
         graph = root.TGraph()
         graphBand = root.TGraphErrors()
         graphBand.SetPoint(0,minx,0.)
@@ -671,6 +669,7 @@ class BiasStudy:
       maxx = 160
       axisHist = root.TH2F("axishist"+str(iHist),"",1,minx,maxx,1,-5,5)
       setHistTitles(axisHist,"M_{H} [GeV/c^{2}]","N_{sig}(Ref))/#DeltaN_{sig}(Ref)]")
+      iHist += 1
       graph = root.TGraphErrors()
       graphBand = root.TGraphErrors()
       graphBand.SetPoint(0,minx,0.)
@@ -703,6 +702,7 @@ class BiasStudy:
         maxx = 160
         axisHist = root.TH2F("axishist"+str(iHist),"",1,minx,maxx,1,-5,5)
         setHistTitles(axisHist,"M_{H} [GeV/c^{2}]","N_{sig}(Alt))/#DeltaN_{sig}(Alt)]")
+        iHist += 1
         graph = root.TGraphErrors()
         graphBand = root.TGraphErrors()
         graphBand.SetPoint(0,minx,0.)
@@ -736,6 +736,7 @@ class BiasStudy:
         maxx = 160
         axisHist = root.TH2F("axishist"+str(iHist),"",1,minx,maxx,1,0.,5.)
         setHistTitles(axisHist,"M_{H} [GeV/c^{2}]","StdDev[N_{sig}(Alt))/#DeltaN_{sig}(Alt)]]")
+        iHist += 1
         graph = root.TGraph()
         for iPoint,hmass in zip(range(len(self.sigMasses)),self.sigMasses):
             zSigmaTmp = stddev(self.data[refPdfName][hmass][pdfAltName]['z'])
