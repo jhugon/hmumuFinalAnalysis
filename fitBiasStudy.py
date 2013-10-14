@@ -1547,7 +1547,7 @@ def printBiasTable(dataCats,refName,altName):
   print plainResult
   print latexResult
 
-def printBiasSummary(dataCats):
+def printBiasSummary(dataCats,excludeHmassFunc = lambda x: False):
   catNames = sorted(dataCats.keys())
   if len(catNames) == 0:
     return
@@ -1601,6 +1601,8 @@ def printBiasSummary(dataCats):
           for hmass in data[refName][altName]:
             tmpBias = data[refName][altName][hmass]
             tmpAbsBias = abs(tmpBias)
+            if excludeHmassFunc(hmass):
+                continue
             if tmpAbsBias > absMaxBias:
               maxBias = tmpBias
               absMaxBias = tmpAbsBias
@@ -1711,10 +1713,10 @@ if __name__ == "__main__":
       #    "ExpLog",
       #    "MOverSq",
           "Bernstein",
-      #    "SumExp",
-      #    "SumPow",
+          "SumExp",
+          "SumPow",
       #    "Laurent",
-      #    "Chebychev",
+          "Chebychev",
       #    "Polynomial",
   ]
   ###############################################
@@ -1736,36 +1738,49 @@ if __name__ == "__main__":
                         "ExpMOverSq",
                         #"ExpMOverSq",
                         #"Old",
-                        #"3Bernstein",
-                        #"4Bernstein",
-                        #"5Bernstein",
+                        "2Bernstein",
+                        "3Bernstein",
+                        "4Bernstein",
+                        "5Bernstein",
                         #"6Bernstein",
                         #"7Bernstein",
                         #"8Bernstein",
-                        #"1SumExp",
-                        #"2SumExp",
+                        "1SumExp",
+                        "2SumExp",
                         #"3SumExp",
                         #"4SumExp",
                     ],
       "SumExp":[          
-                        "ExpMOverSqP0New",
+                        "ExpMOverSq",
                         #"ExpMOverSq",
                         #"Old",
-                        #"3Bernstein",
-                        #"4Bernstein",
-                        #"5Bernstein",
+                        "2Bernstein",
+                        "3Bernstein",
+                        "4Bernstein",
+                        "5Bernstein",
                         #"6Bernstein",
                         #"7Bernstein",
                         #"8Bernstein",
-                        #"1SumExp",
-                        #"2SumExp",
+                        "1SumExp",
+                        "2SumExp",
                         #"3SumExp",
                         #"4SumExp",
                     ],
       "SumPow":[          
                         "ExpMOverSq",
-                        "Old",
-                        "SumExp",
+                        #"ExpMOverSq",
+                        #"Old",
+                        "2Bernstein",
+                        "3Bernstein",
+                        "4Bernstein",
+                        "5Bernstein",
+                        #"6Bernstein",
+                        #"7Bernstein",
+                        #"8Bernstein",
+                        "1SumExp",
+                        "2SumExp",
+                        #"3SumExp",
+                        #"4SumExp",
                     ],
       "Laurent":[          
                         "ExpMOverSq",
@@ -1776,10 +1791,19 @@ if __name__ == "__main__":
                     ],
       "Chebychev":[          
                         "ExpMOverSq",
-                        "Old",
-                        "Bernstein",
-                        "SumPow",
-                        "SumExp",
+                        #"ExpMOverSq",
+                        #"Old",
+                        "2Bernstein",
+                        "3Bernstein",
+                        "4Bernstein",
+                        "5Bernstein",
+                        #"6Bernstein",
+                        #"7Bernstein",
+                        #"8Bernstein",
+                        "1SumExp",
+                        "2SumExp",
+                        #"3SumExp",
+                        #"4SumExp",
                     ],
       "Polynomial":[          
                         "ExpMOverSq",
@@ -1818,8 +1842,8 @@ if __name__ == "__main__":
   ########################################
   ### Directory and file names
 
-  dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
-  #dataDir = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
+  #dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
+  dataDir = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
   dataFns8TeV = [
     "SingleMuRun2012Av1-22Jan2013",
     "SingleMuRun2012Bv1-22Jan2013",
@@ -1908,6 +1932,7 @@ if __name__ == "__main__":
   inputPklFiles = glob.glob(outDir+"*.pkl")
   printBiasTable(allSummaries,"Old","ExpMOverSq")
   printBiasSummary(allSummaries)
+  #printBiasSummary(allSummaries, excludeHmassFunc=lambda x: float(x)<120.)
   printDiagnosticSummary(allSummaries,allZSigmaSummaries)
     
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
