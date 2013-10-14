@@ -1810,7 +1810,7 @@ if __name__ == "__main__":
 
   #sigMasses = range(115,156,5)
   sigMasses = [115,120,125,135,150,155]
-  massWindow = 20.
+  massWindow = 25.
 
   ########################################
 
