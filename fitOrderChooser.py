@@ -481,6 +481,7 @@ def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
         150:1,
         155:1,
       },
+    }
 
     if order == None:
       order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
