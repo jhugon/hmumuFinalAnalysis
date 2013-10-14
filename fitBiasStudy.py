@@ -98,7 +98,7 @@ PDFTITLEMAP = PdfTitleMap({
     "Chebychev":"Chebychev",
     "Polynomial":"Polynomial",
     "SumExp":"Sum of Exponentials",
-    "SumPow":"Sum of Power Functions",
+    "SumPow":"Sum of Powers",
     "Laurent":"Laurent",
 })
 
@@ -1484,66 +1484,60 @@ def mergeDicts(data,newData,multiJob=False):
               assert(type(newData[key][mass][subkey][subsubkey])==list)
               data[key][mass][subkey][subsubkey].extend(newData[key][mass][subkey][subsubkey])
 
-
-def printBiasTable(dataCats,refName,altName):
+def printBiasTable(dataCats,hmasses):
   catNames = sorted(dataCats.keys())
   if len(catNames) == 0:
     return
   plainResult = ""
   latexResult = ""
-  masses = None
   for catName in catNames:
-    if not dataCats[catName].has_key(refName):
-        return
-    if not dataCats[catName][refName].has_key(altName):
-        return
-    masses = sorted(dataCats[catName][refName][altName].keys(),key=float)
-    break
-  sorted01PJetCats = []
-  sorted01FJetCats = []
-  sorted2JetCats = []
-  for cat in catNames:
-    if "Jets01P" in cat:
-      sorted01PJetCats.append(cat)
-    elif "Jets01F" in cat:
-      sorted01FJetCats.append(cat)
-    else:
-      sorted2JetCats.append(cat)
-  catNames = []
-  sorted01PJetCats.sort()
-  sorted01FJetCats.sort()
-  sorted2JetCats.sort()
-  catNames.extend(sorted01PJetCats)
-  catNames.extend(sorted01FJetCats)
-  catNames.extend(sorted2JetCats)
-  plainResult += "????????????????????????????????????????????????????????????\n"
-  plainResult += "Bias v. Mass for Ref: {0} Alt: {1}\n\n".format(refName,altName)
-  plainResult += "{0:<25}".format("")
-  latexResult += "%???????????????????????????????????????????????????????????\n"
-  latexResult += "%% Bias v. Mass for Ref: {0} Alt: {1}\n\n".format(refName,altName)
-  latexResult += r"\begin{tabular}{|l|"+"r|"*len(masses)+"} \\hline \n"
-  latexResult += r" & \multicolumn{"+str(len(masses))+r"}{c|}{$m_H$ [GeV/c$^2$]} \\ \hline "+"\n"
-  for mass in masses:
-    plainResult += "{0:>12}".format(mass)
-    latexResult += "& {0:>12} ".format(mass)
-  plainResult += "\n"
-  latexResult += r"\\ \hline \hline"+"\n"
-  for catName in catNames:
-    if not dataCats[catName].has_key(refName):
-        return
-    if not dataCats[catName][refName].has_key(altName):
-        return
-    data = dataCats[catName][refName][altName]
-    plainResult += "{0:<25}".format(catName)
-    latexResult += "{0:25} ".format(TITLEMAP[catName])
-    for mass in masses:
-      plainResult += "{0:>12.1%}".format(data[mass])
-      latexResult += ("& {0:12.1%} ".format(data[mass])).replace("%","\%")
-    plainResult += "\n"
-    latexResult += r"\\ \hline"+"\n"
-  plainResult += "\n????????????????????????????????????????????????????????????\n"
-  latexResult += "\\end{tabular}\n\n"
-  latexResult += "\n%????????????????????????????????????????????????????????????\n"
+    catTitle = TITLEMAP[catName]
+    data = dataCats[catName]
+    refNames = sorted(data.keys())
+    allAltNames = set()
+    for refName in refNames:
+      allAltNames = allAltNames.union(data[refName].keys())
+    allAltNames = sorted(list(allAltNames))
+    allAltNames.pop(allAltNames.index("orderRef"))
+    for altName in allAltNames:
+      altTitle = PDFTITLEMAP[altName]
+      if "#" in altTitle or "^" in altTitle:
+        altTitle = '$'+altTitle+'$'
+      altTitle = altTitle.replace("#","\\")
+      plainResult += "############################################################\n"
+      plainResult += catName+" Bias v. Mass for Alt: "+altName+"\n\n"
+      plainResult += "\n{0:<10}".format("Alternate")+"{0:>15}\n".format("Reference")
+      plainResult += "{0:<10}".format("")
+      latexResult += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+      latexResult += "%% "+catName+" Bias v. Mass for Alt: "+altName+"\n\n"
+      latexResult += r"\begin{tabular}{|l|"+"r|"*len(refNames)+"} \\hline \n"
+      latexResult += r"\multicolumn{"+str(len(refNames)+1)+r"}{|c|}{ \bf "+catTitle+' Bias for '+altTitle+r"} \\ \hline"+"\n"
+      latexResult += r"\multicolumn{1}{|c|}{\multirow{3}{*}{$m_{H}$ [GeV/c$^{2}$]}} & \multicolumn{"+str(len(refNames))+r"}{c|}{Reference PDFs} \\ \cline{"+"2-{0}".format(len(refNames)+1)+"} "+"\n"
+      for refName in refNames:
+        if data[refName]['orderRef'] != None:
+          latexResult += "& \multicolumn{1}{c|}{"+getOrdinalStr(data[refName]['orderRef'])+"-Order} "
+        else:
+          latexResult += "&              ".format(getOrdinalStr(data[refName]['orderRef']))
+      latexResult += r"\\ "+"\n"
+      for refName in refNames:
+        plainResult += "{0:>15}".format(refName)
+        nicePdfName = PDFTITLEMAP[refName]
+        if "#" in nicePdfName:
+          nicePdfName = '$'+nicePdfName+'$'
+        latexResult += "& \multicolumn{1}{c|}{" +"{0:>15}".format(nicePdfName.replace("#","\\"))+"} "
+      plainResult += "\n"
+      latexResult += r"\\ \hline"+"\n"
+      for hmass in hmasses:
+        plainResult += "{0:<10.0f}".format(hmass)
+        latexResult += "{0:10.0f} ".format(hmass)
+        for refName in refNames:
+           tmpBias = data[refName][altName][hmass]
+           plainResult += "{0:>15.1%}".format(tmpBias)
+           latexResult += ("& {0:15.1%} ".format(tmpBias)).replace("%","\%")
+        plainResult += "\n"
+        latexResult += r"\\ \hline"+"\n"
+      plainResult += "\n\n"
+      latexResult += "\\end{tabular}\n\n"
   print plainResult
   print latexResult
 
@@ -1929,8 +1923,7 @@ if __name__ == "__main__":
         bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
         allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
-  inputPklFiles = glob.glob(outDir+"*.pkl")
-  printBiasTable(allSummaries,"Old","ExpMOverSq")
+  printBiasTable(allSummaries,sigMasses)
   printBiasSummary(allSummaries)
   #printBiasSummary(allSummaries, excludeHmassFunc=lambda x: float(x)<120.)
   printDiagnosticSummary(allSummaries,allZSigmaSummaries)
