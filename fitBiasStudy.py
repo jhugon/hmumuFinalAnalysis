@@ -516,37 +516,9 @@ class BiasStudy:
       pklFile.close()
 
     self.nData = self.data['meta']['nData']
-    outStr = "#"*80+"\n"
-    outStr = "#"*80+"\n"
-    outStr += "\n"+self.catName +"  "+self.energyStr + "\n\n"
-
-    outStr += "nToys: {0}\n".format(self.nToys)
-    outStr += "nData Events: {0}\n".format(self.nData)
-    outStr += "\n"
-
     data = self.data
 
-    for refPdfName in self.refPdfNameList:
-      outStr +=  "Reference PDF: "+str(refPdfName)+'\n'
-      for hmass in self.sigMasses:
-        outStr +=  "mass: "+str(hmass)+'\n'
-        dataH = data[refPdfName][hmass]
-        #shapiroStat, shapiroP = scipy.stats.shapiro(dataH['zTrue'])
-        #sumChi2 = sum(dataH['chi2True'])
-        #sumNDF = sum(dataH['ndfTrue'])
-        #outStr +=  "  True Z Scores:   {0:.2f} +/- {1:.2f}  Median: {2:.2f}    S-W Normal p-Val: {3:.3g}\n".format(mean(dataH['zTrue']),stddev(dataH['zTrue']),median(dataH['zTrue']),shapiroP)
-        #outStr +=  "  True Fit Prob:   {0:.3g},                              chi2: {1:.2f}  NDF: {2}\n".format(scipy.stats.chi2.sf(sumChi2,sumNDF),sumChi2,sumNDF)
-        #outStr +=  "  All Pulls:       {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataH['pullAll']),stddev(dataH['pullAll']),median(dataH['pullAll']))
-        for pdfAltName in self.pdfAltNamesDict[refPdfName]:
-          dataHA = dataH[pdfAltName]
-          #shapiroStat, shapiroP = scipy.stats.shapiro(dataHA['z'])
-          #sumChi2 = sum(dataHA['chi2'])
-          #sumNDF = sum(dataHA['ndf'])
-          outStr +=  "  "+pdfAltName+":\n"
-          #outStr +=  "    Z Scores:      {0:.2f} +/- {1:.2f}  Median: {2:.2f}    S-W Normal p-Val: {3:.3g}\n".format(mean(dataHA['z']),stddev(dataHA['z']),median(dataHA['z']),shapiroP)
-          #outStr +=  "    Fit Prob:      {0:.3g},                              chi2: {1:.2f}  NDF: {2}\n".format(scipy.stats.chi2.sf(sumChi2,sumNDF),sumChi2,sumNDF)
-          outStr +=  "    Pulls:         {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataHA['pull']),stddev(dataHA['pull']),median(dataHA['pull']))
-    print outStr
+    outStr = ""
     self.outStr = outStr
 
     self.pullSummaryDict = {}
