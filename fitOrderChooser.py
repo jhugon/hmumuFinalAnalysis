@@ -107,7 +107,58 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     channelName = name
 
-    defaultOrders = None
+    # Bernstein Default Order Dict
+    # For Window Width: 25.0 GeV
+    defaultOrders = {
+      'Jet2CutsFailVBFGF': {
+        115:3,
+        120:2,
+        125:2,
+        135:1,
+        150:2,
+        155:1,
+      },
+      'Jet2CutsGFPass': {
+        115:2,
+        120:2,
+        125:2,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsVBFPass': {
+        115:2,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BB': {
+        115:5,
+        120:3,
+        125:3,
+        135:2,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BE': {
+        115:4,
+        120:3,
+        125:3,
+        135:2,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BO': {
+        115:4,
+        120:3,
+        125:4,
+        135:2,
+        150:1,
+        155:2,
+      },
+    }
 
     if order == None:
       order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
@@ -181,7 +232,58 @@ def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     channelName = name
 
-    defaultOrders = None
+    # Chebychev Default Order Dict
+    # For Window Width: 25.0 GeV
+    defaultOrders = {
+      'Jet2CutsFailVBFGF': {
+        115:3,
+        120:2,
+        125:2,
+        135:1,
+        150:2,
+        155:1,
+      },
+      'Jet2CutsGFPass': {
+        115:2,
+        120:2,
+        125:2,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsVBFPass': {
+        115:2,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BB': {
+        115:5,
+        120:3,
+        125:3,
+        135:2,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BE': {
+        115:4,
+        120:3,
+        125:3,
+        135:2,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BO': {
+        115:4,
+        120:3,
+        125:4,
+        135:2,
+        150:1,
+        155:2,
+      },
+    }
 
     if order == None:
       order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
@@ -1003,8 +1105,10 @@ if __name__ == "__main__":
   outDir = "output/"
 
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
-  pdfsToTry = ["SumExp","SumPow"]
-  ordersToTry= range(1,5)
+  #pdfsToTry = ["SumExp","SumPow"]
+  #ordersToTry= range(1,5)
+  pdfsToTry = ["Bernstein","Chebychev"]
+  ordersToTry= range(1,7)
 
   categories = []
 
