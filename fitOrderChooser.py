@@ -1004,7 +1004,7 @@ def summaryWriter(summary,windowSize):
   result += "####### "+"{0:^17}".format("Window: {0:.1f}".format(windowSize))+" #######\n"
   result += "#################################\n"
   pdfNames = None
-  categories = sorted(summary.keys())
+  categories = sortCatNames(summary.keys())
   for category in categories:
     pdfNames =  sorted(summary[category].keys())
     break
@@ -1037,7 +1037,7 @@ def summaryWriter(summary,windowSize):
 def summaryLatex(summary,windowSize):
   result = ""
   pdfNames = None
-  categories = sorted(summary.keys())
+  categories = sortCatNames(summary.keys())
   for category in categories:
     pdfNames =  sorted(summary[category].keys())
     break
@@ -1074,7 +1074,7 @@ def summaryLatex(summary,windowSize):
 def summaryDictMaker(summary,windowSize):
   result = "\n########################################################\n"
   pdfNames = None
-  categories = sorted(summary.keys())
+  categories = sortCatNames(summary.keys())
   for category in categories:
     pdfNames =  sorted(summary[category].keys())
     break
