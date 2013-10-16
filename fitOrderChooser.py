@@ -1004,7 +1004,7 @@ def summaryWriter(summary,windowSize):
   result += "####### "+"{0:^17}".format("Window: {0:.1f}".format(windowSize))+" #######\n"
   result += "#################################\n"
   pdfNames = None
-  categories = sorted(summary.keys())
+  categories = sortCatNames(summary.keys())
   for category in categories:
     pdfNames =  sorted(summary[category].keys())
     break
@@ -1026,18 +1026,24 @@ def summaryWriter(summary,windowSize):
       result += "{0:20}".format(category)
       gofList = []
       for sigMass in sigMasses:
+        if not orderSummaries[category][pdfName].has_key(sigMass) or orderSummaries[category][pdfName][sigMass] == None:
+          result +=  "{0:>8}".format("-")
+          continue
         order =  orderSummaries[category][pdfName][sigMass].order
         gof =  orderSummaries[category][pdfName][sigMass].gof
         result +=  "{0:>8}".format(order)
         gofList.append(gof)
-      result += "{0:>10.3f}".format(min(gofList))
+      if len(gofList) != 0:
+        result += "{0:>10.3f}".format(min(gofList))
+      else:
+        result += "{0:>10}".format('-')
       result += "\n"
   return result
 
 def summaryLatex(summary,windowSize):
   result = ""
   pdfNames = None
-  categories = sorted(summary.keys())
+  categories = sortCatNames(summary.keys())
   for category in categories:
     pdfNames =  sorted(summary[category].keys())
     break
@@ -1064,6 +1070,9 @@ def summaryLatex(summary,windowSize):
     for category in categories:
       result += "{0:20} ".format(titleMap[category])
       for sigMass in sigMasses:
+        if not orderSummaries[category][pdfName].has_key(sigMass) or orderSummaries[category][pdfName][sigMass] == None:
+          result +=  "{0:>8}".format("-")
+          continue
         order =  orderSummaries[category][pdfName][sigMass].order
         result +=  "& {0:>8} ".format(order)
       result += r"\\ \hline"
@@ -1074,7 +1083,7 @@ def summaryLatex(summary,windowSize):
 def summaryDictMaker(summary,windowSize):
   result = "\n########################################################\n"
   pdfNames = None
-  categories = sorted(summary.keys())
+  categories = sortCatNames(summary.keys())
   for category in categories:
     pdfNames =  sorted(summary[category].keys())
     break
@@ -1094,7 +1103,9 @@ def summaryDictMaker(summary,windowSize):
     for category in categories:
       result += ind+"  '"+category+"': {\n"
       for sigMass in sigMasses:
-        order =  orderSummaries[category][pdfName][sigMass].order
+        order = None
+        if orderSummaries[category][pdfName].has_key(sigMass) and orderSummaries[category][pdfName][sigMass] != None:
+          order =  orderSummaries[category][pdfName][sigMass].order
         result +=  ind+"    {0}:{1},\n".format(sigMass,order)
       result += ind+"  },\n"
     result += ind+"}\n"

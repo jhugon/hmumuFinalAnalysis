@@ -1457,7 +1457,7 @@ def mergeDicts(data,newData,multiJob=False):
               data[key][mass][subkey][subsubkey].extend(newData[key][mass][subkey][subsubkey])
 
 def printBiasTable(dataCats,hmasses):
-  catNames = sorted(dataCats.keys())
+  catNames = sortCatNames(dataCats.keys())
   if len(catNames) == 0:
     return
   plainResult = ""
@@ -1484,13 +1484,7 @@ def printBiasTable(dataCats,hmasses):
       latexResult += "%% "+catName+" Bias v. Mass for Alt: "+altName+"\n\n"
       latexResult += r"\begin{tabular}{|l|"+"r|"*len(refNames)+"} \\hline \n"
       latexResult += r"\multicolumn{"+str(len(refNames)+1)+r"}{|c|}{ \bf "+catTitle+' Bias for '+altTitle+r"} \\ \hline"+"\n"
-      latexResult += r"\multicolumn{1}{|c|}{\multirow{3}{*}{$m_{H}$ [GeV/c$^{2}$]}} & \multicolumn{"+str(len(refNames))+r"}{c|}{Reference PDFs} \\ \cline{"+"2-{0}".format(len(refNames)+1)+"} "+"\n"
-      for refName in refNames:
-        if data[refName]['orderRef'] != None:
-          latexResult += "& \multicolumn{1}{c|}{"+getOrdinalStr(data[refName]['orderRef'])+"-Order} "
-        else:
-          latexResult += "&              ".format(getOrdinalStr(data[refName]['orderRef']))
-      latexResult += r"\\ "+"\n"
+      latexResult += r"\multicolumn{1}{|c|}{\multirow{2}{*}{$m_{H}$ [GeV/c$^{2}$]}} & \multicolumn{"+str(len(refNames))+r"}{c|}{Reference PDFs} \\ \cline{"+"2-{0}".format(len(refNames)+1)+"} "+"\n"
       for refName in refNames:
         plainResult += "{0:>15}".format(refName)
         nicePdfName = PDFTITLEMAP[refName]
@@ -1514,7 +1508,7 @@ def printBiasTable(dataCats,hmasses):
   print latexResult
 
 def printBiasSummary(dataCats,excludeHmassFunc = lambda x: False):
-  catNames = sorted(dataCats.keys())
+  catNames = sortCatNames(dataCats.keys())
   if len(catNames) == 0:
     return
   plainResult = ""
@@ -1536,13 +1530,7 @@ def printBiasSummary(dataCats,excludeHmassFunc = lambda x: False):
     latexResult += "%% "+catName+" Maximum Bias\n\n"
     latexResult += r"\begin{tabular}{|l|"+"r|"*len(refNames)+"} \\hline \n"
     latexResult += r"\multicolumn{"+str(len(refNames)+1)+r"}{|c|}{ \bf "+catTitle+r" Maximum Bias} \\ \hline"+"\n"
-    latexResult += r"\multicolumn{1}{|c|}{\multirow{3}{*}{Alternate PDFs}} & \multicolumn{"+str(len(refNames))+r"}{c|}{Reference PDFs} \\ \cline{"+"2-{0}".format(len(refNames)+1)+"} "+"\n"
-    for refName in refNames:
-      if data[refName]['orderRef'] != None:
-        latexResult += "& \multicolumn{1}{c|}{"+getOrdinalStr(data[refName]['orderRef'])+"-Order} "
-      else:
-        latexResult += "&              ".format(getOrdinalStr(data[refName]['orderRef']))
-    latexResult += r"\\ "+"\n"
+    latexResult += r"\multicolumn{1}{|c|}{\multirow{2}{*}{Alternate PDFs}} & \multicolumn{"+str(len(refNames))+r"}{c|}{Reference PDFs} \\ \cline{"+"2-{0}".format(len(refNames)+1)+"} "+"\n"
     for refName in refNames:
       plainResult += "{0:>15}".format(refName)
       nicePdfName = PDFTITLEMAP[refName]
@@ -1583,7 +1571,7 @@ def printBiasSummary(dataCats,excludeHmassFunc = lambda x: False):
           
       
 def printDiagnosticSummary(dataCats,dataCatsZSig):
-  catNames = sorted(dataCats.keys())
+  catNames = sortCatNames(dataCats.keys())
   if len(catNames) == 0:
     return
   assert(len(dataCats)==len(dataCatsZSig))
