@@ -216,10 +216,14 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
         trueToyPdf = wTrueToy.pdf("bak")
         trueToyPdf.SetName(trueToyPdfName)
         assert(trueOrder == trueToyOrder)
+
+        truePdfNameOrder = truePdfName
+        if trueOrder:
+          truePdfNameOrder = str(trueOrder)+truePdfNameOrder
   
         # Debug plot for fit to data
         #if toysPerJob > 2:
-        if False:
+        if True:
           frame = dimuonMass.frame()
           realDataHist = realData.binnedClone("realDataHist"+catName+energyStr+str(iJob))
           chi2RealDataVar = truePdf.createChi2(realDataHist)
@@ -232,7 +236,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           frame.GetYaxis().SetTitle("Events / 1 GeV/c^{2}")
           tlatex.SetTextAlign(12)
           tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Ref PDF: "+truePdfName)
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Ref PDF: "+truePdfNameOrder)
           tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.80,"m_{{H}}: {0:.1f}".format(hmass))
           tlatex.SetTextAlign(32)
           tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,catName+" "+energyStr)
@@ -313,7 +317,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           toyData.SetName("toyData"+catName+energyStr+str(iToy))
           toyDataHist = toyData.binnedClone("toyDataHist"+catName+energyStr+str(iToy))
           plotThisToy = (iToy % plotEveryNToys == 5)
-          plotThisToy = False
+          plotThisToy = True
           frame = None 
           if plotThisToy:
             frame = dimuonMass.frame()
@@ -355,8 +359,8 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           data[truePdfName][hmass]['ndfBOnly'].append(ndfBOnlyVal)
           data[truePdfName][hmass]['nBakTrue'].append(nBakTrue)
           if plotThisToy:
-            trueToySBPdf.plotOn(frame,root.RooFit.LineColor(6))
-          for pdfAlt,pdfAltName,color in zip(pdfAltList,pdfAltNameList,range(2,len(pdfAltList)+2)):
+            trueToySBPdf.plotOn(frame,root.RooFit.LineColor(2))
+          for pdfAlt,pdfAltName,color in zip(pdfAltList,pdfAltNameList,range(3,len(pdfAltList)+3)):
               ##### Get Background Only chi^2 and nBak
               pdfAlt.fitTo(toyData,
                                  PRINTLEVEL
@@ -401,7 +405,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
             frame.GetYaxis().SetTitle("Events / 1 GeV/c^{2}")
             tlatex.SetTextAlign(12)
             tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
-            tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Ref PDF: "+truePdfName)
+            tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Ref PDF: "+truePdfNameOrder)
             tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.80,"m_{{H}}: {0:.1f}".format(hmass))
             tlatex.SetTextAlign(32)
             tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,catName+" "+energyStr)
@@ -409,6 +413,30 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
             tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.80,"Ref B-Only #chi^{{2}}/NDF: {0:.2f}".format(chi2BOnlyVal/ndfBOnlyVal))
             tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Ref S+B GOF: {0:.2f}".format(scipy.stats.chi2.sf(chi2TrueToyVar.getVal(),ndfTrue)))
             tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.70,"Ref S+B #chi^{{2}}/NDF: {0:.2f}".format(chi2TrueToyVar.getVal()/ndfTrue))
+            dummyGraphList = []
+            leg = root.TLegend(0.20,0.20,0.5,0.48)
+            leg.SetFillColor(0)
+            leg.SetLineColor(0)
+            dumG = root.TGraph()
+            dumG.SetLineWidth(2)
+            dumG.SetLineColor(2)
+            nsigStr = " {0:.1f}#pm{1:.1f}".format(
+                data[truePdfName][hmass]['nTrue'][-1],
+                data[truePdfName][hmass]['errTrue'][-1]
+              )
+            leg.AddEntry(dumG,"Reference"+nsigStr,"l")
+            dummyGraphList.append(dumG)
+            for pdfAltName,color in zip(pdfAltNameList,range(3,len(pdfAltList)+3)):
+                nsigStr = " {0:.1f}#pm{1:.1f}".format(
+                    data[truePdfName][hmass][pdfAltName]['n'][-1],
+                    data[truePdfName][hmass][pdfAltName]['err'][-1]
+                  )
+                dumG = root.TGraph()
+                dumG.SetLineWidth(2)
+                dumG.SetLineColor(color)
+                leg.AddEntry(dumG,pdfAltName+nsigStr,"l")
+                dummyGraphList.append(dumG)
+            leg.Draw()
             canvas.SaveAs("output/debug_"+truePdfName+"_"+catName+"_"+energyStr+"_"+str(hmass)+tmpJobStr+"_Toy"+str(iToy)+".png")
           #if truePdfName == "Old":
           #  print "**************************************************************"
@@ -1717,7 +1745,7 @@ if __name__ == "__main__":
   ############################################
   ### Define number of toys to run over
 
-  nToys = 20
+  nToys = 5
 
   ############################################
   ### Define which reference functions to use
@@ -1730,9 +1758,9 @@ if __name__ == "__main__":
       #    "MOverSq",
           "Bernstein",
           "SumExp",
-          "SumPow",
+#          "SumPow",
       #    "Laurent",
-          "Chebychev",
+#          "Chebychev",
       #    "Polynomial",
   ]
   ###############################################
@@ -1779,8 +1807,8 @@ if __name__ == "__main__":
                         #"6Bernstein",
                         #"7Bernstein",
                         #"8Bernstein",
-                        "1SumExp",
-                        "2SumExp",
+#                        "1SumExp",
+#                        "2SumExp",
                         #"3SumExp",
                         #"4SumExp",
                     ],
@@ -1796,8 +1824,8 @@ if __name__ == "__main__":
                         #"6Bernstein",
                         #"7Bernstein",
                         #"8Bernstein",
-                        "1SumExp",
-                        "2SumExp",
+#                        "1SumExp",
+#                        "2SumExp",
                         #"3SumExp",
                         #"4SumExp",
                     ],
@@ -1855,15 +1883,15 @@ if __name__ == "__main__":
 
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   ########################################
   ### Directory and file names
 
-  #dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
-  dataDir = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
+  dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
+  #dataDir = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
   dataFns8TeV = [
     "SingleMuRun2012Av1-22Jan2013",
     "SingleMuRun2012Bv1-22Jan2013",
