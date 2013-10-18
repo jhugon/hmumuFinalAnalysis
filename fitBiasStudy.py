@@ -218,7 +218,8 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
         assert(trueOrder == trueToyOrder)
   
         # Debug plot for fit to data
-        if toysPerJob > 2:
+        #if toysPerJob > 2:
+        if False:
           frame = dimuonMass.frame()
           realDataHist = realData.binnedClone("realDataHist"+catName+energyStr+str(iJob))
           chi2RealDataVar = truePdf.createChi2(realDataHist)
@@ -312,6 +313,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           toyData.SetName("toyData"+catName+energyStr+str(iToy))
           toyDataHist = toyData.binnedClone("toyDataHist"+catName+energyStr+str(iToy))
           plotThisToy = (iToy % plotEveryNToys == 5)
+          plotThisToy = False
           frame = None 
           if plotThisToy:
             frame = dimuonMass.frame()
@@ -523,19 +525,26 @@ class BiasStudy:
 
     self.pullSummaryDict = {}
     self.zSigmaSummaryDict = {}
+    self.zMedianSummaryDict = {}
     for refPdfName in self.refPdfNameList:
       self.pullSummaryDict[refPdfName] = {}
+      self.zMedianSummaryDict[refPdfName] = {}
+      self.zMedianSummaryDict[refPdfName]["zTrue"] = {}
       self.zSigmaSummaryDict[refPdfName] = {}
       self.zSigmaSummaryDict[refPdfName]["zTrue"] = {}
       for hmass in self.sigMasses:
+        self.zMedianSummaryDict[refPdfName]['zTrue'][hmass] = median(data[refPdfName][hmass]['zTrue'])
         self.zSigmaSummaryDict[refPdfName]['zTrue'][hmass] = stddev(data[refPdfName][hmass]['zTrue'])
         for pdfAltName in self.pdfAltNamesDict[refPdfName]:
+          if not self.zMedianSummaryDict[refPdfName].has_key(pdfAltName):
+            self.zMedianSummaryDict[refPdfName][pdfAltName] = {}
           if not self.zSigmaSummaryDict[refPdfName].has_key(pdfAltName):
             self.zSigmaSummaryDict[refPdfName][pdfAltName] = {}
           if not self.pullSummaryDict[refPdfName].has_key(pdfAltName):
             self.pullSummaryDict[refPdfName][pdfAltName] = {}
           self.pullSummaryDict[refPdfName][pdfAltName][hmass] = median(data[refPdfName][hmass][pdfAltName]['pull'])
           self.pullSummaryDict[refPdfName]['orderRef'] = data[refPdfName][hmass]['orderTrue']
+          self.zMedianSummaryDict[refPdfName][pdfAltName][hmass] = median(data[refPdfName][hmass][pdfAltName]['z'])
           self.zSigmaSummaryDict[refPdfName][pdfAltName][hmass] = stddev(data[refPdfName][hmass][pdfAltName]['z'])
 
   def plot(self,outputPrefix):
@@ -1628,6 +1637,59 @@ def printDiagnosticSummary(dataCats,dataCatsZSig):
     plainResult += "\n\n"
   print plainResult
 
+def printZs(dataCatsZMed,dataCatsZSig,hmasses):
+  catNames = sortCatNames(dataCatsZMed.keys())
+  if len(catNames) == 0:
+    return
+  plainResult = ""
+  latexResult = ""
+  for catName in catNames:
+    catTitle = TITLEMAP[catName]
+    dataZMed = dataCatsZMed[catName]
+    dataZSig = dataCatsZSig[catName]
+    refNames = sorted(dataZMed.keys())
+    allAltNames = set()
+    for refName in refNames:
+      allAltNames = allAltNames.union(dataZMed[refName].keys())
+    allAltNames = sorted(list(allAltNames))
+    allAltNames.pop(allAltNames.index("zTrue"))
+    for altName in allAltNames:
+      altTitle = PDFTITLEMAP[altName]
+      if "#" in altTitle or "^" in altTitle:
+        altTitle = '$'+altTitle+'$'
+      altTitle = altTitle.replace("#","\\")
+      plainResult += "############################################################\n"
+      plainResult += catName+" Z v. Mass for Alt: "+altName+"\n\n"
+      plainResult += "\n{0:<10}".format("Alternate")+"{0:>15}\n".format("Reference")
+      plainResult += "{0:<10}".format("")
+      latexResult += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+      latexResult += "%% "+catName+" Z v. Mass for Alt: "+altName+"\n\n"
+      latexResult += r"\begin{tabular}{|l|"+"r|"*len(refNames)+"} \\hline \n"
+      latexResult += r"\multicolumn{"+str(len(refNames)+1)+r"}{|c|}{ \bf "+catTitle+' Bias for '+altTitle+r"} \\ \hline"+"\n"
+      latexResult += r"\multicolumn{1}{|c|}{\multirow{2}{*}{$m_{H}$ [GeV/c$^{2}$]}} & \multicolumn{"+str(len(refNames))+r"}{c|}{Reference PDFs} \\ \cline{"+"2-{0}".format(len(refNames)+1)+"} "+"\n"
+      for refName in refNames:
+        plainResult += "{0:>15}".format(refName)
+        nicePdfName = PDFTITLEMAP[refName]
+        if "#" in nicePdfName:
+          nicePdfName = '$'+nicePdfName+'$'
+        latexResult += "& \multicolumn{1}{c|}{" +"{0:>15}".format(nicePdfName.replace("#","\\"))+"} "
+      plainResult += "\n"
+      latexResult += r"\\ \hline"+"\n"
+      for hmass in hmasses:
+        plainResult += "{0:<10.0f}".format(hmass)
+        latexResult += "{0:10.0f} ".format(hmass)
+        for refName in refNames:
+           tmpMed = dataZMed[refName][altName][hmass]
+           tmpRMS = dataZSig[refName][altName][hmass]
+           plainResult += "{0:>15}".format("{0:.2f}+/-{0:.2f}".format(tmpMed,tmpRMS))
+           latexResult += "& {0:15} ".format(r"{0:.2f}$\pm${0:.2f}".format(tmpMed,tmpRMS))
+        plainResult += "\n"
+        latexResult += r"\\ \hline"+"\n"
+      plainResult += "\n\n"
+      latexResult += "\\end{tabular}\n\n"
+  print plainResult
+  print latexResult
+
 
 if __name__ == "__main__":
   helpStr = "./fitBiasStudy.py [jobGroupNumber] [categoryName]\n  where jobGroupNumber is an int that will be added to the random number seed (*1000)\n    and the output pkl file name\n  if there is a jobGroupNumber, no plots or summary will be produced.\n  If categoryName is present, then only that category will be run,\n    otherwise a group of categories defined in the script will all be run."
@@ -1655,7 +1717,7 @@ if __name__ == "__main__":
   ############################################
   ### Define number of toys to run over
 
-  nToys = 1
+  nToys = 20
 
   ############################################
   ### Define which reference functions to use
@@ -1689,9 +1751,10 @@ if __name__ == "__main__":
                         "Old",
                     ],
       "Bernstein":[          
-                        "ExpMOverSq",
+                        #"ExpMOverSq",
                         #"ExpMOverSq",
                         #"Old",
+                        "1Bernstein",
                         "2Bernstein",
                         "3Bernstein",
                         "4Bernstein",
@@ -1705,9 +1768,10 @@ if __name__ == "__main__":
                         #"4SumExp",
                     ],
       "SumExp":[          
-                        "ExpMOverSq",
+                        #"ExpMOverSq",
                         #"ExpMOverSq",
                         #"Old",
+                        "1Bernstein",
                         "2Bernstein",
                         "3Bernstein",
                         "4Bernstein",
@@ -1721,9 +1785,10 @@ if __name__ == "__main__":
                         #"4SumExp",
                     ],
       "SumPow":[          
-                        "ExpMOverSq",
+                        #"ExpMOverSq",
                         #"ExpMOverSq",
                         #"Old",
+                        "1Bernstein",
                         "2Bernstein",
                         "3Bernstein",
                         "4Bernstein",
@@ -1744,9 +1809,10 @@ if __name__ == "__main__":
                         "SumExp",
                     ],
       "Chebychev":[          
-                        "ExpMOverSq",
+                        #"ExpMOverSq",
                         #"ExpMOverSq",
                         #"Old",
+                        "1Bernstein",
                         "2Bernstein",
                         "3Bernstein",
                         "4Bernstein",
@@ -1819,6 +1885,7 @@ if __name__ == "__main__":
 
   allSummaries = {}
   allZSigmaSummaries = {}
+  allZMedianSummaries = {}
   tmpJobGroupStr = ""
   if iJobGroup != None:
     tmpJobGroupStr = "_jobGrp"+str(iJobGroup)
@@ -1843,10 +1910,11 @@ if __name__ == "__main__":
       for inputPkl in inputPklFiles:
         print "Running over input pkl file: "+inputPkl
         bs = BiasStudy(None,None,None,None,None,None,None,inputPkl=inputPkl)
-        logFile.write(bs.outStr)
+#        logFile.write(bs.outStr)
         bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
         allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
+        allZMedianSummaries[bs.catName] = bs.zMedianSummaryDict
     else:
       # Identify basenames to combine job groups
       basenames = set()
@@ -1869,9 +1937,10 @@ if __name__ == "__main__":
           tmpF.close()
         bs = BiasStudy(None,None,None,None,None,None,None,inputPkl=resultData)
         logFile.write(bs.outStr)
-        bs.plot(outDir+"bias_")
+#        bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
         allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
+        allZMedianSummaries[bs.catName] = bs.zMedianSummaryDict
   else:
     processPool = None
     if NPROCS > 1:
@@ -1880,13 +1949,15 @@ if __name__ == "__main__":
       bs = BiasStudy(category,dataFns8TeV,"8TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool,iJobGroup=iJobGroup,fitMassWindow=massWindow)
       logFile.write(bs.outStr)
       if iJobGroup == None:
-        bs.plot(outDir+"bias_")
+#        bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
         allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
+        allZMedianSummaries[bs.catName] = bs.zMedianSummaryDict
   printBiasTable(allSummaries,sigMasses)
-  printBiasSummary(allSummaries)
-  #printBiasSummary(allSummaries, excludeHmassFunc=lambda x: float(x)<120.)
+  #printBiasSummary(allSummaries)
+  printBiasSummary(allSummaries, excludeHmassFunc=lambda x: float(x)<120.)
   printDiagnosticSummary(allSummaries,allZSigmaSummaries)
+  printZs(allZMedianSummaries,allZSigmaSummaries,sigMasses)
     
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
   logFile.write("\n\n# {0}\n".format(now))
