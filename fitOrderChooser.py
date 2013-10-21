@@ -433,31 +433,15 @@ def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
     # SumExp Default Order Dict
     # For Window Width: 25.0 GeV
     defaultOrders = {
-      'Jet2CutsFailVBFGF': {
+      'Jets01PassPtG10BB': {
         115:2,
         120:2,
-        125:1,
-        135:1,
+        125:2,
+        135:2,
         150:1,
         155:1,
       },
-      'Jet2CutsGFPass': {
-        115:2,
-        120:1,
-        125:1,
-        135:1,
-        150:1,
-        155:1,
-      },
-      'Jet2CutsVBFPass': {
-        115:1,
-        120:1,
-        125:1,
-        135:1,
-        150:1,
-        155:1,
-      },
-      'Jets01PassPtG10BB': {
+      'Jets01PassPtG10BO': {
         115:2,
         120:2,
         125:2,
@@ -473,11 +457,99 @@ def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
         150:1,
         155:1,
       },
-      'Jets01PassPtG10BO': {
+      'Jets01PassPtG10OO': {
+        115:2,
+        120:2,
+        125:2,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10OE': {
+        115:2,
+        120:2,
+        125:1,
+        135:2,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10EE': {
+        115:2,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10BB': {
         115:2,
         120:2,
         125:2,
         135:2,
+        150:1,
+        155:2,
+      },
+      'Jets01FailPtG10BO': {
+        115:2,
+        120:2,
+        125:2,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10BE': {
+        115:2,
+        120:2,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10OO': {
+        115:2,
+        120:2,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10OE': {
+        115:2,
+        120:2,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10EE': {
+        115:2,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsVBFPass': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsGFPass': {
+        115:2,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsFailVBFGF': {
+        115:2,
+        120:2,
+        125:1,
+        135:1,
         150:1,
         155:1,
       },
@@ -568,7 +640,47 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
     # SumPow Default Order Dict
     # For Window Width: 25.0 GeV
     defaultOrders = {
-      'Jet2CutsFailVBFGF': {
+      'Jets01PassPtG10BB': {
+        115:1,
+        120:2,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BO': {
+        115:2,
+        120:2,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BE': {
+        115:2,
+        120:2,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10OO': {
+        115:2,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10OE': {
+        115:2,
+        120:2,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10EE': {
         115:1,
         120:1,
         125:1,
@@ -576,7 +688,47 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
         150:1,
         155:1,
       },
-      'Jet2CutsGFPass': {
+      'Jets01FailPtG10BB': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10BO': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10BE': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10OO': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10OE': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10EE': {
         115:1,
         120:1,
         125:1,
@@ -592,25 +744,17 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
         150:1,
         155:1,
       },
-      'Jets01PassPtG10BB': {
+      'Jet2CutsGFPass': {
         115:1,
-        120:2,
+        120:1,
         125:1,
         135:1,
         150:1,
         155:1,
       },
-      'Jets01PassPtG10BE': {
-        115:2,
-        120:2,
-        125:1,
-        135:1,
-        150:1,
-        155:1,
-      },
-      'Jets01PassPtG10BO': {
-        115:2,
-        120:2,
+      'Jet2CutsFailVBFGF': {
+        115:1,
+        120:1,
         125:1,
         135:1,
         150:1,
@@ -1004,7 +1148,7 @@ def summaryWriter(summary,windowSize):
   result += "####### "+"{0:^17}".format("Window: {0:.1f}".format(windowSize))+" #######\n"
   result += "#################################\n"
   pdfNames = None
-  categories = sorted(summary.keys())
+  categories = sortCatNames(summary.keys())
   for category in categories:
     pdfNames =  sorted(summary[category].keys())
     break
@@ -1037,7 +1181,7 @@ def summaryWriter(summary,windowSize):
 def summaryLatex(summary,windowSize):
   result = ""
   pdfNames = None
-  categories = sorted(summary.keys())
+  categories = sortCatNames(summary.keys())
   for category in categories:
     pdfNames =  sorted(summary[category].keys())
     break
@@ -1074,7 +1218,7 @@ def summaryLatex(summary,windowSize):
 def summaryDictMaker(summary,windowSize):
   result = "\n########################################################\n"
   pdfNames = None
-  categories = sorted(summary.keys())
+  categories = sortCatNames(summary.keys())
   for category in categories:
     pdfNames =  sorted(summary[category].keys())
     break
@@ -1105,10 +1249,10 @@ if __name__ == "__main__":
   outDir = "output/"
 
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
-  #pdfsToTry = ["SumExp","SumPow"]
-  #ordersToTry= range(1,5)
-  pdfsToTry = ["Bernstein","Chebychev"]
-  ordersToTry= range(1,7)
+  pdfsToTry = ["SumExp","SumPow"]
+  ordersToTry= range(1,5)
+  #pdfsToTry = ["Bernstein","Chebychev"]
+  #ordersToTry= range(1,7)
 
   categories = []
 
@@ -1116,11 +1260,11 @@ if __name__ == "__main__":
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
-  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
-  #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
-  #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
+  categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
