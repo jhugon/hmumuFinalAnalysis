@@ -21,6 +21,34 @@ import datetime
 PRELIMINARYSTRING="CMS Preliminary"
 #PRELIMINARYSTRING="CMS"
 
+def sortCatNames(l):
+  orderDef = [
+    "CombSplitAll",
+    "Jets01SplitCatAll",
+    "Jet2SplitCutsGFSplit",
+    "Jets01PassCatAll" ,
+    "Jets01FailCatAll" ,
+
+    "Jets01PassPtG10BB",
+    "Jets01PassPtG10BO",
+    "Jets01PassPtG10BE",
+    "Jets01PassPtG10OO",
+    "Jets01PassPtG10OE",
+    "Jets01PassPtG10EE",
+                          
+    "Jets01FailPtG10BB",
+    "Jets01FailPtG10BO",
+    "Jets01FailPtG10BE",
+    "Jets01FailPtG10OO",
+    "Jets01FailPtG10OE",
+    "Jets01FailPtG10EE",
+
+    "Jet2CutsVBFPass",
+    "Jet2CutsGFPass",
+    "Jet2CutsFailVBFGF",
+  ]
+  return sorted(l,key=lambda x: orderDef.index(x))
+
 def drange(start, stop, step):
   r = start
   while r < stop:
