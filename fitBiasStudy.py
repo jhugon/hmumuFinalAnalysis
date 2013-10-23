@@ -218,7 +218,8 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
         assert(trueOrder == trueToyOrder)
   
         # Debug plot for fit to data
-        if toysPerJob > 2:
+        #if toysPerJob > 2:
+        if False:
           frame = dimuonMass.frame()
           realDataHist = realData.binnedClone("realDataHist"+catName+energyStr+str(iJob))
           chi2RealDataVar = truePdf.createChi2(realDataHist)
@@ -311,7 +312,8 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           toyData = truePdf.generate(root.RooArgSet(dimuonMass),int(nData))
           toyData.SetName("toyData"+catName+energyStr+str(iToy))
           toyDataHist = toyData.binnedClone("toyDataHist"+catName+energyStr+str(iToy))
-          plotThisToy = (iToy % plotEveryNToys == 5)
+          #plotThisToy = (iToy % plotEveryNToys == 5)
+          plotThisToy = False
           frame = None 
           if plotThisToy:
             frame = dimuonMass.frame()
