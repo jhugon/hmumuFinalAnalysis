@@ -29,11 +29,11 @@ categoriesImportant="Jets01PassPtG10BB Jets01PassPtG10BO Jets01PassPtG10BE Jet2C
 categoriesImportant01="Jets01PassPtG10BB Jets01PassPtG10BO Jets01PassPtG10BE"
 
 for iJob in $(seq $firstJobN $lastJobN); do
-  for category in $categoriesAll; do
+  $for category in $categoriesAll; do
   #for category in $categories01Tight; do
   #for category in $categories2; do
-  #for category in $categoriesImportant; do
-    command="bsub -q cmscaf1nd -o $fullDir/jobOutFitBiasJob$iJob$category lxbatch_fitBias.sh $iJob $category"
+  for category in $categoriesImportant01; do
+    command="bsub -q 1nd -o $fullDir/jobOutFitBiasJob$iJob$category lxbatch_fitBias.sh $iJob $category"
     echo "running: "$command
     $command
   done
