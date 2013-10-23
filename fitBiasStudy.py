@@ -1655,7 +1655,7 @@ if __name__ == "__main__":
   ############################################
   ### Define number of toys to run over
 
-  nToys = 1
+  nToys = 10
 
   ############################################
   ### Define which reference functions to use
@@ -1696,7 +1696,7 @@ if __name__ == "__main__":
                         "3Bernstein",
                         "4Bernstein",
                         "5Bernstein",
-                        #"6Bernstein",
+                        "6Bernstein",
                         #"7Bernstein",
                         #"8Bernstein",
                         "1SumExp",
@@ -1712,7 +1712,7 @@ if __name__ == "__main__":
                         "3Bernstein",
                         "4Bernstein",
                         "5Bernstein",
-                        #"6Bernstein",
+                        "6Bernstein",
                         #"7Bernstein",
                         #"8Bernstein",
                         "1SumExp",
@@ -1728,7 +1728,7 @@ if __name__ == "__main__":
                         "3Bernstein",
                         "4Bernstein",
                         "5Bernstein",
-                        #"6Bernstein",
+                        "6Bernstein",
                         #"7Bernstein",
                         #"8Bernstein",
                         "1SumExp",
@@ -1751,7 +1751,7 @@ if __name__ == "__main__":
                         "3Bernstein",
                         "4Bernstein",
                         "5Bernstein",
-                        #"6Bernstein",
+                        "6Bernstein",
                         #"7Bernstein",
                         #"8Bernstein",
                         "1SumExp",
