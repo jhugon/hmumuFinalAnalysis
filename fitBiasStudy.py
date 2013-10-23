@@ -525,19 +525,27 @@ class BiasStudy:
 
     self.pullSummaryDict = {}
     self.zSigmaSummaryDict = {}
+    self.zMedianSummaryDict = {}
     for refPdfName in self.refPdfNameList:
       self.pullSummaryDict[refPdfName] = {}
+      self.zMedianSummaryDict[refPdfName] = {}
+      self.zMedianSummaryDict[refPdfName]["zTrue"] = {}
       self.zSigmaSummaryDict[refPdfName] = {}
       self.zSigmaSummaryDict[refPdfName]["zTrue"] = {}
       for hmass in self.sigMasses:
+        print "nToys for {0} {1} {2}: {3}".format(self.catName,refPdfName,hmass,len(data[refPdfName][hmass]['zTrue']))
+        self.zMedianSummaryDict[refPdfName]['zTrue'][hmass] = median(data[refPdfName][hmass]['zTrue'])
         self.zSigmaSummaryDict[refPdfName]['zTrue'][hmass] = stddev(data[refPdfName][hmass]['zTrue'])
         for pdfAltName in self.pdfAltNamesDict[refPdfName]:
+          if not self.zMedianSummaryDict[refPdfName].has_key(pdfAltName):
+            self.zMedianSummaryDict[refPdfName][pdfAltName] = {}
           if not self.zSigmaSummaryDict[refPdfName].has_key(pdfAltName):
             self.zSigmaSummaryDict[refPdfName][pdfAltName] = {}
           if not self.pullSummaryDict[refPdfName].has_key(pdfAltName):
             self.pullSummaryDict[refPdfName][pdfAltName] = {}
           self.pullSummaryDict[refPdfName][pdfAltName][hmass] = median(data[refPdfName][hmass][pdfAltName]['pull'])
           self.pullSummaryDict[refPdfName]['orderRef'] = data[refPdfName][hmass]['orderTrue']
+          self.zMedianSummaryDict[refPdfName][pdfAltName][hmass] = median(data[refPdfName][hmass][pdfAltName]['z'])
           self.zSigmaSummaryDict[refPdfName][pdfAltName][hmass] = stddev(data[refPdfName][hmass][pdfAltName]['z'])
 
   def plot(self,outputPrefix):
@@ -1480,7 +1488,7 @@ def printBiasTable(dataCats,hmasses):
       altTitle = altTitle.replace("#","\\")
       plainResult += "############################################################\n"
       plainResult += catName+" Bias v. Mass for Alt: "+altName+"\n\n"
-      plainResult += "\n{0:<10}".format("Alternate")+"{0:>15}\n".format("Reference")
+      plainResult += "\n{0:<10}".format("mH")+"{0:>15}\n".format("Reference")
       plainResult += "{0:<10}".format("")
       latexResult += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
       latexResult += "%% "+catName+" Bias v. Mass for Alt: "+altName+"\n\n"
@@ -1571,64 +1579,94 @@ def printBiasSummary(dataCats,excludeHmassFunc = lambda x: False):
   print plainResult
   print latexResult
           
-      
-def printDiagnosticSummary(dataCats,dataCatsZSig):
-  catNames = sortCatNames(dataCats.keys())
+def printZs(dataCatsZMed,dataCatsZSig,hmasses):
+  catNames = sortCatNames(dataCatsZMed.keys())
   if len(catNames) == 0:
     return
-  assert(len(dataCats)==len(dataCatsZSig))
   plainResult = ""
+  latexResult = ""
+  # First Reference Zs
   for catName in catNames:
     catTitle = TITLEMAP[catName]
-    data = dataCats[catName]
+    dataZMed = dataCatsZMed[catName]
     dataZSig = dataCatsZSig[catName]
-    refNames = sorted(data.keys())
+    refNames = sorted(dataZMed.keys())
+    plainResult += "############################################################\n"
+    plainResult += catName+" Reference Z v. Mass    (median +/- RMS)"+"\n\n"
+    plainResult += "\n{0:<10}".format("mH")+"{0:>18}\n".format("Reference")
+    plainResult += "{0:<10}".format("")
+    latexResult += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+    latexResult += "%% "+catName+" Reference Z v. Mass     (median +/- RMS)"+"\n\n"
+    latexResult += r"\begin{tabular}{|l|"+"r|"*len(refNames)+"} \\hline \n"
+    latexResult += r"\multicolumn{"+str(len(refNames)+1)+r"}{|c|}{ \bf "+catTitle+' Reference Z'+r"} \\ \hline"+"\n"
+    latexResult += r"\multicolumn{1}{|c|}{\multirow{2}{*}{$m_{H}$ [GeV/c$^{2}$]}} & \multicolumn{"+str(len(refNames))+r"}{c|}{Reference PDFs} \\ \cline{"+"2-{0}".format(len(refNames)+1)+"} "+"\n"
+    for refName in refNames:
+      plainResult += "{0:>18}".format(refName)
+      nicePdfName = PDFTITLEMAP[refName]
+      if "#" in nicePdfName:
+        nicePdfName = '$'+nicePdfName+'$'
+      latexResult += "& \multicolumn{1}{c|}{" +"{0:>18}".format(nicePdfName.replace("#","\\"))+"} "
+    plainResult += "\n"
+    latexResult += r"\\ \hline"+"\n"
+    for hmass in hmasses:
+      plainResult += "{0:<10.0f}".format(hmass)
+      latexResult += "{0:10.0f} ".format(hmass)
+      for refName in refNames:
+         tmpMed = dataZMed[refName]['zTrue'][hmass]
+         tmpRMS = dataZSig[refName]['zTrue'][hmass]
+         plainResult += "{0:>18}".format("{0:.2f} +/- {1:.2f}".format(tmpMed,tmpRMS))
+         latexResult += "& {0:18} ".format(r"{0:.2f}$\pm${1:.2f}".format(tmpMed,tmpRMS))
+      plainResult += "\n"
+      latexResult += r"\\ \hline"+"\n"
+    plainResult += "\n\n"
+    latexResult += "\\end{tabular}\n\n"
+  # Now Alternate sigma Z's
+  for catName in catNames:
+    catTitle = TITLEMAP[catName]
+    dataZMed = dataCatsZMed[catName]
+    dataZSig = dataCatsZSig[catName]
+    refNames = sorted(dataZMed.keys())
     allAltNames = set()
     for refName in refNames:
-      allAltNames = allAltNames.union(data[refName].keys())
+      allAltNames = allAltNames.union(dataZMed[refName].keys())
     allAltNames = sorted(list(allAltNames))
-    allAltNames.pop(allAltNames.index("orderRef"))
-    plainResult += "############################################################\n"
-    plainResult += catName+" Maximum Bias\n\n"
-    plainResult += "\n{0:<15}".format("Alternate")+"{0:>15}".format("Reference")
-    for i in range(len(refNames)-1):
-      plainResult += "{0:>15}".format("")
-    plainResult += "{0:>15}".format("Z-Sigmas")
-    plainResult += "\n"
-    plainResult += "{0:>15}".format("")
-    for refName in refNames:
-      plainResult += "{0:>15}".format(refName,)
-      nicePdfName = PDFTITLEMAP[refName]
-    for refName in refNames:
-       maxZSig = 0.
-       for hmass in dataZSig[refName]['zTrue']:
-         maxZSig = max(dataZSig[refName]['zTrue'][hmass],maxZSig)
-       plainResult += "{0:>15.2f}".format(maxZSig)
-    plainResult += "\n"
+    allAltNames.pop(allAltNames.index("zTrue"))
     for altName in allAltNames:
-      plainResult += "{0:<15}".format(altName)
-      nicePdfName = PDFTITLEMAP[altName]
+      altTitle = PDFTITLEMAP[altName]
+      if "#" in altTitle or "^" in altTitle:
+        altTitle = '$'+altTitle+'$'
+      altTitle = altTitle.replace("#","\\")
+      plainResult += "############################################################\n"
+      plainResult += catName+" RMS(Z) v. Mass for Alt: "+altName+"\n\n"
+      plainResult += "\n{0:<10}".format("mH")+"{0:>15}\n".format("Reference")
+      plainResult += "{0:<10}".format("")
+      latexResult += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+      latexResult += "%% "+catName+" RMS(Z) v. Mass for Alt: "+altName+"\n\n"
+      latexResult += r"\begin{tabular}{|l|"+"r|"*len(refNames)+"} \\hline \n"
+      latexResult += r"\multicolumn{"+str(len(refNames)+1)+r"}{|c|}{ \bf "+catTitle+' RMS(Z) for '+altTitle+r"} \\ \hline"+"\n"
+      latexResult += r"\multicolumn{1}{|c|}{\multirow{2}{*}{$m_{H}$ [GeV/c$^{2}$]}} & \multicolumn{"+str(len(refNames))+r"}{c|}{Reference PDFs} \\ \cline{"+"2-{0}".format(len(refNames)+1)+"} "+"\n"
       for refName in refNames:
-          if not data[refName].has_key(altName):
-            plainResult += "{0:>15}".format("-")
-            continue
-          maxBias = 0.
-          absMaxBias = 0.
-          for hmass in data[refName][altName]:
-            tmpBias = data[refName][altName][hmass]
-            tmpAbsBias = abs(tmpBias)
-            if tmpAbsBias > absMaxBias:
-              maxBias = tmpBias
-              absMaxBias = tmpAbsBias
-          plainResult += "{0:>15.1%}".format(maxBias)
-      for refName in refNames:
-          maxZSig = 0.
-          for hmass in dataZSig[refName][altName]:
-            maxZSig = max(dataZSig[refName][altName][hmass],maxZSig)
-          plainResult += "{0:>15.2f}".format(maxZSig)
+        plainResult += "{0:>15}".format(refName)
+        nicePdfName = PDFTITLEMAP[refName]
+        if "#" in nicePdfName:
+          nicePdfName = '$'+nicePdfName+'$'
+        latexResult += "& \multicolumn{1}{c|}{" +"{0:>15}".format(nicePdfName.replace("#","\\"))+"} "
       plainResult += "\n"
-    plainResult += "\n\n"
+      latexResult += r"\\ \hline"+"\n"
+      for hmass in hmasses:
+        plainResult += "{0:<10.0f}".format(hmass)
+        latexResult += "{0:10.0f} ".format(hmass)
+        for refName in refNames:
+           tmpMed = dataZMed[refName][altName][hmass]
+           tmpRMS = dataZSig[refName][altName][hmass]
+           plainResult += "{0:>15.2f}".format(tmpRMS)
+           latexResult += "& {0:15.2f} ".format(tmpRMS)
+        plainResult += "\n"
+        latexResult += r"\\ \hline"+"\n"
+      plainResult += "\n\n"
+      latexResult += "\\end{tabular}\n\n"
   print plainResult
+  print latexResult
 
 
 if __name__ == "__main__":
@@ -1691,7 +1729,7 @@ if __name__ == "__main__":
                         "Old",
                     ],
       "Bernstein":[          
-                        "ExpMOverSq",
+                        #"ExpMOverSq",
                         #"ExpMOverSq",
                         #"Old",
                         "2Bernstein",
@@ -1707,7 +1745,7 @@ if __name__ == "__main__":
                         #"4SumExp",
                     ],
       "SumExp":[          
-                        "ExpMOverSq",
+                        #"ExpMOverSq",
                         #"ExpMOverSq",
                         #"Old",
                         "2Bernstein",
@@ -1723,7 +1761,7 @@ if __name__ == "__main__":
                         #"4SumExp",
                     ],
       "SumPow":[          
-                        "ExpMOverSq",
+                        #"ExpMOverSq",
                         #"ExpMOverSq",
                         #"Old",
                         "2Bernstein",
@@ -1746,7 +1784,7 @@ if __name__ == "__main__":
                         "SumExp",
                     ],
       "Chebychev":[          
-                        "ExpMOverSq",
+                        #"ExpMOverSq",
                         #"ExpMOverSq",
                         #"Old",
                         "2Bernstein",
@@ -1821,6 +1859,7 @@ if __name__ == "__main__":
 
   allSummaries = {}
   allZSigmaSummaries = {}
+  allZMedianSummaries = {}
   tmpJobGroupStr = ""
   if iJobGroup != None:
     tmpJobGroupStr = "_jobGrp"+str(iJobGroup)
@@ -1849,6 +1888,7 @@ if __name__ == "__main__":
         bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
         allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
+        allZMedianSummaries[bs.catName] = bs.zMedianSummaryDict
     else:
       # Identify basenames to combine job groups
       basenames = set()
@@ -1874,6 +1914,7 @@ if __name__ == "__main__":
         bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
         allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
+        allZMedianSummaries[bs.catName] = bs.zMedianSummaryDict
   else:
     processPool = None
     if NPROCS > 1:
@@ -1885,10 +1926,11 @@ if __name__ == "__main__":
         bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
         allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
-  printBiasTable(allSummaries,sigMasses)
+        allZMedianSummaries[bs.catName] = bs.zMedianSummaryDict
   printBiasSummary(allSummaries)
   #printBiasSummary(allSummaries, excludeHmassFunc=lambda x: float(x)<120.)
-  printDiagnosticSummary(allSummaries,allZSigmaSummaries)
+  printBiasTable(allSummaries,sigMasses)
+  printZs(allZMedianSummaries,allZSigmaSummaries,sigMasses)
     
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
   logFile.write("\n\n# {0}\n".format(now))
