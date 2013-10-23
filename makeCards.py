@@ -99,7 +99,7 @@ class Param:
     else:
         return "-{0:.5g}/+{1:.5g}".format(self.lowErr,self.highErr)
 
-def makePDFBakExpLog(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+def makePDFBakExpLog(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None,higgsMass=None):
     debug = ""
     debug += "### makePDFBakExpLog: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -112,7 +112,7 @@ def makePDFBakExpLog(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
     p3 = root.RooRealVar(channelName+"_p3","p3", 0.0, -1., 1.)
     pdfMmumu = root.RooGenericPdf("bak","TMath::Exp(@0*@0*@1 + @0*@2 + @3*TMath::Log(@0) )",root.RooArgList(dimuonMass,p1,p2,p3))
 
-    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
@@ -164,7 +164,7 @@ def makePDFBakExpLog(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
     return paramList, bakNormTup, debug, None
 
 
-def makePDFBakExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+def makePDFBakExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None,higgsMass=None):
     debug = ""
     debug += "### makePDFBakExpMOverSq: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -185,7 +185,7 @@ def makePDFBakExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
 
     pdfMmumu = root.RooGenericPdf("bak","TMath::Exp(@0*@2)/(@0-@1)/(@0-@1)",root.RooArgList(dimuonMass,InvPolMass,ExpMass))
 
-    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
@@ -238,7 +238,7 @@ def makePDFBakExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
 
     return paramList, bakNormTup, debug, None
 
-def makePDFBakExpMOverSqP0(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+def makePDFBakExpMOverSqP0(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None,higgsMass=None):
     debug = ""
     debug += "### makePDFBakExpMOverSqP0: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -258,7 +258,7 @@ def makePDFBakExpMOverSqP0(name,rooDataset,dimuonMass,minMass,maxMass,workspaceI
 
     pdfMmumu = root.RooGenericPdf("bak","TMath::Exp(-@0*@2*@2)/(@0-@1)*(1./(@0-@1)+@3*@3*@0)",root.RooArgList(dimuonMass,EXPPOLP0_1,EXPPOLP0_2,EXPPOLP0_3))
 
-    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
@@ -311,7 +311,7 @@ def makePDFBakExpMOverSqP0(name,rooDataset,dimuonMass,minMass,maxMass,workspaceI
 
     return paramList, bakNormTup, debug, None
 
-def makePDFBakExpMOverSqP0New(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+def makePDFBakExpMOverSqP0New(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None,higgsMass=None):
     debug = ""
     debug += "### makePDFBakExpMOverSqP0New: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -342,7 +342,7 @@ def makePDFBakExpMOverSqP0New(name,rooDataset,dimuonMass,minMass,maxMass,workspa
     #pdfMmumu = root.RooGenericPdf("bak","TMath::Exp(-@0*@2*@2)/(@0-@1)/(@0-@1)+@3*@3*TMath::Exp(-@0*@4*@4)",root.RooArgList(dimuonMass,EXPPOLP0_1,EXPPOLP0_2,EXPPOLP0_3,EXPPOLP0_4))
     #EXPPOLP0_1.setConstant(True)
 
-    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
@@ -398,7 +398,7 @@ def makePDFBakExpMOverSqP0New(name,rooDataset,dimuonMass,minMass,maxMass,workspa
     return paramList, bakNormTup, debug, None
 
 
-def makePDFBakMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+def makePDFBakMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None,higgsMass=None):
     debug = ""
     debug += "### makePDFBakMOverSq: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -409,7 +409,7 @@ def makePDFBakMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
     InvPolMass = root.RooRealVar(channelName+"_InvPolMass","InvPolMass", 91., 70., 95.)
     pdfMmumu = root.RooGenericPdf("bak","@0/(@0-@1)/(@0-@1)",root.RooArgList(dimuonMass,InvPolMass))
 
-    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
@@ -460,7 +460,7 @@ def makePDFBakMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
 
     return paramList, bakNormTup, debug, None
 
-def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None,higgsMass=None):
     #print "GP's debug line *******************************************************\n"
     debug = ""
     debug += "### makePDFBakOld: "+name+"\n"

@@ -98,11 +98,11 @@ PDFTITLEMAP = PdfTitleMap({
     "Chebychev":"Chebychev",
     "Polynomial":"Polynomial",
     "SumExp":"Sum of Exponentials",
-    "SumPow":"Sum of Power Functions",
+    "SumPow":"Sum of Powers",
     "Laurent":"Laurent",
 })
 
-def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sigMasses,toysPerJob):
+def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sigMasses,fitMassWindow,toysPerJob):
       """
         Pure function so that we can do multiprocessing!!
       """
@@ -142,155 +142,153 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           altPdfNameNoOrderList.append(i)
           altPdfOrderList.append(None)
 
-      truePdfFunc = None
-      if truePdfNameNoOrder == "Bernstein" or truePdfNameNoOrder == "Chebychev" or truePdfNameNoOrder == "Polynomial" or truePdfNameNoOrder == "SumExp" or truePdfNameNoOrder == "SumPow" or truePdfNameNoOrder == "Laurent":
-        truePdfFunc = getattr(fitOrderChooser,"makePDFBak"+truePdfNameNoOrder)
-      else:
-        truePdfFunc = getattr(makeCards,"makePDFBak"+truePdfNameNoOrder)
-      pdfAltFuncList = []
-      for i in altPdfNameNoOrderList:
-        if i == "Bernstein" or i == "Chebychev" or i == "Polynomial" or i == "SumExp" or i == "SumPow" or i == "Laurent":
-          pdfAltFuncList.append(getattr(fitOrderChooser,"makePDFBak"+i))
-        else:
-          pdfAltFuncList.append(getattr(makeCards,"makePDFBak"+i))
-
-      #dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",110.,170.)
-      dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",110.,160.)
-      #dimuonMass.setBins(60)
-      dimuonMass.setBins(50)
-      dimuonMass.setRange("exprange",120,160)
-      dimuonMass.setRange("whole",110,160)
-      dimuonMass.setRange("low",110,120) # Silly ranges for old fit functionality
-      #dimuonMass.setRange("high",130,170)
-      dimuonMass.setRange("high",130,160)
-      dimuonMass.setRange("signal",120,130)
-      dimuonMass.setRange("signalfit",110,140)
-      dimuonMass.setRange("annaRegion",123.5,127.5)
-      dimuonMassArgSet = root.RooArgSet(dimuonMass)
-      wTrue = root.RooWorkspace("wTrue")
-      wTrueToy = root.RooWorkspace("wTrueToy")
-      wTrueImport = getattr(wTrue,"import")
-      wTrueToyImport = getattr(wTrueToy,"import")
-
-      canvas = root.TCanvas("canvas"+catName+energyStr+truePdfName+str(iJob))
-      tlatex = root.TLatex()
-      tlatex.SetNDC()
-      tlatex.SetTextFont(root.gStyle.GetLabelFont())
-      tlatex.SetTextSize(0.04)
+      ### Make results data structure and begin log
+      data = {}
+      data[truePdfName] = {}
 
       # Hack to Make makePDFBakOld work
       minMassZ = 88.
       maxMassZ = 94.
       dimuonMassZ = root.RooRealVar("dimuonMass","dimuonMass",minMassZ,maxMassZ)
       dimuonMassZ = dimuonMassZ
-
-      ### Load data
-      
-      realData = root.RooDataSet("realData"+catName+energyStr,
-                                      "realData"+catName+energyStr,
-                                          dataTree,root.RooArgSet(dimuonMass)
-                                        )
-      nData = realData.sumEntries()
       realDataZ = root.RooDataSet("realDataZ"+catName+energyStr,
                                       "realDataZ"+catName+energyStr,
                                           dataTree,root.RooArgSet(dimuonMassZ)
                                         )
+  
 
-      ### Make Bak Pdfs
-
-      trashParamList, trashBakNormTup, trashDebug, trueOrder = truePdfFunc(truePdfName+catName+energyStr,realData,dimuonMass,110,160,wTrueImport,dimuonMassZ,realDataZ,order=truePdfOrder)
-      truePdf = wTrue.pdf("bak")
-      truePdf.SetName(truePdfName)
-      truePdf.SetTitle("True PDF ")
-      truePdf.fitTo(realData,
-                             PRINTLEVEL
-                           )
-
-      trueToyPdfName = "trueToy"+catName+energyStr
-      trashParamList, trashBakNormTup, trashDebug, trueToyOrder = truePdfFunc(trueToyPdfName,realData,dimuonMass,110,160,wTrueToyImport,dimuonMassZ,realDataZ,order=truePdfOrder)
-      trueToyPdf = wTrueToy.pdf("bak")
-      trueToyPdf.SetName(trueToyPdfName)
-      assert(trueOrder == trueToyOrder)
-
-      # Debug plot for fit to data
-      if toysPerJob > 2:
-        frame = dimuonMass.frame()
-        realDataHist = realData.binnedClone("realDataHist"+catName+energyStr+str(iJob))
-        chi2RealDataVar = truePdf.createChi2(realDataHist)
-        ndfRealData = dimuonMass.getBins() - 1  # b/c roofit normalizes
-        ndfRealData -= rooPdfNFreeParams(truePdf,realDataHist)
-        realData.plotOn(frame)
-        truePdf.plotOn(frame,root.RooFit.Range('low,signal,high'),root.RooFit.NormRange('low,signal,high'))
-        frame.Draw()
-        frame.SetTitle("")
-        frame.GetYaxis().SetTitle("Events / 1 GeV/c^{2}")
-        tlatex.SetTextAlign(12)
-        tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Ref PDF: "+truePdfName)
-        tlatex.SetTextAlign(32)
-        tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,catName+" "+energyStr)
-        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Ref. Fit to Obs. Data")
-        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.80,"Ref. GOF: {0:.2f}".format(scipy.stats.chi2.sf(chi2RealDataVar.getVal(),ndfRealData)))
-        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Ref. #chi^{{2}}/NDF: {0:.2f}".format(chi2RealDataVar.getVal()/ndfRealData))
-        canvas.SaveAs("output/debug_RealData_"+truePdfName+"_"+catName+"_"+energyStr+tmpJobStr+".png")
-
-      # Make sure Voigt params are set to True vals and constant
-      if truePdfName == "Old":
-        for xTrue in rooArgSet2List(truePdf.getParameters(realData)):
-          if not ("voit" in xTrue.GetName()):
-            continue
-          for xToy in rooArgSet2List(trueToyPdf.getParameters(realData)):
-            trueMatch = re.match(r".*(_voit.*)",xTrue.GetName()) 
-            toyMatch = re.match(r".*(_voit.*)",xToy.GetName()) 
-            assert(trueMatch)
-            if not toyMatch:
-                continue
-            trueBaseName = trueMatch.group(1)
-            toyBaseName = toyMatch.group(1)
-            if not ( trueBaseName == toyBaseName ):
-              continue
-            xToy.setVal(xTrue.getVal())
-            xTrue.setConstant(True)
-            xToy.setConstant(True)
-
-      pdfAltList = []
-      pdfAltwList = []
-      for pdfAltName,pdfAltNameNoOrder,pdfAltOrder,pdfAltFunc in zip(pdfAltNameList,altPdfNameNoOrderList,altPdfOrderList,pdfAltFuncList):
-        pdfName = "alt"+catName+energyStr+"_"+pdfAltName
-        wAlt = root.RooWorkspace("wAlt"+catName+energyStr+"_"+pdfAltName)
-        pdfAltFunc(pdfName,realData,dimuonMass,110,160,getattr(wAlt,"import"),dimuonMassZ,realDataZ,order=pdfAltOrder)
-        altPdf = wAlt.pdf("bak")
-        altPdf.SetName(pdfName)
-        # Make sure Voigt params are constant
-        if pdfAltNameNoOrder == "Old":
-          for x in rooArgSet2List(altPdf.getParameters(realData)):
-            if "voit" in x.GetName():
-              x.setConstant(True)
-        pdfAltList.append(altPdf)
-        pdfAltwList.append(wAlt)
-
-      nBakVar = root.RooRealVar("nBak","N_{B}",nData/2.,nData*2)
-
-      ### Now load Signal PDFs
-      sigPdfs = []
-      wSigs = []
       for hmass in sigMasses:
+        truePdfFunc = None
+        if truePdfNameNoOrder == "Bernstein" or truePdfNameNoOrder == "Chebychev" or truePdfNameNoOrder == "Polynomial" or truePdfNameNoOrder == "SumExp" or truePdfNameNoOrder == "SumPow" or truePdfNameNoOrder == "Laurent":
+          truePdfFunc = getattr(fitOrderChooser,"makePDFBak"+truePdfNameNoOrder)
+        else:
+          truePdfFunc = getattr(makeCards,"makePDFBak"+truePdfNameNoOrder)
+        pdfAltFuncList = []
+        for i in altPdfNameNoOrderList:
+          if i == "Bernstein" or i == "Chebychev" or i == "Polynomial" or i == "SumExp" or i == "SumPow" or i == "Laurent":
+            pdfAltFuncList.append(getattr(fitOrderChooser,"makePDFBak"+i))
+          else:
+            pdfAltFuncList.append(getattr(makeCards,"makePDFBak"+i))
+  
+        minMass = hmass-fitMassWindow/2.
+        maxMass = hmass+fitMassWindow/2.
+        dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",minMass,maxMass)
+        dimuonMass.setBins(int(fitMassWindow))
+        dimuonMass.setRange("exprange",120,160)
+        dimuonMass.setRange("whole",110,160)
+        dimuonMass.setRange("low",110,120) # Silly ranges for old fit functionality
+        dimuonMass.setRange("high",130,160)
+        dimuonMass.setRange("signal",120,130)
+        dimuonMass.setRange("signalfit",110,140)
+        dimuonMass.setRange("annaRegion",123.5,127.5)
+        dimuonMassArgSet = root.RooArgSet(dimuonMass)
+        wTrue = root.RooWorkspace("wTrue")
+        wTrueToy = root.RooWorkspace("wTrueToy")
+        wTrueImport = getattr(wTrue,"import")
+        wTrueToyImport = getattr(wTrueToy,"import")
+  
+        canvas = root.TCanvas("canvas"+catName+energyStr+truePdfName+str(iJob))
+        tlatex = root.TLatex()
+        tlatex.SetNDC()
+        tlatex.SetTextFont(root.gStyle.GetLabelFont())
+        tlatex.SetTextSize(0.04)
+  
+        ### Load data
+        
+        realData = root.RooDataSet("realData"+catName+energyStr,
+                                        "realData"+catName+energyStr,
+                                            dataTree,root.RooArgSet(dimuonMass)
+                                          )
+        nData = realData.sumEntries()
+  
+        ### Make Bak Pdfs
+  
+        trashParamList, trashBakNormTup, trashDebug, trueOrder = truePdfFunc(truePdfName+catName+energyStr,realData,dimuonMass,minMass,maxMass,wTrueImport,dimuonMassZ,realDataZ,order=truePdfOrder,higgsMass=hmass)
+        truePdf = wTrue.pdf("bak")
+        truePdf.SetName(truePdfName)
+        truePdf.SetTitle("True PDF ")
+        truePdf.fitTo(realData,
+                               PRINTLEVEL
+                             )
+  
+        trueToyPdfName = "trueToy"+catName+energyStr
+        trashParamList, trashBakNormTup, trashDebug, trueToyOrder = truePdfFunc(trueToyPdfName,realData,dimuonMass,minMass,maxMass,wTrueToyImport,dimuonMassZ,realDataZ,order=truePdfOrder,higgsMass=hmass)
+        trueToyPdf = wTrueToy.pdf("bak")
+        trueToyPdf.SetName(trueToyPdfName)
+        assert(trueOrder == trueToyOrder)
+  
+        # Debug plot for fit to data
+        #if toysPerJob > 2:
+        if False:
+          frame = dimuonMass.frame()
+          realDataHist = realData.binnedClone("realDataHist"+catName+energyStr+str(iJob))
+          chi2RealDataVar = truePdf.createChi2(realDataHist)
+          ndfRealData = dimuonMass.getBins() - 1  # b/c roofit normalizes
+          ndfRealData -= rooPdfNFreeParams(truePdf,realDataHist)
+          realData.plotOn(frame)
+          truePdf.plotOn(frame)
+          frame.Draw()
+          frame.SetTitle("")
+          frame.GetYaxis().SetTitle("Events / 1 GeV/c^{2}")
+          tlatex.SetTextAlign(12)
+          tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Ref PDF: "+truePdfName)
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.80,"m_{{H}}: {0:.1f}".format(hmass))
+          tlatex.SetTextAlign(32)
+          tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,catName+" "+energyStr)
+          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Ref. Fit to Obs. Data")
+          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.80,"Ref. GOF: {0:.2f}".format(scipy.stats.chi2.sf(chi2RealDataVar.getVal(),ndfRealData)))
+          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Ref. #chi^{{2}}/NDF: {0:.2f}".format(chi2RealDataVar.getVal()/ndfRealData))
+          canvas.SaveAs("output/debug_RealData_"+truePdfName+"_"+catName+"_"+energyStr+tmpJobStr+".png")
+  
+        # Make sure Voigt params are set to True vals and constant
+        if truePdfName == "Old":
+          for xTrue in rooArgSet2List(truePdf.getParameters(realData)):
+            if not ("voit" in xTrue.GetName()):
+              continue
+            for xToy in rooArgSet2List(trueToyPdf.getParameters(realData)):
+              trueMatch = re.match(r".*(_voit.*)",xTrue.GetName()) 
+              toyMatch = re.match(r".*(_voit.*)",xToy.GetName()) 
+              assert(trueMatch)
+              if not toyMatch:
+                  continue
+              trueBaseName = trueMatch.group(1)
+              toyBaseName = toyMatch.group(1)
+              if not ( trueBaseName == toyBaseName ):
+                continue
+              xToy.setVal(xTrue.getVal())
+              xTrue.setConstant(True)
+              xToy.setConstant(True)
+  
+        pdfAltList = []
+        pdfAltwList = []
+        for pdfAltName,pdfAltNameNoOrder,pdfAltOrder,pdfAltFunc in zip(pdfAltNameList,altPdfNameNoOrderList,altPdfOrderList,pdfAltFuncList):
+          pdfName = "alt"+catName+energyStr+"_"+pdfAltName
+          wAlt = root.RooWorkspace("wAlt"+catName+energyStr+"_"+pdfAltName)
+          pdfAltFunc(pdfName,realData,dimuonMass,minMass,maxMass,getattr(wAlt,"import"),dimuonMassZ,realDataZ,order=pdfAltOrder,higgsMass=hmass)
+          altPdf = wAlt.pdf("bak")
+          altPdf.SetName(pdfName)
+          # Make sure Voigt params are constant
+          if pdfAltNameNoOrder == "Old":
+            for x in rooArgSet2List(altPdf.getParameters(realData)):
+              if "voit" in x.GetName():
+                x.setConstant(True)
+          pdfAltList.append(altPdf)
+          pdfAltwList.append(wAlt)
+  
+        nBakVar = root.RooRealVar("nBak","N_{B}",nData/2.,nData*2)
+  
+        ### Now load Signal PDF
         wSig = root.RooWorkspace("signal"+catName+energyStr+str(hmass))
         makeCards.makePDFSigNew(catName+energyStr,"sig_ggH",dimuonMass,float(hmass),
                                 getattr(wSig,"import")
                                )
         sigPdf = wSig.pdf("ggH")
         sigPdf.SetName("sigPDF_"+str(hmass)+"_"+catName+energyStr)
-        sigPdfs.append(sigPdf)
-        wSigs.append(wSig)
-
-      nSigVar = root.RooRealVar("nSig","N_{S}",-nData/4.,nData/4)
-
-      ### Make results data structure and begin log
-      data = {}
-      data['meta'] = {'nData':nData}
-      data[truePdfName] = {}
-      for hmass in sigMasses:
+  
+        nSigVar = root.RooRealVar("nSig","N_{S}",-nData/4.,nData/4)
+  
+        data['meta'] = {'nData':nData}
         data[truePdfName][hmass] = {}
         data[truePdfName][hmass]['zTrue'] = []
         data[truePdfName][hmass]['nTrue'] = []
@@ -308,14 +306,14 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           data[truePdfName][hmass][pdfAltName]['chi2BOnly'] = []
           data[truePdfName][hmass][pdfAltName]['ndfBOnly'] = []
 
-      ### Toy Loop
-
-      for iToy in range(toysPerJob):
-        toyData = truePdf.generate(root.RooArgSet(dimuonMass),int(nData))
-        toyData.SetName("toyData"+catName+energyStr+str(iToy))
-        toyDataHist = toyData.binnedClone("toyDataHist"+catName+energyStr+str(iToy))
-        plotThisToy = (iToy % plotEveryNToys == 5)
-        for hmass,sigPdf in zip(sigMasses,sigPdfs):
+        ### Toy Loop
+  
+        for iToy in range(toysPerJob):
+          toyData = truePdf.generate(root.RooArgSet(dimuonMass),int(nData))
+          toyData.SetName("toyData"+catName+energyStr+str(iToy))
+          toyDataHist = toyData.binnedClone("toyDataHist"+catName+energyStr+str(iToy))
+          #plotThisToy = (iToy % plotEveryNToys == 5)
+          plotThisToy = False
           frame = None 
           if plotThisToy:
             frame = dimuonMass.frame()
@@ -404,6 +402,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
             tlatex.SetTextAlign(12)
             tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
             tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Ref PDF: "+truePdfName)
+            tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.80,"m_{{H}}: {0:.1f}".format(hmass))
             tlatex.SetTextAlign(32)
             tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,catName+" "+energyStr)
             tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Ref B-Only GOF: {0:.2f}".format(scipy.stats.chi2.sf(chi2BOnlyVal,ndfBOnlyVal)))
@@ -420,8 +419,8 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           #  for x in rooArgSet2List(trueToyPdf.getParameters(realData)):
           #      x.Print()
           #  print "**************************************************************"
-        del toyData
-        del toyDataHist
+          del toyData
+          del toyDataHist
       return data
 
 def runStudyStar(argList):
@@ -432,7 +431,7 @@ def runStudyStar(argList):
 ################################################################################################
 
 class BiasStudy:
-  def __init__(self,category,dataFileNames,energyStr,sigMasses,refPdfNameList,pdfAltNamesDict,nToys=10,pklOutFnBase="output/biasData",inputPkl=None,processPool=None,iJobGroup=None):
+  def __init__(self,category,dataFileNames,energyStr,sigMasses,refPdfNameList,pdfAltNamesDict,nToys=10,pklOutFnBase="output/biasData",inputPkl=None,processPool=None,iJobGroup=None,fitMassWindow=None):
     self.dataFileNames = dataFileNames
     self.sigMasses = sigMasses
     self.iJobGroup = iJobGroup
@@ -451,6 +450,7 @@ class BiasStudy:
           self.energyStr = self.data['meta']['energyStr']
           energyStr = self.energyStr
           self.sigMasses = self.data['meta']['sigMasses']
+          self.fitMassWindow = self.data['meta']['massFitWidth']
         except Exception, err:
           print("Error loading data from pkl file: "+str(inputPkl))
           print(err)
@@ -465,6 +465,7 @@ class BiasStudy:
           self.energyStr = self.data['meta']['energyStr']
           energyStr = self.energyStr
           self.sigMasses = self.data['meta']['sigMasses']
+          self.fitMassWindow = self.data['meta']['massFitWidth']
       else:
           print("Error: unexpected type for input pickle filename or dict: "+type(inputPkl))
           print("Exiting.")
@@ -486,6 +487,7 @@ class BiasStudy:
     if self.data==None:
       self.refPdfNameList = refPdfNameList
       self.pdfAltNamesDict = pdfAltNamesDict
+      self.fitMassWindow = fitMassWindow
 
       self.data = {'meta':{}}
       data = self.data
@@ -495,15 +497,16 @@ class BiasStudy:
       data['meta']['nToys'] = self.nToys
       data['meta']['catName'] = self.catName
       data['meta']['energyStr'] = self.energyStr
+      data['meta']['massFitWidth'] = self.fitMassWindow
       self.iPklAutoSave = 1
       nProcesses = NPROCS
       nJobs = NPROCS
       for refPdfName,iRefPdfName in zip(self.refPdfNameList,range(len(self.refPdfNameList))):
         pdfAltNameList = self.pdfAltNamesDict[refPdfName]
         if processPool == None:
-          mapResults = map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.iJobGroup),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(int(nToys/nJobs))))
+          mapResults = map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.iJobGroup),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(self.fitMassWindow),itrRepeat(int(nToys/nJobs))))
         else:
-          mapResults = processPool.map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.iJobGroup),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(int(nToys/nJobs))))
+          mapResults = processPool.map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.iJobGroup),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(self.fitMassWindow),itrRepeat(int(nToys/nJobs))))
         for jobResults in mapResults:
           mergeDicts(data,jobResults)
         if iRefPdfName != len(self.refPdfNameList)-1:
@@ -515,47 +518,35 @@ class BiasStudy:
       pklFile.close()
 
     self.nData = self.data['meta']['nData']
-    outStr = "#"*80+"\n"
-    outStr = "#"*80+"\n"
-    outStr += "\n"+self.catName +"  "+self.energyStr + "\n\n"
-
-    outStr += "nToys: {0}\n".format(self.nToys)
-    outStr += "nData Events: {0}\n".format(self.nData)
-    outStr += "\n"
-
     data = self.data
 
-    for refPdfName in self.refPdfNameList:
-      outStr +=  "Reference PDF: "+str(refPdfName)+'\n'
-      for hmass in self.sigMasses:
-        outStr +=  "mass: "+str(hmass)+'\n'
-        dataH = data[refPdfName][hmass]
-        #shapiroStat, shapiroP = scipy.stats.shapiro(dataH['zTrue'])
-        #sumChi2 = sum(dataH['chi2True'])
-        #sumNDF = sum(dataH['ndfTrue'])
-        #outStr +=  "  True Z Scores:   {0:.2f} +/- {1:.2f}  Median: {2:.2f}    S-W Normal p-Val: {3:.3g}\n".format(mean(dataH['zTrue']),stddev(dataH['zTrue']),median(dataH['zTrue']),shapiroP)
-        #outStr +=  "  True Fit Prob:   {0:.3g},                              chi2: {1:.2f}  NDF: {2}\n".format(scipy.stats.chi2.sf(sumChi2,sumNDF),sumChi2,sumNDF)
-        #outStr +=  "  All Pulls:       {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataH['pullAll']),stddev(dataH['pullAll']),median(dataH['pullAll']))
-        for pdfAltName in self.pdfAltNamesDict[refPdfName]:
-          dataHA = dataH[pdfAltName]
-          #shapiroStat, shapiroP = scipy.stats.shapiro(dataHA['z'])
-          #sumChi2 = sum(dataHA['chi2'])
-          #sumNDF = sum(dataHA['ndf'])
-          outStr +=  "  "+pdfAltName+":\n"
-          #outStr +=  "    Z Scores:      {0:.2f} +/- {1:.2f}  Median: {2:.2f}    S-W Normal p-Val: {3:.3g}\n".format(mean(dataHA['z']),stddev(dataHA['z']),median(dataHA['z']),shapiroP)
-          #outStr +=  "    Fit Prob:      {0:.3g},                              chi2: {1:.2f}  NDF: {2}\n".format(scipy.stats.chi2.sf(sumChi2,sumNDF),sumChi2,sumNDF)
-          outStr +=  "    Pulls:         {0:.2f} +/- {1:.2f}  Median: {2:.2f}\n".format(mean(dataHA['pull']),stddev(dataHA['pull']),median(dataHA['pull']))
-    print outStr
+    outStr = ""
     self.outStr = outStr
 
     self.pullSummaryDict = {}
+    self.zSigmaSummaryDict = {}
+    self.zMedianSummaryDict = {}
     for refPdfName in self.refPdfNameList:
       self.pullSummaryDict[refPdfName] = {}
-      for pdfAltName in self.pdfAltNamesDict[refPdfName]:
-        self.pullSummaryDict[refPdfName][pdfAltName] = {}
-        for hmass in self.sigMasses:
+      self.zMedianSummaryDict[refPdfName] = {}
+      self.zMedianSummaryDict[refPdfName]["zTrue"] = {}
+      self.zSigmaSummaryDict[refPdfName] = {}
+      self.zSigmaSummaryDict[refPdfName]["zTrue"] = {}
+      for hmass in self.sigMasses:
+        print "nToys for {0} {1} {2}: {3}".format(self.catName,refPdfName,hmass,len(data[refPdfName][hmass]['zTrue']))
+        self.zMedianSummaryDict[refPdfName]['zTrue'][hmass] = median(data[refPdfName][hmass]['zTrue'])
+        self.zSigmaSummaryDict[refPdfName]['zTrue'][hmass] = stddev(data[refPdfName][hmass]['zTrue'])
+        for pdfAltName in self.pdfAltNamesDict[refPdfName]:
+          if not self.zMedianSummaryDict[refPdfName].has_key(pdfAltName):
+            self.zMedianSummaryDict[refPdfName][pdfAltName] = {}
+          if not self.zSigmaSummaryDict[refPdfName].has_key(pdfAltName):
+            self.zSigmaSummaryDict[refPdfName][pdfAltName] = {}
+          if not self.pullSummaryDict[refPdfName].has_key(pdfAltName):
+            self.pullSummaryDict[refPdfName][pdfAltName] = {}
           self.pullSummaryDict[refPdfName][pdfAltName][hmass] = median(data[refPdfName][hmass][pdfAltName]['pull'])
           self.pullSummaryDict[refPdfName]['orderRef'] = data[refPdfName][hmass]['orderTrue']
+          self.zMedianSummaryDict[refPdfName][pdfAltName][hmass] = median(data[refPdfName][hmass][pdfAltName]['z'])
+          self.zSigmaSummaryDict[refPdfName][pdfAltName][hmass] = stddev(data[refPdfName][hmass][pdfAltName]['z'])
 
   def plot(self,outputPrefix):
 
@@ -574,59 +565,60 @@ class BiasStudy:
       refPdfNameOrder = refPdfName
       if self.data[refPdfName][self.sigMasses[0]]['orderTrue'] != None:
         refPdfNameOrder = str(self.data[refPdfName][self.sigMasses[0]]['orderTrue'])+refPdfNameOrder
-      ##### Pull plots 1D
-      for hmass in self.sigMasses:
-        if len(self.pdfAltNamesDict[refPdfName])>1:
-          hist = root.TH1F("hist"+str(iHist),"",30,-3,3)
-          setHistTitles(hist,"(N_{sig}(Alt)-N_{sig}(Ref))/#DeltaN_{sig}(Alt)","N_{Toys}")
-          iHist += 1
-          for pull in self.data[refPdfName][hmass]['pullAll']:
-              hist.Fill(pull)
-          medianPull = median(self.data[refPdfName][hmass]['pullAll'])
-          hist.Draw()
-          tlatex.SetTextAlign(12)
-          tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
-          tlatex.SetTextAlign(12)
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfNameOrder])
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"All Alternate PDFs")
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.60,"Median: {0:.2f}".format(medianPull))
-          tlatex.SetTextAlign(32)
-          tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
-          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"{0:.2f}".format(medianPull))
-          line = self.setYMaxAndDrawVertLines(hist,medianPull)
-          canvas.RedrawAxis()
-          saveAs(canvas,outputPrefix+self.catName+"_"+str(hmass)+"_AllPulls_Ref"+refPdfName)
-          canvas.Clear()
+      ###### Pull plots 1D
+      #for hmass in self.sigMasses:
+      #  if len(self.pdfAltNamesDict[refPdfName])>1:
+      #    hist = root.TH1F("hist"+str(iHist),"",30,-3,3)
+      #    setHistTitles(hist,"(N_{sig}(Alt)-N_{sig}(Ref))/#DeltaN_{sig}(Alt)","N_{Toys}")
+      #    iHist += 1
+      #    for pull in self.data[refPdfName][hmass]['pullAll']:
+      #        hist.Fill(pull)
+      #    medianPull = median(self.data[refPdfName][hmass]['pullAll'])
+      #    hist.Draw()
+      #    tlatex.SetTextAlign(12)
+      #    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+      #    tlatex.SetTextAlign(12)
+      #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfNameOrder])
+      #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"All Alternate PDFs")
+      #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
+      #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.60,"Median: {0:.2f}".format(medianPull))
+      #    tlatex.SetTextAlign(32)
+      #    tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+      #    tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"{0:.2f}".format(medianPull))
+      #    line = self.setYMaxAndDrawVertLines(hist,medianPull)
+      #    canvas.RedrawAxis()
+      #    saveAs(canvas,outputPrefix+self.catName+"_"+str(hmass)+"_AllPulls_Ref"+refPdfName)
+      #    canvas.Clear()
 
-        for pdfAltName in self.pdfAltNamesDict[refPdfName]:
-          hist = root.TH1F("hist"+str(iHist),"",30,-3,3)
-          setHistTitles(hist,"(N_{sig}(Alt)-N_{sig}(Ref))/#DeltaN_{sig}(Alt)","N_{Toys}")
-          iHist += 1
-          for pull in self.data[refPdfName][hmass][pdfAltName]['pull']:
-              hist.Fill(pull)
-          medianPull = median(self.data[refPdfName][hmass][pdfAltName]['pull'])
-          hist.Draw()
-          tlatex.SetTextAlign(12)
-          tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
-          tlatex.SetTextAlign(12)
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfNameOrder])
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
-          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.60,"Median: {0:.2f}".format(medianPull))
-          tlatex.SetTextAlign(32)
-          tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
-          line = self.setYMaxAndDrawVertLines(hist,medianPull)
-          canvas.RedrawAxis()
-          saveAs(canvas,outputPrefix+self.catName+"_"+str(hmass)+"_Pulls_Ref"+refPdfName+"_Alt"+pdfAltName)
-          canvas.Clear()
+      #  for pdfAltName in self.pdfAltNamesDict[refPdfName]:
+      #    hist = root.TH1F("hist"+str(iHist),"",30,-3,3)
+      #    setHistTitles(hist,"(N_{sig}(Alt)-N_{sig}(Ref))/#DeltaN_{sig}(Alt)","N_{Toys}")
+      #    iHist += 1
+      #    for pull in self.data[refPdfName][hmass][pdfAltName]['pull']:
+      #        hist.Fill(pull)
+      #    medianPull = median(self.data[refPdfName][hmass][pdfAltName]['pull'])
+      #    hist.Draw()
+      #    tlatex.SetTextAlign(12)
+      #    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+      #    tlatex.SetTextAlign(12)
+      #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfNameOrder])
+      #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
+      #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
+      #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.60,"Median: {0:.2f}".format(medianPull))
+      #    tlatex.SetTextAlign(32)
+      #    tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+      #    line = self.setYMaxAndDrawVertLines(hist,medianPull)
+      #    canvas.RedrawAxis()
+      #    saveAs(canvas,outputPrefix+self.catName+"_"+str(hmass)+"_Pulls_Ref"+refPdfName+"_Alt"+pdfAltName)
+      #    canvas.Clear()
 
       ##### Median pull plots v. mass
       for pdfAltName in self.pdfAltNamesDict[refPdfName]:
-        minx = 115
-        maxx = 155
+        minx = 110
+        maxx = 160
         axisHist = root.TH2F("axishist"+str(iHist),"",1,minx,maxx,1,-1,1)
         setHistTitles(axisHist,"M_{H} [GeV/c^{2}]","Median[(N_{sig}(Alt)-N_{sig}(Ref))/#DeltaN_{sig}(Alt)]")
+        iHist += 1
         graph = root.TGraph()
         graphBand = root.TGraphErrors()
         graphBand.SetPoint(0,minx,0.)
@@ -653,6 +645,96 @@ class BiasStudy:
         tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
         canvas.RedrawAxis()
         saveAs(canvas,outputPrefix+self.catName+"_Pulls_Ref"+refPdfName+"_Alt"+pdfAltName)
+        canvas.Clear()
+
+      ##### Ref Z plots v. mass
+      minx = 110
+      maxx = 160
+      axisHist = root.TH2F("axishist"+str(iHist),"",1,minx,maxx,1,-5,5)
+      setHistTitles(axisHist,"M_{H} [GeV/c^{2}]","N_{sig}(Ref))/#DeltaN_{sig}(Ref)]")
+      iHist += 1
+      graph = root.TGraphErrors()
+      graphBand = root.TGraphErrors()
+      graphBand.SetPoint(0,minx,0.)
+      graphBand.SetPointError(0,0.,1.)
+      graphBand.SetPoint(1,maxx,0.)
+      graphBand.SetPointError(1,0.,1.)
+      graphBand.SetFillStyle(1001)
+      graphBand.SetFillColor(root.kGreen-9)
+      for iPoint,hmass in zip(range(len(self.sigMasses)),self.sigMasses):
+          zMeanTmp = mean(self.data[refPdfName][hmass]['zTrue'])
+          zSigmaTmp = stddev(self.data[refPdfName][hmass]['zTrue'])
+          graph.SetPoint(iPoint,hmass,zMeanTmp)
+          graph.SetPointError(iPoint,0.,zSigmaTmp)
+      axisHist.Draw()
+      graphBand.Draw("3")
+      graph.Draw("LP")
+      tlatex.SetTextAlign(12)
+      tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+      tlatex.SetTextAlign(12)
+      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfNameOrder])
+      tlatex.SetTextAlign(32)
+      tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+      canvas.RedrawAxis()
+      saveAs(canvas,outputPrefix+self.catName+"_Z_Ref"+refPdfName)
+      canvas.Clear()
+
+      ##### Alt Z plots v. mass
+      for pdfAltName in self.pdfAltNamesDict[refPdfName]:
+        minx = 110
+        maxx = 160
+        axisHist = root.TH2F("axishist"+str(iHist),"",1,minx,maxx,1,-5,5)
+        setHistTitles(axisHist,"M_{H} [GeV/c^{2}]","N_{sig}(Alt))/#DeltaN_{sig}(Alt)]")
+        iHist += 1
+        graph = root.TGraphErrors()
+        graphBand = root.TGraphErrors()
+        graphBand.SetPoint(0,minx,0.)
+        graphBand.SetPointError(0,0.,1.)
+        graphBand.SetPoint(1,maxx,0.)
+        graphBand.SetPointError(1,0.,1.)
+        graphBand.SetFillStyle(1001)
+        graphBand.SetFillColor(root.kGreen-9)
+        for iPoint,hmass in zip(range(len(self.sigMasses)),self.sigMasses):
+            zMeanTmp = mean(self.data[refPdfName][hmass][pdfAltName]['z'])
+            zSigmaTmp = stddev(self.data[refPdfName][hmass][pdfAltName]['z'])
+            graph.SetPoint(iPoint,hmass,zMeanTmp)
+            graph.SetPointError(iPoint,0.,zSigmaTmp)
+        axisHist.Draw()
+        graphBand.Draw("3")
+        graph.Draw("LP")
+        tlatex.SetTextAlign(12)
+        tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+        tlatex.SetTextAlign(12)
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfNameOrder])
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
+        tlatex.SetTextAlign(32)
+        tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+        canvas.RedrawAxis()
+        saveAs(canvas,outputPrefix+self.catName+"_Z_Ref"+refPdfName+"_Alt"+pdfAltName)
+        canvas.Clear()
+
+      ##### sigma(Z) plots v. mass
+      for pdfAltName in self.pdfAltNamesDict[refPdfName]:
+        minx = 110
+        maxx = 160
+        axisHist = root.TH2F("axishist"+str(iHist),"",1,minx,maxx,1,0.,5.)
+        setHistTitles(axisHist,"M_{H} [GeV/c^{2}]","StdDev[N_{sig}(Alt))/#DeltaN_{sig}(Alt)]]")
+        iHist += 1
+        graph = root.TGraph()
+        for iPoint,hmass in zip(range(len(self.sigMasses)),self.sigMasses):
+            zSigmaTmp = stddev(self.data[refPdfName][hmass][pdfAltName]['z'])
+            graph.SetPoint(iPoint,hmass,zSigmaTmp)
+        axisHist.Draw()
+        graph.Draw("LP")
+        tlatex.SetTextAlign(12)
+        tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+        tlatex.SetTextAlign(12)
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfNameOrder])
+        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
+        tlatex.SetTextAlign(32)
+        tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+        canvas.RedrawAxis()
+        saveAs(canvas,outputPrefix+self.catName+"_ZSigma_Ref"+refPdfName+"_Alt"+pdfAltName)
         canvas.Clear()
 
       ###### Chi2 Prob Plots
@@ -1384,71 +1466,59 @@ def mergeDicts(data,newData,multiJob=False):
               assert(type(newData[key][mass][subkey][subsubkey])==list)
               data[key][mass][subkey][subsubkey].extend(newData[key][mass][subkey][subsubkey])
 
-
-def printBiasTable(dataCats,refName,altName):
-  catNames = sorted(dataCats.keys())
+def printBiasTable(dataCats,hmasses):
+  catNames = sortCatNames(dataCats.keys())
   if len(catNames) == 0:
     return
   plainResult = ""
   latexResult = ""
-  masses = None
   for catName in catNames:
-    if not dataCats[catName].has_key(refName):
-        return
-    if not dataCats[catName][refName].has_key(altName):
-        return
-    masses = sorted(dataCats[catName][refName][altName].keys(),key=float)
-    break
-  sorted01PJetCats = []
-  sorted01FJetCats = []
-  sorted2JetCats = []
-  for cat in catNames:
-    if "Jets01P" in cat:
-      sorted01PJetCats.append(cat)
-    elif "Jets01F" in cat:
-      sorted01FJetCats.append(cat)
-    else:
-      sorted2JetCats.append(cat)
-  catNames = []
-  sorted01PJetCats.sort()
-  sorted01FJetCats.sort()
-  sorted2JetCats.sort()
-  catNames.extend(sorted01PJetCats)
-  catNames.extend(sorted01FJetCats)
-  catNames.extend(sorted2JetCats)
-  plainResult += "????????????????????????????????????????????????????????????\n"
-  plainResult += "Bias v. Mass for Ref: {0} Alt: {1}\n\n".format(refName,altName)
-  plainResult += "{0:<25}".format("")
-  latexResult += "%???????????????????????????????????????????????????????????\n"
-  latexResult += "%% Bias v. Mass for Ref: {0} Alt: {1}\n\n".format(refName,altName)
-  latexResult += r"\begin{tabular}{|l|"+"r|"*len(masses)+"} \\hline \n"
-  latexResult += r" & \multicolumn{"+str(len(masses))+r"}{c|}{$m_H$ [GeV/c$^2$]} \\ \hline "+"\n"
-  for mass in masses:
-    plainResult += "{0:>12}".format(mass)
-    latexResult += "& {0:>12} ".format(mass)
-  plainResult += "\n"
-  latexResult += r"\\ \hline \hline"+"\n"
-  for catName in catNames:
-    if not dataCats[catName].has_key(refName):
-        return
-    if not dataCats[catName][refName].has_key(altName):
-        return
-    data = dataCats[catName][refName][altName]
-    plainResult += "{0:<25}".format(catName)
-    latexResult += "{0:25} ".format(TITLEMAP[catName])
-    for mass in masses:
-      plainResult += "{0:>12.1%}".format(data[mass])
-      latexResult += ("& {0:12.1%} ".format(data[mass])).replace("%","\%")
-    plainResult += "\n"
-    latexResult += r"\\ \hline"+"\n"
-  plainResult += "\n????????????????????????????????????????????????????????????\n"
-  latexResult += "\\end{tabular}\n\n"
-  latexResult += "\n%????????????????????????????????????????????????????????????\n"
+    catTitle = TITLEMAP[catName]
+    data = dataCats[catName]
+    refNames = sorted(data.keys())
+    allAltNames = set()
+    for refName in refNames:
+      allAltNames = allAltNames.union(data[refName].keys())
+    allAltNames = sorted(list(allAltNames))
+    allAltNames.pop(allAltNames.index("orderRef"))
+    for altName in allAltNames:
+      altTitle = PDFTITLEMAP[altName]
+      if "#" in altTitle or "^" in altTitle:
+        altTitle = '$'+altTitle+'$'
+      altTitle = altTitle.replace("#","\\")
+      plainResult += "############################################################\n"
+      plainResult += catName+" Bias v. Mass for Alt: "+altName+"\n\n"
+      plainResult += "\n{0:<10}".format("mH")+"{0:>15}\n".format("Reference")
+      plainResult += "{0:<10}".format("")
+      latexResult += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+      latexResult += "%% "+catName+" Bias v. Mass for Alt: "+altName+"\n\n"
+      latexResult += r"\begin{tabular}{|l|"+"r|"*len(refNames)+"} \\hline \n"
+      latexResult += r"\multicolumn{"+str(len(refNames)+1)+r"}{|c|}{ \bf "+catTitle+' Bias for '+altTitle+r"} \\ \hline"+"\n"
+      latexResult += r"\multicolumn{1}{|c|}{\multirow{2}{*}{$m_{H}$ [GeV/c$^{2}$]}} & \multicolumn{"+str(len(refNames))+r"}{c|}{Reference PDFs} \\ \cline{"+"2-{0}".format(len(refNames)+1)+"} "+"\n"
+      for refName in refNames:
+        plainResult += "{0:>15}".format(refName)
+        nicePdfName = PDFTITLEMAP[refName]
+        if "#" in nicePdfName:
+          nicePdfName = '$'+nicePdfName+'$'
+        latexResult += "& \multicolumn{1}{c|}{" +"{0:>15}".format(nicePdfName.replace("#","\\"))+"} "
+      plainResult += "\n"
+      latexResult += r"\\ \hline"+"\n"
+      for hmass in hmasses:
+        plainResult += "{0:<10.0f}".format(hmass)
+        latexResult += "{0:10.0f} ".format(hmass)
+        for refName in refNames:
+           tmpBias = data[refName][altName][hmass]
+           plainResult += "{0:>15.1%}".format(tmpBias)
+           latexResult += ("& {0:15.1%} ".format(tmpBias)).replace("%","\%")
+        plainResult += "\n"
+        latexResult += r"\\ \hline"+"\n"
+      plainResult += "\n\n"
+      latexResult += "\\end{tabular}\n\n"
   print plainResult
   print latexResult
 
-def printBiasSummary(dataCats):
-  catNames = sorted(dataCats.keys())
+def printBiasSummary(dataCats,excludeHmassFunc = lambda x: False):
+  catNames = sortCatNames(dataCats.keys())
   if len(catNames) == 0:
     return
   plainResult = ""
@@ -1470,13 +1540,7 @@ def printBiasSummary(dataCats):
     latexResult += "%% "+catName+" Maximum Bias\n\n"
     latexResult += r"\begin{tabular}{|l|"+"r|"*len(refNames)+"} \\hline \n"
     latexResult += r"\multicolumn{"+str(len(refNames)+1)+r"}{|c|}{ \bf "+catTitle+r" Maximum Bias} \\ \hline"+"\n"
-    latexResult += r"\multicolumn{1}{|c|}{\multirow{3}{*}{Alternate PDFs}} & \multicolumn{"+str(len(refNames))+r"}{c|}{Reference PDFs} \\ \cline{"+"2-{0}".format(len(refNames)+1)+"} "+"\n"
-    for refName in refNames:
-      if data[refName]['orderRef'] != None:
-        latexResult += "& \multicolumn{1}{c|}{"+getOrdinalStr(data[refName]['orderRef'])+"-Order} "
-      else:
-        latexResult += "&              ".format(getOrdinalStr(data[refName]['orderRef']))
-    latexResult += r"\\ "+"\n"
+    latexResult += r"\multicolumn{1}{|c|}{\multirow{2}{*}{Alternate PDFs}} & \multicolumn{"+str(len(refNames))+r"}{c|}{Reference PDFs} \\ \cline{"+"2-{0}".format(len(refNames)+1)+"} "+"\n"
     for refName in refNames:
       plainResult += "{0:>15}".format(refName)
       nicePdfName = PDFTITLEMAP[refName]
@@ -1501,6 +1565,8 @@ def printBiasSummary(dataCats):
           for hmass in data[refName][altName]:
             tmpBias = data[refName][altName][hmass]
             tmpAbsBias = abs(tmpBias)
+            if excludeHmassFunc(hmass):
+                continue
             if tmpAbsBias > absMaxBias:
               maxBias = tmpBias
               absMaxBias = tmpAbsBias
@@ -1513,7 +1579,95 @@ def printBiasSummary(dataCats):
   print plainResult
   print latexResult
           
-    
+def printZs(dataCatsZMed,dataCatsZSig,hmasses):
+  catNames = sortCatNames(dataCatsZMed.keys())
+  if len(catNames) == 0:
+    return
+  plainResult = ""
+  latexResult = ""
+  # First Reference Zs
+  for catName in catNames:
+    catTitle = TITLEMAP[catName]
+    dataZMed = dataCatsZMed[catName]
+    dataZSig = dataCatsZSig[catName]
+    refNames = sorted(dataZMed.keys())
+    plainResult += "############################################################\n"
+    plainResult += catName+" Reference Z v. Mass    (median +/- RMS)"+"\n\n"
+    plainResult += "\n{0:<10}".format("mH")+"{0:>18}\n".format("Reference")
+    plainResult += "{0:<10}".format("")
+    latexResult += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+    latexResult += "%% "+catName+" Reference Z v. Mass     (median +/- RMS)"+"\n\n"
+    latexResult += r"\begin{tabular}{|l|"+"r|"*len(refNames)+"} \\hline \n"
+    latexResult += r"\multicolumn{"+str(len(refNames)+1)+r"}{|c|}{ \bf "+catTitle+' Reference Z'+r"} \\ \hline"+"\n"
+    latexResult += r"\multicolumn{1}{|c|}{\multirow{2}{*}{$m_{H}$ [GeV/c$^{2}$]}} & \multicolumn{"+str(len(refNames))+r"}{c|}{Reference PDFs} \\ \cline{"+"2-{0}".format(len(refNames)+1)+"} "+"\n"
+    for refName in refNames:
+      plainResult += "{0:>18}".format(refName)
+      nicePdfName = PDFTITLEMAP[refName]
+      if "#" in nicePdfName:
+        nicePdfName = '$'+nicePdfName+'$'
+      latexResult += "& \multicolumn{1}{c|}{" +"{0:>18}".format(nicePdfName.replace("#","\\"))+"} "
+    plainResult += "\n"
+    latexResult += r"\\ \hline"+"\n"
+    for hmass in hmasses:
+      plainResult += "{0:<10.0f}".format(hmass)
+      latexResult += "{0:10.0f} ".format(hmass)
+      for refName in refNames:
+         tmpMed = dataZMed[refName]['zTrue'][hmass]
+         tmpRMS = dataZSig[refName]['zTrue'][hmass]
+         plainResult += "{0:>18}".format("{0:.2f} +/- {1:.2f}".format(tmpMed,tmpRMS))
+         latexResult += "& {0:18} ".format(r"{0:.2f}$\pm${1:.2f}".format(tmpMed,tmpRMS))
+      plainResult += "\n"
+      latexResult += r"\\ \hline"+"\n"
+    plainResult += "\n\n"
+    latexResult += "\\end{tabular}\n\n"
+  # Now Alternate sigma Z's
+  for catName in catNames:
+    catTitle = TITLEMAP[catName]
+    dataZMed = dataCatsZMed[catName]
+    dataZSig = dataCatsZSig[catName]
+    refNames = sorted(dataZMed.keys())
+    allAltNames = set()
+    for refName in refNames:
+      allAltNames = allAltNames.union(dataZMed[refName].keys())
+    allAltNames = sorted(list(allAltNames))
+    allAltNames.pop(allAltNames.index("zTrue"))
+    for altName in allAltNames:
+      altTitle = PDFTITLEMAP[altName]
+      if "#" in altTitle or "^" in altTitle:
+        altTitle = '$'+altTitle+'$'
+      altTitle = altTitle.replace("#","\\")
+      plainResult += "############################################################\n"
+      plainResult += catName+" RMS(Z) v. Mass for Alt: "+altName+"\n\n"
+      plainResult += "\n{0:<10}".format("mH")+"{0:>15}\n".format("Reference")
+      plainResult += "{0:<10}".format("")
+      latexResult += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+      latexResult += "%% "+catName+" RMS(Z) v. Mass for Alt: "+altName+"\n\n"
+      latexResult += r"\begin{tabular}{|l|"+"r|"*len(refNames)+"} \\hline \n"
+      latexResult += r"\multicolumn{"+str(len(refNames)+1)+r"}{|c|}{ \bf "+catTitle+' RMS(Z) for '+altTitle+r"} \\ \hline"+"\n"
+      latexResult += r"\multicolumn{1}{|c|}{\multirow{2}{*}{$m_{H}$ [GeV/c$^{2}$]}} & \multicolumn{"+str(len(refNames))+r"}{c|}{Reference PDFs} \\ \cline{"+"2-{0}".format(len(refNames)+1)+"} "+"\n"
+      for refName in refNames:
+        plainResult += "{0:>15}".format(refName)
+        nicePdfName = PDFTITLEMAP[refName]
+        if "#" in nicePdfName:
+          nicePdfName = '$'+nicePdfName+'$'
+        latexResult += "& \multicolumn{1}{c|}{" +"{0:>15}".format(nicePdfName.replace("#","\\"))+"} "
+      plainResult += "\n"
+      latexResult += r"\\ \hline"+"\n"
+      for hmass in hmasses:
+        plainResult += "{0:<10.0f}".format(hmass)
+        latexResult += "{0:10.0f} ".format(hmass)
+        for refName in refNames:
+           tmpMed = dataZMed[refName][altName][hmass]
+           tmpRMS = dataZSig[refName][altName][hmass]
+           plainResult += "{0:>15.2f}".format(tmpRMS)
+           latexResult += "& {0:15.2f} ".format(tmpRMS)
+        plainResult += "\n"
+        latexResult += r"\\ \hline"+"\n"
+      plainResult += "\n\n"
+      latexResult += "\\end{tabular}\n\n"
+  print plainResult
+  print latexResult
+
 
 if __name__ == "__main__":
   helpStr = "./fitBiasStudy.py [jobGroupNumber] [categoryName]\n  where jobGroupNumber is an int that will be added to the random number seed (*1000)\n    and the output pkl file name\n  if there is a jobGroupNumber, no plots or summary will be produced.\n  If categoryName is present, then only that category will be run,\n    otherwise a group of categories defined in the script will all be run."
@@ -1541,7 +1695,7 @@ if __name__ == "__main__":
   ############################################
   ### Define number of toys to run over
 
-  nToys = 1
+  nToys = 10
 
   ############################################
   ### Define which reference functions to use
@@ -1554,9 +1708,9 @@ if __name__ == "__main__":
       #    "MOverSq",
           "Bernstein",
           "SumExp",
-      #    "SumPow",
+          "SumPow",
       #    "Laurent",
-      #    "Chebychev",
+          "Chebychev",
       #    "Polynomial",
   ]
   ###############################################
@@ -1575,39 +1729,52 @@ if __name__ == "__main__":
                         "Old",
                     ],
       "Bernstein":[          
-                        "ExpMOverSqP0New",
+                        #"ExpMOverSq",
                         #"ExpMOverSq",
                         #"Old",
-                        #"3Bernstein",
-                        #"4Bernstein",
-                        #"5Bernstein",
-                        #"6Bernstein",
+                        "2Bernstein",
+                        "3Bernstein",
+                        "4Bernstein",
+                        "5Bernstein",
+                        "6Bernstein",
                         #"7Bernstein",
                         #"8Bernstein",
-                        #"1SumExp",
-                        #"2SumExp",
+                        "1SumExp",
+                        "2SumExp",
                         #"3SumExp",
                         #"4SumExp",
                     ],
       "SumExp":[          
-                        "ExpMOverSqP0New",
+                        #"ExpMOverSq",
                         #"ExpMOverSq",
                         #"Old",
-                        #"3Bernstein",
-                        #"4Bernstein",
-                        #"5Bernstein",
-                        #"6Bernstein",
+                        "2Bernstein",
+                        "3Bernstein",
+                        "4Bernstein",
+                        "5Bernstein",
+                        "6Bernstein",
                         #"7Bernstein",
                         #"8Bernstein",
-                        #"1SumExp",
-                        #"2SumExp",
+                        "1SumExp",
+                        "2SumExp",
                         #"3SumExp",
                         #"4SumExp",
                     ],
       "SumPow":[          
-                        "ExpMOverSq",
-                        "Old",
-                        "SumExp",
+                        #"ExpMOverSq",
+                        #"ExpMOverSq",
+                        #"Old",
+                        "2Bernstein",
+                        "3Bernstein",
+                        "4Bernstein",
+                        "5Bernstein",
+                        "6Bernstein",
+                        #"7Bernstein",
+                        #"8Bernstein",
+                        "1SumExp",
+                        "2SumExp",
+                        #"3SumExp",
+                        #"4SumExp",
                     ],
       "Laurent":[          
                         "ExpMOverSq",
@@ -1617,11 +1784,20 @@ if __name__ == "__main__":
                         "SumExp",
                     ],
       "Chebychev":[          
-                        "ExpMOverSq",
-                        "Old",
-                        "Bernstein",
-                        "SumPow",
-                        "SumExp",
+                        #"ExpMOverSq",
+                        #"ExpMOverSq",
+                        #"Old",
+                        "2Bernstein",
+                        "3Bernstein",
+                        "4Bernstein",
+                        "5Bernstein",
+                        "6Bernstein",
+                        #"7Bernstein",
+                        #"8Bernstein",
+                        "1SumExp",
+                        "2SumExp",
+                        #"3SumExp",
+                        #"4SumExp",
                     ],
       "Polynomial":[          
                         "ExpMOverSq",
@@ -1633,7 +1809,8 @@ if __name__ == "__main__":
   ### Define which masses to run over
 
   #sigMasses = range(115,156,5)
-  sigMasses = [115,120,125,140,150,155]
+  sigMasses = [115,120,125,135,150,155]
+  massWindow = 20.
 
   ########################################
 
@@ -1646,15 +1823,15 @@ if __name__ == "__main__":
   ########################################
   ### Define which categories to run over
 
-  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
 
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   ########################################
   ### Directory and file names
@@ -1681,6 +1858,8 @@ if __name__ == "__main__":
     categories = [[catToRun,""]]
 
   allSummaries = {}
+  allZSigmaSummaries = {}
+  allZMedianSummaries = {}
   tmpJobGroupStr = ""
   if iJobGroup != None:
     tmpJobGroupStr = "_jobGrp"+str(iJobGroup)
@@ -1708,6 +1887,8 @@ if __name__ == "__main__":
         logFile.write(bs.outStr)
         bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
+        allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
+        allZMedianSummaries[bs.catName] = bs.zMedianSummaryDict
     else:
       # Identify basenames to combine job groups
       basenames = set()
@@ -1732,19 +1913,24 @@ if __name__ == "__main__":
         logFile.write(bs.outStr)
         bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
+        allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
+        allZMedianSummaries[bs.catName] = bs.zMedianSummaryDict
   else:
     processPool = None
     if NPROCS > 1:
       processPool = Pool(processes=NPROCS)
     for category in categories:
-      bs = BiasStudy(category,dataFns8TeV,"8TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool,iJobGroup=iJobGroup)
+      bs = BiasStudy(category,dataFns8TeV,"8TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool,iJobGroup=iJobGroup,fitMassWindow=massWindow)
       logFile.write(bs.outStr)
       if iJobGroup == None:
         bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
-  inputPklFiles = glob.glob(outDir+"*.pkl")
-  printBiasTable(allSummaries,"Old","ExpMOverSq")
+        allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
+        allZMedianSummaries[bs.catName] = bs.zMedianSummaryDict
   printBiasSummary(allSummaries)
+  #printBiasSummary(allSummaries, excludeHmassFunc=lambda x: float(x)<120.)
+  printBiasTable(allSummaries,sigMasses)
+  printZs(allZMedianSummaries,allZSigmaSummaries,sigMasses)
     
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
   logFile.write("\n\n# {0}\n".format(now))

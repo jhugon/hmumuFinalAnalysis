@@ -21,6 +21,34 @@ import datetime
 PRELIMINARYSTRING="CMS Preliminary"
 #PRELIMINARYSTRING="CMS"
 
+def sortCatNames(l):
+  orderDef = [
+    "CombSplitAll",
+    "Jets01SplitCatAll",
+    "Jet2SplitCutsGFSplit",
+    "Jets01PassCatAll" ,
+    "Jets01FailCatAll" ,
+
+    "Jets01PassPtG10BB",
+    "Jets01PassPtG10BO",
+    "Jets01PassPtG10BE",
+    "Jets01PassPtG10OO",
+    "Jets01PassPtG10OE",
+    "Jets01PassPtG10EE",
+                          
+    "Jets01FailPtG10BB",
+    "Jets01FailPtG10BO",
+    "Jets01FailPtG10BE",
+    "Jets01FailPtG10OO",
+    "Jets01FailPtG10OE",
+    "Jets01FailPtG10EE",
+
+    "Jet2CutsVBFPass",
+    "Jet2CutsGFPass",
+    "Jet2CutsFailVBFGF",
+  ]
+  return sorted(l,key=lambda x: orderDef.index(x))
+
 def drange(start, stop, step):
   r = start
   while r < stop:
@@ -2257,7 +2285,7 @@ def fitDGFindQuantiles(hist,level):
     return quants
         
 class RooModelPlotter:
-  def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None,RangeName="",canvas=None,caption1="",caption2=""):
+  def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None,RangeName="",canvas=None,caption1="",caption2="",caption3=""):
     self.xVar = xVar
     self.pdf = pdf
     self.data = data
@@ -2272,6 +2300,7 @@ class RooModelPlotter:
     self.nowStr = nowStr
     self.caption1 = caption1
     self.caption2 = caption2
+    self.caption3 = caption3
 
     self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(lumi)
 
@@ -2549,6 +2578,8 @@ class RooModelPlotter:
 
     if self.caption2 != "":
       self.tlatex.DrawLatex(self.legPos[0]-0.01,0.765,self.caption2)
+    if self.caption3 != "":
+      self.tlatex.DrawLatex(self.legPos[0]-0.01,0.655,self.caption3)
 
     pad2.cd()
     self.tlatex.SetTextSize(self.pullsHist.GetYaxis().GetLabelSize())

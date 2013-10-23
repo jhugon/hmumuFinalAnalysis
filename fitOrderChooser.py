@@ -51,7 +51,55 @@ titleMap = {
   "Jet2CutsFailVBFGF":"2-Jet Loose",
 }
 
-def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+def getOrderToUseFromDict(dataOrds,name,mh):
+  assert(dataOrds != None)
+  assert(name != None)
+  assert(mh != None)
+
+  cat = None
+  for key in dataOrds.keys():
+    if key in name:
+        cat = key
+        break
+  if cat == None:
+    raise KeyError(name)
+
+  data = dataOrds[cat]
+
+  if data.has_key(mh):
+    return data[mh]
+
+  massList = data.keys()
+  assert(len(massList)>1)
+
+  massListP = []
+  massListN = []
+  massDiffListP = []
+  massDiffListN = []
+
+  for mass in massList:
+    mdiff = mh - mass
+    if mdiff < 0.:
+      massDiffListN.append(-mdiff)
+      massListN.append(mass)
+    else:
+      massDiffListP.append(mdiff)
+      massListP.append(mass)
+  minP = 0
+  minN = 0
+  if len(massListP)>0:
+    minP = massListP[massDiffListP.index(min(massDiffListP))]
+    minP = data[minP]
+  if len(massListN)>0:
+    minN = massListN[massDiffListN.index(min(massDiffListN))]
+    minN = data[minN]
+  result = max(minP,minN)
+
+  return result
+
+########################################################################################
+
+def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None,higgsMass=None):
     debug = ""
     debug += "### makePDFBakBernstein: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -59,39 +107,133 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     channelName = name
 
+    # Bernstein Default Order Dict
+    # For Window Width: 20.0 GeV
+    defaultOrders = {
+      'Jets01PassPtG10BB': {
+        115:4,
+        120:3,
+        125:2,
+        135:2,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BO': {
+        115:3,
+        120:3,
+        125:2,
+        135:2,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BE': {
+        115:3,
+        120:3,
+        125:2,
+        135:1,
+        150:1,
+        155:2,
+      },
+      'Jets01PassPtG10OO': {
+        115:3,
+        120:2,
+        125:2,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10OE': {
+        115:3,
+        120:2,
+        125:2,
+        135:2,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10EE': {
+        115:4,
+        120:2,
+        125:2,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10BB': {
+        115:5,
+        120:2,
+        125:2,
+        135:2,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10BO': {
+        115:4,
+        120:2,
+        125:3,
+        135:2,
+        150:2,
+        155:1,
+      },
+      'Jets01FailPtG10BE': {
+        115:3,
+        120:2,
+        125:2,
+        135:2,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10OO': {
+        115:4,
+        120:2,
+        125:2,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10OE': {
+        115:4,
+        120:2,
+        125:2,
+        135:2,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10EE': {
+        115:3,
+        120:2,
+        125:2,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsVBFPass': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsGFPass': {
+        115:2,
+        120:2,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsFailVBFGF': {
+        115:3,
+        120:2,
+        125:2,
+        135:1,
+        150:1,
+        155:1,
+      },
+    }
+
     if order == None:
-      if "Jets01PassPtG10BB" in name:
-        order = 4
-      elif "Jets01PassPtG10BO" in name:
-        order = 6
-      elif "Jets01PassPtG10BE" in name:
-        order = 5
-      elif "Jets01PassPtG10OO" in name:
-        order = 4
-      elif "Jets01PassPtG10OE" in name:
-        order = 3
-      elif "Jets01PassPtG10EE" in name:
-        order = 3
-      elif "Jets01FailPtG10BB" in name:
-        order = 4
-      elif "Jets01FailPtG10BO" in name:
-        order = 4
-      elif "Jets01FailPtG10BE" in name:
-        order = 4
-      elif "Jets01FailPtG10OO" in name:
-        order = 4
-      elif "Jets01FailPtG10OE" in name:
-        order = 3
-      elif "Jets01FailPtG10EE" in name:
-        order = 4
-      elif "Jet2CutsVBFPass" in name:
-        order = 2
-      elif "Jet2CutsGFPass" in name:
-        order = 3
-      elif "Jet2CutsFailVBFGF" in name:
-        order = 4
-      else:
-        order = 5
+      order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
 
     rooParamList = []
     rooArgList = root.RooArgList()
@@ -114,7 +256,7 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
   
     pdfMmumu = root.RooBernstein("bak","Bernstein Order: "+str(order),dimuonMass,rooArgList)
 
-    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
@@ -154,7 +296,7 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     return paramList, bakNormTup, debug, order
 
-def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None,higgsMass=None):
     debug = ""
     debug += "### makePDFBakChebychev: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -162,41 +304,133 @@ def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     channelName = name
 
+    # Chebychev Default Order Dict
+    # For Window Width: 20.0 GeV
+    defaultOrders = {
+      'Jets01PassPtG10BB': {
+        115:4,
+        120:3,
+        125:2,
+        135:2,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BO': {
+        115:3,
+        120:3,
+        125:2,
+        135:2,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BE': {
+        115:3,
+        120:3,
+        125:2,
+        135:1,
+        150:1,
+        155:2,
+      },
+      'Jets01PassPtG10OO': {
+        115:3,
+        120:2,
+        125:2,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10OE': {
+        115:3,
+        120:2,
+        125:2,
+        135:2,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10EE': {
+        115:4,
+        120:2,
+        125:2,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10BB': {
+        115:5,
+        120:2,
+        125:2,
+        135:2,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10BO': {
+        115:4,
+        120:2,
+        125:3,
+        135:2,
+        150:2,
+        155:1,
+      },
+      'Jets01FailPtG10BE': {
+        115:3,
+        120:2,
+        125:2,
+        135:2,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10OO': {
+        115:4,
+        120:2,
+        125:2,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10OE': {
+        115:4,
+        120:2,
+        125:2,
+        135:2,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10EE': {
+        115:3,
+        120:2,
+        125:2,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsVBFPass': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsGFPass': {
+        115:2,
+        120:2,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsFailVBFGF': {
+        115:3,
+        120:2,
+        125:2,
+        135:1,
+        150:1,
+        155:1,
+      },
+    }
+
     if order == None:
-      if "Jets01PassPtG10BB" in name:
-        order = 4
-      elif "Jets01PassPtG10BO" in name:
-        order = 6
-      elif "Jets01PassPtG10BE" in name:
-        order = 5
-      elif "Jets01PassPtG10OO" in name:
-        order = 4
-      elif "Jets01PassPtG10OE" in name:
-        order = 3
-      elif "Jets01PassPtG10EE" in name:
-        order = 3
-      ## 0,1-Jet Fail categories have poor GOF.
-      ## undershoots low-end and funny feature appears at high-end
-      elif "Jets01FailPtG10BB" in name:
-        order = None
-      elif "Jets01FailPtG10BO" in name:
-        order = None
-      elif "Jets01FailPtG10BE" in name:
-        order = None
-      elif "Jets01FailPtG10OO" in name:
-        order = None
-      elif "Jets01FailPtG10OE" in name:
-        order = None
-      elif "Jets01FailPtG10EE" in name:
-        order = None
-      elif "Jet2CutsVBFPass" in name:
-        order = 2
-      elif "Jet2CutsGFPass" in name:
-        order = 3
-      elif "Jet2CutsFailVBFGF" in name:
-        order = 4
-      else:
-        order = None
+      order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
 
     rooParamList = []
     rooArgList = root.RooArgList()
@@ -219,7 +453,7 @@ def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
   
     pdfMmumu = root.RooChebychev("bak","Chebychev Order: "+str(order),dimuonMass,rooArgList)
 
-    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
@@ -259,7 +493,7 @@ def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     return paramList, bakNormTup, debug, order
 
-def makePDFBakPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+def makePDFBakPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None,higgsMass=None):
     debug = ""
     debug += "### makePDFBakPolynomial: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -267,39 +501,9 @@ def makePDFBakPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
 
     channelName = name
 
+    defaultOrders = None
     if order == None:
-      if "Jets01PassPtG10BB" in name:
-        order = None
-      elif "Jets01PassPtG10BO" in name:
-        order = None
-      elif "Jets01PassPtG10BE" in name:
-        order = None
-      elif "Jets01PassPtG10OO" in name:
-        order = None
-      elif "Jets01PassPtG10OE" in name:
-        order = None
-      elif "Jets01PassPtG10EE" in name:
-        order = None
-      elif "Jets01FailPtG10BB" in name:
-        order = None
-      elif "Jets01FailPtG10BO" in name:
-        order = None
-      elif "Jets01FailPtG10BE" in name:
-        order = None
-      elif "Jets01FailPtG10OO" in name:
-        order = None
-      elif "Jets01FailPtG10OE" in name:
-        order = None
-      elif "Jets01FailPtG10EE" in name:
-        order = None
-      elif "Jet2CutsVBFPass" in name:
-        order = None
-      elif "Jet2CutsGFPass" in name:
-        order = None
-      elif "Jet2CutsFailVBFGF" in name:
-        order = None
-      else:
-        order = None
+      order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
 
     rooParamList = []
     rooArgList = root.RooArgList()
@@ -322,7 +526,7 @@ def makePDFBakPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
   
     pdfMmumu = root.RooPolynomial("bak","Polynomial Order: "+str(order),dimuonMass,rooArgList)
 
-    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
@@ -362,7 +566,7 @@ def makePDFBakPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
 
     return paramList, bakNormTup, debug, order
 
-def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None,higgsMass=None):
     debug = ""
     debug += "### makePDFBakSumExp: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -370,8 +574,133 @@ def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
 
     channelName = name
 
+    # SumExp Default Order Dict
+    # For Window Width: 20.0 GeV
+    defaultOrders = {
+      'Jets01PassPtG10BB': {
+        115:2,
+        120:2,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BO': {
+        115:2,
+        120:2,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BE': {
+        115:2,
+        120:2,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10OO': {
+        115:2,
+        120:1,
+        125:2,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10OE': {
+        115:2,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10EE': {
+        115:2,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10BB': {
+        115:2,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10BO': {
+        115:2,
+        120:2,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10BE': {
+        115:2,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10OO': {
+        115:2,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10OE': {
+        115:2,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10EE': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsVBFPass': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsGFPass': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsFailVBFGF': {
+        115:2,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+    }
+
     if order == None:
-      order = 2
+      order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
 
     rooParamList = []
     pyPdfList = []
@@ -404,7 +733,7 @@ def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
   
     pdfMmumu = root.RooAddPdf("bak","Sum of Exponentials Order: "+str(order),rooExpPdfList,rooArgCoefList)
 
-    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
@@ -444,7 +773,7 @@ def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
 
     return paramList, bakNormTup, debug, order
 
-def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None,higgsMass=None):
     debug = ""
     debug += "### makePDFBakSumPow: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -452,39 +781,133 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
 
     channelName = name
 
+    # SumPow Default Order Dict
+    # For Window Width: 20.0 GeV
+    defaultOrders = {
+      'Jets01PassPtG10BB': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BO': {
+        115:2,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BE': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10OO': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10OE': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10EE': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10BB': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10BO': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10BE': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10OO': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10OE': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01FailPtG10EE': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsVBFPass': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsGFPass': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsFailVBFGF': {
+        115:1,
+        120:1,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+    }
+
     if order == None:
-      if "Jets01PassPtG10BB" in name:
-        order = 2
-      elif "Jets01PassPtG10BO" in name:
-        order = 2
-      elif "Jets01PassPtG10BE" in name:
-        order = 2
-      elif "Jets01PassPtG10OO" in name:
-        order = 2
-      elif "Jets01PassPtG10OE" in name:
-        order = 2
-      elif "Jets01PassPtG10EE" in name:
-        order = 2
-      elif "Jets01FailPtG10BB" in name:
-        order = 2
-      elif "Jets01FailPtG10BO" in name:
-        order = 2
-      elif "Jets01FailPtG10BE" in name:
-        order = 2
-      elif "Jets01FailPtG10OO" in name:
-        order = 2
-      elif "Jets01FailPtG10OE" in name:
-        order = 1
-      elif "Jets01FailPtG10EE" in name:
-        order = 2
-      elif "Jet2CutsVBFPass" in name:
-        order = 1
-      elif "Jet2CutsGFPass" in name:
-        order = 1
-      elif "Jet2CutsFailVBFGF" in name:
-        order = 1
-      else:
-        order = 1
+      order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
 
     rooParamList = []
     rooArgList = root.RooArgList(dimuonMass)
@@ -532,7 +955,7 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
 
     pdfMmumu = root.RooGenericPdf("bak","Sum of Powers Order: "+str(order),pdfDefString,rooArgList)
 
-    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
@@ -572,7 +995,7 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
 
     return paramList, bakNormTup, debug, order
 
-def makePDFBakLaurent(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+def makePDFBakLaurent(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None,higgsMass=None):
     debug = ""
     debug += "### makePDFBakLaurent: "+name+"\n"
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
@@ -580,40 +1003,9 @@ def makePDFBakLaurent(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
 
     channelName = name
 
+    defaultOrders = None
     if order == None:
-      if "Jets01PassPtG10BB" in name:
-        order = None
-      elif "Jets01PassPtG10BO" in name:
-        order = None
-      elif "Jets01PassPtG10BE" in name:
-        order = None
-      elif "Jets01PassPtG10OO" in name:
-        order = None
-      elif "Jets01PassPtG10OE" in name:
-        order = None
-      elif "Jets01PassPtG10EE" in name:
-        order = None
-      elif "Jets01FailPtG10BB" in name:
-        order = None
-      elif "Jets01FailPtG10BO" in name:
-        order = None
-      elif "Jets01FailPtG10BE" in name:
-        order = None
-      elif "Jets01FailPtG10OO" in name:
-        order = None
-      elif "Jets01FailPtG10OE" in name:
-        order = None
-      elif "Jets01FailPtG10EE" in name:
-        order = None
-      elif "Jet2CutsVBFPass" in name:
-        order = None
-      elif "Jet2CutsGFPass" in name:
-        order = None
-      elif "Jet2CutsFailVBFGF" in name:
-        order = None
-      else:
-        order = None
-
+      order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
 
     rooParamList = []
     rooTermList = root.RooArgList()
@@ -652,7 +1044,7 @@ def makePDFBakLaurent(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
     pdfMmumu = root.RooAddPdf("bak","Laurent Order: "+str(order),rooTermList,rooExtParList)
     pdfMmumu.Print()
 
-    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
@@ -700,8 +1092,23 @@ def makePDFBakLaurent(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
 #########################################################################
 #########################################################################
 
+class OrderSummary(object):
+  def __init__(self,order,gof,nll,nllp1,deltaNdfFunc):
+    self.order = order
+    self.gof = gof
+    self.nll = nll
+    self.nllp1 = nllp1
+    self.m2DeltaNLL = -2.*(nllp1-nll)
+    self.deltaNdfFunc = deltaNdfFunc
+    self.pChi2 = scipy.stats.chi2.sf(self.m2DeltaNLL,self.deltaNdfFunc)
+
+  def __str__(self):
+    outStr = "{0:>4} {1:>10} {2:>10} {3:>10} {4:>10} ".format("d","GOF","NLL","-2DeltaNLL","pChi2")+"\n"
+    outStr += "{0:4} {1:10.3g} {2:10.2f} {3:10.2f} {4:10.3g}".format(self.order,self.gof,-self.nll,self.m2DeltaNLL,self.pChi2)
+    return outStr
+
 class OrderStudy:
-  def __init__(self,catName,energyStr,dataFileNames,outPrefix,pdfsToTry,ordersToTry):
+  def __init__(self,catName,energyStr,dataFileNames,outPrefix,pdfsToTry,ordersToTry,signalMassList,massWindowWidth):
       catName = catName[0]
       randomGenerator = root.RooRandom.randomGenerator()
       randomGenerator.SetSeed(10001)
@@ -710,33 +1117,6 @@ class OrderStudy:
         dataTree.Add(i+"/outtree"+catName)
       dataTree.SetCacheSize(10000000);
       dataTree.AddBranchToCache("*");
-
-      dimuonMass = root.RooRealVar("dimuonMass","M(#mu#mu) [GeV/c^{2}]",110.,160.)
-      dimuonMass.setRange("low",110,120) # Silly ranges for old fit functionality
-      dimuonMass.setRange("high",130,160)
-      dimuonMass.setRange("signal",120,130)
-      dimuonMass.setRange("signalfit",110,140)
-      dimuonMass.setBins(50)
-
-      # Hack to Make makePDFBakOld work
-      minMassZ = 88.
-      maxMassZ = 94.
-      dimuonMassZ = root.RooRealVar("dimuonMass","dimuonMass",minMassZ,maxMassZ)
-      dimuonMassZ = dimuonMassZ
-
-      ### Load data
-      realData = root.RooDataSet("realData"+catName+energyStr,
-                                      "realData"+catName+energyStr,
-                                          dataTree,root.RooArgSet(dimuonMass)
-                                        )
-      nData = realData.sumEntries()
-      #realDataZ = root.RooDataSet("realDataZ"+catName+energyStr,
-      #                                "realDataZ"+catName+energyStr,
-      #                                    dataTree,root.RooArgSet(dimuonMassZ)
-      #                                  )
-      realDataZ=None
-
-      realDataHist = realData.binnedClone()
 
       ### Make Bak Pdfs
       self.rmpList = []
@@ -753,113 +1133,139 @@ class OrderStudy:
       self.outStrDetail += catName + energyStr + "\n\n"
       for pdfBaseName in pdfsToTry:
         data[pdfBaseName] = {}
-        for order in ordersToTry:
-          data[pdfBaseName][order] = {}
-          w = root.RooWorkspace("w"+pdfBaseName+str(order))
-          wImport = getattr(w,"import")
-          pdfName = pdfBaseName+str(order)
-          pdfFunc = globals()["makePDFBak"+pdfBaseName]
-          tmpParamList,tmpNormTup,tmpDebug,tmpOrder = pdfFunc(pdfName+catName+energyStr,realData,dimuonMass,110,160,wImport,dimuonMassZ,realDataZ,order=order)
-          pdf = w.pdf("bak")
-          fr = pdf.fitTo(realData, 
-                             #root.RooFit.Hesse(True), 
-                             #root.RooFit.Minos(True), # Doesn't Help, just makes it run longer
-                             root.RooFit.Save(True),
-                             PRINTLEVEL
-                           )
+        for sigMass in signalMassList:
+          minMass = sigMass - massWindowWidth/2.
+          maxMass = sigMass + massWindowWidth/2.
 
-          rmp = RooModelPlotter(dimuonMass,pdf,realData,fr,
-                            titleMap[catName],energyStr,lumiDict[energyStr],
-                            caption2=pdfBaseName+" Order "+str(order)
-                            )
-          rmp.draw(outPrefix+"_"+catName+"_"+pdfBaseName+str(order))
-          floatParsFinal = fr.floatParsFinal()
-          self.outStrDetail += "\n{0}\n".format(pdf.GetTitle())
-          #self.outStrDetail += tmpDebug + "\n"
-          for i in range(floatParsFinal.getSize()):
-            parTitle = floatParsFinal.at(i).GetTitle()
-            parVal = floatParsFinal.at(i).getVal()
-            parErr = floatParsFinal.at(i).getError()
-            self.outStrDetail += "  {0:30}: {1:10.3g} +/- {2:10.3g}\n".format(parTitle,parVal,parErr)
+          dimuonMass = root.RooRealVar("dimuonMass","M(#mu#mu) [GeV/c^{2}]",minMass,maxMass)
+          dimuonMass.setBins(int(massWindowWidth))
+          ### Load data
+          realData = root.RooDataSet("realData"+catName+energyStr,
+                                          "realData"+catName+energyStr,
+                                              dataTree,root.RooArgSet(dimuonMass)
+                                            )
+          nData = realData.sumEntries()
+          dimuonMassZ = None
+          realDataZ=None
+          realDataHist = realData.binnedClone()
+          data[pdfBaseName][sigMass] = {}
+          for order in ordersToTry:
+            data[pdfBaseName][sigMass][order] = {}
+            w = root.RooWorkspace("w"+pdfBaseName+str(order))
+            wImport = getattr(w,"import")
+            pdfName = pdfBaseName+str(order)
+            pdfFunc = globals()["makePDFBak"+pdfBaseName]
+            tmpParamList,tmpNormTup,tmpDebug,tmpOrder = pdfFunc(pdfName+catName+energyStr,realData,dimuonMass,minMass,maxMass,wImport,dimuonMassZ,realDataZ,order=order)
+            pdf = w.pdf("bak")
+            fr = pdf.fitTo(realData, 
+                               root.RooFit.Range(minMass,maxMass),
+                               #root.RooFit.Hesse(True), 
+                               #root.RooFit.Minos(True), # Doesn't Help, just makes it run longer
+                               root.RooFit.Save(True),
+                               PRINTLEVEL
+                             )
 
-          pdf.SetName(pdfName)
-        
-          ndfFunc = rooPdfNFreeParams(pdf,realData)
+            rmp = RooModelPlotter(dimuonMass,pdf,realData,fr,
+                              titleMap[catName],energyStr,lumiDict[energyStr],
+                              caption2=pdfBaseName+" Order "+str(order),
+                              caption3="m_{{H}}={0:.0f} GeV/c^{{2}}".format(sigMass)
+                              )
+            rmp.draw(outPrefix+"_"+catName+"_"+pdfBaseName+"_"+str(sigMass)+"_"+str(order))
+            floatParsFinal = fr.floatParsFinal()
+            self.outStrDetail += "\n{0}\n".format(pdf.GetTitle())
+            #self.outStrDetail += tmpDebug + "\n"
+            for i in range(floatParsFinal.getSize()):
+              parTitle = floatParsFinal.at(i).GetTitle()
+              parVal = floatParsFinal.at(i).getVal()
+              parErr = floatParsFinal.at(i).getError()
+              self.outStrDetail += "  {0:30}: {1:10.3g} +/- {2:10.3g}\n".format(parTitle,parVal,parErr)
 
-          chi2Var = pdf.createChi2(realDataHist)
-          chi2 = chi2Var.getVal()
-          ndf = dimuonMass.getBins() - 1  # b/c roofit normalizes
-          ndf -= ndfFunc
-          nll = fr.minNll()
-          #self.outStr+= "{0:15} chi2: {1:.2f} ndf: {2:.0f} nll: {3:.3g}\n".format(pdfName,chi2,ndf,nll)
+            pdf.SetName(pdfName)
+          
+            ndfFunc = rooPdfNFreeParams(pdf,realData)
 
-          self.rmpList.append(rmp)
-          self.pdfList.append(pdf)
-          self.frList.append(fr)
-          data[pdfBaseName][order]['chi2'] = chi2
-          data[pdfBaseName][order]['ndf'] = ndf
-          data[pdfBaseName][order]['nll'] = nll
-          data[pdfBaseName][order]['ndfFunc'] = ndfFunc
+            chi2Var = pdf.createChi2(realDataHist)
+            chi2 = chi2Var.getVal()
+            ndf = dimuonMass.getBins() - 1  # b/c roofit normalizes
+            ndf -= ndfFunc
+            nll = fr.minNll()
+            #self.outStr+= "{0:15} chi2: {1:.2f} ndf: {2:.0f} nll: {3:.3g}\n".format(pdfName,chi2,ndf,nll)
 
+            self.rmpList.append(rmp)
+            self.pdfList.append(pdf)
+            self.frList.append(fr)
+            data[pdfBaseName][sigMass][order]['chi2'] = chi2
+            data[pdfBaseName][sigMass][order]['ndf'] = ndf
+            data[pdfBaseName][sigMass][order]['nll'] = nll
+            data[pdfBaseName][sigMass][order]['ndfFunc'] = ndfFunc
+
+      self.summary = {}
 
       self.latexStr = ""
       for pdfBaseName in pdfsToTry:
-        tableStr =  catName+" "+energyStr+"\n"+pdfBaseName
-        tableStr += "\n\n"+r"\begin{tabular}{|l|c|c|c|c|} \hline" + "\n"
-        tableStr += r"Order & Goodness & $-\ln\mathcal{L}$ & $-2\ln\lambda$ & $p_{\chi^2}$ \\"+" \n"
-        #tableStr += r"Degree (d) & Goodness & NLL$_d$ & -2$\Delta$NLL(d+1,d) & $p_{\chi^2}$(d+1,d) \\"+" \n"
-        tableStr += r" & of Fit  &  & &  \\ \hline \hline" + "\n"
-        foundGoodOne = False
-        for order in sorted(data[pdfBaseName].keys()):
-          tmpDat = data[pdfBaseName][order]
-          tmpDatP1 = False
-          if data[pdfBaseName].has_key(order+1):
-            tmpDatP1 = data[pdfBaseName][order+1]
-          tmpDat = data[pdfBaseName][order]
-          gof = scipy.stats.chi2.sf(tmpDat['chi2'],tmpDat['ndf'])
-          nll = tmpDat['nll']
-          ndfFunc = tmpDat['ndfFunc']
-          if tmpDatP1:
-            nllP1 = tmpDatP1['nll']
-            ndfFuncP1 = tmpDatP1['ndfFunc']
-            deltaNdfFunc = ndfFuncP1-ndfFunc
-            deltaNLL = -2.*(nllP1-nll)
-            pDeltaNLL = scipy.stats.chi2.sf(deltaNLL,deltaNdfFunc)
-            if not foundGoodOne and pDeltaNLL > 0.05:
-              foundGoodOne = True
-              tableStr += r"\bf {0} & \bf {1:.3g} & \bf {2:.2f} & \bf {3:.2f} & \bf {4:.3g} ".format(order,gof,-nll,deltaNLL,pDeltaNLL)+r" \\ \hline" + "\n"
+        self.summary[pdfBaseName] = {}
+        for sigMass in signalMassList:
+          tableStr =  catName+" "+energyStr+"\n"+pdfBaseName+" mH = {0:.1f}  massWindowWidth = {1:.2f} ".format(sigMass,massWindowWidth)
+          tableStr += "\n\n"+r"\begin{tabular}{|l|c|c|c|c|} \hline" + "\n"
+          tableStr += r"Order & Goodness & $-\ln\mathcal{L}$ & $-2\ln\lambda$ & $p_{\chi^2}$ \\"+" \n"
+          #tableStr += r"Degree (d) & Goodness & NLL$_d$ & -2$\Delta$NLL(d+1,d) & $p_{\chi^2}$(d+1,d) \\"+" \n"
+          tableStr += r" & of Fit  &  & &  \\ \hline \hline" + "\n"
+          foundGoodOne = False
+          tmpSummary = None
+          for order in sorted(data[pdfBaseName][sigMass].keys()):
+            tmpDat = data[pdfBaseName][sigMass][order]
+            tmpDatP1 = False
+            if data[pdfBaseName][sigMass].has_key(order+1):
+              tmpDatP1 = data[pdfBaseName][sigMass][order+1]
+            tmpDat = data[pdfBaseName][sigMass][order]
+            gof = scipy.stats.chi2.sf(tmpDat['chi2'],tmpDat['ndf'])
+            nll = tmpDat['nll']
+            ndfFunc = tmpDat['ndfFunc']
+            if tmpDatP1:
+              nllP1 = tmpDatP1['nll']
+              ndfFuncP1 = tmpDatP1['ndfFunc']
+              deltaNdfFunc = ndfFuncP1-ndfFunc
+              deltaNLL = -2.*(nllP1-nll)
+              pDeltaNLL = scipy.stats.chi2.sf(deltaNLL,deltaNdfFunc)
+              if not foundGoodOne and pDeltaNLL > 0.05:
+                foundGoodOne = True
+                tableStr += r"\bf {0} & \bf {1:.3g} & \bf {2:.2f} & \bf {3:.2f} & \bf {4:.3g} ".format(order,gof,-nll,deltaNLL,pDeltaNLL)+r" \\ \hline" + "\n"
+                tmpSummary = OrderSummary(order,gof,nll,nllP1,deltaNdfFunc)
+              else:
+                tableStr += "{0} & {1:.3g} & {2:.2f} & {3:.2f} & {4:.3g} ".format(order,gof,-nll,deltaNLL,pDeltaNLL)+r" \\ \hline" + "\n"
             else:
-              tableStr += "{0} & {1:.3g} & {2:.2f} & {3:.2f} & {4:.3g} ".format(order,gof,-nll,deltaNLL,pDeltaNLL)+r" \\ \hline" + "\n"
-          else:
-            tableStr += "{0} & {1:.3g} & {2:.2f} & - & - ".format(order,gof,-nll)+r" \\ \hline" + "\n"
-        tableStr += r"\end{tabular}" + "\n\n"
-        self.latexStr += tableStr
+              tableStr += "{0} & {1:.3g} & {2:.2f} & - & - ".format(order,gof,-nll)+r" \\ \hline" + "\n"
+          tableStr += r"\end{tabular}" + "\n\n"
+          self.latexStr += tableStr
+          self.summary[pdfBaseName][sigMass] = tmpSummary
       for pdfBaseName in pdfsToTry:
-        self.outStr +=  "\n\n"+"\n"+pdfBaseName+"\n\n"
-        self.outStr += "{0:>4} {1:>10} {2:>10} {3:>10} {4:>10} ".format("d","GOF","NLL","-2DeltaNLL","pChi2")+"\n"
-        foundGoodOne = False
-        for order in sorted(data[pdfBaseName].keys()):
-          tmpDat = data[pdfBaseName][order]
-          tmpDatP1 = False
-          if data[pdfBaseName].has_key(order+1):
-            tmpDatP1 = data[pdfBaseName][order+1]
-          tmpDat = data[pdfBaseName][order]
-          gof = scipy.stats.chi2.sf(tmpDat['chi2'],tmpDat['ndf'])
-          nll = tmpDat['nll']
-          ndfFunc = tmpDat['ndfFunc']
-          if tmpDatP1:
-            nllP1 = tmpDatP1['nll']
-            ndfFuncP1 = tmpDatP1['ndfFunc']
-            deltaNdfFunc = ndfFuncP1-ndfFunc
-            deltaNLL = -2.*(nllP1-nll)
-            pDeltaNLL = scipy.stats.chi2.sf(deltaNLL,deltaNdfFunc)
-            foundGoodStr = ""
-            if not foundGoodOne and pDeltaNLL > 0.05:
-              foundGoodStr = "*"
-              foundGoodOne = True
-            self.outStr += "{0:4} {1:10.3g} {2:10.2f} {3:10.2f} {4:10.3g} {5}".format(order,gof,-nll,deltaNLL,pDeltaNLL,foundGoodStr)+ "\n"
-          else:
-            self.outStr += "{0:4} {1:10.3g} {2:10.2f} {3:>10} {4:>10} ".format(order,gof,-nll,'-','-')+"\n"
+        for sigMass in signalMassList:
+          self.outStr +=  "\n\n"+catName+" "+energyStr+"\n"+pdfBaseName+" mH = {0:.1f}    massWindowWidth = {1:.2f}".format(sigMass,massWindowWidth)+"\n\n"
+      
+          self.outStr += "{0:>4} {1:>10} {2:>10} {3:>10} {4:>10} ".format("d","GOF","NLL","-2DeltaNLL","pChi2")+"\n"
+          foundGoodOne = False
+          for order in sorted(data[pdfBaseName][sigMass].keys()):
+            tmpDat = data[pdfBaseName][sigMass][order]
+            tmpDatP1 = False
+            if data[pdfBaseName][sigMass].has_key(order+1):
+              tmpDatP1 = data[pdfBaseName][sigMass][order+1]
+            tmpDat = data[pdfBaseName][sigMass][order]
+            gof = scipy.stats.chi2.sf(tmpDat['chi2'],tmpDat['ndf'])
+            nll = tmpDat['nll']
+            ndfFunc = tmpDat['ndfFunc']
+            if tmpDatP1:
+              nllP1 = tmpDatP1['nll']
+              ndfFuncP1 = tmpDatP1['ndfFunc']
+              deltaNdfFunc = ndfFuncP1-ndfFunc
+              deltaNLL = -2.*(nllP1-nll)
+              pDeltaNLL = scipy.stats.chi2.sf(deltaNLL,deltaNdfFunc)
+              foundGoodStr = ""
+              if not foundGoodOne and pDeltaNLL > 0.05:
+                foundGoodStr = "*"
+                foundGoodOne = True
+              self.outStr += "{0:4} {1:10.3g} {2:10.2f} {3:10.2f} {4:10.3g} {5}".format(order,gof,-nll,deltaNLL,pDeltaNLL,foundGoodStr)+ "\n"
+            else:
+              self.outStr += "{0:4} {1:10.3g} {2:10.2f} {3:>10} {4:>10} ".format(order,gof,-nll,'-','-')+"\n"
 
       print self.outStr
 
@@ -879,14 +1285,129 @@ class OrderStudy:
     else:
         print "Error: getNDF: don't recognize function: "+basename
         sys.exit(1)
+
+def summaryWriter(summary,windowSize):
+  result = ""
+  result += "#################################\n"
+  result += "####### "+"{0:^17}".format("Window: {0:.1f}".format(windowSize))+" #######\n"
+  result += "#################################\n"
+  pdfNames = None
+  categories = sortCatNames(summary.keys())
+  for category in categories:
+    pdfNames =  sorted(summary[category].keys())
+    break
+  sigMasses = set()
+  for pdfName in pdfNames:
+    for category in categories:
+      for sigMass in summary[category][pdfName].keys():
+        if not sigMass in sigMasses:
+          sigMasses.add(sigMass)
+  sigMasses = sorted(list(sigMasses))
+  for pdfName in pdfNames:
+    result += "\n{0}\n".format(pdfName)
+    result += "{0:20}".format("")
+    for sigMass in sigMasses:
+      result += "{0:>8.1f}".format(sigMass)
+    result += "{0:>10}".format("WrstGOF")
+    result += "\n"
+    for category in categories:
+      result += "{0:20}".format(category)
+      gofList = []
+      for sigMass in sigMasses:
+        if not orderSummaries[category][pdfName].has_key(sigMass) or orderSummaries[category][pdfName][sigMass] == None:
+          result +=  "{0:>8}".format("-")
+          continue
+        order =  orderSummaries[category][pdfName][sigMass].order
+        gof =  orderSummaries[category][pdfName][sigMass].gof
+        result +=  "{0:>8}".format(order)
+        gofList.append(gof)
+      if len(gofList) != 0:
+        result += "{0:>10.3f}".format(min(gofList))
+      else:
+        result += "{0:>10}".format('-')
+      result += "\n"
+  return result
+
+def summaryLatex(summary,windowSize):
+  result = ""
+  pdfNames = None
+  categories = sortCatNames(summary.keys())
+  for category in categories:
+    pdfNames =  sorted(summary[category].keys())
+    break
+  sigMasses = set()
+  for pdfName in pdfNames:
+    for category in categories:
+      for sigMass in summary[category][pdfName].keys():
+        if not sigMass in sigMasses:
+          sigMasses.add(sigMass)
+  sigMasses = sorted(list(sigMasses))
+
+  nSigMasses = len(sigMasses)
+  nCols = nSigMasses+1
+  result += "\n\n"+r"\begin{tabular}{|l|"+"c|"*nSigMasses+r"} \hline" + "\n"
+  result += r"\multicolumn{"+str(nCols)+r"}{|c|}{ \bf Optimal Reference Function Order} \\ \hline"+"\n"
+  result += r"% window width = {0} GeV/c^2".format(windowSize)+"\n"
+  for pdfName in pdfNames:
+    result += r"\multicolumn{"+str(nCols)+"}{|c|}{"+pdfName+r"} \\ \hline"+"\n"
+    result += "{0:20} ".format("")
+    for sigMass in sigMasses:
+      result += "& {0:>8.1f} ".format(sigMass)
+    result += r"\\ \hline"
+    result += "\n"
+    for category in categories:
+      result += "{0:20} ".format(titleMap[category])
+      for sigMass in sigMasses:
+        if not orderSummaries[category][pdfName].has_key(sigMass) or orderSummaries[category][pdfName][sigMass] == None:
+          result +=  "{0:>8}".format("-")
+          continue
+        order =  orderSummaries[category][pdfName][sigMass].order
+        result +=  "& {0:>8} ".format(order)
+      result += r"\\ \hline"
+      result += "\n"
+  result += "\end{tabular}"+"\n"
+  return result
+
+def summaryDictMaker(summary,windowSize):
+  result = "\n########################################################\n"
+  pdfNames = None
+  categories = sortCatNames(summary.keys())
+  for category in categories:
+    pdfNames =  sorted(summary[category].keys())
+    break
+  sigMasses = set()
+  for pdfName in pdfNames:
+    for category in categories:
+      for sigMass in summary[category][pdfName].keys():
+        if not sigMass in sigMasses:
+          sigMasses.add(sigMass)
+  sigMasses = sorted(list(sigMasses))
+  # Base indentation
+  ind = " "*4
+  for pdfName in pdfNames:
+    result += "\n"+ind+"# {0} Default Order Dict\n".format(pdfName)
+    result += ind+"# For Window Width: {0} GeV\n".format(windowSize)
+    result += ind+"defaultOrders = {\n"
+    for category in categories:
+      result += ind+"  '"+category+"': {\n"
+      for sigMass in sigMasses:
+        order = None
+        if orderSummaries[category][pdfName].has_key(sigMass) and orderSummaries[category][pdfName][sigMass] != None:
+          order =  orderSummaries[category][pdfName][sigMass].order
+        result +=  ind+"    {0}:{1},\n".format(sigMass,order)
+      result += ind+"  },\n"
+    result += ind+"}\n"
+  return result
         
 if __name__ == "__main__":
   canvas = root.TCanvas()
   outDir = "output/"
 
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
-  pdfsToTry = ["SumExp","Bernstein"]
-  ordersToTry= range(1,7)
+  pdfsToTry = ["SumExp","SumPow"]
+  ordersToTry= range(1,5)
+  #pdfsToTry = ["Bernstein","Chebychev"]
+  #ordersToTry= range(1,7)
 
   categories = []
 
@@ -902,6 +1423,9 @@ if __name__ == "__main__":
   categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+
+  massWindow = 20.
+  signalMasses = [115,120,125,135,150,155]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
   dataFns8TeV = [
@@ -925,8 +1449,9 @@ if __name__ == "__main__":
   logFile.write("# {0}\n\n".format(now))
   inputPklFiles = glob.glob(outDir+"*.pkl")
   orderStudyList = []
+  orderSummaries = {}
   for category in categories:
-    osy = OrderStudy(category,"8TeV",dataFns8TeV,outDir+"order_Shape",pdfsToTry,ordersToTry)
+    osy = OrderStudy(category,"8TeV",dataFns8TeV,outDir+"order_Shape",pdfsToTry,ordersToTry,signalMasses,massWindow)
     logFile.write(osy.outStr)
     logFile.flush()
     logDetailFile.write(osy.outStrDetail)
@@ -934,10 +1459,14 @@ if __name__ == "__main__":
     texFile.write(osy.latexStr)
     texFile.flush()
     orderStudyList.append(osy)
+    orderSummaries[category[0]] = osy.summary
+
+  logFile.write(summaryWriter(orderSummaries,massWindow))
+  logFile.write(summaryDictMaker(orderSummaries,massWindow))
+  texFile.write(summaryLatex(orderSummaries,massWindow))
     
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
   logFile.write("\n\n# {0}\n".format(now))
   logFile.close()
   logDetailFile.close()
   texFile.close()
-  
