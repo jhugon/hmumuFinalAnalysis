@@ -107,7 +107,58 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     channelName = name
 
-    defaultOrders = None
+    # Bernstein Default Order Dict
+    # For Window Width: 30.0 GeV
+    defaultOrders = {
+      'Jet2CutsFailVBFGF': {
+        115:5,
+        120:5,
+        125:2,
+        135:1,
+        150:2,
+        155:1,
+      },
+      'Jet2CutsGFPass': {
+        115:3,
+        120:3,
+        125:2,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jet2CutsVBFPass': {
+        115:2,
+        120:2,
+        125:1,
+        135:1,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BB': {
+        115:5,
+        120:4,
+        125:4,
+        135:2,
+        150:1,
+        155:1,
+      },
+      'Jets01PassPtG10BE': {
+        115:6,
+        120:4,
+        125:3,
+        135:2,
+        150:2,
+        155:2,
+      },
+      'Jets01PassPtG10BO': {
+        115:6,
+        120:4,
+        125:4,
+        135:2,
+        150:2,
+        155:2,
+      },
+    }
 
     if order == None:
       order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
@@ -924,10 +975,14 @@ def summaryWriter(summary,windowSize):
       result += "{0:20}".format(category)
       gofList = []
       for sigMass in sigMasses:
-        order =  orderSummaries[category][pdfName][sigMass].order
-        gof =  orderSummaries[category][pdfName][sigMass].gof
-        result +=  "{0:>8}".format(order)
-        gofList.append(gof)
+        if orderSummaries[category][pdfName].has_key(sigMass)  and orderSummaries[category][pdfName][sigMass] != None:
+          order =  orderSummaries[category][pdfName][sigMass].order
+          gof =  orderSummaries[category][pdfName][sigMass].gof
+          result +=  "{0:>8}".format(order)
+          gofList.append(gof)
+        else:
+          result +=  "{0:>8}".format('-')
+          gofList.append(99999999999.)
       result += "{0:>10.3f}".format(min(gofList))
       result += "\n"
   return result
@@ -962,8 +1017,11 @@ def summaryLatex(summary,windowSize):
     for category in categories:
       result += "{0:20} ".format(titleMap[category])
       for sigMass in sigMasses:
-        order =  orderSummaries[category][pdfName][sigMass].order
-        result +=  "& {0:>8} ".format(order)
+        if orderSummaries[category][pdfName].has_key(sigMass)  and orderSummaries[category][pdfName][sigMass] != None:
+          order =  orderSummaries[category][pdfName][sigMass].order
+          result +=  "& {0:>8} ".format(order)
+        else:
+          result +=  "& {0:>8} ".format('-')
       result += r"\\ \hline"
       result += "\n"
   result += "\end{tabular}"+"\n"
@@ -992,8 +1050,11 @@ def summaryDictMaker(summary,windowSize):
     for category in categories:
       result += ind+"  '"+category+"': {\n"
       for sigMass in sigMasses:
-        order =  orderSummaries[category][pdfName][sigMass].order
-        result +=  ind+"    {0}:{1},\n".format(sigMass,order)
+        if orderSummaries[category][pdfName].has_key(sigMass)  and orderSummaries[category][pdfName][sigMass] != None:
+          order =  orderSummaries[category][pdfName][sigMass].order
+          result +=  ind+"    {0}:{1},\n".format(sigMass,order)
+        else:
+          result +=  ind+"    {0}:{1},\n".format(sigMass,'None')
       result += ind+"  },\n"
     result += ind+"}\n"
   return result
@@ -1005,8 +1066,10 @@ if __name__ == "__main__":
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
   #pdfsToTry = ["SumExp","SumPow"]
   #ordersToTry= range(1,5)
-  pdfsToTry = ["Bernstein","Chebychev"]
-  ordersToTry= range(1,9)
+  #pdfsToTry = ["Bernstein","Chebychev"]
+  pdfsToTry = ["Bernstein"]
+  #ordersToTry= range(1,9)
+  ordersToTry= range(1,8)
 
   categories = []
 
