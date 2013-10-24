@@ -779,7 +779,7 @@ makePDFBak = makePDFBakBernsteinProd
 ###################################################################################
 
 class Analysis:
-  def __init__(self,directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,toyData=False,sigInject=0.0,sigInjectMass=125.0,energyStr="8TeV",cutString=""):
+  def __init__(self,directory,signalNames,backgroundNames,dataNames,analysis,lumi,fitMassWindow=None,toyData=False,sigInject=0.0,sigInjectMass=125.0,energyStr="8TeV",cutString=""):
     if analysis[0] in "0123456789-.*+/":
        print("Error: Analysis: analysis name '{0}' begins with a forbidden character".format(analysis))
        sys.exit(1)
@@ -807,9 +807,7 @@ class Analysis:
     self.sigNames = signalNames
     self.bakNames = backgroundNames
     self.datNames = dataNames
-    self.controlRegionVeryLow = controlRegionVeryLow
-    self.controlRegionLow = controlRegionLow
-    self.controlRegionHigh = controlRegionHigh
+    self.fitMassWindow = fitMassWindow
     self.analysis = analysis
     self.params = []
     self.debug = "#******************************************************#\n"*3
@@ -838,17 +836,16 @@ class Analysis:
     wImport = getattr(self.workspace,"import")
     self.sigInjectWorkspaces = []
 
-    maxMass = controlRegionHigh[1]
-    minMass = controlRegionLow[0]
+    maxMass = self.higgsMass + self.fitMassWindow/2.
+    minMass = self.higgsMass - self.fitMassWindow/2.
     self.minMass = minMass
     self.maxMass = maxMass
-    #dimuonMass = root.RooRealVar("dimuonMass","dimuonMass",minMass,maxMass)
+    self.debug += "# massWindow: {0}\n# min/max mass: {1} {2}\n".format(self.fitMassWindow,self.minMass,self.maxMass)
+    massBounds = [minMass,maxMass]
+    self.massBounds = massBounds
     dimuonMass = root.RooRealVar("dimuonMass","dimuonMass",minMass,maxMass)
-    dimuonMass.setRange("exprange",120.,controlRegionHigh[1])
-    dimuonMass.setRange("whole",controlRegionLow[0],controlRegionHigh[1])
-    dimuonMass.setRange("low",controlRegionLow[0],controlRegionLow[1])
-    dimuonMass.setRange("high",controlRegionHigh[0],controlRegionHigh[1])
-    dimuonMass.setRange("signal",controlRegionLow[1],controlRegionHigh[0])
+    dimuonMass.setRange("exprange",120.,maxMass)
+    dimuonMass.setRange("whole",minMass,maxMass)
     dimuonMass.setRange("signalfit",SIGNALFIT[0],SIGNALFIT[1])
     self.dimuonMass = dimuonMass
 
@@ -906,8 +903,6 @@ class Analysis:
     effMap = {}
     xsecMap = {}
     lowBin = 0
-    massBounds = [controlRegionLow[0],controlRegionHigh[1]]
-    self.massBounds = massBounds
 
     self.xsecBakTotal = 0.0
     self.xsecBakList = []
@@ -1253,7 +1248,7 @@ class Analysis:
 ###################################################################################
 
 class DataCardMaker:
-  def __init__(self,directory,analysisNames,signalNames,backgroundNames,dataNames,outfilename,lumi,nuisanceMap=None,controlRegionLow=[110.,115],controlRegionHigh=[135,150],controlRegionVeryLow=[80.,110.],sigInject=0.0,sigInjectMass=125.0,toyData=False,energyStr="8TeV",cutString=""):
+  def __init__(self,directory,analysisNames,signalNames,backgroundNames,dataNames,outfilename,lumi,nuisanceMap=None,fitMassWindow=None,sigInject=0.0,sigInjectMass=125.0,toyData=False,energyStr="8TeV",cutString=""):
 
     ########################
     ## Setup
@@ -1276,7 +1271,7 @@ class DataCardMaker:
           analysis = analysis[0]
         for es,sn,bn,dn,lu in zip(energyStr,signalNames,backgroundNames,dataNames,lumi):
           lu *= 1000.0
-          tmp = Analysis(directory,sn,bn,dn,analysis,lu,controlRegionVeryLow,controlRegionLow,controlRegionHigh,toyData=toyData,sigInject=sigInject,sigInjectMass=sigInjectMass,energyStr=es,cutString=cutStringTmp)
+          tmp = Analysis(directory,sn,bn,dn,analysis,lu,fitMassWindow=fitMassWindow,toyData=toyData,sigInject=sigInject,sigInjectMass=sigInjectMass,energyStr=es,cutString=cutStringTmp)
           channels.append(tmp)
       self.channels = channels
     else:
@@ -1289,7 +1284,7 @@ class DataCardMaker:
               cutStringTmp += " && "
             cutStringTmp += analysis[1]
           analysis = analysis[0]
-        tmp = Analysis(directory,signalNames,backgroundNames,dataNames,analysis,lumi,controlRegionVeryLow,controlRegionLow,controlRegionHigh,toyData=toyData,sigInject=sigInject,sigInjectMass=sigInjectMass,energyStr=energyStr,cutString=cutStringTmp)
+        tmp = Analysis(directory,signalNames,backgroundNames,dataNames,analysis,lumi,fitMassWindow=fitMassWindow,toyData=toyData,sigInject=sigInject,sigInjectMass=sigInjectMass,energyStr=energyStr,cutString=cutStringTmp)
         channels.append(tmp)
       self.channels = channels
 
@@ -1317,9 +1312,6 @@ class DataCardMaker:
       i = self.channelNames.index("")
       self.channelNames[i] = "Inc"
 
-    self.controlRegionHigh = controlRegionHigh
-    self.controlRegionLow = controlRegionLow
-    self.controlRegionVeryLow = controlRegionVeryLow
     self.toyData = toyData
 
     ### ROOT Part
@@ -1814,12 +1806,8 @@ if __name__ == "__main__":
   lumiList = [lumiDict["8TeV"],20,25,30]
   lumiList = [lumiDict["8TeV"]]
 
-  controlRegionVeryLow=[60,110]
-  controlRegionLow=[110,120]
-  controlRegionHigh=[130,160]
-  if args.higgsMass > 0.0:
-    controlRegionLow=[110,args.higgsMass-5.0]
-    controlRegionHigh=[args.higgsMass+5.0,160]
+  # width of fitted mass window (symettric around m_H)
+  fitMassWindow = 20.
 
   shape=True
   toyData=args.toyData
@@ -1854,8 +1842,8 @@ if __name__ == "__main__":
             #__init__ args:
             directory,[anaName],
             appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
-            controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
-            controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,sigInjectMass=args.signalInjectMass,
+            fitMassWindow=fitMassWindow,
+            toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,sigInjectMass=args.signalInjectMass,
             energyStr=p, cutString=cutsToDo,
             #write args:
             outfilename=outDir+anaName+"_"+p+"_"+str(name)+".txt",lumi=i
@@ -1868,8 +1856,8 @@ if __name__ == "__main__":
             directory,
             comb[0],
             appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
-            controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
-            controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,sigInjectMass=args.signalInjectMass,
+            fitMassWindow=fitMassWindow,
+            toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,sigInjectMass=args.signalInjectMass,
             energyStr=p,
             #write args:
             outfilename=outDir+comb[1]+"_"+p+"_"+str(name)+".txt",lumi=i
@@ -1899,8 +1887,8 @@ if __name__ == "__main__":
             [appendPeriod(signalNames,p) for p in periods],
             [appendPeriod(backgroundNames,p) for p in periods],
             [dataDict[p] for p in periods],
-            controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
-            controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,sigInjectMass=args.signalInjectMass,
+            fitMassWindow=fitMassWindow,
+            toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,sigInjectMass=args.signalInjectMass,
             energyStr=periods,cutString=cutsToDo,
             #write args:
             outfilename=outDir+anaName+"_"+filenamePeriod+"_"+filenameLumi+".txt",lumi=[float(lumiDict[p]) for p in periods]
@@ -1915,8 +1903,8 @@ if __name__ == "__main__":
             [appendPeriod(signalNames,p) for p in periods],
             [appendPeriod(backgroundNames,p) for p in periods],
             [dataDict[p] for p in periods],
-            controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
-            controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,sigInjectMass=args.signalInjectMass,
+            fitMassWindow=fitMassWindow,
+            toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,sigInjectMass=args.signalInjectMass,
             energyStr=periods,
             #write args:
             outfilename=outDir+comb[1]+"_"+filenamePeriod+"_"+filenameLumi+".txt",lumi=[float(lumiDict[p]) for p in periods]
@@ -1997,8 +1985,8 @@ if __name__ == "__main__":
                directory,
                analysisNames,
                appendPeriod(signalNames,p),appendPeriod(backgroundNames,p),dataDict[p],
-               controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
-               controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,sigInjectMass=args.signalInjectMass,
+               fitMassWindow=fitMassWindow,
+               toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,sigInjectMass=args.signalInjectMass,
                energyStr=p,
                #write args:
                outfilename=outDir+nameString+"_"+p+"_"+str(i)+".txt",lumi=i,
