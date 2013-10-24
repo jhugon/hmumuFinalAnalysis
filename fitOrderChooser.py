@@ -266,20 +266,7 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
       workspaceImportFn(pdfMmumu)
       workspaceImportFn(fr)
 
-    #Norm Time
     bakNormTup = None
-    if False:
-      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
-      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
-      signalRangeList = getRooVarRange(dimuonMass,"signal")
-      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
-      nSideband =  rooDataset.sumEntries(getSidebandString)
-      nData =  rooDataset.sumEntries()
-      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
-      if nData > 0:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
-      else:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
 
 #    ## Debug Time
 #    frame = dimuonMass.frame()
@@ -292,7 +279,6 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     #for i in rooParamList:
     #  debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
-    #debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
 
     return paramList, bakNormTup, debug, order
 
@@ -463,20 +449,7 @@ def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
       workspaceImportFn(pdfMmumu)
       workspaceImportFn(fr)
 
-    #Norm Time
     bakNormTup = None
-    if False:
-      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
-      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
-      signalRangeList = getRooVarRange(dimuonMass,"signal")
-      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
-      nSideband =  rooDataset.sumEntries(getSidebandString)
-      nData =  rooDataset.sumEntries()
-      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
-      if nData > 0:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
-      else:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
 
 #    ## Debug Time
 #    frame = dimuonMass.frame()
@@ -489,7 +462,6 @@ def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     #for i in rooParamList:
     #  debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
-    #debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
 
     return paramList, bakNormTup, debug, order
 
@@ -536,20 +508,7 @@ def makePDFBakPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
       workspaceImportFn(pdfMmumu)
       workspaceImportFn(fr)
 
-    #Norm Time
     bakNormTup = None
-    if False:
-      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
-      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
-      signalRangeList = getRooVarRange(dimuonMass,"signal")
-      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
-      nSideband =  rooDataset.sumEntries(getSidebandString)
-      nData =  rooDataset.sumEntries()
-      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
-      if nData > 0:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
-      else:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
 
 #    ## Debug Time
 #    frame = dimuonMass.frame()
@@ -562,7 +521,6 @@ def makePDFBakPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
 
     #for i in rooParamList:
     #  debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
-    #debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
 
     return paramList, bakNormTup, debug, order
 
@@ -743,20 +701,7 @@ def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
       workspaceImportFn(pdfMmumu)
       workspaceImportFn(fr)
 
-    #Norm Time
     bakNormTup = None
-    if False:
-      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
-      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
-      signalRangeList = getRooVarRange(dimuonMass,"signal")
-      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
-      nSideband =  rooDataset.sumEntries(getSidebandString)
-      nData =  rooDataset.sumEntries()
-      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
-      if nData > 0:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
-      else:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
 
 #    ## Debug Time
 #    frame = dimuonMass.frame()
@@ -769,7 +714,6 @@ def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
 
     #for i in rooParamList:
     #  debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
-    #debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
 
     return paramList, bakNormTup, debug, order
 
@@ -965,20 +909,7 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
       workspaceImportFn(pdfMmumu)
       workspaceImportFn(fr)
 
-    #Norm Time
     bakNormTup = None
-    if False:
-      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
-      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
-      signalRangeList = getRooVarRange(dimuonMass,"signal")
-      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
-      nSideband =  rooDataset.sumEntries(getSidebandString)
-      nData =  rooDataset.sumEntries()
-      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
-      if nData > 0:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
-      else:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
 
 #    ## Debug Time
 #    frame = dimuonMass.frame()
@@ -991,7 +922,6 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
 
     #for i in rooParamList:
     #  debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
-    #debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
 
     return paramList, bakNormTup, debug, order
 
@@ -1054,20 +984,7 @@ def makePDFBakLaurent(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
       workspaceImportFn(pdfMmumu)
       workspaceImportFn(fr)
 
-    #Norm Time
     bakNormTup = None
-    if False:
-      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
-      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
-      signalRangeList = getRooVarRange(dimuonMass,"signal")
-      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
-      nSideband =  rooDataset.sumEntries(getSidebandString)
-      nData =  rooDataset.sumEntries()
-      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
-      if nData > 0:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
-      else:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
 
 #    ## Debug Time
 #    frame = dimuonMass.frame()
@@ -1080,7 +997,6 @@ def makePDFBakLaurent(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
 
     #for i in rooParamList:
     #  debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
-    #debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
 
     return paramList, bakNormTup, debug, order
 

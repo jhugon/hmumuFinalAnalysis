@@ -99,6 +99,66 @@ class Param:
     else:
         return "-{0:.5g}/+{1:.5g}".format(self.lowErr,self.highErr)
 
+def makePDFBakBernsteinProd(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None,higgsMass=None):
+    debug = ""
+    debug += "### makePDFBakBernsteinProd: "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
+    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
+
+    channelName = name
+
+    if order == None:
+      if "Jet2CutsVBFPass" in name:
+        order = 2
+      elif "Jet2CutsGFPass" in name: 
+        order = 2
+      else:
+        order = 4
+
+    rooParamList = []
+    rooArgList = root.RooArgList()
+    for i in range(order+1):
+      tmpArg = root.RooRealVar(channelName+"_B"+str(i),"Bernstein Coefficient "+str(i), 0.0, 0., 1.)
+      rooArgList.add(tmpArg)
+      rooParamList.append(tmpArg)
+
+    debug += "#    Bernstein Order: "+str(order)+"\n"
+    debug += "#    pdfArgs: "+dimuonMass.GetName()+" "
+    for i in rooParamList:
+        debug += i.GetName()+" "
+    debug += "\n"
+
+    #print
+    #print "Bernstein Order: ",order
+    #for i in rooParamList:
+    #    i.Print()
+    #print
+  
+    pdfMmumu = root.RooBernstein("bak","Bernstein Order: "+str(order),dimuonMass,rooArgList)
+
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr.SetName("bak"+"_fitResult")
+    #chi2 = pdfMmumu.createChi2(rooDataset)
+
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(fr)
+
+    bakNormTup = None
+
+#    ## Debug Time
+#    frame = dimuonMass.frame()
+#    frame.SetName("bak_Plot")
+#    rooDataset.plotOn(frame)
+#    pdfMmumu.plotOn(frame)
+#    canvas = root.TCanvas()
+#    frame.Draw()
+#    canvas.SaveAs("debug_"+name+channelName+".png")
+
+    return paramList, bakNormTup, debug, order
+
 def makePDFBakExpLog(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None,higgsMass=None):
     debug = ""
     debug += "### makePDFBakExpLog: "+name+"\n"
@@ -126,27 +186,7 @@ def makePDFBakExpLog(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
       workspaceImportFn(pdfMmumu)
       workspaceImportFn(fr)
 
-    #Norm Time
     bakNormTup = None
-    if True:
-      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
-      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
-      signalRangeList = getRooVarRange(dimuonMass,"signal")
-      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
-      nSideband =  rooDataset.sumEntries(getSidebandString)
-      nData =  rooDataset.sumEntries()
-      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
-      if nData > 0:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
-      else:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
-    #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
-    #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
-
-    #rooDataset2 = rooDataset.reduce(root.RooFit.CutRange("low,signal,high"))
-    #rooDataset2.SetName("bak_TemplateNoVeryLow")
-    #if workspaceImportFn != None:
-    #  workspaceImportFn(rooDataset2)
 
 #    ## Debug Time
 #    frame = dimuonMass.frame()
@@ -159,7 +199,6 @@ def makePDFBakExpLog(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
 
     for i in rooParamList:
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
-    debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
 
     return paramList, bakNormTup, debug, None
 
@@ -201,27 +240,7 @@ def makePDFBakExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
       workspaceImportFn(pdfMmumu)
       workspaceImportFn(fr)
 
-    #Norm Time
     bakNormTup = None
-    if True:
-      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
-      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
-      signalRangeList = getRooVarRange(dimuonMass,"signal")
-      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
-      nSideband =  rooDataset.sumEntries(getSidebandString)
-      nData =  rooDataset.sumEntries()
-      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
-      if nData > 0:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
-      else:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
-   #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
-    #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
-
-    #rooDataset2 = rooDataset.reduce(root.RooFit.CutRange("low,signal,high"))
-    #rooDataset2.SetName("bak_TemplateNoVeryLow")
-    #if workspaceImportFn != None:
-    #  workspaceImportFn(rooDataset2)
 
 #    ## Debug Time
 #    frame = dimuonMass.frame()
@@ -234,7 +253,6 @@ def makePDFBakExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
 
     for i in rooParamList:
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
-    debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
 
     return paramList, bakNormTup, debug, None
 
@@ -274,27 +292,7 @@ def makePDFBakExpMOverSqP0(name,rooDataset,dimuonMass,minMass,maxMass,workspaceI
       workspaceImportFn(pdfMmumu)
       workspaceImportFn(fr)
 
-    #Norm Time
     bakNormTup = None
-    if True:
-      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
-      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
-      signalRangeList = getRooVarRange(dimuonMass,"signal")
-      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
-      nSideband =  rooDataset.sumEntries(getSidebandString)
-      nData =  rooDataset.sumEntries()
-      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
-      if nData > 0:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
-      else:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
-   #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
-    #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
-
-    #rooDataset2 = rooDataset.reduce(root.RooFit.CutRange("low,signal,high"))
-    #rooDataset2.SetName("bak_TemplateNoVeryLow")
-    #if workspaceImportFn != None:
-    #  workspaceImportFn(rooDataset2)
 
 #    ## Debug Time
 #    frame = dimuonMass.frame()
@@ -307,7 +305,6 @@ def makePDFBakExpMOverSqP0(name,rooDataset,dimuonMass,minMass,maxMass,workspaceI
 
     for i in rooParamList:
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
-    debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
 
     return paramList, bakNormTup, debug, None
 
@@ -360,27 +357,7 @@ def makePDFBakExpMOverSqP0New(name,rooDataset,dimuonMass,minMass,maxMass,workspa
       workspaceImportFn(pdfMmumu)
       workspaceImportFn(fr)
 
-    #Norm Time
     bakNormTup = None
-    if True:
-      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
-      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
-      signalRangeList = getRooVarRange(dimuonMass,"signal")
-      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
-      nSideband =  rooDataset.sumEntries(getSidebandString)
-      nData =  rooDataset.sumEntries()
-      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
-      if nData > 0:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
-      else:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
-   #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
-    #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
-
-    #rooDataset2 = rooDataset.reduce(root.RooFit.CutRange("low,signal,high"))
-    #rooDataset2.SetName("bak_TemplateNoVeryLow")
-    #if workspaceImportFn != None:
-    #  workspaceImportFn(rooDataset2)
 
 #    ## Debug Time
 #    frame = dimuonMass.frame()
@@ -393,7 +370,6 @@ def makePDFBakExpMOverSqP0New(name,rooDataset,dimuonMass,minMass,maxMass,workspa
 
     for i in rooParamList:
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
-    debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
 
     return paramList, bakNormTup, debug, None
 
@@ -423,27 +399,7 @@ def makePDFBakMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
       workspaceImportFn(pdfMmumu)
       workspaceImportFn(fr)
 
-    #Norm Time
     bakNormTup = None
-    if True:
-      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
-      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
-      signalRangeList = getRooVarRange(dimuonMass,"signal")
-      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
-      nSideband =  rooDataset.sumEntries(getSidebandString)
-      nData =  rooDataset.sumEntries()
-      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
-      if nData > 0:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
-      else:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
-    #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
-    #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
-
-    #rooDataset2 = rooDataset.reduce(root.RooFit.CutRange("low,signal,high"))
-    #rooDataset2.SetName("bak_TemplateNoVeryLow")
-    #if workspaceImportFn != None:
-    #  workspaceImportFn(rooDataset2)
 
 #    ## Debug Time
 #    frame = dimuonMass.frame()
@@ -456,7 +412,6 @@ def makePDFBakMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
 
     for i in rooParamList:
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
-    debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
 
     return paramList, bakNormTup, debug, None
 
@@ -528,27 +483,7 @@ def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,d
       workspaceImportFn(pdfMmumu)
       workspaceImportFn(fr)
 
-    #Norm Time
     bakNormTup = None
-    if True:
-      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
-      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
-      signalRangeList = getRooVarRange(dimuonMass,"signal")
-      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
-      nSideband =  rooDataset.sumEntries(getSidebandString)
-      nData =  rooDataset.sumEntries()
-      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
-      if nData > 0:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
-      else:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
-    #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
-    #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
-
-    #rooDataset2 = rooDataset.reduce(root.RooFit.CutRange("low,signal,high"))
-    #rooDataset2.SetName("bak_TemplateNoVeryLow")
-    #if workspaceImportFn != None:
-    #  workspaceImportFn(rooDataset2)
 
 #    ## Debug Time
 #    frame = dimuonMass.frame()
@@ -561,7 +496,6 @@ def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,d
 
     for i in rooParamList:
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
-    debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
 
     return paramList, bakNormTup, debug, None
 
@@ -850,8 +784,9 @@ def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=True)
 makePDFSig = makePDFSigDG
 ## makePDFBak = makePDFBakOld
 #makePDFBak = makePDFBakMOverSq
-makePDFBak = makePDFBakExpMOverSq
+#makePDFBak = makePDFBakExpMOverSq
 #makePDFBak = makePDFBakExpLog
+makePDFBak = makePDFBakBernsteinProd
 
 ###################################################################################
 
@@ -1050,13 +985,13 @@ class Analysis:
     else:
         self.dataCountsTotal += doSigInject(self.datHistTotal,sigInject,sigInjectMass)
 
-    tmpBakParams, self.bakNormTup, tmpDebug, tmpOrder = makePDFBak(
+    tmpBakParams, tmpBakNormTup, tmpDebug, tmpOrder = makePDFBak(
                                     analysis+energyStr,histToUseForBak,
                                     dimuonMass, minMass,maxMass,wImport,
                                     dimuonMassZ,histToUseForBakZ
                                        )
     self.params.extend(tmpBakParams)
-    self.countsBakTotal = self.bakNormTup[0]*self.bakNormTup[1]
+    self.countsBakTotal = self.dataCountsTotal
     self.debug += tmpDebug
     
     self.sigParamList = []
@@ -1612,14 +1547,10 @@ class DataCardMaker:
 
     # Bak norm uncertainty
     for channel1,channel1Name in zip(self.channels,self.channelNames):
-      tmpTup = channel1.bakNormTup
-      formatString = "{0:<8} {1:^3} {2:.0f}"
-      formatList = ["bkN"+channel1Name,"gmN",tmpTup[0]]
-      iParam = 3
-      if FREEBAKPARAMS:
-        formatString = "{0:<8} {1:^3}"
-        formatList = ["bkN"+channel1Name,"lnU"]
-        iParam = 2
+      assert(FREEBAKPARAMS)
+      formatString = "{0:<8} {1:^3}"
+      formatList = ["bkN"+channel1Name,"lnU"]
+      iParam = 2
       for channel in self.channels:
           for sigName in channel.sigNames:
             formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
@@ -1629,9 +1560,7 @@ class DataCardMaker:
           value = '-'
           tmpString = "{"+str(iParam)+":^"+str(self.largestChannelName)+"}"
           if channel == channel1:
-            value = tmpTup[1]
-            if FREEBAKPARAMS:
-              value = 2.
+            value = 2.
             tmpString = "{"+str(iParam)+":^"+str(self.largestChannelName)+".2f}"
           formatString += tmpString
           formatList.append(value)
@@ -1763,72 +1692,72 @@ if __name__ == "__main__":
   jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
-  #analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  analyses += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
-  analyses += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+  analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+#  analyses += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
+#  analyses += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   analyses += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  analyses += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  analyses += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-
-
-  # Jet 0+1 Pass All Cats
-  combinations.append((
-    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]
-    ,"Jets01PassCatAll"
-  ))
- 
-  # Jet 0+1 Fail All Cats
-  combinations.append((
-    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-    ,"Jets01FailCatAll"
-  ))
- 
-  # Jet 0+1 Pass BB,BO,CC,FF Cats
-  #combinations.append((
-  #  [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesCCFF]
-  #  ,"Jets01PassCatCCFF"
-  #))
- 
-  # Jet 0+1 Fail BB,BO,CC,FF Cats
-  #combinations.append((
-  #  [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesCCFF]
-  #  ,"Jets01FailCatCCFF"
-  #))
- 
- 
- 
-  # Jet 0+1 Pass All Cats
-  combinations.append((
-    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
-    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-    ,"Jets01SplitCatAll"
-  ))
-  # Jet 0+1 Pass BB,BO,CC,FF Cats
-  #combinations.append((
-  #  [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesCCFF]+
-  #  [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesCCFF]
-  #  ,"Jets01SplitCatCCFF"
-  #))
- 
-  # Jets >=2 Pass + Fail
-  combinations.append((
-    [  
-     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
-     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-    ],"Jet2SplitCutsGFSplit"
-  ))
- 
-  # Jets 0,1,>=2 Pass + Fail All
-  combinations.append((
-    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
-    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]+
-    [
-     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
-     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-    ],"CombSplitAll"
-  ))
+#  analyses += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+#  analyses += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+#
+#
+#  # Jet 0+1 Pass All Cats
+#  combinations.append((
+#    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]
+#    ,"Jets01PassCatAll"
+#  ))
+# 
+#  # Jet 0+1 Fail All Cats
+#  combinations.append((
+#    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+#    ,"Jets01FailCatAll"
+#  ))
+# 
+#  # Jet 0+1 Pass BB,BO,CC,FF Cats
+#  #combinations.append((
+#  #  [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesCCFF]
+#  #  ,"Jets01PassCatCCFF"
+#  #))
+# 
+#  # Jet 0+1 Fail BB,BO,CC,FF Cats
+#  #combinations.append((
+#  #  [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesCCFF]
+#  #  ,"Jets01FailCatCCFF"
+#  #))
+# 
+# 
+# 
+#  # Jet 0+1 Pass All Cats
+#  combinations.append((
+#    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
+#    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+#    ,"Jets01SplitCatAll"
+#  ))
+#  # Jet 0+1 Pass BB,BO,CC,FF Cats
+#  #combinations.append((
+#  #  [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesCCFF]+
+#  #  [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesCCFF]
+#  #  ,"Jets01SplitCatCCFF"
+#  #))
+# 
+#  # Jets >=2 Pass + Fail
+#  combinations.append((
+#    [  
+#     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+#     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#    ],"Jet2SplitCutsGFSplit"
+#  ))
+# 
+#  # Jets 0,1,>=2 Pass + Fail All
+#  combinations.append((
+#    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
+#    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]+
+#    [
+#     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+#     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#    ],"CombSplitAll"
+#  ))
  
   ## combinations = []
 
