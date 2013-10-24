@@ -2302,7 +2302,9 @@ class RooModelPlotter:
     self.caption2 = caption2
     self.caption3 = caption3
 
-    self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(lumi)
+    self.lumiStr = ""
+    if self.lumi:
+      self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(lumi)
 
 
     #Set the PDF pars value from the FitResults
@@ -2361,7 +2363,7 @@ class RooModelPlotter:
       self.rangename = RangeName
       frame = xVar.frame(root.RooFit.Title(""),root.RooFit.Range(self.rangename))
       frameBkgSub = xVar.frame(root.RooFit.Title("BkgSub"),root.RooFit.Range(self.rangename))
-      #frame.SetMaximum(6000)
+      rangeArg = root.RooFit.Range(self.rangename)
 
     self.frame       = frame
     self.frameBkgSub = frameBkgSub
@@ -2563,7 +2565,7 @@ class RooModelPlotter:
     self.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption1+self.title)
 
     self.tlatex.SetTextAlign(32)
-    if (self.lumi != 0):
+    if (self.lumi and self.lumi != 0):
       self.tlatex.DrawLatex(self.legPos[0]-0.01,0.820,self.lumiStr)
     if (self.lumi == 0):
       self.tlatex.SetTextSize(0.04)
@@ -2571,10 +2573,11 @@ class RooModelPlotter:
       self.tlatex.DrawLatex(self.legPos[0]-0.03,0.770,"#sqrt{s}=8 TeV L = 19.8 fb^{-1}")
             
     energyStr = self.energyStr
-    if re.search(r"[\d]TeV",energyStr):
-      energyStr = energyStr.replace("TeV"," TeV")
-    if (self.energyStr != ""):
-      self.tlatex.DrawLatex(self.legPos[0]-0.01,0.875,"#sqrt{s} = "+self.energyStr)
+    if energyStr:
+      if re.search(r"[\d]TeV",energyStr):
+        energyStr = energyStr.replace("TeV"," TeV")
+      if (self.energyStr != ""):
+        self.tlatex.DrawLatex(self.legPos[0]-0.01,0.875,"#sqrt{s} = "+self.energyStr)
 
     if self.caption2 != "":
       self.tlatex.DrawLatex(self.legPos[0]-0.01,0.765,self.caption2)
@@ -2635,8 +2638,10 @@ class RooModelPlotter:
     if caption1 != "":
         caption1 += ": "
     tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption1+self.title)
-    tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.875,"#sqrt{s} = "+self.energyStr)
-    tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.825,self.lumiStr)
+    if self.energyStr:
+      tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.875,"#sqrt{s} = "+self.energyStr)
+    if self.lumiStr:
+      tlatex.DrawLatex(0.98-gStyle.GetPadRightMargin(),0.825,self.lumiStr)
     tlatex.SetTextAlign(12)
     tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.875,"#chi^{{2}}/NDF = {0:.2g}".format(float(chi2)/ndf))
     tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.825,"#mu = {0:.2f} #pm {1:.2f}".format(mean,meanErr))
@@ -2736,7 +2741,7 @@ class RooModelPlotter:
     self.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
 
     self.tlatex.SetTextAlign(32)
-    if (self.lumi != 0):
+    if (self.lumi and self.lumi != 0):
       self.tlatex.DrawLatex(self.legPos[0]-0.01,0.820,self.lumiStr)
     if (self.lumi == 0):
       self.tlatex.SetTextSize(0.04)
@@ -2744,10 +2749,11 @@ class RooModelPlotter:
       self.tlatex.DrawLatex(self.legPos[0]-0.03,0.770,"#sqrt{s}=8 TeV L = 19.8 fb^{-1}")
             
     energyStr = self.energyStr
-    if re.search(r"[\d]TeV",energyStr):
-      energyStr = energyStr.replace("TeV"," TeV")
-    if (self.energyStr != ""):
-      self.tlatex.DrawLatex(self.legPos[0]-0.01,0.875,"#sqrt{s} = "+self.energyStr)
+    if energyStr:
+      if re.search(r"[\d]TeV",energyStr):
+        energyStr = energyStr.replace("TeV"," TeV")
+      if (self.energyStr != ""):
+        self.tlatex.DrawLatex(self.legPos[0]-0.01,0.875,"#sqrt{s} = "+self.energyStr)
 
     saveAs(self.canvas,filenameNoExt)
 
