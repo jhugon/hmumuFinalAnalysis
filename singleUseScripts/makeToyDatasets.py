@@ -24,6 +24,7 @@ outDirName = "output/"
 ############################################3
 
 catVar = root.RooCategory("CMS_channel","CMS_channel")
+catVar.defineType(categoryName)
 
 dimuonMassAll = root.RooRealVar("dimuonMassAll","M(#mu#mu) [GeV/c^{2}]",100,200)
 dimuonMassAll.setRange("baseline",110,160)
