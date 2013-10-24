@@ -46,7 +46,6 @@ RUNSIMPLELIMITS = False
 USEGPANNA = True
 
 SIGNALFIT = [110.,140.]
-FREEBAKPARAMS = True
 
 USETREES=False
 HISTNAME="mDiMu"
@@ -180,7 +179,7 @@ def makePDFBakExpLog(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
     paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
 
     for param in rooParamList:
-        param.setConstant(not FREEBAKPARAMS)
+        param.setConstant(False)
 
     if workspaceImportFn != None:
       workspaceImportFn(pdfMmumu)
@@ -232,7 +231,7 @@ def makePDFBakExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
     paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
 
     for param in rooParamList:
-        param.setConstant(not FREEBAKPARAMS)
+        param.setConstant(False)
         if ('Jet2CutsVBFPass' in name ):
           InvPolMass.setConstant(True)
 
@@ -282,11 +281,6 @@ def makePDFBakExpMOverSqP0(name,rooDataset,dimuonMass,minMass,maxMass,workspaceI
 
     rooParamList = [EXPPOLP0_1,EXPPOLP0_2,EXPPOLP0_3]
     paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
-
-    #for param in rooParamList:
-    #    param.setConstant(not FREEBAKPARAMS)
-    #    if ('Jet2CutsVBFPass' in name ):
-    #      InvPolMass.setConstant(True)
 
     if workspaceImportFn != None:
       workspaceImportFn(pdfMmumu)
@@ -347,11 +341,6 @@ def makePDFBakExpMOverSqP0New(name,rooDataset,dimuonMass,minMass,maxMass,workspa
     #rooParamList = [EXPPOLP0_1,EXPPOLP0_2,EXPPOLP0_3,EXPPOLP0_4]
 
     paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
-
-    #for param in rooParamList:
-    #    param.setConstant(not FREEBAKPARAMS)
-    #    if ('Jet2CutsVBFPass' in name ):
-    #      InvPolMass.setConstant(True)
 
     if workspaceImportFn != None:
       workspaceImportFn(pdfMmumu)
@@ -471,9 +460,8 @@ def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,d
     rooParamList = [voitmZ,voitSig,expParam,mixParam]
     paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
 
-    if FREEBAKPARAMS:
-      for param in rooParamList:
-        param.setConstant(False)
+    for param in rooParamList:
+      param.setConstant(False)
 
     voitWidth.setConstant(True)
     voitmZ.setConstant(True)
@@ -842,7 +830,6 @@ class Analysis:
     self.debug += "########################\n"
     self.debug += "# USEGPANNA: "+str(USEGPANNA)+"\n"
     self.debug += "# SIGNALFIT: "+str(SIGNALFIT)+"\n"
-    self.debug += "# FREEBAKPARAMS: "+str(FREEBAKPARAMS)+"\n"
     self.debug += "# USETREES: "+str(USETREES)+"\n"
     self.debug += "########################\n"
 
@@ -1547,7 +1534,6 @@ class DataCardMaker:
 
     # Bak norm uncertainty
     for channel1,channel1Name in zip(self.channels,self.channelNames):
-      assert(FREEBAKPARAMS)
       formatString = "{0:<8} {1:^3}"
       formatList = ["bkN"+channel1Name,"lnU"]
       iParam = 2
