@@ -51,7 +51,7 @@ for dataWhole,iToy in zip(dataWholeList,range(nToys)):
                     caption2="Baseline Background Toy Data",
                     caption3="<N_{Events}> = "+str(nEvents)
                     )
-  rmp.draw(outDirName+"toyFit_"+str(iToy+1)+"_"+categoryName)
+  rmp.draw(outDirName+"toyFit_"+str(iToy+1.)+"_"+categoryName)
   rmpList.append(rmp)
   
 
@@ -59,7 +59,7 @@ for mh in mhVals:
   minMass = mh - width/2.
   maxMass = mh + width/2.
   dimuonMass = root.RooRealVar("dimuonMass","dimuonMass",minMass,maxMass)
-  f = root.TFile(outDirName+"out_"+str(mh)+".root","RECREATE")
+  f = root.TFile(outDirName+"out_{0:.1f}".format(mh)+".root","RECREATE")
   toysDir = f.mkdir("toys")
   toysDir.cd()
   for dataWhole,iToy in zip(dataWholeList,range(nToys)):
@@ -69,6 +69,6 @@ for mh in mhVals:
       if tmpM >= minMass and tmpM <= maxMass:
         dimuonMass.setVal(tmpM)
         data_obs.add(root.RooArgSet(dimuonMass,catVar))
-    data_obs.SetName("toy_{0}".format(iToy+1))
-    data_obs.Write()
+    data_obs.SetName("model_bData")
+    data_obs.Write("toy_{0}".format(iToy+1))
   f.Close()
