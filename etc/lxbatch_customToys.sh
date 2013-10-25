@@ -32,12 +32,18 @@ $linkcommand
 command="combine -M Asymptotic -t $ntoys --toysFile=$TOYFILENAME $FILENAME"
 echo $command
 $command >& $FILENAME.outToys
+mv higgs*Asymptotic*.root ../$FILENAME.outToys.root
+
+command="combine -M Asymptotic"
+echo $command
+$command >& $FILENAME.out
+mv higgs*Asymptotic*.root ../$FILENAME.out.root
+
 
 echo "contents of dir:"
 ls -lh
 
 cp *.txt.* ../.
-cp higgs*Asymptotic*.root ../$FILENAME.outToys.root
 
 #cd ..
 #rm -r $DIRNAME

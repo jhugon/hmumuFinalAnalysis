@@ -22,10 +22,12 @@ energy = "8TeV"
 nEvents = 33965 # between 100 and 200
 categoryName = "Jets01PassPtG10BB"
 plotTitle = "0,1-Jet Tight BB Toy"
+expVal = 5.0e-3
 
 #nEvents = 209 # between 100 and 200
 #categoryName = "Jet2CutsVBFPass"
 #plotTitle = "2-Jet VBF Tight Toy"
+#expVal = 2.0e-2
 
 ############################################3
 
@@ -40,7 +42,7 @@ dimuonMassAll.setRange("baseline",110,160)
 #bakPdf = expPdf
 
 InvPolMass = root.RooRealVar("InvPolMass","InvPolMass", 91.187, 30., 105.)
-ExpMass = root.RooRealVar("ExpMass","ExpMass", 5.0e-3, -2., 2.)
+ExpMass = root.RooRealVar("ExpMass","ExpMass", expVal, -2., 2.)
 baselinePdf = root.RooGenericPdf("bak","TMath::Exp(@0*@2)/(@0-@1)/(@0-@1)",root.RooArgList(dimuonMassAll,InvPolMass,ExpMass))
 bakPdf = baselinePdf
 
@@ -55,7 +57,7 @@ for dataWhole,iToy in zip(dataWholeList,range(nToys)):
   fr = bakPdf.fitTo(dataWhole,root.RooFit.Save(True),PRINTLEVEL)
   rmp = RooModelPlotter(dimuonMassAll,bakPdf,dataWhole,fr,
                     plotTitle,None,None,
-                    caption2="Baseline Background Toy Data",
+                    caption2="Baseline-Based Toy Data",
                     caption3="<N_{Events}> = "+str(nEvents)
                     )
   rmp.draw(outDirName+"toyFit"+str(iToy+1)+"_"+categoryName+"_"+energy)

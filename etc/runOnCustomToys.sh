@@ -12,7 +12,7 @@ for i in *.txt; do
   massVal=${i:$massVal:5}
 
   echo "Running on $i massVal: $massVal"
-  command="bsub -q cmscaf1nd -o out_ToyJob_"$i" lxbatch_customToys.sh $i $ntoys"
+  command="bsub -q 1nd -o out_ToyJob_"$i" lxbatch_customToys.sh $i $ntoys"
   echo "Running: $command"
   $command
 done
