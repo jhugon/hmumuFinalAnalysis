@@ -19,13 +19,13 @@ width = 20.
 outDirName = "output/"
 energy = "8TeV"
 
-#nEvents = 1000
-#categoryName = "Jets01PassPtG10BB"
-#plotTitle = "0,1-Jet Tight BB Toy"
+nEvents = 33965 # between 100 and 200
+categoryName = "Jets01PassPtG10BB"
+plotTitle = "0,1-Jet Tight BB Toy"
 
-nEvents = 100
-categoryName = "Jet2CutsVBFPass"
-plotTitle = "2-Jet VBF Tight Toy"
+#nEvents = 209 # between 100 and 200
+#categoryName = "Jet2CutsVBFPass"
+#plotTitle = "2-Jet VBF Tight Toy"
 
 ############################################3
 
