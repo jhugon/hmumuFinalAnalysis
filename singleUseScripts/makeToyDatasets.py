@@ -19,15 +19,15 @@ width = 20.
 outDirName = "output/"
 energy = "8TeV"
 
-nEvents = 33965 # between 100 and 200
-categoryName = "Jets01PassPtG10BB"
-plotTitle = "0,1-Jet Tight BB Toy"
-expVal = 5.0e-3
+#nEvents = 33965 # between 100 and 200
+#categoryName = "Jets01PassPtG10BB"
+#plotTitle = "0,1-Jet Tight BB Toy"
+#expVal = 5.0e-3
 
-#nEvents = 209 # between 100 and 200
-#categoryName = "Jet2CutsVBFPass"
-#plotTitle = "2-Jet VBF Tight Toy"
-#expVal = 2.0e-2
+nEvents = 209 # between 100 and 200
+categoryName = "Jet2CutsVBFPass"
+plotTitle = "2-Jet VBF Tight Toy"
+expVal = 2.0e-2
 
 ############################################3
 
@@ -69,6 +69,26 @@ for mh in mhVals:
   maxMass = mh + width/2.
   dimuonMass = root.RooRealVar("dimuonMass","dimuonMass",minMass,maxMass)
   f = root.TFile(outDirName+"toysData_{0}_{1}_{2:.1f}".format(categoryName,energy,mh)+".root","RECREATE")
+  toysDir = f.mkdir("toys")
+  toysDir.cd()
+  for dataWhole,iToy in zip(dataWholeList,range(nToys)):
+    data_obs = root.RooDataSet("data_obs","Funky Generated Data",root.RooArgSet(dimuonMass,catVar))
+    for iEvent in range(int(dataWhole.sumEntries())):
+      tmpM = dataWhole.get(iEvent).getRealValue("dimuonMassAll")
+      if tmpM >= minMass and tmpM <= maxMass:
+        dimuonMass.setVal(tmpM)
+        data_obs.add(root.RooArgSet(dimuonMass,catVar))
+    data_obs.SetName("model_bData")
+    data_obs.Write("toy_{0}".format(iToy+1))
+  f.Close()
+
+# Wide Data For old-school
+doWideToys = True
+if doWideToys:
+  minMass = 110
+  maxMass = 160
+  dimuonMass = root.RooRealVar("dimuonMass","dimuonMass",minMass,maxMass)
+  f = root.TFile(outDirName+"toysWideData_{0}_{1}".format(categoryName,energy)+".root","RECREATE")
   toysDir = f.mkdir("toys")
   toysDir.cd()
   for dataWhole,iToy in zip(dataWholeList,range(nToys)):
