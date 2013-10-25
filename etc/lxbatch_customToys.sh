@@ -15,7 +15,7 @@ TXTSUFFIX=".txt"
 FILENAME=$1
 DIRNAME="Dir"$1_"$2"_"Dir"
 ROOTFILENAME=${1%$TXTSUFFIX}.root
-TOYFILENAME="toyData_"${1%$TXTSUFFIX}.root
+TOYFILENAME="toysData_"${1%$TXTSUFFIX}.root
 
 mkdir $DIRNAME
 cp $FILENAME $DIRNAME/
@@ -34,7 +34,7 @@ echo $command
 $command >& $FILENAME.outToys
 mv higgs*Asymptotic*.root ../$FILENAME.outToys.root
 
-command="combine -M Asymptotic"
+command="combine -M Asymptotic $FILENAME"
 echo $command
 $command >& $FILENAME.out
 mv higgs*Asymptotic*.root ../$FILENAME.out.root
