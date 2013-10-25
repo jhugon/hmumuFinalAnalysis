@@ -14,17 +14,23 @@ PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 ############################################3
 
 nToys = 10
-nEvents = 1000
 mhVals = range(115,156,1)
 width = 20.
-categoryName = "Jets01PassPtG10BB8TeV"
-plotTitle = "0,1-Jet Tight BB Toy"
 outDirName = "output/"
+energy = "8TeV"
+
+#nEvents = 1000
+#categoryName = "Jets01PassPtG10BB"
+#plotTitle = "0,1-Jet Tight BB Toy"
+
+nEvents = 100
+categoryName = "Jet2CutsVBFPass"
+plotTitle = "2-Jet VBF Tight Toy"
 
 ############################################3
 
 catVar = root.RooCategory("CMS_channel","CMS_channel")
-catVar.defineType(categoryName)
+catVar.defineType(categoryName+energy)
 
 dimuonMassAll = root.RooRealVar("dimuonMassAll","M(#mu#mu) [GeV/c^{2}]",100,200)
 dimuonMassAll.setRange("baseline",110,160)
@@ -52,7 +58,7 @@ for dataWhole,iToy in zip(dataWholeList,range(nToys)):
                     caption2="Baseline Background Toy Data",
                     caption3="<N_{Events}> = "+str(nEvents)
                     )
-  rmp.draw(outDirName+"toyFit_"+str(iToy+1.)+"_"+categoryName)
+  rmp.draw(outDirName+"toyFit"+str(iToy+1)+"_"+categoryName+"_"+energy)
   rmpList.append(rmp)
   
 
@@ -60,7 +66,7 @@ for mh in mhVals:
   minMass = mh - width/2.
   maxMass = mh + width/2.
   dimuonMass = root.RooRealVar("dimuonMass","dimuonMass",minMass,maxMass)
-  f = root.TFile(outDirName+"out_{0:.1f}".format(mh)+".root","RECREATE")
+  f = root.TFile(outDirName+"toysData_{0}_{1}_{2:.1f}".format(categoryName,energy,mh)+".root","RECREATE")
   toysDir = f.mkdir("toys")
   toysDir.cd()
   for dataWhole,iToy in zip(dataWholeList,range(nToys)):

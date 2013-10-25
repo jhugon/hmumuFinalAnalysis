@@ -16,6 +16,8 @@ import ROOT as root
 from helpers import *
 import datetime
 import sys
+import os
+import stat
 import os.path
 import copy
 import random
@@ -23,6 +25,7 @@ import shutil
 import multiprocessing
 import time
 import string
+import glob
 myThread = multiprocessing.Process
 
 from ROOT import gSystem
@@ -155,6 +158,9 @@ def makePDFBakBernsteinProd(name,rooDataset,dimuonMass,minMass,maxMass,workspace
 #    canvas = root.TCanvas()
 #    frame.Draw()
 #    canvas.SaveAs("debug_"+name+channelName+".png")
+
+    for i in rooParamList:
+      debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
 
     return paramList, bakNormTup, debug, order
 
@@ -771,9 +777,7 @@ def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=True)
 #makePDFSig = makePDFSigCBPlusGaus
 makePDFSig = makePDFSigDG
 ## makePDFBak = makePDFBakOld
-#makePDFBak = makePDFBakMOverSq
 #makePDFBak = makePDFBakExpMOverSq
-#makePDFBak = makePDFBakExpLog
 makePDFBak = makePDFBakBernsteinProd
 
 ###################################################################################
@@ -1618,7 +1622,7 @@ if __name__ == "__main__":
   #directory = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  #periods = ["8TeV"]
+  periods = ["8TeV"]
   #periods = ["7TeV"]
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
   categoriesFF = ["BB","BO","BE","OO","FF"]
@@ -1670,7 +1674,7 @@ if __name__ == "__main__":
   jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
-  analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+#  analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
 #  analyses += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
 #  analyses += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   analyses += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
@@ -2055,4 +2059,9 @@ if __name__ == "__main__":
   shutil.copy("etc/compatHPC_Template.sh",outDir+"compatHPC_Template.sh")
   shutil.copy("etc/lxbatch_LEE.sh",outDir+"lxbatch_LEE.sh")
   shutil.copy("etc/runLEE.sh",outDir+"runLEE.sh")
+  shutil.copy("etc/lxbatch_customToys.sh",outDir+"lxbatch_customToys.sh")
+  shutil.copy("etc/runOnCustomToys.sh",outDir+"runOnCustomToys.sh")
+
+  for iexef in glob.glob(outDir+"*.sh")+glob.glob(outDir+"*.py"):
+    os.chmod(iexef, os.stat(iexef).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
