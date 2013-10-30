@@ -1735,8 +1735,8 @@ if __name__ == "__main__":
                         "2Bernstein",
                         "3Bernstein",
                         "4Bernstein",
-                        "5Bernstein",
-                        "6Bernstein",
+                        #"5Bernstein",
+                        #"6Bernstein",
                         #"7Bernstein",
                         #"8Bernstein",
                         "1SumExp",
@@ -1751,8 +1751,8 @@ if __name__ == "__main__":
                         "2Bernstein",
                         "3Bernstein",
                         "4Bernstein",
-                        "5Bernstein",
-                        "6Bernstein",
+                        #"5Bernstein",
+                        #"6Bernstein",
                         #"7Bernstein",
                         #"8Bernstein",
                         "1SumExp",
@@ -1767,8 +1767,8 @@ if __name__ == "__main__":
                         "2Bernstein",
                         "3Bernstein",
                         "4Bernstein",
-                        "5Bernstein",
-                        "6Bernstein",
+                        #"5Bernstein",
+                        #"6Bernstein",
                         #"7Bernstein",
                         #"8Bernstein",
                         "1SumExp",
@@ -1790,8 +1790,8 @@ if __name__ == "__main__":
                         "2Bernstein",
                         "3Bernstein",
                         "4Bernstein",
-                        "5Bernstein",
-                        "6Bernstein",
+                        #"5Bernstein",
+                        #"6Bernstein",
                         #"7Bernstein",
                         #"8Bernstein",
                         "1SumExp",
@@ -1809,7 +1809,7 @@ if __name__ == "__main__":
   ### Define which masses to run over
 
   #sigMasses = range(115,156,5)
-  sigMasses = [120,121,122,123,124,125]
+  sigMasses = [118,119,120,121,122,123,124,125,126,127]
   massWindow = 20.
 
   ########################################

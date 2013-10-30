@@ -107,7 +107,82 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     channelName = name
 
-    defaultOrders = None
+    # Bernstein Default Order Dict
+    # For Window Width: 20.0 GeV
+    defaultOrders = {
+      'Jets01PassPtG10BB': {
+        118:3,
+        119:3,
+        120:3,
+        121:3,
+        122:3,
+        123:3,
+        124:3,
+        125:2,
+        126:2,
+        127:2,
+      },
+      'Jets01PassPtG10BO': {
+        118:3,
+        119:3,
+        120:3,
+        121:3,
+        122:3,
+        123:3,
+        124:3,
+        125:2,
+        126:2,
+        127:2,
+      },
+      'Jets01PassPtG10BE': {
+        118:3,
+        119:3,
+        120:3,
+        121:2,
+        122:3,
+        123:2,
+        124:2,
+        125:2,
+        126:2,
+        127:2,
+      },
+      'Jet2CutsVBFPass': {
+        118:1,
+        119:1,
+        120:1,
+        121:2,
+        122:1,
+        123:1,
+        124:1,
+        125:1,
+        126:1,
+        127:1,
+      },
+      'Jet2CutsGFPass': {
+        118:2,
+        119:1,
+        120:2,
+        121:1,
+        122:1,
+        123:1,
+        124:1,
+        125:1,
+        126:1,
+        127:1,
+      },
+      'Jet2CutsFailVBFGF': {
+        118:2,
+        119:2,
+        120:2,
+        121:2,
+        122:2,
+        123:2,
+        124:2,
+        125:2,
+        126:2,
+        127:2,
+      },
+    }
 
     if order == None:
       order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
@@ -167,7 +242,82 @@ def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     channelName = name
 
-    defaultOrders = None
+    # Chebychev Default Order Dict
+    # For Window Width: 20.0 GeV
+    defaultOrders = {
+      'Jets01PassPtG10BB': {
+        118:3,
+        119:3,
+        120:3,
+        121:3,
+        122:3,
+        123:3,
+        124:3,
+        125:2,
+        126:2,
+        127:2,
+      },
+      'Jets01PassPtG10BO': {
+        118:3,
+        119:3,
+        120:3,
+        121:3,
+        122:3,
+        123:3,
+        124:3,
+        125:2,
+        126:2,
+        127:2,
+      },
+      'Jets01PassPtG10BE': {
+        118:3,
+        119:3,
+        120:3,
+        121:2,
+        122:3,
+        123:2,
+        124:2,
+        125:2,
+        126:2,
+        127:2,
+      },
+      'Jet2CutsVBFPass': {
+        118:1,
+        119:1,
+        120:1,
+        121:2,
+        122:1,
+        123:1,
+        124:1,
+        125:1,
+        126:1,
+        127:1,
+      },
+      'Jet2CutsGFPass': {
+        118:2,
+        119:1,
+        120:2,
+        121:1,
+        122:1,
+        123:1,
+        124:1,
+        125:1,
+        126:1,
+        127:1,
+      },
+      'Jet2CutsFailVBFGF': {
+        118:2,
+        119:2,
+        120:2,
+        121:2,
+        122:2,
+        123:2,
+        124:2,
+        125:2,
+        126:2,
+        127:2,
+      },
+    }
 
     if order == None:
       order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
@@ -286,7 +436,82 @@ def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
 
     channelName = name
 
-    defaultOrders = None
+    # SumExp Default Order Dict
+    # For Window Width: 20.0 GeV
+    defaultOrders = {
+      'Jets01PassPtG10BB': {
+        118:2,
+        119:2,
+        120:2,
+        121:2,
+        122:1,
+        123:2,
+        124:2,
+        125:1,
+        126:1,
+        127:1,
+      },
+      'Jets01PassPtG10BO': {
+        118:2,
+        119:2,
+        120:2,
+        121:2,
+        122:2,
+        123:2,
+        124:1,
+        125:1,
+        126:1,
+        127:1,
+      },
+      'Jets01PassPtG10BE': {
+        118:2,
+        119:2,
+        120:2,
+        121:2,
+        122:2,
+        123:1,
+        124:1,
+        125:1,
+        126:1,
+        127:1,
+      },
+      'Jet2CutsVBFPass': {
+        118:1,
+        119:1,
+        120:1,
+        121:1,
+        122:1,
+        123:1,
+        124:1,
+        125:1,
+        126:1,
+        127:1,
+      },
+      'Jet2CutsGFPass': {
+        118:1,
+        119:1,
+        120:1,
+        121:1,
+        122:1,
+        123:1,
+        124:1,
+        125:1,
+        126:1,
+        127:1,
+      },
+      'Jet2CutsFailVBFGF': {
+        118:1,
+        119:1,
+        120:1,
+        121:1,
+        122:1,
+        123:1,
+        124:1,
+        125:1,
+        126:1,
+        127:1,
+      },
+    }
 
     if order == None:
       order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
@@ -359,7 +584,7 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
     defaultOrders=None
 
     if order == None:
-      order = getOrderToUseFromDict(defaultOrders,name,higgsMass)
+      order = 1
 
     rooParamList = []
     rooArgList = root.RooArgList(dimuonMass)
@@ -828,10 +1053,10 @@ if __name__ == "__main__":
   outDir = "output/"
 
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
-  pdfsToTry = ["SumExp","SumPow"]
-  ordersToTry= range(1,5)
+  pdfsToTry = ["SumExp"]
+  ordersToTry= range(1,4)
   #pdfsToTry = ["Bernstein","Chebychev"]
-  #ordersToTry= range(1,7)
+  #ordersToTry= range(1,5)
 
   categories = []
 
@@ -849,7 +1074,7 @@ if __name__ == "__main__":
   categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   massWindow = 20.
-  signalMasses = [120,121,122,123,124,125]
+  signalMasses = [118,119,120,121,122,123,124,125,126,127]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
   dataFns8TeV = [
