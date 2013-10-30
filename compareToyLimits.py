@@ -21,6 +21,8 @@ PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 
 ####################################################
 
+HISTCOUNTER=0
+
 def massFromFn(x):
   srch = re.search(r"_([0-9.]+)\.txt",x)
   assert(srch)
@@ -92,6 +94,7 @@ class LimitDataVMass(object):
       graph.SetPointError(i,0.0,0.0,ld.median[iToy]-ld.m2sig[iToy],ld.p2sig[iToy]-ld.median[iToy])
 
   def plotToys(self,fnBase,ylimits=[0,100.]):
+    global HISTCOUNTER
     canvas = root.TCanvas()
     for iToy in range(self.nToys):
       obs = root.TGraph()
@@ -109,7 +112,8 @@ class LimitDataVMass(object):
       self.fill1sigGraph(oneSig,iToy)
       self.fill2sigGraph(twoSig,iToy)
 
-      axisHist = root.TH2F("axisHist","",1,110,160,1,ylimits[0],ylimits[1])
+      axisHist = root.TH2F("axisHist"+str(HISTCOUNTER),"",1,110,160,1,ylimits[0],ylimits[1])
+      HISTCOUNTER+=1
       axisHist.GetXaxis().SetTitle("m_{H} [GeV/c^{2}]")
       axisHist.GetYaxis().SetTitle("95% CL Limit on #sigma/#sigma_{SM} (H#rightarrow#mu#mu)")
 
@@ -125,9 +129,14 @@ class LimitDataVMass(object):
       canvas.SaveAs(fnBase+"_toy"+str(iToy)+".pdf")
       canvas.Clear()
 
-def plotTogether(listOfLimitData,fnBase,showFirstBands=True,ylimits=[0,100]):
-    canvas = root.TCanvas()
+def plotTogether(listOfLimitData,fnBase,showFirstBands=True,ylimits=[0,150],title=""):
     assert(len(listOfLimitData)>0)
+    global HISTCOUNTER
+    canvas = root.TCanvas()
+    tlatex = root.TLatex()
+    tlatex.SetNDC()
+    tlatex.SetTextFont(root.gStyle.GetLabelFont())
+    tlatex.SetTextSize(0.04)
     for iToy in range(listOfLimitData[0].nToys):
       oneSig = root.TGraphAsymmErrors()
       oneSig.SetFillColor(root.kGreen)
@@ -153,7 +162,8 @@ def plotTogether(listOfLimitData,fnBase,showFirstBands=True,ylimits=[0,100]):
         obsList.append(obs)
         medianList.append(median)
 
-      axisHist = root.TH2F("axisHist","",1,110,160,1,ylimits[0],ylimits[1])
+      axisHist = root.TH2F("axisHist"+str(HISTCOUNTER),"",1,110,160,1,ylimits[0],ylimits[1])
+      HISTCOUNTER+=1
       axisHist.GetXaxis().SetTitle("m_{H} [GeV/c^{2}]")
       axisHist.GetYaxis().SetTitle("95% CL Limit on #sigma/#sigma_{SM} (H#rightarrow#mu#mu)")
 
@@ -167,6 +177,21 @@ def plotTogether(listOfLimitData,fnBase,showFirstBands=True,ylimits=[0,100]):
 
       canvas.RedrawAxis()
 
+      #leg = root.TLegend(0.172,0.905,0.73,0.585)
+      leg = root.TLegend(0.172,0.905,0.73,0.635)
+      leg.SetLineColor(0)
+      leg.SetFillColor(0)
+      for obs,ld in zip(obsList,listOfLimitData):
+        leg.AddEntry(obs,ld.title,"lp")
+      leg.Draw()
+
+      tlatex.SetTextAlign(12)
+      tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
+      #tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Toy: {0}".format(iToy))
+      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.60,"Toy: {0}".format(iToy))
+      tlatex.SetTextAlign(32)
+      tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,title)
+
       canvas.SaveAs(fnBase+"_toy"+str(iToy)+".png")
       canvas.SaveAs(fnBase+"_toy"+str(iToy)+".pdf")
       canvas.Clear()
@@ -178,15 +203,19 @@ if __name__ == "__main__":
   inDir = "/afs/cern.ch/user/j/jhugon/work/private/stats/CMSSW_6_1_1/customToys/"
   outDir = "output/"
 
-  limitDataBaselineVBF = LimitDataVMass(inDir+"Baseline/Jet2CutsVBFPass_8TeV_*.txt.outToys.root","2-Bernstein",1)
-  limitDataBernsteinVBF = LimitDataVMass(inDir+"Bern/Jet2CutsVBFPass_8TeV_*.txt.outToys.root","Baseline",2)
-  limitDataBaselineBB = LimitDataVMass(inDir+"Baseline/Jets01PassPtG10BB_8TeV_*.txt.outToys.root","4-Bernstein",1)
-  limitDataBernsteinBB = LimitDataVMass(inDir+"Bern/Jets01PassPtG10BB_8TeV_*.txt.outToys.root","Baseline",2)
+  limitDataBaselineVBF = LimitDataVMass(inDir+"Baseline/Jet2CutsVBFPass_8TeV_*.txt.outToys.root","Baseline, 110-160 GeV/c^{2}",1)
+  limitData20BaselineVBF = LimitDataVMass(inDir+"Baseline20GeVWindow/Jet2CutsVBFPass_8TeV_*.txt.outToys.root","Baseline, 20 GeV/c^{2} Wide",4)
+  limitData20BernsteinVBF = LimitDataVMass(inDir+"Bern20GeVWindow/Jet2CutsVBFPass_8TeV_*.txt.outToys.root","2-Bernstein, 20 GeV/c^{2} Wide",2)
+  limitDataBaselineBB = LimitDataVMass(inDir+"Baseline/Jets01PassPtG10BB_8TeV_*.txt.outToys.root","Baseline, 110-160 GeV/c^{2}",1)
+  limitData20BaselineBB = LimitDataVMass(inDir+"Baseline20GeVWindow/Jets01PassPtG10BB_8TeV_*.txt.outToys.root","Baseline, 20 GeV/c^{2} Wide",4)
+  limitData20BernsteinBB = LimitDataVMass(inDir+"Bern20GeVWindow/Jets01PassPtG10BB_8TeV_*.txt.outToys.root","4-Bernstein, 20 GeV/c^{2} Wide",2)
 
-  limitDataBernsteinVBF.plotToys(outDir+"limits_VBFTight_Bernstein",ylimits=[0,100.])
+  limitData20BernsteinVBF.plotToys(outDir+"limits_VBFTight_20Bernstein",ylimits=[0,100.])
+  limitData20BaselineVBF.plotToys(outDir+"limits_VBFTight_20Baseline",ylimits=[0,100.])
   limitDataBaselineVBF.plotToys(outDir+"limits_VBFTight_Baseline",ylimits=[0,100.])
-  limitDataBernsteinBB.plotToys(outDir+"limits_TightBB_Bernstein",ylimits=[0,100.])
+  limitData20BernsteinBB.plotToys(outDir+"limits_TightBB_20Bernstein",ylimits=[0,100.])
+  limitData20BaselineBB.plotToys(outDir+"limits_TightBB_20Baseline",ylimits=[0,100.])
   limitDataBaselineBB.plotToys(outDir+"limits_TightBB_Baseline",ylimits=[0,100.])
 
-  plotTogether([limitDataBaselineBB,limitDataBernsteinBB],outDir+"compareLimits_TightBB")
-  plotTogether([limitDataBaselineVBF,limitDataBernsteinVBF],outDir+"compareLimits_VBFTight")
+  plotTogether([limitDataBaselineBB,limitData20BaselineBB,limitData20BernsteinBB],outDir+"compareLimits_TightBB",title="0,1-Jet Tight BB")
+  plotTogether([limitDataBaselineVBF,limitData20BaselineVBF,limitData20BernsteinVBF],outDir+"compareLimits_VBFTight",title="2-Jet VBF Tight")
