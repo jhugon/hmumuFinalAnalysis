@@ -2285,7 +2285,11 @@ def fitDGFindQuantiles(hist,level):
     return quants
         
 class RooModelPlotter:
-  def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None,RangeName="",canvas=None,caption1="",caption2="",caption3=""):
+  def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None,RangeName="",canvas=None,caption1="",caption2="",caption3="",showStackDatasets=[],showStackDatasetColors=[],showStackDatasetTitles=[]):
+    """
+  If you want to show the stacked MC, you must have all 3 showStackXXX options.  
+    Just add the MC samples, they will be stacked for you with the first entry on bottom.
+    """
     self.xVar = xVar
     self.pdf = pdf
     self.data = data
@@ -2301,6 +2305,15 @@ class RooModelPlotter:
     self.caption1 = caption1
     self.caption2 = caption2
     self.caption3 = caption3
+
+    assert(len(showStackDatasetTitles) == len(showStackDatasets))
+    assert(len(showStackDatasetColors) == len(showStackDatasets))
+    self.showStackDatasets = showStackDatasets
+    self.showStackDatasetColors = showStackDatasetColors
+    self.showStackDatasetTitles = showStackDatasetTitles
+    print self.showStackDatasets
+    print self.showStackDatasetColors
+    print self.showStackDatasetTitles
 
     self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(lumi)
 
@@ -2334,6 +2347,7 @@ class RooModelPlotter:
     lineDrawOptArg = root.RooFit.DrawOption("L")
     graphDrawOptArg = root.RooFit.DrawOption("PEZ")
     sigLineColorArg = root.RooFit.LineColor(root.kRed)
+      
 
     binningArg = root.RooFit.Binning("")
     xVar.setRange("RMPRange",self.binning.lowBound(),self.binning.highBound())
@@ -2366,8 +2380,9 @@ class RooModelPlotter:
     self.frame       = frame
     self.frameBkgSub = frameBkgSub
     
+    self.plotStack(frame)
     data.plotOn(frame,      graphDrawOptArg,binningArg)
-      
+
     #print "backgroundPDFName = %s" % backgroundPDFName 
     if backgroundPDFName != None:
       bakCompArg = root.RooFit.Components(backgroundPDFName)
@@ -2492,13 +2507,19 @@ class RooModelPlotter:
     self.phonySigLegHist.SetLineWidth(2)
     
     legPos = [0.65,0.65,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
-    #legPos = [0.73,0.65,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
+    if len(self.showStackDatasets)>0:
+      legPos = [0.65,0.50,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
     self.legPos = legPos
     self.leg = root.TLegend(*legPos)
     self.leg.SetFillColor(0)
     self.leg.SetLineColor(0)
-    self.leg.AddEntry(self.phonyDatLegHist,"Data","lp")
+    if len(self.showStackDatasets)>0:
+      self.leg.AddEntry(self.phonyDatLegHist,"MC Sum","lp")
+    else:
+      self.leg.AddEntry(self.phonyDatLegHist,"Data","lp")
     self.leg.AddEntry(self.phonyFitLegHist,"Background Model","lf")
+    for fakeHist,stackTitle in reversed(zip(self.stackLegendFakeHists,self.showStackDatasetTitles)):
+      self.leg.AddEntry(fakeHist,stackTitle,"f")
 
     legPosBkgSub = [0.64,0.72,0.92,0.88]
     self.legBkgSub = root.TLegend(*legPosBkgSub)
@@ -2863,6 +2884,31 @@ class RooModelPlotter:
         errDown = sqrt(errDown2)
       bakErrCurve.SetPoint(i,xDown,y+errDown)
       bakErrCurve.SetPoint(iUp,xUp,y+errUp)
+
+  def plotStack(self,frame):
+    self.showStackDatasetsStacked = []
+    for i in range(len(self.showStackDatasets)):
+      tmpDS = self.showStackDatasets[i].Clone(self.showStackDatasets[i].GetName()+"Stacked")
+      for j in range(i):
+        tmpDS.append(self.showStackDatasets[j])
+      self.showStackDatasetsStacked.append(tmpDS)
+        
+    stackDrawOptArg = root.RooFit.DrawOption("BX")
+    stackLineStyleArg = root.RooFit.LineStyle(0)
+    stackMarkerStyleArg = root.RooFit.MarkerStyle(0)
+    for stackData,stackColor in reversed(zip(self.showStackDatasetsStacked,self.showStackDatasetColors)):
+      stackLineColorArg = root.RooFit.LineColor(stackColor)
+      stackFillColorArg = root.RooFit.FillColor(stackColor)
+      stackData.plotOn(frame,stackDrawOptArg,stackLineColorArg,stackFillColorArg,stackLineStyleArg,stackMarkerStyleArg)
+
+    self.stackLegendFakeHists = []
+    for stackColor,stackTitle in zip(self.showStackDatasetColors,self.showStackDatasetTitles):
+        tmp = root.TH1F("fakeGraph"+stackTitle,"",1,0,1)
+        tmp.SetFillColor(stackColor)
+        tmp.SetLineColor(stackColor)
+        tmp.SetLineStyle(0)
+        tmp.SetMarkerStyle(0)
+        self.stackLegendFakeHists.append(tmp)
 
 def treeCut(category,cutString,eventWeights=True,muonRequirements=True,KDString="KD"):
   global MENormDict
