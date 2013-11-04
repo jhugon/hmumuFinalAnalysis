@@ -2285,7 +2285,7 @@ def fitDGFindQuantiles(hist,level):
     return quants
         
 class RooModelPlotter:
-  def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None,RangeName="",canvas=None,caption1="",caption2="",caption3="",showStackDatasets=[],showStackDatasetColors=[],showStackDatasetTitles=[]):
+  def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None,RangeName="",canvas=None,caption1="",caption2="",caption3="",showStackDatasets=[],showStackDatasetColors=[],showStackDatasetTitles=[],errorsToDraw=root.RooFit.DataError(root.RooAbsData.Poisson)):
     """
   If you want to show the stacked MC, you must have all 3 showStackXXX options.  
     Just add the MC samples, they will be stacked for you with the first entry on bottom.
@@ -2311,11 +2311,15 @@ class RooModelPlotter:
     self.showStackDatasets = showStackDatasets
     self.showStackDatasetColors = showStackDatasetColors
     self.showStackDatasetTitles = showStackDatasetTitles
-    print self.showStackDatasets
-    print self.showStackDatasetColors
-    print self.showStackDatasetTitles
 
     self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(lumi)
+
+    nData = data.sumEntries()
+    self.nData = nData
+    if self.nData == 0:
+      return
+    normErr = nData**(-0.5)
+    self.normErr = normErr
 
 
     #Set the PDF pars value from the FitResults
@@ -2360,10 +2364,6 @@ class RooModelPlotter:
     tmpBakPDFNameArg = root.RooFit.Name(tmpBakPDFName)
     tmpBakPDFErrorNameArg = root.RooFit.Name(tmpBakPDFErrorName)
 
-    nData = data.sumEntries()
-    normErr = nData**(-0.5)
-    self.normErr = normErr
-
     self.rangename = None
     # Main Frame
     frame       = xVar.frame(root.RooFit.Title(""))
@@ -2381,7 +2381,7 @@ class RooModelPlotter:
     self.frameBkgSub = frameBkgSub
     
     self.plotStack(frame)
-    data.plotOn(frame,      graphDrawOptArg,binningArg)
+    data.plotOn(frame,      graphDrawOptArg,binningArg,errorsToDraw)
 
     #print "backgroundPDFName = %s" % backgroundPDFName 
     if backgroundPDFName != None:
@@ -2392,13 +2392,13 @@ class RooModelPlotter:
       pdf.plotOn(frame,errVisArg,errColorArg,rangeArg,tmpBakPDFErrorNameArg)
       pdf.plotOn(frame,lineDrawOptArg,lineColorArg,lineWidthArg,rangeArg,tmpBakPDFNameArg)
 
-    data.plotOn(frame,graphDrawOptArg,binningArg,tmpDataHistNameArg)
+    data.plotOn(frame,graphDrawOptArg,binningArg,tmpDataHistNameArg,errorsToDraw)
 
     # filling it with white points for the sig PDF normalization
     data.plotOn(frameBkgSub,graphDrawOptArg,
                 root.RooFit.MarkerColor(root.kWhite),
                 root.RooFit.LineColor(root.kWhite),
-                binningArg,tmpDataHistNameArg)
+                binningArg,tmpDataHistNameArg,errorsToDraw)
 
     frame.SetTitle("")
     frame.GetXaxis().SetLabelSize(0)
@@ -2537,6 +2537,8 @@ class RooModelPlotter:
 
 
   def draw(self,filenameNoExt):
+    if self.nData == 0:
+      return
     nowStr = self.nowStr
     self.canvas.SetLogy(0)
     self.canvas.cd()
@@ -2888,7 +2890,7 @@ class RooModelPlotter:
   def plotStack(self,frame):
     self.showStackDatasetsStacked = []
     for i in range(len(self.showStackDatasets)):
-      tmpDS = self.showStackDatasets[i].Clone(self.showStackDatasets[i].GetName()+"Stacked")
+      tmpDS = self.showStackDatasets[i].Clone(self.showStackDatasets[i].GetName()+"Stacked"+self.nowStr)
       for j in range(i):
         tmpDS.append(self.showStackDatasets[j])
       self.showStackDatasetsStacked.append(tmpDS)
@@ -2903,7 +2905,7 @@ class RooModelPlotter:
 
     self.stackLegendFakeHists = []
     for stackColor,stackTitle in zip(self.showStackDatasetColors,self.showStackDatasetTitles):
-        tmp = root.TH1F("fakeGraph"+stackTitle,"",1,0,1)
+        tmp = root.TH1F("fakeGraph"+stackTitle+"Stacked"+self.nowStr,"",1,0,1)
         tmp.SetFillColor(stackColor)
         tmp.SetLineColor(stackColor)
         tmp.SetLineStyle(0)
