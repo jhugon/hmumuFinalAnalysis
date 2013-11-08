@@ -55,6 +55,15 @@ TITLEMAP = {
   "Jet2CutsFailVBFGF":"2-Jet Loose",
 }
 
+def medianAbsoluteDeviation(data,axis=None):
+  return numpy.median(numpy.absolute(data - numpy.median(data, axis=axis)), axis=axis)
+ 
+def madStddev(a,rescaleFactor=1.0/scipy.stats.norm.isf(1/4.)):
+  """
+  the default rescaleFactor is appropriate for the normal distribution
+  """
+  return medianAbsoluteDeviation(a)*rescaleFactor
+
 def getOrdinalStr(inInt):
   result = str(inInt)
   if result[-1] == "1":
@@ -629,130 +638,130 @@ class BiasStudy:
       #    saveAs(canvas,outputPrefix+self.catName+"_"+str(hmass)+"_Pulls_Ref"+refPdfName+"_Alt"+pdfAltName)
       #    canvas.Clear()
 
-      ##### Median pull plots v. mass
-      for pdfAltName in self.pdfAltNamesDict[refPdfName]:
-        minx = 110
-        maxx = 160
-        axisHist = root.TH2F("axishist"+str(iHist),"",1,minx,maxx,1,-1,1)
-        setHistTitles(axisHist,"M_{H} [GeV/c^{2}]","Median[(N_{sig}(Alt)-N_{sig}(Ref))/#DeltaN_{sig}(Alt)]")
-        iHist += 1
-        graph = root.TGraph()
-        graphBand = root.TGraphErrors()
-        graphBand.SetPoint(0,minx,0.)
-        graphBand.SetPointError(0,0.,0.14)
-        graphBand.SetPoint(1,maxx,0.)
-        graphBand.SetPointError(1,0.,0.14)
-        graphBand.SetFillStyle(1001)
-        graphBand.SetFillColor(root.kGreen-9)
-        iHist += 1
-        iGraph = 0
-        for hmass in self.sigMasses:
-          medianPull = median(self.data[refPdfName][hmass][pdfAltName]['pull'])
-          graph.SetPoint(iGraph,hmass,medianPull)
-          iGraph += 1
-        axisHist.Draw()
-        graphBand.Draw("3")
-        graph.Draw("LP")
-        tlatex.SetTextAlign(12)
-        tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
-        tlatex.SetTextAlign(12)
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfNameOrder])
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
-        tlatex.SetTextAlign(32)
-        tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
-        canvas.RedrawAxis()
-        saveAs(canvas,outputPrefix+self.catName+"_Pulls_Ref"+refPdfName+"_Alt"+pdfAltName)
-        canvas.Clear()
-
-      ##### Ref Z plots v. mass
-      minx = 110
-      maxx = 160
-      axisHist = root.TH2F("axishist"+str(iHist),"",1,minx,maxx,1,-5,5)
-      setHistTitles(axisHist,"M_{H} [GeV/c^{2}]","N_{sig}(Ref))/#DeltaN_{sig}(Ref)]")
-      iHist += 1
-      graph = root.TGraphErrors()
-      graphBand = root.TGraphErrors()
-      graphBand.SetPoint(0,minx,0.)
-      graphBand.SetPointError(0,0.,1.)
-      graphBand.SetPoint(1,maxx,0.)
-      graphBand.SetPointError(1,0.,1.)
-      graphBand.SetFillStyle(1001)
-      graphBand.SetFillColor(root.kGreen-9)
-      for iPoint,hmass in zip(range(len(self.sigMasses)),self.sigMasses):
-          zMeanTmp = mean(self.data[refPdfName][hmass]['zTrue'])
-          zSigmaTmp = stddev(self.data[refPdfName][hmass]['zTrue'])
-          graph.SetPoint(iPoint,hmass,zMeanTmp)
-          graph.SetPointError(iPoint,0.,zSigmaTmp)
-      axisHist.Draw()
-      graphBand.Draw("3")
-      graph.Draw("LP")
-      tlatex.SetTextAlign(12)
-      tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
-      tlatex.SetTextAlign(12)
-      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfNameOrder])
-      tlatex.SetTextAlign(32)
-      tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
-      canvas.RedrawAxis()
-      saveAs(canvas,outputPrefix+self.catName+"_Z_Ref"+refPdfName)
-      canvas.Clear()
-
-      ##### Alt Z plots v. mass
-      for pdfAltName in self.pdfAltNamesDict[refPdfName]:
-        minx = 110
-        maxx = 160
-        axisHist = root.TH2F("axishist"+str(iHist),"",1,minx,maxx,1,-5,5)
-        setHistTitles(axisHist,"M_{H} [GeV/c^{2}]","N_{sig}(Alt))/#DeltaN_{sig}(Alt)]")
-        iHist += 1
-        graph = root.TGraphErrors()
-        graphBand = root.TGraphErrors()
-        graphBand.SetPoint(0,minx,0.)
-        graphBand.SetPointError(0,0.,1.)
-        graphBand.SetPoint(1,maxx,0.)
-        graphBand.SetPointError(1,0.,1.)
-        graphBand.SetFillStyle(1001)
-        graphBand.SetFillColor(root.kGreen-9)
-        for iPoint,hmass in zip(range(len(self.sigMasses)),self.sigMasses):
-            zMeanTmp = mean(self.data[refPdfName][hmass][pdfAltName]['z'])
-            zSigmaTmp = stddev(self.data[refPdfName][hmass][pdfAltName]['z'])
-            graph.SetPoint(iPoint,hmass,zMeanTmp)
-            graph.SetPointError(iPoint,0.,zSigmaTmp)
-        axisHist.Draw()
-        graphBand.Draw("3")
-        graph.Draw("LP")
-        tlatex.SetTextAlign(12)
-        tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
-        tlatex.SetTextAlign(12)
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfNameOrder])
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
-        tlatex.SetTextAlign(32)
-        tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
-        canvas.RedrawAxis()
-        saveAs(canvas,outputPrefix+self.catName+"_Z_Ref"+refPdfName+"_Alt"+pdfAltName)
-        canvas.Clear()
-
-      ##### sigma(Z) plots v. mass
-      for pdfAltName in self.pdfAltNamesDict[refPdfName]:
-        minx = 110
-        maxx = 160
-        axisHist = root.TH2F("axishist"+str(iHist),"",1,minx,maxx,1,0.,5.)
-        setHistTitles(axisHist,"M_{H} [GeV/c^{2}]","StdDev[N_{sig}(Alt))/#DeltaN_{sig}(Alt)]]")
-        iHist += 1
-        graph = root.TGraph()
-        for iPoint,hmass in zip(range(len(self.sigMasses)),self.sigMasses):
-            zSigmaTmp = stddev(self.data[refPdfName][hmass][pdfAltName]['z'])
-            graph.SetPoint(iPoint,hmass,zSigmaTmp)
-        axisHist.Draw()
-        graph.Draw("LP")
-        tlatex.SetTextAlign(12)
-        tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
-        tlatex.SetTextAlign(12)
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfNameOrder])
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
-        tlatex.SetTextAlign(32)
-        tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
-        canvas.RedrawAxis()
-        saveAs(canvas,outputPrefix+self.catName+"_ZSigma_Ref"+refPdfName+"_Alt"+pdfAltName)
-        canvas.Clear()
+#      ##### Median pull plots v. mass
+#      for pdfAltName in self.pdfAltNamesDict[refPdfName]:
+#        minx = 110
+#        maxx = 160
+#        axisHist = root.TH2F("axishist"+str(iHist),"",1,minx,maxx,1,-1,1)
+#        setHistTitles(axisHist,"M_{H} [GeV/c^{2}]","Median[(N_{sig}(Alt)-N_{sig}(Ref))/#DeltaN_{sig}(Alt)]")
+#        iHist += 1
+#        graph = root.TGraph()
+#        graphBand = root.TGraphErrors()
+#        graphBand.SetPoint(0,minx,0.)
+#        graphBand.SetPointError(0,0.,0.14)
+#        graphBand.SetPoint(1,maxx,0.)
+#        graphBand.SetPointError(1,0.,0.14)
+#        graphBand.SetFillStyle(1001)
+#        graphBand.SetFillColor(root.kGreen-9)
+#        iHist += 1
+#        iGraph = 0
+#        for hmass in self.sigMasses:
+#          medianPull = median(self.data[refPdfName][hmass][pdfAltName]['pull'])
+#          graph.SetPoint(iGraph,hmass,medianPull)
+#          iGraph += 1
+#        axisHist.Draw()
+#        graphBand.Draw("3")
+#        graph.Draw("LP")
+#        tlatex.SetTextAlign(12)
+#        tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+#        tlatex.SetTextAlign(12)
+#        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfNameOrder])
+#        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
+#        tlatex.SetTextAlign(32)
+#        tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+#        canvas.RedrawAxis()
+#        saveAs(canvas,outputPrefix+self.catName+"_Pulls_Ref"+refPdfName+"_Alt"+pdfAltName)
+#        canvas.Clear()
+#
+#      ##### Ref Z plots v. mass
+#      minx = 110
+#      maxx = 160
+#      axisHist = root.TH2F("axishist"+str(iHist),"",1,minx,maxx,1,-5,5)
+#      setHistTitles(axisHist,"M_{H} [GeV/c^{2}]","N_{sig}(Ref))/#DeltaN_{sig}(Ref)]")
+#      iHist += 1
+#      graph = root.TGraphErrors()
+#      graphBand = root.TGraphErrors()
+#      graphBand.SetPoint(0,minx,0.)
+#      graphBand.SetPointError(0,0.,1.)
+#      graphBand.SetPoint(1,maxx,0.)
+#      graphBand.SetPointError(1,0.,1.)
+#      graphBand.SetFillStyle(1001)
+#      graphBand.SetFillColor(root.kGreen-9)
+#      for iPoint,hmass in zip(range(len(self.sigMasses)),self.sigMasses):
+#          zMeanTmp = mean(self.data[refPdfName][hmass]['zTrue'])
+#          zSigmaTmp = stddev(self.data[refPdfName][hmass]['zTrue'])
+#          graph.SetPoint(iPoint,hmass,zMeanTmp)
+#          graph.SetPointError(iPoint,0.,zSigmaTmp)
+#      axisHist.Draw()
+#      graphBand.Draw("3")
+#      graph.Draw("LP")
+#      tlatex.SetTextAlign(12)
+#      tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+#      tlatex.SetTextAlign(12)
+#      tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfNameOrder])
+#      tlatex.SetTextAlign(32)
+#      tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+#      canvas.RedrawAxis()
+#      saveAs(canvas,outputPrefix+self.catName+"_Z_Ref"+refPdfName)
+#      canvas.Clear()
+#
+#      ##### Alt Z plots v. mass
+#      for pdfAltName in self.pdfAltNamesDict[refPdfName]:
+#        minx = 110
+#        maxx = 160
+#        axisHist = root.TH2F("axishist"+str(iHist),"",1,minx,maxx,1,-5,5)
+#        setHistTitles(axisHist,"M_{H} [GeV/c^{2}]","N_{sig}(Alt))/#DeltaN_{sig}(Alt)]")
+#        iHist += 1
+#        graph = root.TGraphErrors()
+#        graphBand = root.TGraphErrors()
+#        graphBand.SetPoint(0,minx,0.)
+#        graphBand.SetPointError(0,0.,1.)
+#        graphBand.SetPoint(1,maxx,0.)
+#        graphBand.SetPointError(1,0.,1.)
+#        graphBand.SetFillStyle(1001)
+#        graphBand.SetFillColor(root.kGreen-9)
+#        for iPoint,hmass in zip(range(len(self.sigMasses)),self.sigMasses):
+#            zMeanTmp = mean(self.data[refPdfName][hmass][pdfAltName]['z'])
+#            zSigmaTmp = stddev(self.data[refPdfName][hmass][pdfAltName]['z'])
+#            graph.SetPoint(iPoint,hmass,zMeanTmp)
+#            graph.SetPointError(iPoint,0.,zSigmaTmp)
+#        axisHist.Draw()
+#        graphBand.Draw("3")
+#        graph.Draw("LP")
+#        tlatex.SetTextAlign(12)
+#        tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+#        tlatex.SetTextAlign(12)
+#        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfNameOrder])
+#        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
+#        tlatex.SetTextAlign(32)
+#        tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+#        canvas.RedrawAxis()
+#        saveAs(canvas,outputPrefix+self.catName+"_Z_Ref"+refPdfName+"_Alt"+pdfAltName)
+#        canvas.Clear()
+#
+#      ##### sigma(Z) plots v. mass
+#      for pdfAltName in self.pdfAltNamesDict[refPdfName]:
+#        minx = 110
+#        maxx = 160
+#        axisHist = root.TH2F("axishist"+str(iHist),"",1,minx,maxx,1,0.,5.)
+#        setHistTitles(axisHist,"M_{H} [GeV/c^{2}]","StdDev[N_{sig}(Alt))/#DeltaN_{sig}(Alt)]]")
+#        iHist += 1
+#        graph = root.TGraph()
+#        for iPoint,hmass in zip(range(len(self.sigMasses)),self.sigMasses):
+#            zSigmaTmp = stddev(self.data[refPdfName][hmass][pdfAltName]['z'])
+#            graph.SetPoint(iPoint,hmass,zSigmaTmp)
+#        axisHist.Draw()
+#        graph.Draw("LP")
+#        tlatex.SetTextAlign(12)
+#        tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+#        tlatex.SetTextAlign(12)
+#        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfNameOrder])
+#        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
+#        tlatex.SetTextAlign(32)
+#        tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+#        canvas.RedrawAxis()
+#        saveAs(canvas,outputPrefix+self.catName+"_ZSigma_Ref"+refPdfName+"_Alt"+pdfAltName)
+#        canvas.Clear()
 
       ###### Chi2 Prob Plots
       #for hmass in self.sigMasses:
@@ -878,6 +887,8 @@ class BiasStudy:
         iHist += 1
         for nsigref in self.data[refPdfName][hmass]['zTrue']:
             hist.Fill(nsigref)
+        fitFn = root.TF1("gaus"+str(hmass),"gaus",-3,3)
+        fitResult = hist.Fit(fitFn,"LSMEQ") 
         hist.Draw()
         tlatex.SetTextAlign(12)
         tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
@@ -887,10 +898,13 @@ class BiasStudy:
         tlatex.SetTextAlign(32)
         tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
         tmpDat = self.data[refPdfName][hmass]['zTrue']
-        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Median: {0:.2f}".format(median(tmpDat)))
-        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Mean: {0:.2f}".format(mean(tmpDat)))
-        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.65,"#sigma: {0:.2f}".format(stddev(tmpDat)))
-        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.55,"N_{{out of hist}}: {0:.0f}".format(hist.GetBinContent(0)+hist.GetBinContent(hist.GetNbinsX()+1)))
+        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.55,"Mean: {0:.2f} #pm {1:.2f}".format(fitFn.GetParameter(1),fitFn.GetParError(1)))
+        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.45,"#sigma: {0:.2f} #pm {1:.2f}".format(fitFn.GetParameter(2),fitFn.GetParError(2)))
+        #tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.65,"Median: {0:.2f}".format(median(tmpDat)))
+        #tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.55,"MAD #sigma: {0:.2f}".format(madStddev(tmpDat)))
+        #tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.45,"Mean: {0:.2f}".format(mean(tmpDat)))
+        #tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.35,"#sigma: {0:.2f}".format(stddev(tmpDat)))
+        #tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.25,"N_{{out of hist}}: {0:.1f}".format(hist.GetBinContent(0)+hist.GetBinContent(hist.GetNbinsX()+1)))
         self.setYMaxAndDrawVertLines(hist,None)
         canvas.RedrawAxis()
         saveAs(canvas,outputPrefix+self.catName+"_"+str(hmass)+"_Z_Ref"+refPdfName)
@@ -902,6 +916,7 @@ class BiasStudy:
           iHist += 1
           for nsigalt in self.data[refPdfName][hmass][pdfAltName]['z']:
             hist.Fill(nsigalt)
+          fitResult = hist.Fit(fitFn,"LSMEQ") 
           hist.Draw()
           tlatex.SetTextAlign(12)
           tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
@@ -912,10 +927,13 @@ class BiasStudy:
           tlatex.SetTextAlign(32)
           tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
           tmpDat = self.data[refPdfName][hmass][pdfAltName]['z']
-          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Median: {0:.2f}".format(median(tmpDat)))
-          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Mean: {0:.2f}".format(mean(tmpDat)))
-          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.65,"#sigma: {0:.2f}".format(stddev(tmpDat)))
-          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.55,"N_{{out of hist}}: {0:.1f}".format(hist.GetBinContent(0)+hist.GetBinContent(hist.GetNbinsX()+1)))
+          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.55,"Mean: {0:.2f} #pm {1:.2f}".format(fitFn.GetParameter(1),fitFn.GetParError(1)))
+          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.45,"#sigma: {0:.2f} #pm {1:.2f}".format(fitFn.GetParameter(2),fitFn.GetParError(2)))
+          #tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.65,"Median: {0:.2f}".format(median(tmpDat)))
+          #tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.55,"MAD #sigma: {0:.2f}".format(madStddev(tmpDat)))
+          #tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.45,"Mean: {0:.2f}".format(mean(tmpDat)))
+          #tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.35,"#sigma: {0:.2f}".format(stddev(tmpDat)))
+          #tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.25,"N_{{out of hist}}: {0:.1f}".format(hist.GetBinContent(0)+hist.GetBinContent(hist.GetNbinsX()+1)))
           self.setYMaxAndDrawVertLines(hist,None)
           canvas.RedrawAxis()
           saveAs(canvas,outputPrefix+self.catName+"_"+str(hmass)+"_Z_Ref"+refPdfName+"_Alt"+pdfAltName)
@@ -1698,7 +1716,7 @@ if __name__ == "__main__":
   ############################################
   ### Define number of toys to run over
 
-  nToys = 1
+  nToys = 10
 
   ############################################
   ### Define which reference functions to use
@@ -1732,30 +1750,32 @@ if __name__ == "__main__":
                         "Old",
                     ],
       "Bernstein":[          
-                        "ExpMOverSqP0New",
+                        #"ExpMOverSqP0New",
                         #"ExpMOverSq",
                         #"Old",
                         #"3Bernstein",
-                        #"4Bernstein",
-                        #"5Bernstein",
-                        #"6Bernstein",
-                        #"7Bernstein",
-                        #"8Bernstein",
+                        "4Bernstein",
+                        "5Bernstein",
+                        "6Bernstein",
+                        "7Bernstein",
+                        "8Bernstein",
+                        "9Bernstein",
                         #"1SumExp",
                         #"2SumExp",
                         #"3SumExp",
                         #"4SumExp",
                     ],
       "SumExp":[          
-                        "ExpMOverSqP0New",
+                        #"ExpMOverSqP0New",
                         #"ExpMOverSq",
                         #"Old",
                         #"3Bernstein",
-                        #"4Bernstein",
-                        #"5Bernstein",
-                        #"6Bernstein",
-                        #"7Bernstein",
-                        #"8Bernstein",
+                        "4Bernstein",
+                        "5Bernstein",
+                        "6Bernstein",
+                        "7Bernstein",
+                        "8Bernstein",
+                        "9Bernstein",
                         #"1SumExp",
                         #"2SumExp",
                         #"3SumExp",
@@ -1790,7 +1810,7 @@ if __name__ == "__main__":
   ### Define which masses to run over
 
   #sigMasses = range(115,156,5)
-  sigMasses = [115,120,125,140,150,155]
+  sigMasses = [115,120,125,135,150,155]
 
   ########################################
 
