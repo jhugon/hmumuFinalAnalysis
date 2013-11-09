@@ -99,6 +99,85 @@ class Param:
     else:
         return "-{0:.5g}/+{1:.5g}".format(self.lowErr,self.highErr)
 
+def makePDFBakBernsteinProd(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+    debug = ""
+    debug += "### makePDFBakBernsteinProd: "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
+    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
+
+    channelName = name
+
+    if order == None:
+      if "Jets01PassPtG10BB" in name:
+        order = 6
+      elif "Jets01PassPtG10BO" in name:
+        order = 6
+      elif "Jets01PassPtG10BE" in name:
+        order = 8
+      else:
+        order = None
+
+    rooParamList = []
+    rooArgList = root.RooArgList()
+    for i in range(order+1):
+      tmpArg = root.RooRealVar(channelName+"_B"+str(i),"Bernstein Coefficient "+str(i), 0.0, 0., 1.)
+      rooArgList.add(tmpArg)
+      rooParamList.append(tmpArg)
+
+    debug += "#    Bernstein Order: "+str(order)+"\n"
+    debug += "#    pdfArgs: "+dimuonMass.GetName()+" "
+    for i in rooParamList:
+        debug += i.GetName()+" "
+    debug += "\n"
+
+    #print
+    #print "Bernstein Order: ",order
+    #for i in rooParamList:
+    #    i.Print()
+    #print
+  
+    pdfMmumu = root.RooBernstein("bak","Bernstein Order: "+str(order),dimuonMass,rooArgList)
+
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr.SetName("bak"+"_fitResult")
+    #chi2 = pdfMmumu.createChi2(rooDataset)
+
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(fr)
+
+    #Norm Time
+    bakNormTup = None
+    if True:
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(dimuonMass,"signal")
+      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
+      nSideband =  rooDataset.sumEntries(getSidebandString)
+      nData =  rooDataset.sumEntries()
+      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
+      if nData > 0:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+      else:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
+
+#    ## Debug Time
+#    frame = dimuonMass.frame()
+#    frame.SetName("bak_Plot")
+#    rooDataset.plotOn(frame)
+#    pdfMmumu.plotOn(frame)
+#    canvas = root.TCanvas()
+#    frame.Draw()
+#    canvas.SaveAs("debug_"+name+channelName+".png")
+
+    #for i in rooParamList:
+    #  debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+    #debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
+
+    return paramList, bakNormTup, debug, order
+
 def makePDFBakExpLog(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
     debug = ""
     debug += "### makePDFBakExpLog: "+name+"\n"
@@ -850,7 +929,8 @@ def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=True)
 makePDFSig = makePDFSigDG
 ## makePDFBak = makePDFBakOld
 #makePDFBak = makePDFBakMOverSq
-makePDFBak = makePDFBakExpMOverSq
+#makePDFBak = makePDFBakExpMOverSq
+makePDFBak = makePDFBakBernsteinProd
 #makePDFBak = makePDFBakExpLog
 
 ###################################################################################
@@ -1707,11 +1787,11 @@ if __name__ == "__main__":
   print "Started makeCards.py"
   root.gROOT.SetBatch(True)
 
-  directory = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
-  #directory = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
+  #directory = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
+  directory = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  #periods = ["8TeV"]
+  periods = ["8TeV"]
   #periods = ["7TeV"]
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
   categoriesFF = ["BB","BO","BE","OO","FF"]
@@ -1763,72 +1843,72 @@ if __name__ == "__main__":
   jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
-  #analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  analyses += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
-  analyses += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  analyses += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  analyses += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  analyses += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-
-
-  # Jet 0+1 Pass All Cats
-  combinations.append((
-    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]
-    ,"Jets01PassCatAll"
-  ))
- 
-  # Jet 0+1 Fail All Cats
-  combinations.append((
-    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-    ,"Jets01FailCatAll"
-  ))
- 
-  # Jet 0+1 Pass BB,BO,CC,FF Cats
-  #combinations.append((
-  #  [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesCCFF]
-  #  ,"Jets01PassCatCCFF"
-  #))
- 
-  # Jet 0+1 Fail BB,BO,CC,FF Cats
-  #combinations.append((
-  #  [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesCCFF]
-  #  ,"Jets01FailCatCCFF"
-  #))
- 
- 
- 
-  # Jet 0+1 Pass All Cats
-  combinations.append((
-    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
-    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-    ,"Jets01SplitCatAll"
-  ))
-  # Jet 0+1 Pass BB,BO,CC,FF Cats
-  #combinations.append((
-  #  [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesCCFF]+
-  #  [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesCCFF]
-  #  ,"Jets01SplitCatCCFF"
-  #))
- 
-  # Jets >=2 Pass + Fail
-  combinations.append((
-    [  
-     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
-     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-    ],"Jet2SplitCutsGFSplit"
-  ))
- 
-  # Jets 0,1,>=2 Pass + Fail All
-  combinations.append((
-    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
-    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]+
-    [
-     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
-     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-    ],"CombSplitAll"
-  ))
+  analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+#  analyses += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
+#  analyses += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+#  analyses += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+#  analyses += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+#  analyses += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+#
+#
+#  # Jet 0+1 Pass All Cats
+#  combinations.append((
+#    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]
+#    ,"Jets01PassCatAll"
+#  ))
+# 
+#  # Jet 0+1 Fail All Cats
+#  combinations.append((
+#    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+#    ,"Jets01FailCatAll"
+#  ))
+# 
+#  # Jet 0+1 Pass BB,BO,CC,FF Cats
+#  #combinations.append((
+#  #  [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesCCFF]
+#  #  ,"Jets01PassCatCCFF"
+#  #))
+# 
+#  # Jet 0+1 Fail BB,BO,CC,FF Cats
+#  #combinations.append((
+#  #  [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesCCFF]
+#  #  ,"Jets01FailCatCCFF"
+#  #))
+# 
+# 
+# 
+#  # Jet 0+1 Pass All Cats
+#  combinations.append((
+#    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
+#    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+#    ,"Jets01SplitCatAll"
+#  ))
+#  # Jet 0+1 Pass BB,BO,CC,FF Cats
+#  #combinations.append((
+#  #  [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesCCFF]+
+#  #  [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesCCFF]
+#  #  ,"Jets01SplitCatCCFF"
+#  #))
+# 
+#  # Jets >=2 Pass + Fail
+#  combinations.append((
+#    [  
+#     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+#     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#    ],"Jet2SplitCutsGFSplit"
+#  ))
+# 
+#  # Jets 0,1,>=2 Pass + Fail All
+#  combinations.append((
+#    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
+#    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]+
+#    [
+#     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+#     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#    ],"CombSplitAll"
+#  ))
  
   ## combinations = []
 
