@@ -1692,7 +1692,7 @@ if __name__ == "__main__":
   ############################################
   ### Define number of toys to run over
 
-  nToys = 10
+  nToys = 1
 
   ############################################
   ### Define which reference functions to use
@@ -1729,13 +1729,13 @@ if __name__ == "__main__":
                         #"ExpMOverSqP0New",
                         #"ExpMOverSq",
                         #"Old",
-                        #"3Bernstein",
+                        "2Bernstein",
+                        "3Bernstein",
                         "4Bernstein",
                         "5Bernstein",
                         "6Bernstein",
                         "7Bernstein",
                         "8Bernstein",
-                        "9Bernstein",
                         #"1SumExp",
                         #"2SumExp",
                         #"3SumExp",
@@ -1746,12 +1746,13 @@ if __name__ == "__main__":
                         #"ExpMOverSq",
                         #"Old",
                         #"3Bernstein",
+                        "2Bernstein",
+                        "3Bernstein",
                         "4Bernstein",
                         "5Bernstein",
                         "6Bernstein",
                         "7Bernstein",
                         "8Bernstein",
-                        "9Bernstein",
                         #"1SumExp",
                         #"2SumExp",
                         #"3SumExp",
