@@ -705,18 +705,34 @@ class OrderStudy:
       catName = catName[0]
       randomGenerator = root.RooRandom.randomGenerator()
       randomGenerator.SetSeed(10001)
-      dataTree = root.TChain()
-      for i in dataFileNames:
-        dataTree.Add(i+"/outtree"+catName)
-      dataTree.SetCacheSize(10000000);
-      dataTree.AddBranchToCache("*");
+      useHists = True
+      dataTree = None
+      dataHist = None
+      if useHists:
+        for i in dataFileNames:
+          tmpFile = root.TFile(i)
+          tmpHist = tmpFile.Get(catName+"/mDiMu")
+          tmpHist.Print()
+          if dataHist == None:
+            root.gROOT.cd()
+            dataHist = tmpHist.Clone(tmpHist.GetName()+"productionHist")
+          else:
+            dataHist.Add(tmpHist)
+          tmpFile.Close()
+        dataHist.Print()
+      else:
+        dataTree = root.TChain()
+        for i in dataFileNames:
+          dataTree.Add(i+"/outtree"+catName)
+        dataTree.SetCacheSize(10000000);
+        dataTree.AddBranchToCache("*");
 
       dimuonMass = root.RooRealVar("dimuonMass","M(#mu#mu) [GeV/c^{2}]",110.,160.)
       dimuonMass.setRange("low",110,120) # Silly ranges for old fit functionality
       dimuonMass.setRange("high",130,160)
       dimuonMass.setRange("signal",120,130)
       dimuonMass.setRange("signalfit",110,140)
-      dimuonMass.setBins(50)
+      #dimuonMass.setBins(50)
 
       # Hack to Make makePDFBakOld work
       minMassZ = 88.
@@ -725,10 +741,21 @@ class OrderStudy:
       dimuonMassZ = dimuonMassZ
 
       ### Load data
-      realData = root.RooDataSet("realData"+catName+energyStr,
+      realData = None
+      realDataHist = None
+      if useHists:
+        realData = root.RooDataHist("realData"+catName+energyStr,
+                                      "realData"+catName+energyStr,
+                                          root.RooArgList(dimuonMass),
+                                          dataHist
+                                        )
+        realDataHist = realData
+      else:
+        realData = root.RooDataSet("realData"+catName+energyStr,
                                       "realData"+catName+energyStr,
                                           dataTree,root.RooArgSet(dimuonMass)
                                         )
+        realDataHist = realData.binnedClone()
       nData = realData.sumEntries()
       #realDataZ = root.RooDataSet("realDataZ"+catName+energyStr,
       #                                "realDataZ"+catName+energyStr,
@@ -736,7 +763,6 @@ class OrderStudy:
       #                                  )
       realDataZ=None
 
-      realDataHist = realData.binnedClone()
 
       ### Make Bak Pdfs
       self.rmpList = []
@@ -885,7 +911,8 @@ if __name__ == "__main__":
   outDir = "output/"
 
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
-  pdfsToTry = ["SumExp","Bernstein"]
+  #pdfsToTry = ["SumExp","Bernstein"]
+  pdfsToTry = ["Chebychev"]
   ordersToTry= range(1,7)
 
   categories = []
@@ -895,15 +922,18 @@ if __name__ == "__main__":
 
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
   categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01FailPtG10BB",  "dimuonPt<=10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
-  dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
+  #dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
+  dataDir = "/cms/data/store/user/jhugon/hmumu/stage2/"
+  #directory = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
   dataFns8TeV = [
     "SingleMuRun2012Av1-22Jan2013",
     "SingleMuRun2012Bv1-22Jan2013",
