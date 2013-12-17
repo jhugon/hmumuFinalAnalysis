@@ -1,10 +1,79 @@
 #!/bin/bash
 
-NJOBS=`ls *.txt | wc -l`
-sed "s/YAYYAYYAY/$NJOBS/" hpcTemplate.sh > hpc.sh
+#Vars to be replaced: TYPE, NJOBS, TIME, PREFIX
 
-chmod +x hpc.sh
+##########################################################
 
-qsub hpc.sh
+PREFIX="CombSplitAll"
+TYPE="Comb"
+TIME="7:00:00"
 
-echo "Submitted $NJOBS jobs"
+NJOBS=$(ls "$PREFIX"*.txt | wc -l)
+sed "s/TYPE/$TYPE/;s/NJOBS/$NJOBS/;s/TIME/$TIME/;s/PREFIX/$PREFIX/" hpcTemplate.sh > hpc$TYPE.sh
+
+chmod +x hpc$TYPE.sh
+
+qsub hpc$TYPE.sh
+
+echo "Submitted $NJOBS $TYPE jobs with prefix: '$PREFIX' and walltime $TIME"
+
+##########################################################
+
+PREFIX="Jet2"
+TYPE="2Jet"
+TIME="0:30:00"
+
+NJOBS=$(ls "$PREFIX"*.txt | wc -l)
+sed "s/TYPE/$TYPE/;s/NJOBS/$NJOBS/;s/TIME/$TIME/;s/PREFIX/$PREFIX/" hpcTemplate.sh > hpc$TYPE.sh
+
+chmod +x hpc$TYPE.sh
+
+qsub hpc$TYPE.sh
+
+echo "Submitted $NJOBS $TYPE jobs with prefix: '$PREFIX' and walltime $TIME"
+
+##########################################################
+
+PREFIX="Jets01Fail"
+TYPE="01Fail"
+TIME="1:00:00"
+
+NJOBS=$(ls "$PREFIX"*.txt | wc -l)
+sed "s/TYPE/$TYPE/;s/NJOBS/$NJOBS/;s/TIME/$TIME/;s/PREFIX/$PREFIX/" hpcTemplate.sh > hpc$TYPE.sh
+
+chmod +x hpc$TYPE.sh
+
+qsub hpc$TYPE.sh
+
+echo "Submitted $NJOBS $TYPE jobs with prefix: '$PREFIX' and walltime $TIME"
+
+##########################################################
+
+PREFIX="Jets01Pass"
+TYPE="01Pass"
+TIME="1:30:00"
+
+NJOBS=$(ls "$PREFIX"*.txt | wc -l)
+sed "s/TYPE/$TYPE/;s/NJOBS/$NJOBS/;s/TIME/$TIME/;s/PREFIX/$PREFIX/" hpcTemplate.sh > hpc$TYPE.sh
+
+chmod +x hpc$TYPE.sh
+
+qsub hpc$TYPE.sh
+
+echo "Submitted $NJOBS $TYPE jobs with prefix: '$PREFIX' and walltime $TIME"
+
+##########################################################
+
+PREFIX="Jets01Split"
+TYPE="01Split"
+TIME="3:00:00"
+
+NJOBS=$(ls "$PREFIX"*.txt | wc -l)
+sed "s/TYPE/$TYPE/;s/NJOBS/$NJOBS/;s/TIME/$TIME/;s/PREFIX/$PREFIX/" hpcTemplate.sh > hpc$TYPE.sh
+
+chmod +x hpc$TYPE.sh
+
+qsub hpc$TYPE.sh
+
+echo "Submitted $NJOBS $TYPE jobs with prefix: '$PREFIX' and walltime $TIME"
+

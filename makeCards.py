@@ -16,7 +16,9 @@ import ROOT as root
 from helpers import *
 import datetime
 import sys
+import os
 import os.path
+import stat
 import copy
 import random
 import shutil
@@ -539,6 +541,109 @@ def makePDFBakMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
 
     return paramList, bakNormTup, debug, None
 
+def makePDFBakMSSM(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+    debug = ""
+    debug += "### makePDFBakMSSM: "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
+    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
+
+    channelName = name
+
+    bwWidth = root.RooRealVar(channelName+"_bwWidth","bwWidth",10,0,30)
+    bwmZ = root.RooRealVar(channelName+"_bwmZ","bwmZ",91,85,95)
+    bwMmumu = root.RooGenericPdf(channelName+"_bwPdf",channelName+"_bwPdf","@2/(TMath::Power(@0-@1,2)+0.25*@2*@2)",root.RooArgList(dimuonMass,bwmZ,bwWidth))
+    #bwMmumu = root.RooBreitWigner(channelName+"_bwPdf",channelName+"_bwPdf",dimuonMass,bwmZ,bwWidth)  # Misses the width on top!!
+
+    expParam = root.RooRealVar(channelName+"_expParam","expParam",0.1,-5,5)
+    expMmumu = root.RooGenericPdf(channelName+"_bak_expMmumu","expMmumu","TMath::Exp(-1*@0*@1*@1)",root.RooArgList(dimuonMass,expParam))
+
+    # Photon Term
+    phoMmumu = root.RooGenericPdf(channelName+"_bak_phoMmumu","phoMmumu","1/(@0*@0)",root.RooArgList(dimuonMass))
+
+    mixParam = root.RooRealVar(channelName+"_mixParam","mixParam",0.5,0,1)
+
+    sumMmumu = root.RooAddPdf(channelName+"_sumMmumu","bakSum",root.RooArgList(bwMmumu,phoMmumu),root.RooArgList(mixParam))
+    pdfMmumu = root.RooProdPdf("bak","bak",root.RooArgList(sumMmumu,expMmumu))
+    #pdfMmumu = root.RooAddPdf("bak","bak",root.RooArgList(bwMmumu,phoMmumu),root.RooArgList(mixParam))
+
+    # Just For Z-Peak Part
+    assert(dimuonMassZ != None)
+    assert(rooDatasetZ != None)
+    bwMmumuZ = root.RooBreitWigner(channelName+"bak_bwMmumuZ","bwMmumuZ",dimuonMassZ,bwmZ,bwWidth)
+
+    bwMmumuZ.fitTo(rooDatasetZ,root.RooFit.SumW2Error(False),PRINTLEVEL)
+    bwmZ.setConstant(True)
+    bwWidth.setConstant(True)
+
+    ### Debug Time
+    #frameZ = dimuonMassZ.frame()
+    #frameZ.SetName("bak_PlotZ")
+    #rooDatasetZ.plotOn(frameZ)
+    #bwMmumuZ.plotOn(frameZ)
+    #canvas = root.TCanvas()
+    #frameZ.Draw()
+    #canvas.SaveAs("debug_"+name+channelName+"_Z.png")
+
+    # Back to everywhere else
+   
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr.SetName("bak"+"_fitResult")
+    #chi2 = pdfMmumu.createChi2(rooDataset)
+    fr.Print()
+
+    rooParamList = [bwmZ,bwWidth,expParam,mixParam]
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+
+    if FREEBAKPARAMS:
+      for param in rooParamList:
+        param.setConstant(False)
+
+    bwWidth.setConstant(True)
+    bwmZ.setConstant(True)
+
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(fr)
+
+    ## Debug Time
+    frame = dimuonMass.frame()
+    frame.SetName("bak_Plot")
+    rooDataset.plotOn(frame)
+    #pdfMmumu.plotOn(frame,root.RooFit.Range(110,160))
+    pdfMmumu.plotOn(frame,root.RooFit.Range(minMass,maxMass))
+    canvas = root.TCanvas()
+    frame.Draw()
+    canvas.SaveAs("debug_"+name+channelName+".png")
+
+    #Norm Time
+    bakNormTup = None
+    if True:
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(dimuonMass,"signal")
+      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
+      nSideband =  rooDataset.sumEntries(getSidebandString)
+      nData =  rooDataset.sumEntries()
+      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
+      if nData > 0:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+      else:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
+    #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
+    #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
+
+    #rooDataset2 = rooDataset.reduce(root.RooFit.CutRange("low,signal,high"))
+    #rooDataset2.SetName("bak_TemplateNoVeryLow")
+    #if workspaceImportFn != None:
+    #  workspaceImportFn(rooDataset2)
+
+    for i in rooParamList:
+      debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+    debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
+
+    return paramList, bakNormTup, debug, None
+
+
 def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
     #print "GP's debug line *******************************************************\n"
     debug = ""
@@ -928,10 +1033,9 @@ def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=True)
 #makePDFSig = makePDFSigCBPlusGaus
 makePDFSig = makePDFSigDG
 ## makePDFBak = makePDFBakOld
-#makePDFBak = makePDFBakMOverSq
-#makePDFBak = makePDFBakExpMOverSq
-makePDFBak = makePDFBakBernsteinProd
-#makePDFBak = makePDFBakExpLog
+makePDFBak = makePDFBakExpMOverSq
+#makePDFBak = makePDFBakBernsteinProd
+#makePDFBak = makePDFBakMSSM
 
 ###################################################################################
 
@@ -1785,13 +1889,15 @@ class ThreadedCardMaker(myThread):
 
 if __name__ == "__main__":
   print "Started makeCards.py"
+  print "Higgs mass set to: ", args.higgsMass
   root.gROOT.SetBatch(True)
 
   #directory = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
-  directory = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
+  directory = "/cms/data/store/user/jhugon/hmumu/stage2/"
+  #directory = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  periods = ["8TeV"]
+  #periods = ["8TeV"]
   #periods = ["7TeV"]
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
   categoriesFF = ["BB","BO","BE","OO","FF"]
@@ -1843,72 +1949,52 @@ if __name__ == "__main__":
   jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
-  analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-#  analyses += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
-#  analyses += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-#  analyses += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-#  analyses += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-#  analyses += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-#
-#
-#  # Jet 0+1 Pass All Cats
-#  combinations.append((
-#    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]
-#    ,"Jets01PassCatAll"
-#  ))
-# 
-#  # Jet 0+1 Fail All Cats
-#  combinations.append((
-#    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-#    ,"Jets01FailCatAll"
-#  ))
-# 
-#  # Jet 0+1 Pass BB,BO,CC,FF Cats
-#  #combinations.append((
-#  #  [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesCCFF]
-#  #  ,"Jets01PassCatCCFF"
-#  #))
-# 
-#  # Jet 0+1 Fail BB,BO,CC,FF Cats
-#  #combinations.append((
-#  #  [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesCCFF]
-#  #  ,"Jets01FailCatCCFF"
-#  #))
-# 
-# 
-# 
-#  # Jet 0+1 Pass All Cats
-#  combinations.append((
-#    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
-#    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-#    ,"Jets01SplitCatAll"
-#  ))
-#  # Jet 0+1 Pass BB,BO,CC,FF Cats
-#  #combinations.append((
-#  #  [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesCCFF]+
-#  #  [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesCCFF]
-#  #  ,"Jets01SplitCatCCFF"
-#  #))
-# 
-#  # Jets >=2 Pass + Fail
-#  combinations.append((
-#    [  
-#     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
-#     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-#     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-#    ],"Jet2SplitCutsGFSplit"
-#  ))
-# 
-#  # Jets 0,1,>=2 Pass + Fail All
-#  combinations.append((
-#    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
-#    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]+
-#    [
-#     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
-#     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-#     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-#    ],"CombSplitAll"
-#  ))
+  #analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  analyses += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
+  analyses += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+  analyses += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  analyses += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  analyses += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+
+
+  # Jet 0+1 Pass All Cats
+  combinations.append((
+    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]
+    ,"Jets01PassCatAll"
+  ))
+ 
+  # Jet 0+1 Fail All Cats
+  combinations.append((
+    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+    ,"Jets01FailCatAll"
+  ))
+ 
+  # Jet 0+1 Pass All Cats
+  combinations.append((
+    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
+    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+    ,"Jets01SplitCatAll"
+  ))
+ 
+  # Jets >=2 Pass + Fail
+  combinations.append((
+    [  
+     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+    ],"Jet2SplitCutsGFSplit"
+  ))
+ 
+  # Jets 0,1,>=2 Pass + Fail All
+  combinations.append((
+    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
+    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]+
+    [
+     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+    ],"CombSplitAll"
+  ))
  
   ## combinations = []
 
@@ -2233,3 +2319,7 @@ if __name__ == "__main__":
   shutil.copy("etc/lxbatch_LEE.sh",outDir+"lxbatch_LEE.sh")
   shutil.copy("etc/runLEE.sh",outDir+"runLEE.sh")
 
+  for iexef in glob.glob(outDir+"*.sh")+glob.glob(outDir+"*.py"):
+    os.chmod(iexef, os.stat(iexef).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+  print "makeCards.py done."
