@@ -515,10 +515,10 @@ class BiasStudy:
           mapResults = processPool.map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.iJobGroup),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(int(nToys/nJobs))))
         for jobResults in mapResults:
           mergeDicts(data,jobResults)
-        if iRefPdfName != len(self.refPdfNameList)-1:
-          pklFile = open(self.pklOutFn+"."+str(iRefPdfName),'w')
-          cPickle.dump(data,pklFile)
-          pklFile.close()
+        #if iRefPdfName != len(self.refPdfNameList)-1:
+        #  pklFile = open(self.pklOutFn+"."+str(iRefPdfName),'w')
+        #  cPickle.dump(data,pklFile)
+        #  pklFile.close()
       pklFile = open(self.pklOutFn,'w')
       cPickle.dump(data,pklFile)
       pklFile.close()
@@ -1787,7 +1787,7 @@ if __name__ == "__main__":
   ### Define which masses to run over
 
   #sigMasses = range(115,156,5)
-  sigMasses = [115,120,125,135,150,155]
+  sigMasses = [115,120,125,130,135,140,145,150,155]
 
   ########################################
 
@@ -1814,7 +1814,8 @@ if __name__ == "__main__":
   ### Directory and file names
 
   #dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
-  dataDir = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
+  #dataDir = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
+  dataDir = "/cms/data/store/user/jhugon/hmumu/stage2/"
   dataFns8TeV = [
     "SingleMuRun2012Av1-22Jan2013",
     "SingleMuRun2012Bv1-22Jan2013",
@@ -1839,9 +1840,9 @@ if __name__ == "__main__":
   tmpJobGroupStr = ""
   if iJobGroup != None:
     tmpJobGroupStr = "_jobGrp"+str(iJobGroup)
-  logFile = open(outDir+"biasStudy.log",'w')
+#  logFile = open(outDir+"biasStudy.log",'w')
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
-  logFile.write("# {0}\n\n".format(now))
+#  logFile.write("# {0}\n\n".format(now))
   inputPklFiles = glob.glob(outDir+"*.pkl")
   tmpInputPklFiles = inputPklFiles
   if len(inputPklFiles)>0 and iJobGroup==None:
@@ -1861,7 +1862,7 @@ if __name__ == "__main__":
       for inputPkl in inputPklFiles:
         print "Running over input pkl file: "+inputPkl
         bs = BiasStudy(None,None,None,None,None,None,None,inputPkl=inputPkl)
-        logFile.write(bs.outStr)
+#        logFile.write(bs.outStr)
         bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
         allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
@@ -1886,7 +1887,7 @@ if __name__ == "__main__":
             mergeDicts(resultData,tmpD,True)
           tmpF.close()
         bs = BiasStudy(None,None,None,None,None,None,None,inputPkl=resultData)
-        logFile.write(bs.outStr)
+#        logFile.write(bs.outStr)
         bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
         allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
@@ -1896,7 +1897,7 @@ if __name__ == "__main__":
       processPool = Pool(processes=NPROCS)
     for category in categories:
       bs = BiasStudy(category,dataFns8TeV,"8TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool,iJobGroup=iJobGroup)
-      logFile.write(bs.outStr)
+#      logFile.write(bs.outStr)
       if iJobGroup == None:
         bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
@@ -1906,6 +1907,6 @@ if __name__ == "__main__":
   printDiagnosticSummary(allSummaries,allZSigmaSummaries)
     
   now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
-  logFile.write("\n\n# {0}\n".format(now))
-  logFile.close()
+#  logFile.write("\n\n# {0}\n".format(now))
+#  logFile.close()
   

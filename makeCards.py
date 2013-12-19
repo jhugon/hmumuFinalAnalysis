@@ -83,8 +83,6 @@ def convertSigName(name):
   if "zhH" in name:
     return "ZH"
 
-###################################################################################
-
 class Param:
   def __init__(self,name,nominal,lowErr,highErr):
     self.name = name
@@ -101,6 +99,8 @@ class Param:
     else:
         return "-{0:.5g}/+{1:.5g}".format(self.lowErr,self.highErr)
 
+###################################################################################
+
 def makePDFBakBernsteinProd(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
     debug = ""
     debug += "### makePDFBakBernsteinProd: "+name+"\n"
@@ -111,13 +111,39 @@ def makePDFBakBernsteinProd(name,rooDataset,dimuonMass,minMass,maxMass,workspace
 
     if order == None:
       if "Jets01PassPtG10BB" in name:
-        order = 6
+        order = 5
       elif "Jets01PassPtG10BO" in name:
         order = 6
       elif "Jets01PassPtG10BE" in name:
-        order = 8
+        order = 6
+      elif "Jets01PassPtG10OO" in name:
+        order = 5
+      elif "Jets01PassPtG10OE" in name:
+        order = 5
+      elif "Jets01PassPtG10EE" in name:
+        order = 5
+      elif "Jets01FailPtG10BB" in name:
+        order = 5
+      elif "Jets01FailPtG10BO" in name:
+        order = 5
+      elif "Jets01FailPtG10BE" in name:
+        order = 5
+      elif "Jets01FailPtG10OO" in name:
+        order = 6
+      elif "Jets01FailPtG10OE" in name:
+        order = 5
+      elif "Jets01FailPtG10EE" in name:
+        order = 6
+      elif "Jet2CutsVBFPass" in name:
+        order = 3
+      elif "Jet2CutsGFPass" in name:
+        order = 5
+      elif "Jet2CutsFailVBFGF" in name:
+        order = 5
       else:
-        order = None
+        print "Error: makePDFBakBernsteinProd: category '"+str(name)+"' not recognized, exiting."
+	sys.exit(1)
+	
 
     rooParamList = []
     rooArgList = root.RooArgList()
@@ -1033,8 +1059,8 @@ def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=True)
 #makePDFSig = makePDFSigCBPlusGaus
 makePDFSig = makePDFSigDG
 ## makePDFBak = makePDFBakOld
-makePDFBak = makePDFBakExpMOverSq
-#makePDFBak = makePDFBakBernsteinProd
+#makePDFBak = makePDFBakExpMOverSq
+makePDFBak = makePDFBakBernsteinProd
 #makePDFBak = makePDFBakMSSM
 
 ###################################################################################

@@ -1,2 +1,6 @@
 *.pyc
 diff.txt
+jobout*
+joberr*
+etc/jobout*
+etc/joberr*

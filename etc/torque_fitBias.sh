@@ -15,12 +15,11 @@
 
 # This controls what job group numbers are used
 
-#PBS -t 15-29
 ##PBS -t 0-140
-##PBS -t 0-1400
+#PBS -t 0-1400
 
 ##Job Resources
-#PBS -l walltime=3:00:00
+#PBS -l walltime=1:00:00
 #PBS -l nodes=1:ppn=1
 #PBS -l pmem=3000mb
 
