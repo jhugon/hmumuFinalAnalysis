@@ -1814,8 +1814,8 @@ if __name__ == "__main__":
   ### Directory and file names
 
   #dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
-  #dataDir = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
-  dataDir = "/cms/data/store/user/jhugon/hmumu/stage2/"
+  dataDir = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
+  #dataDir = "/cms/data/store/user/jhugon/hmumu/stage2/"
   dataFns8TeV = [
     "SingleMuRun2012Av1-22Jan2013",
     "SingleMuRun2012Bv1-22Jan2013",

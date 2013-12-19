@@ -1919,8 +1919,8 @@ if __name__ == "__main__":
   root.gROOT.SetBatch(True)
 
   #directory = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
-  directory = "/cms/data/store/user/jhugon/hmumu/stage2/"
-  #directory = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
+  #directory = "/cms/data/store/user/jhugon/hmumu/stage2/"
+  directory = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
   #periods = ["8TeV"]
