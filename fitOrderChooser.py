@@ -98,7 +98,7 @@ def makePDFBakExpTimesBernstein(name,rooDataset,dimuonMass,minMass,maxMass,works
     expArg = root.RooRealVar(channelName+"_E","Exp Param ", -0.01, -1, 1.)
     rooParamList.append(expArg)
     for i in range(order+1):
-      tmpArg = root.RooRealVar(channelName+"_B"+str(i),"Bernstein Coefficient "+str(i), 0.0, 0., 1.)
+      tmpArg = root.RooRealVar(channelName+"_B"+str(i),"Bernstein Coef "+str(i), 0.0, 0., 1.)
       rooArgList.add(tmpArg)
       rooParamList.append(tmpArg)
 
@@ -209,7 +209,7 @@ def makePDFBakExpTimesChebychev(name,rooDataset,dimuonMass,minMass,maxMass,works
     expArg = root.RooRealVar(channelName+"_E","Exp Param ", -0.01, -1, 1.)
     rooParamList.append(expArg)
     for i in range(order+1):
-      tmpArg = root.RooRealVar(channelName+"_C"+str(i),"Chebychev Coefficient "+str(i), 0.0, -1., 1.)
+      tmpArg = root.RooRealVar(channelName+"_C"+str(i),"Chebychev Coef "+str(i), 0.0, -1., 1.)
       rooArgList.add(tmpArg)
       rooParamList.append(tmpArg)
 
@@ -317,7 +317,7 @@ def makePDFBakExpTimesPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,work
     expArg = root.RooRealVar(channelName+"_E","Exp Param ", -0.01, -1, 1.)
     rooParamList.append(expArg)
     for i in range(order+1):
-      tmpArg = root.RooRealVar(channelName+"_P"+str(i),"Polynomial Coefficient "+str(i), 0.0, -1., 1.)
+      tmpArg = root.RooRealVar(channelName+"_P"+str(i),"Polynomial Coef "+str(i), 0.0, -1., 1.)
       rooArgList.add(tmpArg)
       rooParamList.append(tmpArg)
 
@@ -423,7 +423,7 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
     rooParamList = []
     rooArgList = root.RooArgList()
     for i in range(order+1):
-      tmpArg = root.RooRealVar(channelName+"_B"+str(i),"Bernstein Coefficient "+str(i), 0.0, 0., 1.)
+      tmpArg = root.RooRealVar(channelName+"_B"+str(i),"Bernstein Coef "+str(i), 0.0, 0., 1.)
       rooArgList.add(tmpArg)
       rooParamList.append(tmpArg)
 
@@ -528,7 +528,7 @@ def makePDFBakChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
     rooParamList = []
     rooArgList = root.RooArgList()
     for i in range(order):
-      tmpArg = root.RooRealVar(channelName+"_B"+str(i),"Chebychev Coefficient "+str(i), 0.0, -1., 1.)
+      tmpArg = root.RooRealVar(channelName+"_B"+str(i),"Chebychev Coef "+str(i), 0.0, -1., 1.)
       rooArgList.add(tmpArg)
       rooParamList.append(tmpArg)
 
@@ -631,7 +631,7 @@ def makePDFBakPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
     rooParamList = []
     rooArgList = root.RooArgList()
     for i in range(order):
-      tmpArg = root.RooRealVar(channelName+"_P"+str(i),"Polynomial Coefficient "+str(i), 0.0, -1., 1.)
+      tmpArg = root.RooRealVar(channelName+"_P"+str(i),"Polynomial Coef "+str(i), 0.0, -1., 1.)
       rooArgList.add(tmpArg)
       rooParamList.append(tmpArg)
 
@@ -713,7 +713,7 @@ def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
       rooExpPdfList.add(tmpExpPdf)
       pyPdfList.append(tmpExpPdf)
       if i != 0:
-        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Exponential Coefficient "+str(i), 0.0, 0., 1.)
+        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Exponential Coef "+str(i), 0.0, 0., 1.)
         rooArgCoefList.add(tmpCoefArg)
         rooParamList.append(tmpCoefArg)
 
@@ -826,7 +826,7 @@ def makePDFBakSumPow(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
       iCoefParam = iParam
       iParam += 1
       if i != 0:
-        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Power Term Coefficient "+str(i), 0.0, 0., 1.)
+        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Power Term Coef "+str(i), 0.0, 0., 1.)
         rooArgList.add(tmpCoefArg)
         rooParamList.append(tmpCoefArg)
         pdfDefString += "+@"+str(iParam)+"*"
@@ -952,7 +952,7 @@ def makePDFBakLaurent(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
       for j in range(1,i+1):
         tmpLPow += (-1)**j*(j-1)
       if i != 1:
-        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Laurent Coefficient for Power: "+str(tmpLPow)+" Temrm #: "+str(i), 0.0, 0., 1.)
+        tmpCoefArg = root.RooRealVar(channelName+"_C"+str(i),"Laurent Coef for Power: "+str(tmpLPow)+" Temrm #: "+str(i), 0.0, 0., 1.)
         rooExtParList.add(tmpCoefArg)
         rooParamList.append(tmpCoefArg)
       pdfDefString = "TMath::Power(@0,"+str(tmpLPow)+")"
