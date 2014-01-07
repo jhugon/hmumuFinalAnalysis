@@ -12,6 +12,7 @@ import math
 import numpy
 import scipy
 import array
+import os
 import sys
 import time
 import datetime
@@ -2331,6 +2332,12 @@ class RooModelPlotter:
     if canvas == None:
       canvas = root.TCanvas("canvas"+nowStr)
     self.canvas = canvas
+    self.canvas2 = root.TCanvas("canvas2"+nowStr,"",
+                        2*root.gStyle.GetCanvasDefW(),
+                        root.gStyle.GetCanvasDefH()
+                        )
+    self.canvas2.SetMargin(0,0,0,0)
+    self.canvas2.Divide(2,1,0,0,0)
 
     self.tlatex = root.TLatex()
     self.tlatex.SetNDC()
@@ -2527,10 +2534,14 @@ class RooModelPlotter:
         self.legBkgSub.AddEntry(self.phonySigLegHist,"Signal","l")
 
 
-  def draw(self,filenameNoExt):
+  def draw(self,filenameNoExt,canvas=None,motherPad=None):
+    if canvas==None:
+        canvas=self.canvas
+    if motherPad==None:
+        motherPad=self.canvas
     nowStr = self.nowStr
-    self.canvas.SetLogy(0)
-    self.canvas.cd()
+    motherPad.SetLogy(0)
+    motherPad.cd()
     pad1 = root.TPad("pad1"+nowStr,"",0.02,0.30,0.98,0.98,0)
     pad2 = root.TPad("pad2"+nowStr,"",0.02,0.01,0.98,0.29,0)
     self.pad1 = pad1
@@ -2548,8 +2559,8 @@ class RooModelPlotter:
     pad2Height = pad2.YtoPixel(pad2.GetY1())
     #pad1ToPad2FontScalingFactor = float(pad1Width)/pad2Height
     pad1ToPad2FontScalingFactor = float(pad1Height)/pad2Height
-    canvasToPad1FontScalingFactor = float(self.canvas.YtoPixel(self.canvas.GetY1()))/pad1.YtoPixel(pad1.GetY1())
-    canvasToPad2FontScalingFactor = float(self.canvas.YtoPixel(self.canvas.GetY1()))/pad2.YtoPixel(pad2.GetY1())
+    motherPadToPad1FontScalingFactor = float(motherPad.YtoPixel(motherPad.GetY1()))/pad1.YtoPixel(pad1.GetY1())
+    motherPadToPad2FontScalingFactor = float(motherPad.YtoPixel(motherPad.GetY1()))/pad2.YtoPixel(pad2.GetY1())
   
     # Main Pad
     pad1.cd();
@@ -2564,7 +2575,7 @@ class RooModelPlotter:
     # Text
     self.pad1.cd()
     #self.tlatex.SetTextSize(root.gStyle.GetLabelSize())
-    self.tlatex.SetTextSize(0.04*canvasToPad1FontScalingFactor)
+    self.tlatex.SetTextSize(0.04*motherPadToPad1FontScalingFactor)
     self.tlatex.SetTextAlign(12)
     self.tlatex.DrawLatex(root.gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
     self.tlatex.SetTextAlign(32)
@@ -2597,7 +2608,25 @@ class RooModelPlotter:
     self.tlatex.DrawLatex(0.18,0.41,"#chi^{{2}}/NDF: {0:.3g}".format(self.chi2))
 
     if (filenameNoExt != ""):
-      saveAs(self.canvas,filenameNoExt)
+      saveAs(canvas,filenameNoExt)
+
+  def drawWithParams(self,filenameNoExt):
+    rightPad = self.canvas2.cd(2)
+    paramPave = root.TPaveText(0,0,1,1,"NDC")
+    paramPave.SetFillColor(0)
+    paramPave.SetLineColor(0)
+    paramPave.AddText("Fitted Parameters")
+    fpf = self.fr.floatParsFinal()
+    for i in range(fpf.getSize()):
+      param = fpf.at(i)
+      paramName = param.GetName()
+      paramNameSplit = paramName.split("_")
+      paramName = paramNameSplit[-1]+":"
+      paramPave.AddText("{0:5} {1:8.3f} +/- {2:5.3f}".format(paramName,param.getVal(),param.getError()))
+    paramPave.Draw()
+    leftPad = self.canvas2.cd(1)
+    self.draw(filenameNoExt,canvas=self.canvas2,motherPad=leftPad)
+    self.paramPave = paramPave
 
   def drawPulls(self,filenameNoExt):
     self.canvas.cd()

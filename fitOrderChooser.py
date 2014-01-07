@@ -1100,6 +1100,7 @@ class OrderStudy:
                             caption2=pdfBaseName+" Order "+str(order)
                             )
           rmp.draw(outPrefix+"_"+catName+"_"+pdfBaseName+str(order))
+          rmp.drawWithParams(outPrefix+"_"+catName+"_"+pdfBaseName+str(order)+"_params")
           floatParsFinal = fr.floatParsFinal()
           self.outStrDetail += "\n{0}\n".format(pdf.GetTitle())
           #self.outStrDetail += tmpDebug + "\n"
@@ -1214,7 +1215,9 @@ if __name__ == "__main__":
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
   #pdfsToTry = ["SumExp","Bernstein"]
   pdfsToTry = ["ExpTimesBernstein","ExpTimesChebychev","ExpTimesPolynomial"]
+  pdfsToTry = ["ExpTimesChebychev"]
   ordersToTry= range(0,6)
+  ordersToTry= range(0,2)
 
   categories = []
 
