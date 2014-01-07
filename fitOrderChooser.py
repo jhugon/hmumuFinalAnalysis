@@ -51,6 +51,333 @@ titleMap = {
   "Jet2CutsFailVBFGF":"2-Jet Loose",
 }
 
+def makePDFBakExpTimesBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+    debug = ""
+    debug += "### makePDFBakExpTimesBernstein: "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
+    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
+
+    channelName = name
+
+    if order == None:
+      if "Jets01PassPtG10BB" in name:
+        order = 1
+      elif "Jets01PassPtG10BO" in name:
+        order = 1
+      elif "Jets01PassPtG10BE" in name:
+        order = 1
+      elif "Jets01PassPtG10OO" in name:
+        order = 1
+      elif "Jets01PassPtG10OE" in name:
+        order = 1
+      elif "Jets01PassPtG10EE" in name:
+        order = 1
+      elif "Jets01FailPtG10BB" in name:
+        order = 1
+      elif "Jets01FailPtG10BO" in name:
+        order = 1
+      elif "Jets01FailPtG10BE" in name:
+        order = 1
+      elif "Jets01FailPtG10OO" in name:
+        order = 1
+      elif "Jets01FailPtG10OE" in name:
+        order = 1
+      elif "Jets01FailPtG10EE" in name:
+        order = 1
+      elif "Jet2CutsVBFPass" in name:
+        order = 1
+      elif "Jet2CutsGFPass" in name:
+        order = 1
+      elif "Jet2CutsFailVBFGF" in name:
+        order = 1
+      else:
+        order = 1
+
+    rooParamList = []
+    rooArgList = root.RooArgList()
+    expArg = root.RooRealVar(channelName+"_E","Exp Param ", -0.01, -1, 1.)
+    rooParamList.append(expArg)
+    for i in range(order+1):
+      tmpArg = root.RooRealVar(channelName+"_B"+str(i),"Bernstein Coefficient "+str(i), 0.0, 0., 1.)
+      rooArgList.add(tmpArg)
+      rooParamList.append(tmpArg)
+
+    debug += "#    Exp*Bernstein Order: "+str(order)+"\n"
+    debug += "#    pdfArgs: "+dimuonMass.GetName()+" "
+    for i in rooParamList:
+        debug += i.GetName()+" "
+    debug += "\n"
+
+    print
+    print "Exp*Bernstein Order: ",order
+    for i in rooParamList:
+        i.Print()
+    print
+  
+    expPdf = root.RooExponential("expPdf","Exponential Pdf",dimuonMass,expArg)
+    bernPdf = root.RooBernstein("bernPdf","Bernstein Order: "+str(order-1),dimuonMass,rooArgList)
+    pdfMmumu = root.RooProdPdf("bak","Exp*Bernstein Order: "+str(order),root.RooArgList(expPdf,bernPdf))
+    expPdf.Print()
+    bernPdf.Print()
+    pdfMmumu.Print()
+
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr.SetName("bak"+"_fitResult")
+    #chi2 = pdfMmumu.createChi2(rooDataset)
+
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(fr)
+
+    #Norm Time
+    bakNormTup = None
+    if False:
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(dimuonMass,"signal")
+      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
+      nSideband =  rooDataset.sumEntries(getSidebandString)
+      nData =  rooDataset.sumEntries()
+      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
+      if nData > 0:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+      else:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
+
+#    ## Debug Time
+#    frame = dimuonMass.frame()
+#    frame.SetName("bak_Plot")
+#    rooDataset.plotOn(frame)
+#    pdfMmumu.plotOn(frame)
+#    canvas = root.TCanvas()
+#    frame.Draw()
+#    canvas.SaveAs("debug_"+name+channelName+".png")
+
+    #for i in rooParamList:
+    #  debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+    #debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
+
+    return paramList, bakNormTup, debug, order
+
+
+def makePDFBakExpTimesChebychev(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+    debug = ""
+    debug += "### makePDFBakExpTimesChebychev: "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
+    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
+
+    channelName = name
+
+    if order == None:
+      if "Jets01PassPtG10BB" in name:
+        order = 1
+      elif "Jets01PassPtG10BO" in name:
+        order = 1
+      elif "Jets01PassPtG10BE" in name:
+        order = 1
+      elif "Jets01PassPtG10OO" in name:
+        order = 1
+      elif "Jets01PassPtG10OE" in name:
+        order = 1
+      elif "Jets01PassPtG10EE" in name:
+        order = 1
+      elif "Jets01FailPtG10BB" in name:
+        order = 1
+      elif "Jets01FailPtG10BO" in name:
+        order = 1
+      elif "Jets01FailPtG10BE" in name:
+        order = 1
+      elif "Jets01FailPtG10OO" in name:
+        order = 1
+      elif "Jets01FailPtG10OE" in name:
+        order = 1
+      elif "Jets01FailPtG10EE" in name:
+        order = 1
+      elif "Jet2CutsVBFPass" in name:
+        order = 1
+      elif "Jet2CutsGFPass" in name:
+        order = 1
+      elif "Jet2CutsFailVBFGF" in name:
+        order = 1
+      else:
+        order = 1
+
+    rooParamList = []
+    rooArgList = root.RooArgList()
+    expArg = root.RooRealVar(channelName+"_E","Exp Param ", -0.01, -1, 1.)
+    rooParamList.append(expArg)
+    for i in range(order+1):
+      tmpArg = root.RooRealVar(channelName+"_C"+str(i),"Chebychev Coefficient "+str(i), 0.0, -1., 1.)
+      rooArgList.add(tmpArg)
+      rooParamList.append(tmpArg)
+
+    debug += "#    Exp*Chebychev Order: "+str(order)+"\n"
+    debug += "#    pdfArgs: "+dimuonMass.GetName()+" "
+    for i in rooParamList:
+        debug += i.GetName()+" "
+    debug += "\n"
+
+    print
+    print "Exp*Chebychev Order: ",order
+    for i in rooParamList:
+        i.Print()
+    print
+  
+    expPdf = root.RooExponential("expPdf","Exponential Pdf",dimuonMass,expArg)
+    chebPdf = root.RooChebychev("bernPdf","Chebychev Order: "+str(order-1),dimuonMass,rooArgList)
+    pdfMmumu = root.RooProdPdf("bak","Exp*Chebychev Order: "+str(order),root.RooArgList(expPdf,chebPdf))
+
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr.SetName("bak"+"_fitResult")
+    #chi2 = pdfMmumu.createChi2(rooDataset)
+
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(fr)
+
+    #Norm Time
+    bakNormTup = None
+    if False:
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(dimuonMass,"signal")
+      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
+      nSideband =  rooDataset.sumEntries(getSidebandString)
+      nData =  rooDataset.sumEntries()
+      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
+      if nData > 0:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+      else:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
+
+#    ## Debug Time
+#    frame = dimuonMass.frame()
+#    frame.SetName("bak_Plot")
+#    rooDataset.plotOn(frame)
+#    pdfMmumu.plotOn(frame)
+#    canvas = root.TCanvas()
+#    frame.Draw()
+#    canvas.SaveAs("debug_"+name+channelName+".png")
+
+    #for i in rooParamList:
+    #  debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+    #debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
+
+    return paramList, bakNormTup, debug, order
+
+
+def makePDFBakExpTimesPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+    debug = ""
+    debug += "### makePDFBakExpTimesPolynomial: "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
+    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
+
+    channelName = name
+
+    if order == None:
+      if "Jets01PassPtG10BB" in name:
+        order = 1
+      elif "Jets01PassPtG10BO" in name:
+        order = 1
+      elif "Jets01PassPtG10BE" in name:
+        order = 1
+      elif "Jets01PassPtG10OO" in name:
+        order = 1
+      elif "Jets01PassPtG10OE" in name:
+        order = 1
+      elif "Jets01PassPtG10EE" in name:
+        order = 1
+      elif "Jets01FailPtG10BB" in name:
+        order = 1
+      elif "Jets01FailPtG10BO" in name:
+        order = 1
+      elif "Jets01FailPtG10BE" in name:
+        order = 1
+      elif "Jets01FailPtG10OO" in name:
+        order = 1
+      elif "Jets01FailPtG10OE" in name:
+        order = 1
+      elif "Jets01FailPtG10EE" in name:
+        order = 1
+      elif "Jet2CutsVBFPass" in name:
+        order = 1
+      elif "Jet2CutsGFPass" in name:
+        order = 1
+      elif "Jet2CutsFailVBFGF" in name:
+        order = 1
+      else:
+        order = 1
+
+    rooParamList = []
+    rooArgList = root.RooArgList()
+    expArg = root.RooRealVar(channelName+"_E","Exp Param ", -0.01, -1, 1.)
+    rooParamList.append(expArg)
+    for i in range(order+1):
+      tmpArg = root.RooRealVar(channelName+"_P"+str(i),"Polynomial Coefficient "+str(i), 0.0, -1., 1.)
+      rooArgList.add(tmpArg)
+      rooParamList.append(tmpArg)
+
+    debug += "#    Exp*Polynomial Order: "+str(order)+"\n"
+    debug += "#    pdfArgs: "+dimuonMass.GetName()+" "
+    for i in rooParamList:
+        debug += i.GetName()+" "
+    debug += "\n"
+
+    print
+    print "Exp*Polynomial Order: ",order
+    for i in rooParamList:
+        i.Print()
+    print
+  
+    expPdf = root.RooExponential("expPdf","Exponential Pdf",dimuonMass,expArg)
+    polyPdf = root.RooPolynomial("bernPdf","Polynomial Order: "+str(order-1),dimuonMass,rooArgList)
+    pdfMmumu = root.RooProdPdf("bak","Exp*Polynomial Order: "+str(order),root.RooArgList(expPdf,polyPdf))
+
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr.SetName("bak"+"_fitResult")
+    #chi2 = pdfMmumu.createChi2(rooDataset)
+
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(fr)
+
+    #Norm Time
+    bakNormTup = None
+    if False:
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(dimuonMass,"signal")
+      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
+      nSideband =  rooDataset.sumEntries(getSidebandString)
+      nData =  rooDataset.sumEntries()
+      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
+      if nData > 0:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+      else:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
+
+#    ## Debug Time
+#    frame = dimuonMass.frame()
+#    frame.SetName("bak_Plot")
+#    rooDataset.plotOn(frame)
+#    pdfMmumu.plotOn(frame)
+#    canvas = root.TCanvas()
+#    frame.Draw()
+#    canvas.SaveAs("debug_"+name+channelName+".png")
+
+    #for i in rooParamList:
+    #  debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+    #debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
+
+    return paramList, bakNormTup, debug, order
+
+
 def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
     debug = ""
     debug += "### makePDFBakBernstein: "+name+"\n"
@@ -885,8 +1212,9 @@ if __name__ == "__main__":
   outDir = "output/"
 
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
-  pdfsToTry = ["SumExp","Bernstein"]
-  ordersToTry= range(1,7)
+  #pdfsToTry = ["SumExp","Bernstein"]
+  pdfsToTry = ["ExpTimesBernstein","ExpTimesChebychev","ExpTimesPolynomial"]
+  ordersToTry= range(0,6)
 
   categories = []
 
@@ -904,6 +1232,8 @@ if __name__ == "__main__":
   categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
+  dataDir = "/cms/data/store/user/jhugon/hmumu/stage2/"
+
   dataFns8TeV = [
     "SingleMuRun2012Av1-22Jan2013",
     "SingleMuRun2012Bv1-22Jan2013",
