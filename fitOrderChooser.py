@@ -1231,8 +1231,9 @@ if __name__ == "__main__":
   categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
-  dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
-  dataDir = "/cms/data/store/user/jhugon/hmumu/stage2/"
+  dataDir = getDataStage2Directory()
+  #dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
+  #dataDir = "/cms/data/store/user/jhugon/hmumu/stage2/"
 
   dataFns8TeV = [
     "SingleMuRun2012Av1-22Jan2013",

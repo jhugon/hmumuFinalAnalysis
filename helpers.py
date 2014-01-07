@@ -21,6 +21,19 @@ import datetime
 PRELIMINARYSTRING="CMS Preliminary"
 #PRELIMINARYSTRING="CMS"
 
+def getDataStage2Directory():
+  hostname = os.uname()[1]
+  if "melrose" in hostname:
+    result = "/raid/raid8/jhugon/higgsSamples/stage2/"
+  elif "uftrig" in hostname:
+    result = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
+  elif "cern" in hostname: # Works on lxplus and lxbatch
+    result = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
+  else: # Works on ihepa computers and UF HPC
+    result = "/cms/data/store/user/jhugon/hmumu/stage2/"
+  #print "Using Input Directory: ",result
+  return result
+
 def sortCatNames(l):
   orderDef = [
     "CombSplitAll",

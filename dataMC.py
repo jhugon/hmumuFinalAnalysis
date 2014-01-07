@@ -58,7 +58,8 @@ import ROOT as root
 import os
 import sys
 
-dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
+dataDir = getDataStage2Directory()
+#dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
 outDir = "output/"
 
 RUNPERIOD=args.energy
