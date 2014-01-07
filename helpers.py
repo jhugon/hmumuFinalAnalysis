@@ -13,6 +13,7 @@ import numpy
 import scipy
 import array
 import sys
+import os
 import time
 import datetime
 #import matplotlib.pyplot as mpl
@@ -20,6 +21,17 @@ import datetime
 #PRELIMINARYSTRING="CMS Internal"
 PRELIMINARYSTRING="CMS Preliminary"
 #PRELIMINARYSTRING="CMS"
+
+def getDataStage2Directory():
+  hostname = os.uname()[1]
+  if "melrose" in hostname:
+    return "/raid/raid8/jhugon/higgsSamples/stage2/"
+  elif "uftrig" in hostname:
+    return "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
+  elif "cern" in hostname: # Works on lxplus and lxbatch
+    return "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
+  else: # Works on ihepa computers and UF HPC
+    return "/cms/data/store/user/jhugon/hmumu/stage2/"
 
 def sortCatNames(l):
   orderDef = [
