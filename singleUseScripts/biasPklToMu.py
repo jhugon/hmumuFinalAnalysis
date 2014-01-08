@@ -222,14 +222,21 @@ if __name__ == "__main__":
   muDict = cPickle.load(muDictFile)
   muDictFile.close()
 
-  # Create Summary Dictionary
+  #############################
+  # Create Summary Dictionary #
+  #############################
+  # Summary dictionary takes median values of muR, muAlt, 
+  # and muAltUnc over all of the toys.  Also, orders
+  # besides the ones chosen in the function getProductionPdf
+  # are not included.
   muSummaryDict = createSummaryMuDict(muDict)
+
   #muSummaryDictFile = open("biasMuDictSummary.pkl",'w')
   #cPickle.dump(muSummaryDict,muSummaryDictFile)
   #muSummaryDictFile.close()
   #print muSummaryDict
 
-  # Look at Data
+  # Look at Summary Data
   for catName in muSummaryDict:
     print catName
     for refName in muSummaryDict[catName]:
@@ -246,4 +253,5 @@ if __name__ == "__main__":
         muAltUnc = muSummaryDict[catName][refName][hmass]['muAltUnc']
 
         print "    {0:6.2f} {1:7.2f} {2:7.2f} {3:7.2f}".format(hmass,muR,muAlt,muAltUnc)
+
 
