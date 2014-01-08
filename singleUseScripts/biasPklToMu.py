@@ -12,6 +12,42 @@ import glob
 import re
 from numpy import mean,median
 
+def getProductionPdf(name):
+  if "Jets01PassPtG10BB" in name:
+    order = 5
+  elif "Jets01PassPtG10BO" in name:
+    order = 6
+  elif "Jets01PassPtG10BE" in name:
+    order = 6
+  elif "Jets01PassPtG10OO" in name:
+    order = 5
+  elif "Jets01PassPtG10OE" in name:
+    order = 5
+  elif "Jets01PassPtG10EE" in name:
+    order = 5
+  elif "Jets01FailPtG10BB" in name:
+    order = 5
+  elif "Jets01FailPtG10BO" in name:
+    order = 5
+  elif "Jets01FailPtG10BE" in name:
+    order = 5
+  elif "Jets01FailPtG10OO" in name:
+    order = 6
+  elif "Jets01FailPtG10OE" in name:
+    order = 5
+  elif "Jets01FailPtG10EE" in name:
+    order = 6
+  elif "Jet2CutsVBFPass" in name:
+    order = 3
+  elif "Jet2CutsGFPass" in name:
+    order = 5
+  elif "Jet2CutsFailVBFGF" in name:
+    order = 5
+  else:
+    print "Error: makePDFBakBernsteinProd: category '"+str(name)+"' not recognized, exiting."
+    sys.exit(1)
+  return str(order)+"Bernstein"
+
 def getSMSigCounts(catName,higgsMass,energy="8TeV"):
   lumi = lumiDict[energy]
   lumi *= 1000.
@@ -152,29 +188,62 @@ def createMuDict(data):
 def createSummaryMuDict(data):
   muDict = {}
   for catName in data:
-    muDict[catName] = {}
-    pdfAltNamesDict = data[catName]['meta']['pdfAltNamesDict']
+    muDict[catName] = {'meta':data[catName]['meta']}
     pdfRefNames = data[catName]['meta']['refPdfNameList']
+    altPdfName = getProductionPdf(catName)
+    muDict[catName]['meta']['altPdf'] = altPdfName
+    muDict[catName]['meta'].pop('pdfAltNamesDict')
     for refPdfName in pdfRefNames:
-      muDict[catName][refPdfName] = {'meta':data[catName]['meta']}
-      for altPdfName in pdfAltNamesDict[refPdfName]:
-        muDict[catName][refPdfName][altPdfName] = {}
-        for hmass in data[catName]['meta']['sigMasses']:
-          muRList = data[catName][refPdfName][altPdfName][hmass]["muR"]
-          muAltList = data[catName][refPdfName][altPdfName][hmass]["muAlt"]
-          muAltUncList = data[catName][refPdfName][altPdfName][hmass]["muAltUnc"]
-          muR = median(muRList)
-          muAlt = median(muAltList)
-          muAltUnc = median(muAltUncList)
-          muDict[catName][refPdfName][altPdfName][hmass] = {}
-          muDict[catName][refPdfName][altPdfName][hmass]["muR"]      = muR
-          muDict[catName][refPdfName][altPdfName][hmass]["muAlt"]    = muAlt
-          muDict[catName][refPdfName][altPdfName][hmass]["muAltUnc"] = muAltUnc
+      muDict[catName][refPdfName] = {}
+      for hmass in data[catName]['meta']['sigMasses']:
+        muRList = data[catName][refPdfName][altPdfName][hmass]["muR"]
+        muAltList = data[catName][refPdfName][altPdfName][hmass]["muAlt"]
+        muAltUncList = data[catName][refPdfName][altPdfName][hmass]["muAltUnc"]
+        muR = median(muRList)
+        muAlt = median(muAltList)
+        muAltUnc = median(muAltUncList)
+        muDict[catName][refPdfName][hmass] = {}
+        muDict[catName][refPdfName][hmass]["muR"]      = muR
+        muDict[catName][refPdfName][hmass]["muAlt"]    = muAlt
+        muDict[catName][refPdfName][hmass]["muAltUnc"] = muAltUnc
   return muDict
 
 if __name__ == "__main__":
 
-  biasData = loadBiasData("output/")
-  muDict = createMuDict(biasData)
+  # Create detailed mu data dicts
+  #biasData = loadBiasData("output/")
+  #muDict = createMuDict(biasData)
+  #muDictFile = open("biasMuDictDetail.pkl",'w')
+  #cPickle.dump(muDict,muDictFile)
+  #muDictFile.close()
+
+  # Read in detailed mu data dict
+  muDictFile = open("biasMuDictDetail.pkl")
+  muDict = cPickle.load(muDictFile)
+  muDictFile.close()
+
+  # Create Summary Dictionary
   muSummaryDict = createSummaryMuDict(muDict)
-  print muSummaryDict
+  #muSummaryDictFile = open("biasMuDictSummary.pkl",'w')
+  #cPickle.dump(muSummaryDict,muSummaryDictFile)
+  #muSummaryDictFile.close()
+  #print muSummaryDict
+
+  # Look at Data
+  for catName in muSummaryDict:
+    print catName
+    for refName in muSummaryDict[catName]:
+      if refName == "meta":
+        continue
+      print "  ",refName
+      print "    {0:6} {1:>7} {2:>7} {3:>7}".format('hmass','muR','muAlt','muAltUnc')
+      for hmass in sorted(muSummaryDict[catName][refName].keys()):
+        # muR is (N(alt)-N(ref))/N(SM) similar to what we used before
+        muR = muSummaryDict[catName][refName][hmass]['muR']  
+        # muAlt is N(alt)/N(SM), just in case you want it
+        muAlt = muSummaryDict[catName][refName][hmass]['muAlt']
+        # muAltUnc is the uncertainty on N(alt) divided by N(SM)
+        muAltUnc = muSummaryDict[catName][refName][hmass]['muAltUnc']
+
+        print "    {0:6.2f} {1:7.2f} {2:7.2f} {3:7.2f}".format(hmass,muR,muAlt,muAltUnc)
+
