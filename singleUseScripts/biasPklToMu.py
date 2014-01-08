@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+import singleHelpers
+from helpers import *
+from xsec import *
+from effReaderFromFile import *
 import cPickle
 import sys
 import os
@@ -7,6 +11,24 @@ import os.path
 import glob
 import re
 from numpy import mean,median
+
+def getSMSigCounts(catName,higgsMass,energy="8TeV"):
+  lumi = lumiDict[energy]
+  lumi *= 1000.
+  xsTotal = 0.
+  for prodMode in ['gg','vbf','wh','zh']:
+    name = prodMode + "Hmumu"+str(higgsMass)+"_"+energy
+    effReader = effReaderFromFile('fitresults',
+                                prodMode,
+                                energy,
+                                catName)
+    efficiencies = effReader.getEff()
+    eff = efficiencies[ '{0:.1f}'.format(higgsMass) ]
+    higgsMassStr = "{0:.1f}".format(higgsMass)
+    tmpName = name.replace("125",higgsMassStr)
+    xs = xsec[tmpName]
+    xsTotal += xs*eff
+  return xsTotal*lumi
 
 def mergeDicts(data,newData,multiJob=False):
   newDataKeys = newData.keys()
@@ -106,14 +128,15 @@ def loadBiasData(pklDir):
 def createMuDict(data):
   muDict = {}
   for catName in data:
-    muDict[catName] = {}
+    muDict[catName] = {'meta':data[catName]['meta']}
     pdfAltNamesDict = data[catName]['meta']['pdfAltNamesDict']
-    for refPdfName in pdfAltNamesDict:
-      muDict[catName][refPdfName] = {'meta':data[catName]['meta']}
+    pdfRefNames = data[catName]['meta']['refPdfNameList']
+    for refPdfName in pdfRefNames:
+      muDict[catName][refPdfName] = {}
       for altPdfName in pdfAltNamesDict[refPdfName]:
         muDict[catName][refPdfName][altPdfName] = {}
         for hmass in data[catName]['meta']['sigMasses']:
-          nSigSM = 1.  ## Needs to be found
+          nSigSM = getSMSigCounts(catName,hmass)
           nSigRef = data[catName][refPdfName][hmass]['nTrue']
           nSigAlt = data[catName][refPdfName][hmass][altPdfName]['n']
           nSigAltUnc = data[catName][refPdfName][hmass][altPdfName]['err']
@@ -126,12 +149,13 @@ def createMuDict(data):
           muDict[catName][refPdfName][altPdfName][hmass]["muAltUnc"] = muAltUnc
   return muDict
 
-def createSummaryMuDict(data)
+def createSummaryMuDict(data):
   muDict = {}
   for catName in data:
     muDict[catName] = {}
     pdfAltNamesDict = data[catName]['meta']['pdfAltNamesDict']
-    for refPdfName in pdfAltNamesDict:
+    pdfRefNames = data[catName]['meta']['refPdfNameList']
+    for refPdfName in pdfRefNames:
       muDict[catName][refPdfName] = {'meta':data[catName]['meta']}
       for altPdfName in pdfAltNamesDict[refPdfName]:
         muDict[catName][refPdfName][altPdfName] = {}
