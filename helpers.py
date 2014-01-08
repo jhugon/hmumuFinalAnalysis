@@ -2620,7 +2620,7 @@ class RooModelPlotter:
     for i in range(fpf.getSize()):
       param = fpf.at(i)
       paramName = param.GetTitle()
-      paramPave.AddText("{0:5} {1:8.3f} +/- {2:5.3f}".format(paramName,param.getVal(),param.getError()))
+      paramPave.AddText("{0:8} {1:8.3g} +/- {2:5.3g}".format(paramName,param.getVal(),param.getError()))
     paramPave.Draw()
     leftPad = self.canvas2.cd(1)
     self.draw(filenameNoExt,canvas=self.canvas2,motherPad=leftPad)

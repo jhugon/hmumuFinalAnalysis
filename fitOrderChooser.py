@@ -97,7 +97,7 @@ def makePDFBakExpTimesBernstein(name,rooDataset,dimuonMass,minMass,maxMass,works
     rooArgList = root.RooArgList()
     expArg = root.RooRealVar(channelName+"_E","Exp Param ", -0.01, -1, 1.)
     rooParamList.append(expArg)
-    for i in range(order+1):
+    for i in range(order):
       tmpArg = root.RooRealVar(channelName+"_B"+str(i),"Bernstein Coef "+str(i), 0.0, 0., 1.)
       rooArgList.add(tmpArg)
       rooParamList.append(tmpArg)
@@ -114,11 +114,18 @@ def makePDFBakExpTimesBernstein(name,rooDataset,dimuonMass,minMass,maxMass,works
         i.Print()
     print
   
-    expPdf = root.RooExponential("expPdf","Exponential Pdf",dimuonMass,expArg)
-    bernPdf = root.RooBernstein("bernPdf","Bernstein Order: "+str(order-1),dimuonMass,rooArgList)
-    pdfMmumu = root.RooProdPdf("bak","Exp*Bernstein Order: "+str(order),root.RooArgList(expPdf,bernPdf))
-    expPdf.Print()
-    bernPdf.Print()
+    expPdf = None
+    bernPdf = None
+    pdfMmumu = None
+    if rooArgList.getSize() > 0:
+      expPdf = root.RooExponential("expPdf","Exponential Pdf",dimuonMass,expArg)
+      bernPdf = root.RooBernstein("bernPdf","Bernstein Order: "+str(order-1),dimuonMass,rooArgList)
+      pdfMmumu = root.RooProdPdf("bak","Exp*Bernstein Order: "+str(order),root.RooArgList(expPdf,bernPdf))
+      expPdf.Print()
+      bernPdf.Print()
+    else:
+      expPdf = root.RooExponential("bak","Exp*Bernstein Order: "+str(order),dimuonMass,expArg)
+      pdfMmumu = expPdf
     pdfMmumu.Print()
 
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
@@ -208,7 +215,7 @@ def makePDFBakExpTimesChebychev(name,rooDataset,dimuonMass,minMass,maxMass,works
     rooArgList = root.RooArgList()
     expArg = root.RooRealVar(channelName+"_E","Exp Param ", -0.01, -1, 1.)
     rooParamList.append(expArg)
-    for i in range(order+1):
+    for i in range(order):
       tmpArg = root.RooRealVar(channelName+"_C"+str(i),"Chebychev Coef "+str(i), 0.0, -1., 1.)
       rooArgList.add(tmpArg)
       rooParamList.append(tmpArg)
@@ -224,10 +231,17 @@ def makePDFBakExpTimesChebychev(name,rooDataset,dimuonMass,minMass,maxMass,works
     for i in rooParamList:
         i.Print()
     print
-  
-    expPdf = root.RooExponential("expPdf","Exponential Pdf",dimuonMass,expArg)
-    chebPdf = root.RooChebychev("bernPdf","Chebychev Order: "+str(order-1),dimuonMass,rooArgList)
-    pdfMmumu = root.RooProdPdf("bak","Exp*Chebychev Order: "+str(order),root.RooArgList(expPdf,chebPdf))
+
+    expPdf = None
+    chebPdf = None
+    pdfMmumu = None
+    if rooArgList.getSize() > 0:
+      expPdf = root.RooExponential("expPdf","Exponential Pdf",dimuonMass,expArg)
+      chebPdf = root.RooChebychev("bernPdf","Chebychev Order: "+str(order-1),dimuonMass,rooArgList)
+      pdfMmumu = root.RooProdPdf("bak","Exp*Chebychev Order: "+str(order),root.RooArgList(expPdf,chebPdf))
+    else:
+      expPdf = root.RooExponential("bak","Exp*Chebychev Order: "+str(order),dimuonMass,expArg)
+      pdfMmumu = expPdf
 
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
@@ -316,7 +330,7 @@ def makePDFBakExpTimesPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,work
     rooArgList = root.RooArgList()
     expArg = root.RooRealVar(channelName+"_E","Exp Param ", -0.01, -1, 1.)
     rooParamList.append(expArg)
-    for i in range(order+1):
+    for i in range(order):
       tmpArg = root.RooRealVar(channelName+"_P"+str(i),"Polynomial Coef "+str(i), 0.0, -1., 1.)
       rooArgList.add(tmpArg)
       rooParamList.append(tmpArg)
@@ -332,10 +346,17 @@ def makePDFBakExpTimesPolynomial(name,rooDataset,dimuonMass,minMass,maxMass,work
     for i in rooParamList:
         i.Print()
     print
-  
-    expPdf = root.RooExponential("expPdf","Exponential Pdf",dimuonMass,expArg)
-    polyPdf = root.RooPolynomial("bernPdf","Polynomial Order: "+str(order-1),dimuonMass,rooArgList)
-    pdfMmumu = root.RooProdPdf("bak","Exp*Polynomial Order: "+str(order),root.RooArgList(expPdf,polyPdf))
+
+    expPdf = None
+    polyPdf = None
+    pdfMmumu = None
+    if rooArgList.getSize() > 0:
+      expPdf = root.RooExponential("expPdf","Exponential Pdf",dimuonMass,expArg)
+      polyPdf = root.RooPolynomial("bernPdf","Polynomial Order: "+str(order-1),dimuonMass,rooArgList)
+      pdfMmumu = root.RooProdPdf("bak","Exp*Polynomial Order: "+str(order),root.RooArgList(expPdf,polyPdf))
+    else:
+      expPdf = root.RooExponential("bak","Exp*Polynomial Order: "+str(order),dimuonMass,expArg)
+      pdfMmumu = expPdf
 
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr.SetName("bak"+"_fitResult")
@@ -1215,9 +1236,7 @@ if __name__ == "__main__":
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
   #pdfsToTry = ["SumExp","Bernstein"]
   pdfsToTry = ["ExpTimesBernstein","ExpTimesChebychev","ExpTimesPolynomial"]
-  pdfsToTry = ["ExpTimesChebychev"]
   ordersToTry= range(0,6)
-  ordersToTry= range(0,2)
 
   categories = []
 
