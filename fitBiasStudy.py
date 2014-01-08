@@ -109,6 +109,9 @@ PDFTITLEMAP = PdfTitleMap({
     "SumExp":"Sum of Exponentials",
     "SumPow":"Sum of Power Functions",
     "Laurent":"Laurent",
+    "ExpTimesBernstein":"Exp*Bernstein",
+    "ExpTimesChebychev":"Exp*Chebychev",
+    "ExpTimesPolynomial":"Exp*Polynomial",
 })
 
 def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sigMasses,toysPerJob):
@@ -152,13 +155,13 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           altPdfOrderList.append(None)
 
       truePdfFunc = None
-      if truePdfNameNoOrder == "Bernstein" or truePdfNameNoOrder == "Chebychev" or truePdfNameNoOrder == "Polynomial" or truePdfNameNoOrder == "SumExp" or truePdfNameNoOrder == "SumPow" or truePdfNameNoOrder == "Laurent":
+      if truePdfNameNoOrder == "Bernstein" or truePdfNameNoOrder == "Chebychev" or truePdfNameNoOrder == "Polynomial" or truePdfNameNoOrder == "SumExp" or truePdfNameNoOrder == "SumPow" or truePdfNameNoOrder == "Laurent" or truePdfNameNoOrder == "ExpTimesBernstein" or truePdfNameNoOrder == "ExpTimesChebychev" or truePdfNameNoOrder == "ExpTimesPolynomial":
         truePdfFunc = getattr(fitOrderChooser,"makePDFBak"+truePdfNameNoOrder)
       else:
         truePdfFunc = getattr(makeCards,"makePDFBak"+truePdfNameNoOrder)
       pdfAltFuncList = []
       for i in altPdfNameNoOrderList:
-        if i == "Bernstein" or i == "Chebychev" or i == "Polynomial" or i == "SumExp" or i == "SumPow" or i == "Laurent":
+        if i == "Bernstein" or i == "Chebychev" or i == "Polynomial" or i == "SumExp" or i == "SumPow" or i == "Laurent" or i == "ExpTimesBernstein" or i == "ExpTimesChebychev" or i == "ExpTimesPolynomial":
           pdfAltFuncList.append(getattr(fitOrderChooser,"makePDFBak"+i))
         else:
           pdfAltFuncList.append(getattr(makeCards,"makePDFBak"+i))
@@ -1729,34 +1732,62 @@ if __name__ == "__main__":
                         #"ExpMOverSqP0New",
                         #"ExpMOverSq",
                         #"Old",
-                        "2Bernstein",
-                        "3Bernstein",
-                        "4Bernstein",
-                        "5Bernstein",
-                        "6Bernstein",
-                        "7Bernstein",
-                        "8Bernstein",
+                        #"2Bernstein",
+                        #"3Bernstein",
+                        #"4Bernstein",
+                        #"5Bernstein",
+                        #"6Bernstein",
+                        #"7Bernstein",
+                        #"8Bernstein",
                         #"1SumExp",
                         #"2SumExp",
                         #"3SumExp",
                         #"4SumExp",
+                        "0ExpTimesBernstein",
+                        "1ExpTimesBernstein",
+                        "2ExpTimesBernstein",
+                        "3ExpTimesBernstein",
+                        "4ExpTimesBernstein",
+                        "5ExpTimesBernstein",
+                        "6ExpTimesBernstein",
+                        "0ExpTimesChebychev",
+                        "1ExpTimesChebychev",
+                        "2ExpTimesChebychev",
+                        "3ExpTimesChebychev",
+                        "4ExpTimesChebychev",
+                        "5ExpTimesChebychev",
+                        "6ExpTimesChebychev",
                     ],
       "SumExp":[          
                         #"ExpMOverSqP0New",
                         #"ExpMOverSq",
                         #"Old",
                         #"3Bernstein",
-                        "2Bernstein",
-                        "3Bernstein",
-                        "4Bernstein",
-                        "5Bernstein",
-                        "6Bernstein",
-                        "7Bernstein",
-                        "8Bernstein",
+                        #"2Bernstein",
+                        #"3Bernstein",
+                        #"4Bernstein",
+                        #"5Bernstein",
+                        #"6Bernstein",
+                        #"7Bernstein",
+                        #"8Bernstein",
                         #"1SumExp",
                         #"2SumExp",
                         #"3SumExp",
                         #"4SumExp",
+                        "0ExpTimesBernstein",
+                        "1ExpTimesBernstein",
+                        "2ExpTimesBernstein",
+                        "3ExpTimesBernstein",
+                        "4ExpTimesBernstein",
+                        "5ExpTimesBernstein",
+                        "6ExpTimesBernstein",
+                        "0ExpTimesChebychev",
+                        "1ExpTimesChebychev",
+                        "2ExpTimesChebychev",
+                        "3ExpTimesChebychev",
+                        "4ExpTimesChebychev",
+                        "5ExpTimesChebychev",
+                        "6ExpTimesChebychev",
                     ],
       "SumPow":[          
                         "ExpMOverSq",
