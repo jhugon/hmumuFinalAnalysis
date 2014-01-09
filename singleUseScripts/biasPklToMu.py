@@ -174,15 +174,21 @@ def createMuDict(data):
         for hmass in data[catName]['meta']['sigMasses']:
           nSigSM = getSMSigCounts(catName,hmass)
           nSigRef = data[catName][refPdfName][hmass]['nTrue']
+          nSigRefUnc = data[catName][refPdfName][hmass]['errTrue']
           nSigAlt = data[catName][refPdfName][hmass][altPdfName]['n']
           nSigAltUnc = data[catName][refPdfName][hmass][altPdfName]['err']
           muAlt = [i/nSigSM for i in nSigAlt]
+          muRef = [i/nSigSM for i in nSigRef]
           muR = [(iAlt-iRef)/nSigSM for iAlt,iRef in zip(nSigAlt,nSigRef)]
           muAltUnc = [i/nSigSM for i in nSigAltUnc]
+          muRefUnc = [i/nSigSM for i in nSigRefUnc]
           muDict[catName][refPdfName][altPdfName][hmass] = {}
           muDict[catName][refPdfName][altPdfName][hmass]["muR"]      = muR
           muDict[catName][refPdfName][altPdfName][hmass]["muAlt"]    = muAlt
           muDict[catName][refPdfName][altPdfName][hmass]["muAltUnc"] = muAltUnc
+          muDict[catName][refPdfName][altPdfName][hmass]["muRef"]    = muRef
+          muDict[catName][refPdfName][altPdfName][hmass]["muRefUnc"] = muRefUnc
+          muDict[catName][refPdfName][altPdfName][hmass]["nSigSM"]   = nSigSM
   return muDict
 
 def createSummaryMuDict(data):
@@ -196,21 +202,29 @@ def createSummaryMuDict(data):
     for refPdfName in pdfRefNames:
       muDict[catName][refPdfName] = {}
       for hmass in data[catName]['meta']['sigMasses']:
+        nSigSM = data[catName][refPdfName][altPdfName][hmass]["nSigSM"]
         muRList = data[catName][refPdfName][altPdfName][hmass]["muR"]
         muAltList = data[catName][refPdfName][altPdfName][hmass]["muAlt"]
         muAltUncList = data[catName][refPdfName][altPdfName][hmass]["muAltUnc"]
+        muRefList = data[catName][refPdfName][altPdfName][hmass]["muRef"]
+        muRefUncList = data[catName][refPdfName][altPdfName][hmass]["muRefUnc"]
         muR = median(muRList)
         muAlt = median(muAltList)
         muAltUnc = median(muAltUncList)
+        muRef = median(muRefList)
+        muRefUnc = median(muRefUncList)
         muDict[catName][refPdfName][hmass] = {}
         muDict[catName][refPdfName][hmass]["muR"]      = muR
         muDict[catName][refPdfName][hmass]["muAlt"]    = muAlt
         muDict[catName][refPdfName][hmass]["muAltUnc"] = muAltUnc
+        muDict[catName][refPdfName][hmass]["muRef"]    = muRef
+        muDict[catName][refPdfName][hmass]["muRefUnc"] = muRefUnc
+        muDict[catName][refPdfName][hmass]["nSigSM"] = nSigSM
   return muDict
 
 if __name__ == "__main__":
 
-  # Create detailed mu data dicts
+  ## Create detailed mu data dicts
   #biasData = loadBiasData("output/")
   #muDict = createMuDict(biasData)
   #muDictFile = open("biasMuDictDetail.pkl",'w')
@@ -243,7 +257,7 @@ if __name__ == "__main__":
       if refName == "meta":
         continue
       print "  ",refName
-      print "    {0:6} {1:>7} {2:>7} {3:>7}".format('hmass','muR','muAlt','muAltUnc')
+      print "    {0:6} {1:>7} {2:>7} {3:>7} {4:>7} {5:>7}".format('hmass','muR','muAlt','muAltUnc','muRef','nSigSM')
       for hmass in sorted(muSummaryDict[catName][refName].keys()):
         # muR is (N(alt)-N(ref))/N(SM) similar to what we used before
         muR = muSummaryDict[catName][refName][hmass]['muR']  
@@ -251,7 +265,11 @@ if __name__ == "__main__":
         muAlt = muSummaryDict[catName][refName][hmass]['muAlt']
         # muAltUnc is the uncertainty on N(alt) divided by N(SM)
         muAltUnc = muSummaryDict[catName][refName][hmass]['muAltUnc']
-
-        print "    {0:6.2f} {1:7.2f} {2:7.2f} {3:7.2f}".format(hmass,muR,muAlt,muAltUnc)
-
-
+        # muRef is N(ref)/N(SM), just in case you want it
+        muRef = muSummaryDict[catName][refName][hmass]['muRef']
+        # muRefUnc is the uncertainty on N(ref) divided by N(SM)
+        # You shouldn't need it
+        muRefUnc = muSummaryDict[catName][refName][hmass]['muRefUnc']
+        # nSigSM is the expected number of signal events in this category
+        nSigSM = muSummaryDict[catName][refName][hmass]['nSigSM']
+        print "    {0:6.2f} {1:7.2f} {2:7.2f} {3:7.2f} {4:7.2f} {5:7.2f}".format(hmass,muR,muAlt,muAltUnc,muRef,nSigSM)
