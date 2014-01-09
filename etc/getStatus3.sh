@@ -15,4 +15,5 @@ else
 fi
 echo "N jobs:             "$njobs
 echo "N jobs Running:     "$njobsRunning
-echo "Running Percentage: "$(python -c "print float($njobsRunning)/$njobs")
+#echo "Running Percentage: "$(python -c "print float($njobsRunning)/$njobs")
+echo "Running Fraction: "$(python -c "print float($njobsRunning)/$njobs if $njobs>0 else -1")
