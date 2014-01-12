@@ -719,7 +719,10 @@ def makePDFBakSumExp(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
     channelName = name
 
     if order == None:
-      order = 2
+      if "Jet2CutsVBFPass" in name:
+        order = 1
+      else:
+        order = 2
 
     rooParamList = []
     pyPdfList = []

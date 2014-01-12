@@ -135,7 +135,7 @@ def makePDFBakBernsteinProd(name,rooDataset,dimuonMass,minMass,maxMass,workspace
       elif "Jets01FailPtG10EE" in name:
         order = 6
       elif "Jet2CutsVBFPass" in name:
-        order = 3
+        order = 2
       elif "Jet2CutsGFPass" in name:
         order = 5
       elif "Jet2CutsFailVBFGF" in name:
