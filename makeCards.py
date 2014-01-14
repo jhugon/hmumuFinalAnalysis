@@ -2022,6 +2022,42 @@ if __name__ == "__main__":
      ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
     ],"CombSplitAll"
   ))
+
+
+##### New combinations
+#
+#  combinations.append((
+#    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
+#    [
+#     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+#     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#    ],"CombJets01PassJet2Split"
+#  ))
+#
+#
+#  combinations.append((
+#    [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts],
+#     ["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts],
+#     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+#     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#    ],"CombJets01PassBBBOJet2Split"
+#  ))
+# 
+#  combinations.append((
+#    [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts],
+#     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+#     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#    ],"CombJets01PassBBJet2Split"
+#  ))
+#
+#  combinations.append((
+#    [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts],
+#     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+#    ],"CombJets01PassBBJet2VBFPass"
+#  ))
  
   ## combinations = []
 
