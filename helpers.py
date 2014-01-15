@@ -2345,7 +2345,7 @@ class RooModelPlotter:
     self.tlatex.SetTextSize(root.gStyle.GetLabelSize())
     self.tlatex.SetTextAlign(22)
 
-    doLinearErrs = True
+    doLinearErrs = False
     errVisArg = root.RooFit.VisualizeError(fr,1,doLinearErrs)
     errColorArg = root.RooFit.FillColor(root.kCyan)
     lineColorArg = root.RooFit.LineColor(root.kBlue)
@@ -2565,7 +2565,7 @@ class RooModelPlotter:
     # Main Pad
     pad1.cd();
     self.frame.Draw()
-    self.addPDFNormError(pad1)
+    #self.addPDFNormError(pad1)
     self.leg.Draw()
 
     # Pulls Pad
