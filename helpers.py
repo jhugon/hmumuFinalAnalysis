@@ -2610,7 +2610,7 @@ class RooModelPlotter:
     if (filenameNoExt != ""):
       saveAs(canvas,filenameNoExt)
 
-  def drawWithParams(self,filenameNoExt):
+  def drawWithParams(self,filenameNoExt,paramsToPlot=None):
     rightPad = self.canvas2.cd(2)
     paramPave = root.TPaveText(0,0,1,1,"NDC")
     paramPave.SetFillColor(0)
@@ -2619,6 +2619,15 @@ class RooModelPlotter:
     fpf = self.fr.floatParsFinal()
     for i in range(fpf.getSize()):
       param = fpf.at(i)
+      if paramsToPlot != None:
+        doContinue = True
+        for j in paramsToPlot:
+          match = re.search(j,param.GetName())
+          if match:
+            doContinue = False
+            break
+        if doContinue:
+          continue
       paramName = param.GetTitle()
       paramPave.AddText("{0:8} {1:8.3g} +/- {2:5.3g}".format(paramName,param.getVal(),param.getError()))
     paramPave.Draw()

@@ -575,28 +575,21 @@ def makePDFBakMSSM(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,
 
     channelName = name
 
-    bwWidth = root.RooRealVar(channelName+"_bwWidth","bwWidth",10,0,30)
+    bwWidth = root.RooRealVar(channelName+"_bwWidth","bwWidth",5,0,30)
     bwmZ = root.RooRealVar(channelName+"_bwmZ","bwmZ",91,85,95)
-    bwMmumu = root.RooGenericPdf(channelName+"_bwPdf",channelName+"_bwPdf","@2/(TMath::Power(@0-@1,2)+0.25*@2*@2)",root.RooArgList(dimuonMass,bwmZ,bwWidth))
-    #bwMmumu = root.RooBreitWigner(channelName+"_bwPdf",channelName+"_bwPdf",dimuonMass,bwmZ,bwWidth)  # Misses the width on top!!
-
-    expParam = root.RooRealVar(channelName+"_expParam","expParam",0.1,-5,5)
-    expMmumu = root.RooGenericPdf(channelName+"_bak_expMmumu","expMmumu","TMath::Exp(-1*@0*@1*@1)",root.RooArgList(dimuonMass,expParam))
-
-    # Photon Term
-    phoMmumu = root.RooGenericPdf(channelName+"_bak_phoMmumu","phoMmumu","1/(@0*@0)",root.RooArgList(dimuonMass))
-
+    expParam = root.RooRealVar(channelName+"_expParam","expParam",-1e-03,-1e-01,1e-01)
     mixParam = root.RooRealVar(channelName+"_mixParam","mixParam",0.5,0,1)
 
-    sumMmumu = root.RooAddPdf(channelName+"_sumMmumu","bakSum",root.RooArgList(bwMmumu,phoMmumu),root.RooArgList(mixParam))
-    pdfMmumu = root.RooProdPdf("bak","bak",root.RooArgList(sumMmumu,expMmumu))
-    #pdfMmumu = root.RooAddPdf("bak","bak",root.RooArgList(bwMmumu,phoMmumu),root.RooArgList(mixParam))
+    phoExpMmumu = root.RooGenericPdf("phoExpMmumu","exp(@0*@1)*pow(@0,-2)",root.RooArgList(dimuonMass,expParam))
+    bwExpMmumu  = root.RooGenericPdf("bwExpMmumu","exp(@0*@3)*(@2)/(pow(@0-@1,2)+0.25*pow(@2,2))",root.RooArgList(dimuonMass,bwmZ,bwWidth,expParam))
+    pdfMmumu = root.RooAddPdf("bak","bak",root.RooArgList(bwExpMmumu,phoExpMmumu),root.RooArgList(mixParam))
+    
 
     # Just For Z-Peak Part
     assert(dimuonMassZ != None)
     assert(rooDatasetZ != None)
-    bwMmumuZ = root.RooBreitWigner(channelName+"bak_bwMmumuZ","bwMmumuZ",dimuonMassZ,bwmZ,bwWidth)
 
+    bwMmumuZ  = root.RooGenericPdf("bwMmumuZ","(@2)/(pow(@0-@1,2)+0.25*pow(@2,2))",root.RooArgList(dimuonMassZ,bwmZ,bwWidth))
     bwMmumuZ.fitTo(rooDatasetZ,root.RooFit.SumW2Error(False),PRINTLEVEL)
     bwmZ.setConstant(True)
     bwWidth.setConstant(True)
@@ -631,15 +624,15 @@ def makePDFBakMSSM(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,
       workspaceImportFn(pdfMmumu)
       workspaceImportFn(fr)
 
-    ## Debug Time
-    frame = dimuonMass.frame()
-    frame.SetName("bak_Plot")
-    rooDataset.plotOn(frame)
-    #pdfMmumu.plotOn(frame,root.RooFit.Range(110,160))
-    pdfMmumu.plotOn(frame,root.RooFit.Range(minMass,maxMass))
-    canvas = root.TCanvas()
-    frame.Draw()
-    canvas.SaveAs("debug_"+name+channelName+".png")
+    ### Debug Time
+    #frame = dimuonMass.frame()
+    #frame.SetName("bak_Plot")
+    #rooDataset.plotOn(frame)
+    ##pdfMmumu.plotOn(frame,root.RooFit.Range(110,160))
+    #pdfMmumu.plotOn(frame,root.RooFit.Range(minMass,maxMass))
+    #canvas = root.TCanvas()
+    #frame.Draw()
+    #canvas.SaveAs("debug_"+name+channelName+".png")
 
     #Norm Time
     bakNormTup = None
@@ -1060,8 +1053,8 @@ def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=True)
 makePDFSig = makePDFSigDG
 ## makePDFBak = makePDFBakOld
 #makePDFBak = makePDFBakExpMOverSq
-makePDFBak = makePDFBakBernsteinProd
-#makePDFBak = makePDFBakMSSM
+#makePDFBak = makePDFBakBernsteinProd
+makePDFBak = makePDFBakMSSM
 
 ###################################################################################
 

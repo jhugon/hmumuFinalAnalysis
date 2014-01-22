@@ -131,6 +131,7 @@ class ShapePlotter:
                             caption1="Analysis A"
                             )
       rmp.draw(saveName)
+      #rmp.drawWithParams(saveName+"_params",["mixParam","bwWidth","bwmZ","expParam"])
 
       #Pull Distribution Time
       saveNameSplit = os.path.split(saveName)
