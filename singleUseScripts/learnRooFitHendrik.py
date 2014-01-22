@@ -9,9 +9,11 @@ import math
 from ROOT import *
 gSystem.Load('libRooFit')
 import ROOT as root
+root.gROOT.SetBatch(True)
 
 import singleHelpers
 from helpers import *
+from xsec import *
 
 #root.gErrorIgnoreLevel = root.kWarning
 #root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.WARNING)
@@ -49,20 +51,40 @@ sumMmumu = root.RooAddPdf("pdfMmumu","pdfMmumu",root.RooArgList(bwMmumu,phoMmumu
 #pdfMmumu = root.RooProdPdf("pdfMmumu","pdfMmumu",root.RooArgList(sumMmumu,expMmumu))
 #pdfMmumu = phoMmumu
 #pdfMmumu = bwMmumu
-#pdfMmumu = sumMmumu
-pdfMmumu = root.RooProdPdf("pdfMmumu","pdfMmumu",root.RooArgList(bwMmumu,expMmumu))
+pdfMmumu = sumMmumu
 
 #####################################################################
 
 filename = getDataStage2Directory()+"/DYJetsToLL_8TeV.root"
+#filename = getDataStage2Directory()+"/ttbar_8TeV.root"
 print filename
 f = root.TFile(filename)
-#f = root.TFile("input/ttbar.root")
-
-#mDiMu = f.Get("mDiMu")
-#mDiMu = f.Get("IncPresel/mDiMu")
-mDiMu = f.Get("Jets01PassPtG10BB/mDiMu")
-mDiMu.Rebin(2)
+samples = ['ttbar_8TeV','DYJetsToLL_8TeV']
+samples += ['ggHmumu125_8TeV','vbfHmumu125_8TeV']
+scaleFactors = {}
+#scaleFactors['ggHmumu125_8TeV'] = 500.
+#scaleFactors['ttbar_8TeV'] = 10.
+mDiMu = None
+files = []
+hstack = root.THStack("hstack","")
+for sample in samples:
+  f = root.TFile(getDataStage2Directory()+"/"+sample+".root")
+  #mDiMuTmp = f.Get("Jets01PassPtG10BE/mDiMu")
+  mDiMuTmp = f.Get("Jets01PassPtG10/mDiMu")
+  #mDiMuTmp = f.Get("Jet2CutsGFPass/mDiMu")
+  mDiMuTmp.Rebin(2)
+  mDiMuTmp.Scale(xsec[sample]*1000.*lumiDict['8TeV']/nEventsMap[sample])
+  mDiMuTmp.SetFillColor(colors[re.sub(r"_.*","",sample)])
+  if scaleFactors.has_key(sample):
+    mDiMuTmp.Scale(scaleFactors[sample])
+  hstack.Add(mDiMuTmp)
+  if mDiMu == None:
+    mDiMu = mDiMuTmp.Clone("mDiMuHist")
+    print "creating hist from ",sample
+  else:
+    mDiMu.Add(mDiMuTmp)
+    print "adding hist from ",sample
+  files.append(f)
 
 #####################################################################
 
@@ -82,23 +104,30 @@ bwSig.setConstant(True)
 #yay = raw_input("Press Enter to continue...")
 #canvas.Clear()
 
+#fr = pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("lowsighigh"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
 pdfMmumu.fitTo(mMuMuRooDataHist,root.RooFit.Range("lowsighigh"),root.RooFit.SumW2Error(False),PRINTLEVEL)
-chi2 = pdfMmumu.createChi2(mMuMuRooDataHist)
+chi2 = pdfMmumu.createChi2(mMuMuRooDataHist,root.RooFit.Range("lowsighigh"))
 
 plotMmumu = mMuMu.frame(root.RooFit.Range("lowsighigh"))
 
-drawRange = [80,150]
-#mMuMu.setRange(*drawRange)
+#############################################################################
+
 mMuMu.Print()
 plotMmumu.Print()
-#mMuMuRooDataHist.plotOn(plotMmumu,root.RooFit.Range(*drawRange))
 mMuMuRooDataHist.plotOn(plotMmumu)
 pdfMmumu.plotOn(plotMmumu,root.RooFit.Range("lowsighigh"))
 #pdfMmumu.plotOn(plotMmumu,root.RooFit.LineStyle(2))
 pdfMmumu.plotOn(plotMmumu,root.RooFit.Components("phoMmumu"),root.RooFit.LineStyle(2),root.RooFit.LineColor(root.kGreen+1),root.RooFit.Range("lowsighigh"))
 pdfMmumu.plotOn(plotMmumu,root.RooFit.Components("bwMmumu"),root.RooFit.LineStyle(2),root.RooFit.LineColor(root.kRed+1),root.RooFit.Range("lowsighigh"))
 
-plotMmumu.Draw()
+#axisHist = root.TH2F("axisHist","",1,110,160,1,0,1200)
+axisHist = root.TH2F("axisHist","",1,massLowRange[0],massHighRange[1],1,0,5500)
+axisHist.Draw()
+hstack.Draw('histsame')
+plotMmumu.Draw('same')
+canvas.SaveAs("TestMSSM.png")
+
+###########################################################################
 
 print("chi2: {}".format(chi2.getVal()))
 for i in [bwmZ,bwSig,expLambda,mixParam]:
