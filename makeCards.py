@@ -662,6 +662,195 @@ def makePDFBakMSSM(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,
 
     return paramList, bakNormTup, debug, None
 
+def makePDFBakVoigtPMm2(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+    debug = ""
+    debug += "### makePDFBakVoigtPMm2: "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
+    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
+
+    channelName = name
+
+    voitWidth = root.RooRealVar(channelName+"_voitWidth","voitWidth",2.4952)
+    voitWidth.setConstant(True)
+    voitmZ = root.RooRealVar(channelName+"_voitmZ","voitmZ",91,85,95)
+    voitSig = root.RooRealVar(channelName+"_voitSig","voitSig",1.5,0.0,30.0)
+    voitMmumu = root.RooVoigtian(channelName+"bak_voitMmumu","voitMmumu",dimuonMass,voitmZ,voitWidth,voitSig)
+    mm2Mmumu = root.RooGenericPdf(channelName+"bak_Mm2","pow(@0,-2)",root.RooArgList(dimuonMass))
+    mixParam = root.RooRealVar(channelName+"_mixParam","mixParam",0.5,0,1)
+    pdfMmumu = root.RooAddPdf("bak","bak",root.RooArgList(voitMmumu,mm2Mmumu),root.RooArgList(mixParam))
+
+    # Just For Z-Peak Part
+    assert(dimuonMassZ != None)
+    assert(rooDatasetZ != None)
+    voitMmumuZ = root.RooVoigtian("bak_voitMmumuZ","voitMmumuZ",dimuonMassZ,voitmZ,voitWidth,voitSig)
+
+    voitMmumuZ.fitTo(rooDatasetZ,root.RooFit.SumW2Error(False),PRINTLEVEL)
+    voitmZ.setConstant(True)
+    voitSig.setConstant(True)
+
+    ### Debug Time
+    #frameZ = dimuonMassZ.frame()
+    #frameZ.SetName("bak_PlotZ")
+    #rooDatasetZ.plotOn(frameZ)
+    #bwMmumuZ.plotOn(frameZ)
+    #canvas = root.TCanvas()
+    #frameZ.Draw()
+    #canvas.SaveAs("debug_"+name+channelName+"_Z.png")
+
+    # Back to everywhere else
+   
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr.SetName("bak"+"_fitResult")
+    #chi2 = pdfMmumu.createChi2(rooDataset)
+    fr.Print()
+
+    rooParamList = [bwmZ,bwWidth,mixParam]
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+
+    if FREEBAKPARAMS:
+      for param in rooParamList:
+        param.setConstant(False)
+
+    bwWidth.setConstant(True)
+    bwmZ.setConstant(True)
+
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(fr)
+
+    ## Debug Time
+    frame = dimuonMass.frame()
+    frame.SetName("bak_Plot")
+    rooDataset.plotOn(frame)
+    #pdfMmumu.plotOn(frame,root.RooFit.Range(110,160))
+    pdfMmumu.plotOn(frame,root.RooFit.Range(minMass,maxMass))
+    canvas = root.TCanvas()
+    frame.Draw()
+    canvas.SaveAs("debug_VoigtPMm2_"+name+channelName+".png")
+
+    #Norm Time
+    bakNormTup = None
+    if True:
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(dimuonMass,"signal")
+      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
+      nSideband =  rooDataset.sumEntries(getSidebandString)
+      nData =  rooDataset.sumEntries()
+      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
+      if nData > 0:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+      else:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
+    #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
+    #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
+
+    #rooDataset2 = rooDataset.reduce(root.RooFit.CutRange("low,signal,high"))
+    #rooDataset2.SetName("bak_TemplateNoVeryLow")
+    #if workspaceImportFn != None:
+    #  workspaceImportFn(rooDataset2)
+
+    for i in rooParamList:
+      debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+    debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
+
+    return paramList, bakNormTup, debug, None
+
+def makePDFBakVoigtPExpMm2(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
+    debug = ""
+    debug += "### makePDFBakVoigtPExpMm2: "+name+"\n"
+    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
+    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
+
+    channelName = name
+
+    voitWidth = root.RooRealVar(channelName+"_voitWidth","voitWidth",2.4952)
+    voitWidth.setConstant(True)
+    voitmZ = root.RooRealVar(channelName+"_voitmZ","voitmZ",91,85,95)
+    voitSig = root.RooRealVar(channelName+"_voitSig","voitSig",1.5,0.0,30.0)
+    voitMmumu = root.RooVoigtian(channelName+"bak_voitMmumu","voitMmumu",dimuonMass,voitmZ,voitWidth,voitSig)
+    expParam = root.RooRealVar(channelName+"_expParam","expParam",-0.01,-1,1)
+    expMm2Mmumu = root.RooGenericPdf(channelName+"bak_expMm2","exp(@0*@1)*pow(@0,-2)",root.RooArgList(dimuonMass,expParam))
+    mixParam = root.RooRealVar(channelName+"_mixParam","mixParam",0.5,0,1)
+    pdfMmumu = root.RooAddPdf("bak","bak",root.RooArgList(voitMmumu,expMm2Mmumu),root.RooArgList(mixParam))
+
+    # Just For Z-Peak Part
+    assert(dimuonMassZ != None)
+    assert(rooDatasetZ != None)
+    voitMmumuZ = root.RooVoigtian("bak_voitMmumuZ","voitMmumuZ",dimuonMassZ,voitmZ,voitWidth,voitSig)
+
+    voitMmumuZ.fitTo(rooDatasetZ,root.RooFit.SumW2Error(False),PRINTLEVEL)
+    voitmZ.setConstant(True)
+    voitSig.setConstant(True)
+
+    ### Debug Time
+    #frameZ = dimuonMassZ.frame()
+    #frameZ.SetName("bak_PlotZ")
+    #rooDatasetZ.plotOn(frameZ)
+    #bwMmumuZ.plotOn(frameZ)
+    #canvas = root.TCanvas()
+    #frameZ.Draw()
+    #canvas.SaveAs("debug_"+name+channelName+"_Z.png")
+
+    # Back to everywhere else
+   
+    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
+    fr.SetName("bak"+"_fitResult")
+    #chi2 = pdfMmumu.createChi2(rooDataset)
+    fr.Print()
+
+    rooParamList = [bwmZ,bwWidth,expParam,mixParam]
+    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+
+    if FREEBAKPARAMS:
+      for param in rooParamList:
+        param.setConstant(False)
+
+    bwWidth.setConstant(True)
+    bwmZ.setConstant(True)
+
+    if workspaceImportFn != None:
+      workspaceImportFn(pdfMmumu)
+      workspaceImportFn(fr)
+
+    ## Debug Time
+    frame = dimuonMass.frame()
+    frame.SetName("bak_Plot")
+    rooDataset.plotOn(frame)
+    #pdfMmumu.plotOn(frame,root.RooFit.Range(110,160))
+    pdfMmumu.plotOn(frame,root.RooFit.Range(minMass,maxMass))
+    canvas = root.TCanvas()
+    frame.Draw()
+    canvas.SaveAs("debug_VoigtPExpMm2_"+name+channelName+".png")
+
+    #Norm Time
+    bakNormTup = None
+    if True:
+      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
+      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
+      signalRangeList = getRooVarRange(dimuonMass,"signal")
+      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
+      nSideband =  rooDataset.sumEntries(getSidebandString)
+      nData =  rooDataset.sumEntries()
+      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
+      if nData > 0:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
+      else:
+        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
+    #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
+    #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
+
+    #rooDataset2 = rooDataset.reduce(root.RooFit.CutRange("low,signal,high"))
+    #rooDataset2.SetName("bak_TemplateNoVeryLow")
+    #if workspaceImportFn != None:
+    #  workspaceImportFn(rooDataset2)
+
+    for i in rooParamList:
+      debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+    debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
+
+    return paramList, bakNormTup, debug, None
+
 
 def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
     #print "GP's debug line *******************************************************\n"

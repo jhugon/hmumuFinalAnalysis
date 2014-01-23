@@ -83,7 +83,7 @@ mMuMu.setRange("lowsighigh",massLowRange[0],massHighRange[1])
 
 bwmZ = root.RooRealVar("bwmZ","bwmZ",85,95)
 bwSig = root.RooRealVar("bwSig","bwSig",0.0,30.0)
-expLambda = root.RooRealVar("expLambda","expLambda",-1e-03,-0.1,0.0001)
+expLambda = root.RooRealVar("expLambda","expLambda",-1e-03,-1,1.)
 mixParam = root.RooRealVar("mixParam","mixParam",0.99,0,1)
 
 #Just for fitting Z-peak
