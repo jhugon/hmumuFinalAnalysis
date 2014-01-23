@@ -1223,7 +1223,7 @@ if __name__ == "__main__":
   ############################################
   ### Define number of toys to run over
 
-  nToys = 100
+  nToys = 1
 
   ############################################
   ### Define which reference functions to use
@@ -1267,10 +1267,9 @@ if __name__ == "__main__":
   ### Define which masses to run over
 
   #sigMasses = range(115,156,5)
-  #sigMasses = [115,120,125,130,135,140,145,150,155]
-  sigMasses = [125]
+  sigMasses = [115,120,125,130,135,140,145,150,155]
 
-  sigInject = 20.
+  sigInject = 0.
 
   ########################################
 
