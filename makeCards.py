@@ -718,15 +718,15 @@ def makePDFBakVoigtPMm2(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
       workspaceImportFn(pdfMmumu)
       workspaceImportFn(fr)
 
-    ## Debug Time
-    frame = dimuonMass.frame()
-    frame.SetName("bak_Plot")
-    rooDataset.plotOn(frame)
-    #pdfMmumu.plotOn(frame,root.RooFit.Range(110,160))
-    pdfMmumu.plotOn(frame,root.RooFit.Range(minMass,maxMass))
-    canvas = root.TCanvas()
-    frame.Draw()
-    canvas.SaveAs("debug_VoigtPMm2_"+name+channelName+".png")
+    ### Debug Time
+    #frame = dimuonMass.frame()
+    #frame.SetName("bak_Plot")
+    #rooDataset.plotOn(frame)
+    ##pdfMmumu.plotOn(frame,root.RooFit.Range(110,160))
+    #pdfMmumu.plotOn(frame,root.RooFit.Range(minMass,maxMass))
+    #canvas = root.TCanvas()
+    #frame.Draw()
+    #canvas.SaveAs("debug_VoigtPMm2_"+name+channelName+".png")
 
     #Norm Time
     bakNormTup = None
@@ -770,7 +770,7 @@ def makePDFBakVoigtPExpMm2(name,rooDataset,dimuonMass,minMass,maxMass,workspaceI
     voitSig = root.RooRealVar(channelName+"_voitSig","voitSig",1.5,0.0,30.0)
     voitMmumu = root.RooVoigtian(channelName+"bak_voitMmumu","voitMmumu",dimuonMass,voitmZ,voitWidth,voitSig)
     expParam = root.RooRealVar(channelName+"_expParam","expParam",0.01,-1,1)
-    expMm2Mmumu = root.RooGenericPdf(channelName+"bak_expMm2","exp(@0*@1*@1)*pow(@0,-2)",root.RooArgList(dimuonMass,expParam))
+    expMm2Mmumu = root.RooGenericPdf(channelName+"bak_expMm2","exp(-1*@0*@1*@1)*pow(@0,-2)",root.RooArgList(dimuonMass,expParam))
     mixParam = root.RooRealVar(channelName+"_mixParam","mixParam",0.5,0,1)
     pdfMmumu = root.RooAddPdf("bak","bak",root.RooArgList(voitMmumu,expMm2Mmumu),root.RooArgList(mixParam))
 
@@ -813,15 +813,15 @@ def makePDFBakVoigtPExpMm2(name,rooDataset,dimuonMass,minMass,maxMass,workspaceI
       workspaceImportFn(pdfMmumu)
       workspaceImportFn(fr)
 
-    ## Debug Time
-    frame = dimuonMass.frame()
-    frame.SetName("bak_Plot")
-    rooDataset.plotOn(frame)
-    #pdfMmumu.plotOn(frame,root.RooFit.Range(110,160))
-    pdfMmumu.plotOn(frame,root.RooFit.Range(minMass,maxMass))
-    canvas = root.TCanvas()
-    frame.Draw()
-    canvas.SaveAs("debug_VoigtPExpMm2_"+name+channelName+".png")
+    ### Debug Time
+    #frame = dimuonMass.frame()
+    #frame.SetName("bak_Plot")
+    #rooDataset.plotOn(frame)
+    ##pdfMmumu.plotOn(frame,root.RooFit.Range(110,160))
+    #pdfMmumu.plotOn(frame,root.RooFit.Range(minMass,maxMass))
+    #canvas = root.TCanvas()
+    #frame.Draw()
+    #canvas.SaveAs("debug_VoigtPExpMm2_"+name+channelName+".png")
 
     #Norm Time
     bakNormTup = None
