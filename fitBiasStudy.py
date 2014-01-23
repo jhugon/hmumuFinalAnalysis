@@ -112,6 +112,9 @@ PDFTITLEMAP = PdfTitleMap({
     "ExpTimesBernstein":"Exp*Bernstein",
     "ExpTimesChebychev":"Exp*Chebychev",
     "ExpTimesPolynomial":"Exp*Polynomial",
+    "MSSM":"Exp#times(Breit-Wigner+#frac{1}{m^{2}})",
+    "VoigtPMm2":"Voigtian+#frac{1}{m^{2}}",
+    "VoigtPExpMm2":"Voigtian+#frac{Exp}{m^{2}}",
 })
 
 def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sigMasses,toysPerJob):
@@ -194,7 +197,6 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
       minMassZ = 88.
       maxMassZ = 94.
       dimuonMassZ = root.RooRealVar("dimuonMass","dimuonMass",minMassZ,maxMassZ)
-      dimuonMassZ = dimuonMassZ
 
       ### Load data
       
@@ -1701,13 +1703,15 @@ if __name__ == "__main__":
   ### Define which reference functions to use
 
   refPdfNameList = [
-      #    "Old",
-      #    "ExpMOverSq",
+          "Old",
+          "ExpMOverSq",
+          "Bernstein",
+          "SumExp",
+          "VoigtPExpMm2",
+          "VoigtPMm2",
       #    "ExpMOverSqP0",
       #    "ExpLog",
       #    "MOverSq",
-          "Bernstein",
-          "SumExp",
       #    "SumPow",
       #    "Laurent",
       #    "Chebychev",
@@ -1718,100 +1722,19 @@ if __name__ == "__main__":
   ### for each given reference function
 
   pdfAltNamesDict = {
-      "ExpLog":["ExpMOverSq"],
-      "MOverSq":["ExpMOverSq"],
-      "Old":["ExpMOverSq"],
-      "ExpMOverSq":[          
-                        "Old",
-                    ],
-      "ExpMOverSqP0":[          
-                        "ExpMOverSq",
-                        "Old",
-                    ],
-      "Bernstein":[          
-                        #"ExpMOverSqP0New",
-                        #"ExpMOverSq",
-                        #"Old",
-                        #"2Bernstein",
-                        #"3Bernstein",
-                        #"4Bernstein",
-                        #"5Bernstein",
-                        #"6Bernstein",
-                        #"7Bernstein",
-                        #"8Bernstein",
-                        #"1SumExp",
-                        #"2SumExp",
-                        #"3SumExp",
-                        #"4SumExp",
-                        "0ExpTimesBernstein",
-                        "1ExpTimesBernstein",
-                        "2ExpTimesBernstein",
-                        "3ExpTimesBernstein",
-                        "4ExpTimesBernstein",
-                        "5ExpTimesBernstein",
-                        "6ExpTimesBernstein",
-                        "0ExpTimesChebychev",
-                        "1ExpTimesChebychev",
-                        "2ExpTimesChebychev",
-                        "3ExpTimesChebychev",
-                        "4ExpTimesChebychev",
-                        "5ExpTimesChebychev",
-                        "6ExpTimesChebychev",
-                    ],
-      "SumExp":[          
-                        #"ExpMOverSqP0New",
-                        #"ExpMOverSq",
-                        #"Old",
-                        #"3Bernstein",
-                        #"2Bernstein",
-                        #"3Bernstein",
-                        #"4Bernstein",
-                        #"5Bernstein",
-                        #"6Bernstein",
-                        #"7Bernstein",
-                        #"8Bernstein",
-                        #"1SumExp",
-                        #"2SumExp",
-                        #"3SumExp",
-                        #"4SumExp",
-                        "0ExpTimesBernstein",
-                        "1ExpTimesBernstein",
-                        "2ExpTimesBernstein",
-                        "3ExpTimesBernstein",
-                        "4ExpTimesBernstein",
-                        "5ExpTimesBernstein",
-                        "6ExpTimesBernstein",
-                        "0ExpTimesChebychev",
-                        "1ExpTimesChebychev",
-                        "2ExpTimesChebychev",
-                        "3ExpTimesChebychev",
-                        "4ExpTimesChebychev",
-                        "5ExpTimesChebychev",
-                        "6ExpTimesChebychev",
-                    ],
-      "SumPow":[          
-                        "ExpMOverSq",
-                        "Old",
-                        "SumExp",
-                    ],
-      "Laurent":[          
-                        "ExpMOverSq",
-                        "Old",
-                        "Bernstein",
-                        "SumPow",
-                        "SumExp",
-                    ],
-      "Chebychev":[          
-                        "ExpMOverSq",
-                        "Old",
-                        "Bernstein",
-                        "SumPow",
-                        "SumExp",
-                    ],
-      "Polynomial":[          
-                        "ExpMOverSq",
-                        "Old",
-                    ],
+      "ExpLog":["MSSM"],
+      "MOverSq":["MSSM"],
+      "Old":["MSSM"],
+      "ExpMOverSq":["MSSM"],
+      "ExpMOverSqP0":["MSSM"],
+      "Bernstein":["MSSM"],          
+      "SumExp":["MSSM"],          
+      "SumPow":["MSSM"],          
+      "Laurent":["MSSM"],          
+      "Chebychev":["MSSM"],          
+      "Polynomial":["MSSM"],          
+      "VoigtPExpMm2":["MSSM"],
+      "VoigtPMm2":["MSSM"],
   }
 
   ########################################
@@ -1831,14 +1754,14 @@ if __name__ == "__main__":
   ########################################
   ### Define which categories to run over
 
-  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
 
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   ########################################
