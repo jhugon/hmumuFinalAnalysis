@@ -21,6 +21,7 @@ from itertools import repeat as itrRepeat
 from helpers import *
 import makeCards
 import fitOrderChooser
+from singleUseScripts.biasPklToMu import getSMSigCounts
 
 from numpy import mean, median, corrcoef, percentile
 from numpy import std as stddev
@@ -117,7 +118,7 @@ PDFTITLEMAP = PdfTitleMap({
     "VoigtPExpMm2":"Voigtian+#frac{Exp}{m^{2}}",
 })
 
-def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sigMasses,toysPerJob):
+def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sigMasses,sigInject,toysPerJob):
       """
         Pure function so that we can do multiprocessing!!
       """
@@ -225,6 +226,8 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
       trueToyPdf = wTrueToy.pdf("bak")
       trueToyPdf.SetName(trueToyPdfName)
       assert(trueOrder == trueToyOrder)
+      nDataVar = root.RooFit.RooConst(nData)
+      truePdfE = root.RooExtendPdf(truePdfName+"E","True PDF Extended",truePdf,nDataVar)
 
       # Debug plot for fit to data
       if toysPerJob > 2:
@@ -286,7 +289,10 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
       nBakVar = root.RooRealVar("nBak","N_{B}",nData/2.,nData*2)
 
       ### Now load Signal PDFs
+      nSigVarBounds = nData/4
+      nSigVar = root.RooRealVar("nSig","N_{S}",-nSigVarBounds,nSigVarBounds)
       sigPdfs = []
+      sigPdfEs = []
       wSigs = []
       for hmass in sigMasses:
         wSig = root.RooWorkspace("signal"+catName+energyStr+str(hmass))
@@ -297,12 +303,17 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
         sigPdf.SetName("sigPDF_"+str(hmass)+"_"+catName+energyStr)
         sigPdfs.append(sigPdf)
         wSigs.append(wSig)
+        sigPdfE = root.RooExtendPdf(sigPdf.GetName()+"E",sigPdf.GetTitle()+" Extended",sigPdf,nSigVar)
+        sigPdfEs.append(sigPdfE)
 
-      nSigVar = root.RooRealVar("nSig","N_{S}",-nData/4.,nData/4)
+      ## Load the 1*SM N signal events
+      nSigSMs = []
+      for hmass in sigMasses:
+        nSigSMs.append(getSMSigCounts(catName,hmass))
 
       ### Make results data structure and begin log
       data = {}
-      data['meta'] = {'nData':nData}
+      data['meta'] = {'nData':nData,'sigInjectMu':sigInject}
       data[truePdfName] = {}
       for hmass in sigMasses:
         data[truePdfName][hmass] = {}
@@ -325,11 +336,21 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
       ### Toy Loop
 
       for iToy in range(toysPerJob):
-        toyData = truePdf.generate(root.RooArgSet(dimuonMass),int(nData))
-        toyData.SetName("toyData"+catName+energyStr+str(iToy))
-        toyDataHist = toyData.binnedClone("toyDataHist"+catName+energyStr+str(iToy))
+        toyData = None
+        toyDataHist = None
+        if sigInject == 0.:
+          toyData = truePdf.generate(root.RooArgSet(dimuonMass),int(nData))
+          toyData.SetName("toyData"+catName+energyStr+str(iToy))
+          toyDataHist = toyData.binnedClone("toyDataHist"+catName+energyStr+str(iToy))
         plotThisToy = (iToy % plotEveryNToys == 5)
-        for hmass,sigPdf in zip(sigMasses,sigPdfs):
+        #plotThisToy = True
+        for hmass,sigPdf,sigPdfE,nSigSM in zip(sigMasses,sigPdfs,sigPdfEs,nSigSMs):
+          if sigInject != 0.:
+            nSigVar.setVal(nSigSM*sigInject)
+            truePdfPlusSigPdf = root.RooAddPdf("truePdfPlusSigPdf"+catName+energyStr+str(iToy),"",root.RooArgList(truePdfE,sigPdfE))
+            toyData = truePdfPlusSigPdf.generate(root.RooArgSet(dimuonMass),int(nData))
+            toyData.SetName("toyData"+catName+energyStr+str(iToy))
+            toyDataHist = toyData.binnedClone("toyDataHist"+catName+energyStr+str(iToy))
           frame = None 
           if plotThisToy:
             frame = dimuonMass.frame()
@@ -356,14 +377,14 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           chi2TrueToyVar = trueToySBPdf.createChi2(toyDataHist)
           ndfTrue = dimuonMass.getBins() - 1  # b/c roofit normalizes
           ndfTrue -= rooPdfNFreeParams(trueToySBPdf,toyDataHist)
-          nTrueToy = nSigVar.getVal()
+          nTrueToy = nSigVar.getVal() - nSigSM*sigInject
           errTrueToy = nSigVar.getError()
           if errTrueToy == 0.:
             continue
           if chi2TrueToyVar.getVal()==0.0:
             continue
-          data[truePdfName][hmass]['nTrue'].append(nTrueToy)
-          data[truePdfName][hmass]['errTrue'].append(errTrueToy)
+          data[truePdfName][hmass]['nTrue'].append(nTrueToy/nSigSM)
+          data[truePdfName][hmass]['errTrue'].append(errTrueToy/nSigSM)
           data[truePdfName][hmass]['chi2True'].append(chi2TrueToyVar.getVal())
           data[truePdfName][hmass]['ndfTrue'].append(ndfTrue)
           data[truePdfName][hmass]['zTrue'].append(nTrueToy/errTrueToy)
@@ -394,13 +415,13 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
               altChi2Var = altSBPdf.createChi2(toyDataHist)
               ndfAlt = dimuonMass.getBins() - 1  # b/c roofit normalizes
               ndfAlt -= rooPdfNFreeParams(altSBPdf,toyDataHist)
-              nAlt = nSigVar.getVal()
+              nAlt = nSigVar.getVal() - nSigSM*sigInject
               errAlt = nSigVar.getError()
               if errAlt == 0.:
                 continue
               pull = (nAlt-nTrueToy)/errAlt
-              data[truePdfName][hmass][pdfAltName]['n'].append(nAlt)
-              data[truePdfName][hmass][pdfAltName]['err'].append(errAlt)
+              data[truePdfName][hmass][pdfAltName]['n'].append(nAlt/nSigSM)
+              data[truePdfName][hmass][pdfAltName]['err'].append(errAlt/nSigSM)
               data[truePdfName][hmass][pdfAltName]['chi2'].append(altChi2Var.getVal())
               data[truePdfName][hmass][pdfAltName]['ndf'].append(ndfAlt)
               data[truePdfName][hmass][pdfAltName]['z'].append(nAlt/errAlt)
@@ -446,9 +467,10 @@ def runStudyStar(argList):
 ################################################################################################
 
 class BiasStudy:
-  def __init__(self,category,dataFileNames,energyStr,sigMasses,refPdfNameList,pdfAltNamesDict,nToys=10,pklOutFnBase="output/biasData",inputPkl=None,processPool=None,iJobGroup=None):
+  def __init__(self,category,dataFileNames,energyStr,sigMasses,refPdfNameList,pdfAltNamesDict,nToys=10,pklOutFnBase="output/biasData",inputPkl=None,processPool=None,iJobGroup=None,sigInject=0.):
     self.dataFileNames = dataFileNames
     self.sigMasses = sigMasses
+    self.sigInject = sigInject
     self.iJobGroup = iJobGroup
     ## Try to load data from pkl file
     if inputPkl != None:
@@ -465,6 +487,7 @@ class BiasStudy:
           self.energyStr = self.data['meta']['energyStr']
           energyStr = self.energyStr
           self.sigMasses = self.data['meta']['sigMasses']
+          self.sigInject = self.data['meta']['sigInjectMu']
         except Exception, err:
           print("Error loading data from pkl file: "+str(inputPkl))
           print(err)
@@ -479,6 +502,7 @@ class BiasStudy:
           self.energyStr = self.data['meta']['energyStr']
           energyStr = self.energyStr
           self.sigMasses = self.data['meta']['sigMasses']
+          self.sigInject = self.data['meta']['sigInjectMu']
       else:
           print("Error: unexpected type for input pickle filename or dict: "+type(inputPkl))
           print("Exiting.")
@@ -509,15 +533,16 @@ class BiasStudy:
       data['meta']['nToys'] = self.nToys
       data['meta']['catName'] = self.catName
       data['meta']['energyStr'] = self.energyStr
+      data['meta']['sigInjectMu'] = self.sigInject
       self.iPklAutoSave = 1
       nProcesses = NPROCS
       nJobs = NPROCS
       for refPdfName,iRefPdfName in zip(self.refPdfNameList,range(len(self.refPdfNameList))):
         pdfAltNameList = self.pdfAltNamesDict[refPdfName]
         if processPool == None:
-          mapResults = map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.iJobGroup),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(int(nToys/nJobs))))
+          mapResults = map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.iJobGroup),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(self.sigInject),itrRepeat(int(nToys/nJobs))))
         else:
-          mapResults = processPool.map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.iJobGroup),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(int(nToys/nJobs))))
+          mapResults = processPool.map(runStudyStar, itertools.izip(range(nJobs),itrRepeat(self.iJobGroup),itrRepeat(self.catName),itrRepeat(self.energyStr),itrRepeat(refPdfName),itrRepeat(pdfAltNameList),itrRepeat(self.dataFileNames),itrRepeat(self.sigMasses),itrRepeat(self.sigInject),itrRepeat(int(nToys/nJobs))))
         for jobResults in mapResults:
           mergeDicts(data,jobResults)
         #if iRefPdfName != len(self.refPdfNameList)-1:
@@ -1697,7 +1722,7 @@ if __name__ == "__main__":
   ############################################
   ### Define number of toys to run over
 
-  nToys = 1
+  nToys = 100
 
   ############################################
   ### Define which reference functions to use
@@ -1741,7 +1766,10 @@ if __name__ == "__main__":
   ### Define which masses to run over
 
   #sigMasses = range(115,156,5)
-  sigMasses = [115,120,125,130,135,140,145,150,155]
+  #sigMasses = [115,120,125,130,135,140,145,150,155]
+  sigMasses = [125]
+
+  sigInject = 20.
 
   ########################################
 
@@ -1761,7 +1789,7 @@ if __name__ == "__main__":
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   ########################################
@@ -1851,7 +1879,7 @@ if __name__ == "__main__":
     if NPROCS > 1:
       processPool = Pool(processes=NPROCS)
     for category in categories:
-      bs = BiasStudy(category,dataFns8TeV,"8TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool,iJobGroup=iJobGroup)
+      bs = BiasStudy(category,dataFns8TeV,"8TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool,iJobGroup=iJobGroup,sigInject=sigInject)
 #      logFile.write(bs.outStr)
       if iJobGroup == None:
         bs.plot(outDir+"bias_")
