@@ -692,7 +692,7 @@ def makePDFBakVoigtPMm2(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
     #frameZ = dimuonMassZ.frame()
     #frameZ.SetName("bak_PlotZ")
     #rooDatasetZ.plotOn(frameZ)
-    #bwMmumuZ.plotOn(frameZ)
+    #voitMmumuZ.plotOn(frameZ)
     #canvas = root.TCanvas()
     #frameZ.Draw()
     #canvas.SaveAs("debug_"+name+channelName+"_Z.png")
@@ -704,15 +704,15 @@ def makePDFBakVoigtPMm2(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
     #chi2 = pdfMmumu.createChi2(rooDataset)
     fr.Print()
 
-    rooParamList = [bwmZ,bwWidth,mixParam]
+    rooParamList = [voitmZ,voitWidth,mixParam]
     paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
 
     if FREEBAKPARAMS:
       for param in rooParamList:
         param.setConstant(False)
 
-    bwWidth.setConstant(True)
-    bwmZ.setConstant(True)
+    voitWidth.setConstant(True)
+    voitmZ.setConstant(True)
 
     if workspaceImportFn != None:
       workspaceImportFn(pdfMmumu)
@@ -769,8 +769,8 @@ def makePDFBakVoigtPExpMm2(name,rooDataset,dimuonMass,minMass,maxMass,workspaceI
     voitmZ = root.RooRealVar(channelName+"_voitmZ","voitmZ",91,85,95)
     voitSig = root.RooRealVar(channelName+"_voitSig","voitSig",1.5,0.0,30.0)
     voitMmumu = root.RooVoigtian(channelName+"bak_voitMmumu","voitMmumu",dimuonMass,voitmZ,voitWidth,voitSig)
-    expParam = root.RooRealVar(channelName+"_expParam","expParam",-0.01,-1,1)
-    expMm2Mmumu = root.RooGenericPdf(channelName+"bak_expMm2","exp(@0*@1)*pow(@0,-2)",root.RooArgList(dimuonMass,expParam))
+    expParam = root.RooRealVar(channelName+"_expParam","expParam",0.01,-1,1)
+    expMm2Mmumu = root.RooGenericPdf(channelName+"bak_expMm2","exp(@0*@1*@1)*pow(@0,-2)",root.RooArgList(dimuonMass,expParam))
     mixParam = root.RooRealVar(channelName+"_mixParam","mixParam",0.5,0,1)
     pdfMmumu = root.RooAddPdf("bak","bak",root.RooArgList(voitMmumu,expMm2Mmumu),root.RooArgList(mixParam))
 
@@ -787,7 +787,7 @@ def makePDFBakVoigtPExpMm2(name,rooDataset,dimuonMass,minMass,maxMass,workspaceI
     #frameZ = dimuonMassZ.frame()
     #frameZ.SetName("bak_PlotZ")
     #rooDatasetZ.plotOn(frameZ)
-    #bwMmumuZ.plotOn(frameZ)
+    #voitMmumuZ.plotOn(frameZ)
     #canvas = root.TCanvas()
     #frameZ.Draw()
     #canvas.SaveAs("debug_"+name+channelName+"_Z.png")
@@ -799,15 +799,15 @@ def makePDFBakVoigtPExpMm2(name,rooDataset,dimuonMass,minMass,maxMass,workspaceI
     #chi2 = pdfMmumu.createChi2(rooDataset)
     fr.Print()
 
-    rooParamList = [bwmZ,bwWidth,expParam,mixParam]
+    rooParamList = [voitmZ,voitWidth,expParam,mixParam]
     paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
 
     if FREEBAKPARAMS:
       for param in rooParamList:
         param.setConstant(False)
 
-    bwWidth.setConstant(True)
-    bwmZ.setConstant(True)
+    voitWidth.setConstant(True)
+    voitmZ.setConstant(True)
 
     if workspaceImportFn != None:
       workspaceImportFn(pdfMmumu)
@@ -1244,6 +1244,8 @@ makePDFSig = makePDFSigDG
 #makePDFBak = makePDFBakExpMOverSq
 #makePDFBak = makePDFBakBernsteinProd
 makePDFBak = makePDFBakMSSM
+#makePDFBak = makePDFBakVoigtPMm2
+#makePDFBak = makePDFBakVoigtPExpMm2
 
 ###################################################################################
 
