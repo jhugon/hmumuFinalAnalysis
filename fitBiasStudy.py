@@ -1049,6 +1049,8 @@ def printBiasSummary(dataCats):
           maxBias = 0.
           absMaxBias = 0.
           for hmass in data[refName][altName]:
+            if hmass < 120. or hmass > 150.:
+              continue
             tmpBias = data[refName][altName][hmass]
             tmpAbsBias = abs(tmpBias)
             if tmpAbsBias > absMaxBias:
@@ -1093,6 +1095,8 @@ def printDiagnosticSummary(dataCats,dataCatsZSig):
     for refName in refNames:
        maxZSig = 0.
        for hmass in dataZSig[refName]['zTrue']:
+         if hmass < 120. or hmass > 150.:
+           continue
          maxZSig = max(dataZSig[refName]['zTrue'][hmass],maxZSig)
        plainResult += "{0:>15.2f}".format(maxZSig)
     plainResult += "\n"
@@ -1106,6 +1110,8 @@ def printDiagnosticSummary(dataCats,dataCatsZSig):
           maxBias = 0.
           absMaxBias = 0.
           for hmass in data[refName][altName]:
+            if hmass < 120. or hmass > 150.:
+              continue
             tmpBias = data[refName][altName][hmass]
             tmpAbsBias = abs(tmpBias)
             if tmpAbsBias > absMaxBias:
@@ -1224,6 +1230,8 @@ def printBiasSummaryNevt(dataCats):
           maxBias = 0.
           absMaxBias = 0.
           for hmass in data[refName][altName]:
+            if hmass < 120. or hmass > 150.:
+              continue
             tmpBias = data[refName][altName][hmass]
             tmpAbsBias = abs(tmpBias)
             if tmpAbsBias > absMaxBias:
