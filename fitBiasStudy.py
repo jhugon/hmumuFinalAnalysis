@@ -311,9 +311,19 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
       for hmass in sigMasses:
         nSigSMs.append(getSMSigCounts(catName,hmass))
 
+      ## Load 1 sigma excess per category N signal events
+
+      nSig1Sigmas = []
+      oneSigPklFile = open('pklfiles/oneSig.pkl')
+      oneSigDict = cPickle.load(oneSigPklFile)
+      oneSigDict = oneSigDict[energyStr][catName]
+      for hmass in sigMasses:
+        nSig1Sigmas.append(oneSigDict[hmass])
+      oneSigPklFile.close()
+
       ### Make results data structure and begin log
       data = {}
-      data['meta'] = {'nData':nData,'sigInjectMu':sigInject}
+      data['meta'] = {'nData':nData,'sigInjectNsigma':sigInject}
       data[truePdfName] = {}
       for hmass in sigMasses:
         data[truePdfName][hmass] = {}
@@ -344,9 +354,9 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           toyDataHist = toyData.binnedClone("toyDataHist"+catName+energyStr+str(iToy))
         plotThisToy = (iToy % plotEveryNToys == 5)
         #plotThisToy = True
-        for hmass,sigPdf,sigPdfE,nSigSM in zip(sigMasses,sigPdfs,sigPdfEs,nSigSMs):
+        for hmass,sigPdf,sigPdfE,nSigSM,nSig1Sigma in zip(sigMasses,sigPdfs,sigPdfEs,nSigSMs,nSig1Sigmas):
           if sigInject != 0.:
-            nSigVar.setVal(nSigSM*sigInject)
+            nSigVar.setVal(nSig1Sigma*sigInject)
             truePdfPlusSigPdf = root.RooAddPdf("truePdfPlusSigPdf"+catName+energyStr+str(iToy),"",root.RooArgList(truePdfE,sigPdfE))
             toyData = truePdfPlusSigPdf.generate(root.RooArgSet(dimuonMass),int(nData))
             toyData.SetName("toyData"+catName+energyStr+str(iToy))
@@ -377,14 +387,14 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           chi2TrueToyVar = trueToySBPdf.createChi2(toyDataHist)
           ndfTrue = dimuonMass.getBins() - 1  # b/c roofit normalizes
           ndfTrue -= rooPdfNFreeParams(trueToySBPdf,toyDataHist)
-          nTrueToy = nSigVar.getVal() - nSigSM*sigInject
+          nTrueToy = nSigVar.getVal() - nSig1Sigma*sigInject
           errTrueToy = nSigVar.getError()
           if errTrueToy == 0.:
             continue
           if chi2TrueToyVar.getVal()==0.0:
             continue
-          data[truePdfName][hmass]['nTrue'].append(nTrueToy/nSigSM)
-          data[truePdfName][hmass]['errTrue'].append(errTrueToy/nSigSM)
+          data[truePdfName][hmass]['nTrue'].append(nTrueToy)
+          data[truePdfName][hmass]['errTrue'].append(errTrueToy)
           data[truePdfName][hmass]['chi2True'].append(chi2TrueToyVar.getVal())
           data[truePdfName][hmass]['ndfTrue'].append(ndfTrue)
           data[truePdfName][hmass]['zTrue'].append(nTrueToy/errTrueToy)
@@ -415,13 +425,13 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
               altChi2Var = altSBPdf.createChi2(toyDataHist)
               ndfAlt = dimuonMass.getBins() - 1  # b/c roofit normalizes
               ndfAlt -= rooPdfNFreeParams(altSBPdf,toyDataHist)
-              nAlt = nSigVar.getVal() - nSigSM*sigInject
+              nAlt = nSigVar.getVal() - nSig1Sigma*sigInject
               errAlt = nSigVar.getError()
               if errAlt == 0.:
                 continue
               pull = (nAlt-nTrueToy)/errAlt
-              data[truePdfName][hmass][pdfAltName]['n'].append(nAlt/nSigSM)
-              data[truePdfName][hmass][pdfAltName]['err'].append(errAlt/nSigSM)
+              data[truePdfName][hmass][pdfAltName]['n'].append(nAlt)
+              data[truePdfName][hmass][pdfAltName]['err'].append(errAlt)
               data[truePdfName][hmass][pdfAltName]['chi2'].append(altChi2Var.getVal())
               data[truePdfName][hmass][pdfAltName]['ndf'].append(ndfAlt)
               data[truePdfName][hmass][pdfAltName]['z'].append(nAlt/errAlt)
@@ -487,7 +497,7 @@ class BiasStudy:
           self.energyStr = self.data['meta']['energyStr']
           energyStr = self.energyStr
           self.sigMasses = self.data['meta']['sigMasses']
-          self.sigInject = self.data['meta']['sigInjectMu']
+          self.sigInject = self.data['meta']['sigInjectNsigma']
         except Exception, err:
           print("Error loading data from pkl file: "+str(inputPkl))
           print(err)
@@ -502,7 +512,7 @@ class BiasStudy:
           self.energyStr = self.data['meta']['energyStr']
           energyStr = self.energyStr
           self.sigMasses = self.data['meta']['sigMasses']
-          self.sigInject = self.data['meta']['sigInjectMu']
+          self.sigInject = self.data['meta']['sigInjectNsigma']
       else:
           print("Error: unexpected type for input pickle filename or dict: "+type(inputPkl))
           print("Exiting.")
@@ -533,7 +543,7 @@ class BiasStudy:
       data['meta']['nToys'] = self.nToys
       data['meta']['catName'] = self.catName
       data['meta']['energyStr'] = self.energyStr
-      data['meta']['sigInjectMu'] = self.sigInject
+      data['meta']['sigInjectNsigma'] = self.sigInject
       self.iPklAutoSave = 1
       nProcesses = NPROCS
       nJobs = NPROCS
@@ -569,10 +579,12 @@ class BiasStudy:
 
     self.pullSummaryDict = {}
     self.zSigmaSummaryDict = {}
+    self.nevtSummaryDict = {}
     for refPdfName in self.refPdfNameList:
       self.pullSummaryDict[refPdfName] = {}
       self.zSigmaSummaryDict[refPdfName] = {}
       self.zSigmaSummaryDict[refPdfName]["zTrue"] = {}
+      self.nevtSummaryDict[refPdfName] = {}
       for hmass in self.sigMasses:
         self.zSigmaSummaryDict[refPdfName]['zTrue'][hmass] = stddev(data[refPdfName][hmass]['zTrue'])
         for pdfAltName in self.pdfAltNamesDict[refPdfName]:
@@ -580,9 +592,13 @@ class BiasStudy:
             self.zSigmaSummaryDict[refPdfName][pdfAltName] = {}
           if not self.pullSummaryDict[refPdfName].has_key(pdfAltName):
             self.pullSummaryDict[refPdfName][pdfAltName] = {}
+          if not self.nevtSummaryDict[refPdfName].has_key(pdfAltName):
+            self.nevtSummaryDict[refPdfName][pdfAltName] = {}
           self.pullSummaryDict[refPdfName][pdfAltName][hmass] = median(data[refPdfName][hmass][pdfAltName]['pull'])
           self.pullSummaryDict[refPdfName]['orderRef'] = data[refPdfName][hmass]['orderTrue']
           self.zSigmaSummaryDict[refPdfName][pdfAltName][hmass] = stddev(data[refPdfName][hmass][pdfAltName]['z'])
+          self.nevtSummaryDict[refPdfName][pdfAltName][hmass] = median(data[refPdfName][hmass][pdfAltName]['n'])
+          self.nevtSummaryDict[refPdfName]['orderRef'] = data[refPdfName][hmass]['orderTrue']
 
   def plot(self,outputPrefix):
 
@@ -1046,7 +1062,6 @@ def printBiasSummary(dataCats):
     latexResult += "\\end{tabular}\n\n"
   print plainResult
   print latexResult
-          
       
 def printDiagnosticSummary(dataCats,dataCatsZSig):
   catNames = sorted(dataCats.keys())
@@ -1106,96 +1121,122 @@ def printDiagnosticSummary(dataCats,dataCatsZSig):
     plainResult += "\n\n"
   print plainResult
 
-def createSummaryMuDict(data):
-  muDict = {}
-  muDict = {'meta':data['meta']}
-  pdfRefNames = data['meta']['refPdfNameList']
-  altPdfName = 'MSSM'
-  muDict['meta']['altPdf'] = altPdfName
-  muDict['meta'].pop('pdfAltNamesDict')
-  for refPdfName in pdfRefNames:
-    muDict[refPdfName] = {}
-    for hmass in data['meta']['sigMasses']:
-      # muR is (N(alt)-N(ref))/N(SM) similar to what we used before
-      # muAlt is N(alt)/N(SM), just in case you want it
-      # muAltUnc is the uncertainty on N(alt) divided by N(SM)
-      # muRef is N(ref)/N(SM), just in case you want it
-      # muRefUnc is the uncertainty on N(ref) divided by N(SM)
-      # You shouldn't need it
-      muAltList = data[refPdfName][hmass][altPdfName]["n"]
-      muAltUncList = data[refPdfName][hmass][altPdfName]["err"]
-      muRefList = data[refPdfName][hmass]["nTrue"]
-      muRefUncList = data[refPdfName][hmass]["errTrue"]
-      muRList = [i-j for i,j in zip(muAltList,muRefList)]
-      muR = median(muRList)
-      muAlt = median(muAltList)
-      muAltUnc = median(muAltUncList)
-      muRef = median(muRefList)
-      muRefUnc = median(muRefUncList)
-      muDict[refPdfName][hmass] = {}
-      muDict[refPdfName][hmass]["muR"]      = muR
-      muDict[refPdfName][hmass]["muAlt"]    = muAlt
-      muDict[refPdfName][hmass]["muAltUnc"] = muAltUnc
-      muDict[refPdfName][hmass]["muRef"]    = muRef
-      muDict[refPdfName][hmass]["muRefUnc"] = muRefUnc
-  return muDict
-
-def printBiasCombination(data):
-  hmasses = None
-  for catName in data:
-    hmasses = data[catName]['meta']['sigMasses']
-    continue
-  print "Weighted Averages of Categories"
-  combPullDict = {}
-  refNames = sorted(data[catName].keys())
-  refNames.remove('meta')
-  for refName in refNames:
-    print refName
-    print "{0:<7} {1:>8} {2:>8} {3:>8}".format('hmass', 'Mu','deltaMu','Pull')
-    for hmass in hmasses:
-      normFactor = 0.
-      sumOfWeightedMeas = 0.
-      for catName in data:
-        var = data[catName][refName][hmass]['muAltUnc']**2
-        sumOfWeightedMeas += data[catName][refName][hmass]['muR'] / var
-        normFactor += 1./var
-      weightedMean = sumOfWeightedMeas/normFactor
-      weightedStdDev = 1./sqrt(normFactor)
-      print "{0:<7} {1:>8.2f} {2:>8.2f} {3:>8.2f}".format(hmass, weightedMean,weightedStdDev,weightedMean/weightedStdDev)
-      if not combPullDict.has_key(hmass):
-        combPullDict[hmass] = {}
-      combPullDict[hmass][refName] = weightedMean/weightedStdDev
-
-  print
-  print
-
-  rowStr = "{0:<8}"
-  rowArgs = [r"m_H [\GeVcc{}]"]
-  rowI = 1
-  for refName in refNames:
-    rowStr += " & {"+str(rowI)+":<14}"
-    rowArgs.append(PDFTITLEMAP[refName])
-    rowI += 1
-  rowStr += r"\\ \hline \hline"
-  print rowStr.format(*rowArgs)
-  rowStr = "{0:<8}"
-  rowArgs = ["hmass"]
-  rowI = 1
-  for refName in refNames:
-    rowStr += " {"+str(rowI)+":<14}"
-    rowArgs.append(refName)
-    rowI += 1
-  print rowStr.format(*rowArgs)
-  for hmass in hmasses:
-    rowStr = "{0:<8}"
-    rowArgs = [hmass]
-    rowI = 1
+def printBiasTableNevt(dataCats,hmasses):
+  catNames = sortCatNames(dataCats.keys())
+  if len(catNames) == 0:
+    return
+  plainResult = ""
+  latexResult = ""
+  for catName in catNames:
+    catTitle = TITLEMAP[catName]
+    data = dataCats[catName]
+    refNames = sorted(data.keys())
+    allAltNames = set()
     for refName in refNames:
-      rowStr += " & {"+str(rowI)+":<12.2f}"
-      rowArgs.append(combPullDict[hmass][refName])
-      rowI += 1
-    print rowStr.format(*rowArgs)
-    
+      allAltNames = allAltNames.union(data[refName].keys())
+    allAltNames = sorted(list(allAltNames))
+    allAltNames.pop(allAltNames.index("orderRef"))
+    for altName in allAltNames:
+      altTitle = PDFTITLEMAP[altName]
+      if "#" in altTitle or "^" in altTitle:
+        altTitle = '$'+altTitle+'$'
+      altTitle = altTitle.replace("#","\\")
+      plainResult += "############################################################\n"
+      plainResult += catName+" Nevt Bias v. Mass for Alt: "+altName+"\n\n"
+      plainResult += "\n{0:<10}".format("mH")+"{0:>15}\n".format("Reference")
+      plainResult += "{0:<10}".format("")
+      latexResult += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+      latexResult += "%% "+catName+" $N_{sig}$ Bias v. Mass for Alt: "+altName+"\n\n"
+      latexResult += r"\begin{tabular}{|l|"+"r|"*len(refNames)+"} \\hline \n"
+      latexResult += r"\multicolumn{"+str(len(refNames)+1)+r"}{|c|}{ \bf "+catTitle+' Bias for '+altTitle+r"} \\ \hline"+"\n"
+      latexResult += r"\multicolumn{1}{|c|}{\multirow{2}{*}{$m_{H}$ [GeV/c$^{2}$]}} & \multicolumn{"+str(len(refNames))+r"}{c|}{Reference PDFs} \\ \cline{"+"2-{0}".format(len(refNames)+1)+"} "+"\n"
+      for refName in refNames:
+        plainResult += "{0:>15}".format(refName)
+        nicePdfName = PDFTITLEMAP[refName]
+        if "#" in nicePdfName:
+          nicePdfName = '$'+nicePdfName+'$'
+        latexResult += "& \multicolumn{1}{c|}{" +"{0:>15}".format(nicePdfName.replace("#","\\"))+"} "
+      plainResult += "\n"
+      latexResult += r"\\ \hline"+"\n"
+      for hmass in hmasses:
+        plainResult += "{0:<10.0f}".format(hmass)
+        latexResult += "{0:10.0f} ".format(hmass)
+        for refName in refNames:
+           tmpBias = data[refName][altName][hmass]
+           plainResult += "{0:>15.1f}".format(tmpBias)
+           latexResult += ("& {0:15.1f} ".format(tmpBias))
+        plainResult += "\n"
+        latexResult += r"\\ \hline"+"\n"
+      plainResult += "\n\n"
+      latexResult += "\\end{tabular}\n\n"
+  print plainResult
+  print latexResult
+
+def printBiasSummaryNevt(dataCats):
+  catNames = sorted(dataCats.keys())
+  if len(catNames) == 0:
+    return
+  plainResult = ""
+  latexResult = ""
+  for catName in catNames:
+    catTitle = TITLEMAP[catName]
+    data = dataCats[catName]
+    refNames = sorted(data.keys())
+    allAltNames = set()
+    for refName in refNames:
+      allAltNames = allAltNames.union(data[refName].keys())
+    allAltNames = sorted(list(allAltNames))
+    allAltNames.pop(allAltNames.index("orderRef"))
+    plainResult += "############################################################\n"
+    plainResult += catName+" Maximum Bias\n\n"
+    plainResult += "\n{0:<15}".format("Alternate")+"{0:>15}\n".format("Reference")
+    plainResult += "{0:<15}".format("")
+    latexResult += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+    latexResult += "%% "+catName+" Maximum Bias\n\n"
+    latexResult += r"\begin{tabular}{|l|"+"r|"*len(refNames)+"} \\hline \n"
+    latexResult += r"\multicolumn{"+str(len(refNames)+1)+r"}{|c|}{ \bf "+catTitle+r" Maximum Bias} \\ \hline"+"\n"
+    latexResult += r"\multicolumn{1}{|c|}{\multirow{3}{*}{Alternate PDFs}} & \multicolumn{"+str(len(refNames))+r"}{c|}{Reference PDFs} \\ \cline{"+"2-{0}".format(len(refNames)+1)+"} "+"\n"
+    for refName in refNames:
+      if data[refName]['orderRef'] != None:
+        latexResult += "& \multicolumn{1}{c|}{"+getOrdinalStr(data[refName]['orderRef'])+"-Order} "
+      else:
+        latexResult += "&              ".format(getOrdinalStr(data[refName]['orderRef']))
+    latexResult += r"\\ "+"\n"
+    for refName in refNames:
+      plainResult += "{0:>15}".format(refName)
+      nicePdfName = PDFTITLEMAP[refName]
+      if "#" in nicePdfName:
+        nicePdfName = '$'+nicePdfName+'$'
+      latexResult += "& \multicolumn{1}{c|}{" +"{0:>15}".format(nicePdfName.replace("#","\\"))+"} "
+    plainResult += "\n"
+    latexResult += r"\\ \hline"+"\n"
+    for altName in allAltNames:
+      plainResult += "{0:<15}".format(altName)
+      nicePdfName = PDFTITLEMAP[altName]
+      if "#" in nicePdfName:
+        nicePdfName = '$'+nicePdfName+'$'
+      latexResult += "{0:15} ".format(nicePdfName.replace("#","\\"))
+      for refName in refNames:
+          if not data[refName].has_key(altName):
+            plainResult += "{0:>15}".format("-")
+            latexResult += "& {0:15} ".format('-')
+            continue
+          maxBias = 0.
+          absMaxBias = 0.
+          for hmass in data[refName][altName]:
+            tmpBias = data[refName][altName][hmass]
+            tmpAbsBias = abs(tmpBias)
+            if tmpAbsBias > absMaxBias:
+              maxBias = tmpBias
+              absMaxBias = tmpAbsBias
+          plainResult += "{0:>15.1f}".format(maxBias)
+          latexResult += ("& {0:15.1f} ".format(maxBias))
+      plainResult += "\n"
+      latexResult += r"\\ \hline"+"\n"
+    plainResult += "\n\n"
+    latexResult += "\\end{tabular}\n\n"
+  print plainResult
+  print latexResult
 
 if __name__ == "__main__":
   helpStr = "./fitBiasStudy.py [jobGroupNumber] [categoryName]\n  where jobGroupNumber is an int that will be added to the random number seed (*1000)\n    and the output pkl file name\n  if there is a jobGroupNumber, no plots or summary will be produced.\n  If categoryName is present, then only that category will be run,\n    otherwise a group of categories defined in the script will all be run."
@@ -1269,6 +1310,7 @@ if __name__ == "__main__":
   #sigMasses = range(115,156,5)
   sigMasses = [115,120,125,130,135,140,145,150,155]
 
+  # Number of sigmas signal to inject per category
   sigInject = 0.
 
   ########################################
@@ -1320,7 +1362,7 @@ if __name__ == "__main__":
 
   allSummaries = {}
   allZSigmaSummaries = {}
-  muSummaries = {}
+  allNevtSummaries = {}
   tmpJobGroupStr = ""
   if iJobGroup != None:
     tmpJobGroupStr = "_jobGrp"+str(iJobGroup)
@@ -1350,7 +1392,7 @@ if __name__ == "__main__":
         bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
         allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
-        muSummaries[bs.catName] = createSummaryMuDict(bs.data)
+        allNevtSummaries[bs.catName] = bs.nevtSummaryDict
     else:
       # Identify basenames to combine job groups
       basenames = set()
@@ -1376,7 +1418,7 @@ if __name__ == "__main__":
         bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
         allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
-        muSummaries[bs.catName] = createSummaryMuDict(bs.data)
+        allNevtSummaries[bs.catName] = bs.nevtSummaryDict
   else:
     processPool = None
     if NPROCS > 1:
@@ -1388,13 +1430,14 @@ if __name__ == "__main__":
         bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
         allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
-        muSummaries[bs.catName] = createSummaryMuDict(bs.data)
-  printBiasTable(allSummaries,sigMasses)
-  printBiasSummary(allSummaries)
-  printDiagnosticSummary(allSummaries,allZSigmaSummaries)
+        allNevtSummaries[bs.catName] = bs.nevtSummaryDict
+#  printBiasTable(allSummaries,sigMasses)
+#  printBiasSummary(allSummaries)
+#  printDiagnosticSummary(allSummaries,allZSigmaSummaries)
+  printBiasTableNevt(allNevtSummaries,sigMasses)
+  printBiasSummaryNevt(allNevtSummaries)
     
-  now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
+#  now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
 #  logFile.write("\n\n# {0}\n".format(now))
 #  logFile.close()
-  printBiasCombination(muSummaries)
   
