@@ -53,6 +53,8 @@ FREEBAKPARAMS = True
 USETREES=False
 HISTNAME="mDiMu"
 
+BAKPARAMUNC=True
+
 if args.cutOpt:
   USEGPANNA = False
 
@@ -82,6 +84,7 @@ def convertSigName(name):
     return "WH"
   if "zhH" in name:
     return "ZH"
+  return name
 
 class Param:
   def __init__(self,name,nominal,lowErr,highErr):
@@ -1565,6 +1568,26 @@ class Analysis:
     for sigName,sigEff in zip(signalNames,self.effSigList):
       self.debug += "#    {0}: {1:.2g}\n".format(sigName,sigEff)
 
+    ### Background Parameterization Uncertainty Part
+    if BAKPARAMUNC:
+      self.bakParamUncPdfName = "bakParamUnc"
+      sigParams, sigDebug =  makePDFSigNew(analysis+energyStr,self.bakParamUncPdfName,dimuonMass,self.higgsMass,wImport)
+      self.sigParamList.append(sigParams)
+      self.debug += sigDebug
+      self.bakParamUncCounts = BakParameterizationUncDict[energyStr][analysis]
+      # Giovanni Recommended this next part, but I think it adds a free parameter we don't want
+      #self.bakParamUncVar = root.RooRealVar(self.bakParamUncPdfName+'_norm','',0.,-3.*self.bakParamUncCounts,3.*self.bakParamUncCounts)
+      #wImport(self.bakParamUncVar)
+
+  def getBakParamUncName(self,full=False):
+    if full:
+      # example: n_exp_binJets01FailPtG10BO8TeV_proc_bakParamUnc param 0.0 50.0
+      return "n_exp_bin"+self.analysis+self.energyStr+"_proc_"+self.bakParamUncPdfName
+    else:
+      return self.bakParamUncPdfName
+  def getBakParamUncCounts(self):
+    return self.bakParamUncCounts
+
   def getCutHist(self,inHist,outHist,cut,cutAbove=False):
     if not inHist.InheritsFrom("TH1"):
       print("Error: Analysis.getCutHist(): inHist is not a hist exiting.")
@@ -1901,6 +1924,24 @@ class DataCardMaker:
     
         iParam += 1
         iProc += 1
+
+        ## Bkg Parameterization Uncertainty Time
+        if BAKPARAMUNC:
+          binFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+          binFormatList.append(channelName)
+  
+          proc1FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+          proc1FormatList.append(channel.getBakParamUncName())
+  
+          proc2FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+          proc2FormatList.append(iProc)
+
+          decimals = ".1f"
+          rateFormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+decimals+"} "
+          rateFormatList.append(1.0)  # Want in terms of n signal events NOT mu
+    
+          iParam += 1
+          iProc += 1
     binFormatString+= "\n"
     proc1FormatString+= "\n"
     proc2FormatString+= "\n"
@@ -1934,6 +1975,12 @@ class DataCardMaker:
           value = "-"
           formatList.append(value)
           iParam += 1
+          ## Bkg Parameterization Uncertainty Time
+          if BAKPARAMUNC:
+            formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+            value = "-"
+            formatList.append(value)
+            iParam += 1
       formatString += "\n"
       #print formatString
       #print formatList
@@ -1969,6 +2016,12 @@ class DataCardMaker:
             value = "-"
             formatList.append(value)
             iParam += 1
+            ## Bkg Parameterization Uncertainty Time
+            if BAKPARAMUNC:
+              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+              value = "-"
+              formatList.append(value)
+              iParam += 1
         formatString += "\n"
         #print formatString
         #print formatList
@@ -1999,6 +2052,12 @@ class DataCardMaker:
             value = "-"
             formatList.append(value)
             iParam += 1
+            ## Bkg Parameterization Uncertainty Time
+            if BAKPARAMUNC:
+              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+              value = "-"
+              formatList.append(value)
+              iParam += 1
           formatString += "\n"
           #print formatString
           #print formatList
@@ -2030,6 +2089,13 @@ class DataCardMaker:
           formatString += tmpString
           formatList.append(value)
           iParam += 1
+          ## Bkg Parameterization Uncertainty Time
+          if BAKPARAMUNC:
+            value = '-'
+            tmpString = "{"+str(iParam)+":^"+str(self.largestChannelName)+"}"
+            formatString += tmpString
+            formatList.append(value)
+            iParam += 1
       formatString += "\n"
       outfile.write(formatString.format(*formatList))
 
@@ -2057,6 +2123,17 @@ class DataCardMaker:
             #print formatString
             #print formatList
             outfile.write(formatString.format(*formatList))
+
+      # Parameter Uncertainty for background parameterization uncertainty
+      if BAKPARAMUNC:
+        for channel,channelName in zip(self.channels,self.channelNames):
+          nuisanceName = channel.getBakParamUncName(True)
+          formatString = "{0:<25} {1:<6} {2:<10.1f} {3:<10.5g}"
+          formatList = [nuisanceName,"param",0.0,channel.getBakParamUncCounts()]
+          formatString += "\n"
+          #print formatString
+          #print formatList
+          outfile.write(formatString.format(*formatList))
 
     #Debugging
     outfile.write("#################################\n")
@@ -2161,6 +2238,7 @@ if __name__ == "__main__":
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
   #analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  #analyses += [["Jets01FailPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   analyses += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   analyses += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   analyses += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]

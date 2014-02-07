@@ -130,8 +130,8 @@ class ShapePlotter:
                             signalLegEntry=signalLegEntry,
                             caption1="Analysis A"
                             )
-      rmp.draw(saveName)
-      #rmp.drawWithParams(saveName+"_params",["mixParam","bwWidth","bwmZ","expParam"])
+      #rmp.draw(saveName)
+      rmp.drawWithParams(saveName+"_params",["mixParam","bwWidth","bwmZ","expParam"])
 
       #Pull Distribution Time
       saveNameSplit = os.path.split(saveName)
@@ -289,7 +289,7 @@ if __name__ == "__main__":
     #if ("147" not in fn):
         continue
 
-    skip = True
+    skip = False
     #if ("Jets01FailPtG10BB" in fn):
     #  skip = False
     #if ("Jets01PassPtG10BB" in fn):
