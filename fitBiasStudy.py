@@ -1432,7 +1432,7 @@ if __name__ == "__main__":
     if NPROCS > 1:
       processPool = Pool(processes=NPROCS)
     for category in categories:
-      bs = BiasStudy(category,dataFns8TeV,"8TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool,iJobGroup=iJobGroup,sigInject=sigInject)
+      bs = BiasStudy(category,dataFns7TeV,"7TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool,iJobGroup=iJobGroup,sigInject=sigInject)
 #      logFile.write(bs.outStr)
       if iJobGroup == None:
         bs.plot(outDir+"bias_")
