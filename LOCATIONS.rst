@@ -55,6 +55,8 @@ H->mumu Datacards
 H->mumu All Categories Bias Data
 --------------------------------
 
+**7TeV bias study performed with 8TeV Bernstein reference orders**
+
 /raid/raid9/jhugon/biasData/
 
 Backup in /afs/cern.ch/user/j/jhugon/work/public/hmumuBkgBias/
