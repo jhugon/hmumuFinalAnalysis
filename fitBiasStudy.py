@@ -998,13 +998,14 @@ def printBiasTable(dataCats,hmasses):
   print latexResult
 
 def printBiasSummary(dataCats):
-  catNames = sorted(dataCats.keys())
+  catNames = sortCatNames(dataCats.keys())
   if len(catNames) == 0:
     return
   plainResult = ""
   latexResult = ""
+  refNames = None
+  allAltNames = None
   for catName in catNames:
-    catTitle = TITLEMAP[catName]
     data = dataCats[catName]
     refNames = sorted(data.keys())
     allAltNames = set()
@@ -1013,14 +1014,14 @@ def printBiasSummary(dataCats):
     allAltNames = sorted(list(allAltNames))
     allAltNames.pop(allAltNames.index("orderRef"))
     plainResult += "############################################################\n"
-    plainResult += catName+" Maximum Bias\n\n"
-    plainResult += "\n{0:<15}".format("Alternate")+"{0:>15}\n".format("Reference")
-    plainResult += "{0:<15}".format("")
+    plainResult += allAltNames[0]+" Maximum Bias (Relative to Stat. Error)\n\n"
+    plainResult += "\n{0:<20}".format("Category")+"{0:>15}\n".format("Reference")
+    plainResult += "{0:<20}".format("")
     latexResult += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-    latexResult += "%% "+catName+" Maximum Bias\n\n"
+    latexResult += "%% "+allAltNames[0]+" Maximum Bias (Relative to Stat Error)\n\n"
     latexResult += r"\begin{tabular}{|l|"+"r|"*len(refNames)+"} \\hline \n"
-    latexResult += r"\multicolumn{"+str(len(refNames)+1)+r"}{|c|}{ \bf "+catTitle+r" Maximum Bias} \\ \hline"+"\n"
-    latexResult += r"\multicolumn{1}{|c|}{\multirow{3}{*}{Alternate PDFs}} & \multicolumn{"+str(len(refNames))+r"}{c|}{Reference PDFs} \\ \cline{"+"2-{0}".format(len(refNames)+1)+"} "+"\n"
+    latexResult += r"\multicolumn{"+str(len(refNames)+1)+r"}{|c|}{ \bf "+allAltNames[0]+r" Maximum Bias} \\ \hline"+"\n"
+    latexResult += r"\multicolumn{1}{|c|}{\multirow{3}{*}{Categories}} & \multicolumn{"+str(len(refNames))+r"}{c|}{Reference PDFs} \\ \cline{"+"2-{0}".format(len(refNames)+1)+"} "+"\n"
     for refName in refNames:
       if data[refName]['orderRef'] != None:
         latexResult += "& \multicolumn{1}{c|}{"+getOrdinalStr(data[refName]['orderRef'])+"-Order} "
@@ -1035,12 +1036,13 @@ def printBiasSummary(dataCats):
       latexResult += "& \multicolumn{1}{c|}{" +"{0:>15}".format(nicePdfName.replace("#","\\"))+"} "
     plainResult += "\n"
     latexResult += r"\\ \hline"+"\n"
+    break  # Only need to do this for one catname
+  for catName in catNames:
+    catTitle = TITLEMAP[catName]
+    data = dataCats[catName]
     for altName in allAltNames:
-      plainResult += "{0:<15}".format(altName)
-      nicePdfName = PDFTITLEMAP[altName]
-      if "#" in nicePdfName:
-        nicePdfName = '$'+nicePdfName+'$'
-      latexResult += "{0:15} ".format(nicePdfName.replace("#","\\"))
+      plainResult += "{0:<15}".format(catName)
+      latexResult += "{0:15} ".format(catTitle)
       for refName in refNames:
           if not data[refName].has_key(altName):
             plainResult += "{0:>15}".format("-")
@@ -1056,12 +1058,13 @@ def printBiasSummary(dataCats):
             if tmpAbsBias > absMaxBias:
               maxBias = tmpBias
               absMaxBias = tmpAbsBias
-          plainResult += "{0:>15.1%}".format(maxBias)
-          latexResult += ("& {0:15.1%} ".format(maxBias)).replace("%","\%")
+          plainResult += "{0:>15.0%}".format(maxBias)
+          latexResult += ("& {0:15.0%} ".format(maxBias)).replace('%',r'\%')
       plainResult += "\n"
       latexResult += r"\\ \hline"+"\n"
-    plainResult += "\n\n"
-    latexResult += "\\end{tabular}\n\n"
+      break
+  plainResult += "\n\n"
+  latexResult += "\\end{tabular}\n\n"
   print plainResult
   print latexResult
       
@@ -1195,11 +1198,11 @@ def printBiasSummaryNevt(dataCats):
     allAltNames = sorted(list(allAltNames))
     allAltNames.pop(allAltNames.index("orderRef"))
     plainResult += "############################################################\n"
-    plainResult += allAltNames[0]+" Maximum Bias\n\n"
+    plainResult += allAltNames[0]+" Maximum Bias (Nevts)\n\n"
     plainResult += "\n{0:<20}".format("Category")+"{0:>15}\n".format("Reference")
     plainResult += "{0:<20}".format("")
     latexResult += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
-    latexResult += "%% "+catName+" Maximum Bias\n\n"
+    latexResult += "%% "+allAltNames[0]+" Maximum Bias (Nevts)\n\n"
     latexResult += r"\begin{tabular}{|l|"+"r|"*len(refNames)+"} \\hline \n"
     latexResult += r"\multicolumn{"+str(len(refNames)+1)+r"}{|c|}{ \bf "+allAltNames[0]+r" Maximum Bias} \\ \hline"+"\n"
     latexResult += r"\multicolumn{1}{|c|}{\multirow{3}{*}{Categories}} & \multicolumn{"+str(len(refNames))+r"}{c|}{Reference PDFs} \\ \cline{"+"2-{0}".format(len(refNames)+1)+"} "+"\n"
@@ -1443,7 +1446,7 @@ if __name__ == "__main__":
         allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
         allNevtSummaries[bs.catName] = bs.nevtSummaryDict
 #  printBiasTable(allSummaries,sigMasses)
-#  printBiasSummary(allSummaries)
+  printBiasSummary(allSummaries)
 #  printDiagnosticSummary(allSummaries,allZSigmaSummaries)
   printBiasTableNevt(allNevtSummaries,sigMasses)
   printBiasSummaryNevt(allNevtSummaries)
