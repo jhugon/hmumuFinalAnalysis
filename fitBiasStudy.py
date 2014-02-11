@@ -1181,10 +1181,11 @@ def printBiasTableNevt(dataCats,hmasses):
   print plainResult
   print latexResult
 
-def printBiasSummaryNevt(dataCats):
+def printBiasSummaryNevt(dataCats,energyStr=None,sigInject=None):
   catNames = sortCatNames(dataCats.keys())
   if len(catNames) == 0:
     return
+  dictResult = {}
   plainResult = ""
   latexResult = ""
   refNames = None
@@ -1224,6 +1225,7 @@ def printBiasSummaryNevt(dataCats):
   for catName in catNames:
     catTitle = TITLEMAP[catName]
     data = dataCats[catName]
+    dictResult[catName] = {}
     for altName in allAltNames:
       plainResult += "{0:<15}".format(catName)
       latexResult += "{0:15} ".format(catTitle)
@@ -1244,6 +1246,7 @@ def printBiasSummaryNevt(dataCats):
               absMaxBias = tmpAbsBias
           plainResult += "{0:>15.1f}".format(maxBias)
           latexResult += ("& {0:15.1f} ".format(maxBias))
+          dictResult[catName][refName] = maxBias
       plainResult += "\n"
       latexResult += r"\\ \hline"+"\n"
       break
@@ -1251,6 +1254,16 @@ def printBiasSummaryNevt(dataCats):
   latexResult += "\\end{tabular}\n\n"
   print plainResult
   print latexResult
+
+  pklFileName = "biasMaxPkl"
+  if energyStr != None:
+    pklFileName += "_"+energyStr
+  if sigInject != None:
+    pklFileName += "_signif"+str(sigInject)
+  pklFileName += ".pkl"
+  pklFile = open(pklFileName,'w')
+  cPickle.dump(dictResult,pklFile)
+  pklFile.close()
 
 if __name__ == "__main__":
   helpStr = "./fitBiasStudy.py [jobGroupNumber] [categoryName]\n  where jobGroupNumber is an int that will be added to the random number seed (*1000)\n    and the output pkl file name\n  if there is a jobGroupNumber, no plots or summary will be produced.\n  If categoryName is present, then only that category will be run,\n    otherwise a group of categories defined in the script will all be run."
@@ -1378,6 +1391,8 @@ if __name__ == "__main__":
   allZSigmaSummaries = {}
   allNevtSummaries = {}
   tmpJobGroupStr = ""
+  energyStr = None
+  foundNSigma = None
   if iJobGroup != None:
     tmpJobGroupStr = "_jobGrp"+str(iJobGroup)
 #  logFile = open(outDir+"biasStudy.log",'w')
@@ -1403,10 +1418,12 @@ if __name__ == "__main__":
         print "Running over input pkl file: "+inputPkl
         bs = BiasStudy(None,None,None,None,None,None,None,inputPkl=inputPkl)
 #        logFile.write(bs.outStr)
-#        bs.plot(outDir+"bias_")
+        bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
         allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
         allNevtSummaries[bs.catName] = bs.nevtSummaryDict
+        energyStr = bs.energyStr
+        usedSigInject = bs.sigInject
     else:
       # Identify basenames to combine job groups
       basenames = set()
@@ -1429,10 +1446,12 @@ if __name__ == "__main__":
           tmpF.close()
         bs = BiasStudy(None,None,None,None,None,None,None,inputPkl=resultData)
 #        logFile.write(bs.outStr)
-#        bs.plot(outDir+"bias_")
+        bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
         allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
         allNevtSummaries[bs.catName] = bs.nevtSummaryDict
+        energyStr = bs.energyStr
+        usedSigInject = bs.sigInject
   else:
     processPool = None
     if NPROCS > 1:
@@ -1441,15 +1460,17 @@ if __name__ == "__main__":
       bs = BiasStudy(category,dataFns8TeV,"8TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool,iJobGroup=iJobGroup,sigInject=sigInject)
 #      logFile.write(bs.outStr)
       if iJobGroup == None:
-#        bs.plot(outDir+"bias_")
+        bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
         allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
         allNevtSummaries[bs.catName] = bs.nevtSummaryDict
+        energyStr = bs.energyStr
+        usedSigInject = bs.sigInject
 #  printBiasTable(allSummaries,sigMasses)
   printBiasSummary(allSummaries)
 #  printDiagnosticSummary(allSummaries,allZSigmaSummaries)
   printBiasTableNevt(allNevtSummaries,sigMasses)
-  printBiasSummaryNevt(allNevtSummaries)
+  printBiasSummaryNevt(allNevtSummaries,energyStr,usedSigInject)
     
 #  now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
 #  logFile.write("\n\n# {0}\n".format(now))
