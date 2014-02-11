@@ -1179,13 +1179,14 @@ def printBiasTableNevt(dataCats,hmasses):
   print latexResult
 
 def printBiasSummaryNevt(dataCats):
-  catNames = sorted(dataCats.keys())
+  catNames = sortCatNames(dataCats.keys())
   if len(catNames) == 0:
     return
   plainResult = ""
   latexResult = ""
+  refNames = None
+  allAltNames = None
   for catName in catNames:
-    catTitle = TITLEMAP[catName]
     data = dataCats[catName]
     refNames = sorted(data.keys())
     allAltNames = set()
@@ -1194,14 +1195,14 @@ def printBiasSummaryNevt(dataCats):
     allAltNames = sorted(list(allAltNames))
     allAltNames.pop(allAltNames.index("orderRef"))
     plainResult += "############################################################\n"
-    plainResult += catName+" Maximum Bias\n\n"
-    plainResult += "\n{0:<15}".format("Alternate")+"{0:>15}\n".format("Reference")
-    plainResult += "{0:<15}".format("")
+    plainResult += allAltNames[0]+" Maximum Bias\n\n"
+    plainResult += "\n{0:<20}".format("Category")+"{0:>15}\n".format("Reference")
+    plainResult += "{0:<20}".format("")
     latexResult += "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
     latexResult += "%% "+catName+" Maximum Bias\n\n"
     latexResult += r"\begin{tabular}{|l|"+"r|"*len(refNames)+"} \\hline \n"
-    latexResult += r"\multicolumn{"+str(len(refNames)+1)+r"}{|c|}{ \bf "+catTitle+r" Maximum Bias} \\ \hline"+"\n"
-    latexResult += r"\multicolumn{1}{|c|}{\multirow{3}{*}{Alternate PDFs}} & \multicolumn{"+str(len(refNames))+r"}{c|}{Reference PDFs} \\ \cline{"+"2-{0}".format(len(refNames)+1)+"} "+"\n"
+    latexResult += r"\multicolumn{"+str(len(refNames)+1)+r"}{|c|}{ \bf "+allAltNames[0]+r" Maximum Bias} \\ \hline"+"\n"
+    latexResult += r"\multicolumn{1}{|c|}{\multirow{3}{*}{Categories}} & \multicolumn{"+str(len(refNames))+r"}{c|}{Reference PDFs} \\ \cline{"+"2-{0}".format(len(refNames)+1)+"} "+"\n"
     for refName in refNames:
       if data[refName]['orderRef'] != None:
         latexResult += "& \multicolumn{1}{c|}{"+getOrdinalStr(data[refName]['orderRef'])+"-Order} "
@@ -1216,12 +1217,13 @@ def printBiasSummaryNevt(dataCats):
       latexResult += "& \multicolumn{1}{c|}{" +"{0:>15}".format(nicePdfName.replace("#","\\"))+"} "
     plainResult += "\n"
     latexResult += r"\\ \hline"+"\n"
+    break  # Only need to do this for one catname
+  for catName in catNames:
+    catTitle = TITLEMAP[catName]
+    data = dataCats[catName]
     for altName in allAltNames:
-      plainResult += "{0:<15}".format(altName)
-      nicePdfName = PDFTITLEMAP[altName]
-      if "#" in nicePdfName:
-        nicePdfName = '$'+nicePdfName+'$'
-      latexResult += "{0:15} ".format(nicePdfName.replace("#","\\"))
+      plainResult += "{0:<15}".format(catName)
+      latexResult += "{0:15} ".format(catTitle)
       for refName in refNames:
           if not data[refName].has_key(altName):
             plainResult += "{0:>15}".format("-")
@@ -1241,8 +1243,9 @@ def printBiasSummaryNevt(dataCats):
           latexResult += ("& {0:15.1f} ".format(maxBias))
       plainResult += "\n"
       latexResult += r"\\ \hline"+"\n"
-    plainResult += "\n\n"
-    latexResult += "\\end{tabular}\n\n"
+      break
+  plainResult += "\n\n"
+  latexResult += "\\end{tabular}\n\n"
   print plainResult
   print latexResult
 
@@ -1397,7 +1400,7 @@ if __name__ == "__main__":
         print "Running over input pkl file: "+inputPkl
         bs = BiasStudy(None,None,None,None,None,None,None,inputPkl=inputPkl)
 #        logFile.write(bs.outStr)
-        bs.plot(outDir+"bias_")
+#        bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
         allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
         allNevtSummaries[bs.catName] = bs.nevtSummaryDict
@@ -1423,7 +1426,7 @@ if __name__ == "__main__":
           tmpF.close()
         bs = BiasStudy(None,None,None,None,None,None,None,inputPkl=resultData)
 #        logFile.write(bs.outStr)
-        bs.plot(outDir+"bias_")
+#        bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
         allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
         allNevtSummaries[bs.catName] = bs.nevtSummaryDict
@@ -1435,7 +1438,7 @@ if __name__ == "__main__":
       bs = BiasStudy(category,dataFns8TeV,"8TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool,iJobGroup=iJobGroup,sigInject=sigInject)
 #      logFile.write(bs.outStr)
       if iJobGroup == None:
-        bs.plot(outDir+"bias_")
+#        bs.plot(outDir+"bias_")
         allSummaries[bs.catName] = bs.pullSummaryDict
         allZSigmaSummaries[bs.catName] = bs.zSigmaSummaryDict
         allNevtSummaries[bs.catName] = bs.nevtSummaryDict
