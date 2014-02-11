@@ -6,8 +6,6 @@
 #PBS -N statsTYPE
 #PBS -o joboutStatsJobTYPE
 #PBS -e joberrStatsJobTYPE
-#PBS -m a
-#PBS -M jhugon@phys.ufl.edu
 
 #Multiple Job Submission:
 #Jobs will have a variable called $PBS_ARRAYID
