@@ -6,8 +6,6 @@
 #PBS -N MakeCards
 #PBS -o joboutMakeCardsJob
 #PBS -e joberrMakeCardsJob
-#PBS -m a
-#PBS -M jhugon@phys.ufl.edu
 
 #Multiple Job Submission:
 #Jobs will have an environmental variable called $PBS_ARRAYID

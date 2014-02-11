@@ -6,8 +6,6 @@
 #PBS -N FitBias
 #PBS -o joboutFitBiasJob
 #PBS -e joberrFitBiasJob
-#PBS -m a
-#PBS -M jhugon@phys.ufl.edu
 
 #Multiple Job Submission:
 #Jobs will have an environmental variable called $PBS_ARRAYID
