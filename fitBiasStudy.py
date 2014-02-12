@@ -1058,8 +1058,8 @@ def printBiasSummary(dataCats):
             if tmpAbsBias > absMaxBias:
               maxBias = tmpBias
               absMaxBias = tmpAbsBias
-          plainResult += "{0:>15.0%}".format(maxBias)
-          latexResult += ("& {0:15.0%} ".format(maxBias)).replace('%',r'\%')
+          plainResult += "{0:>15.0%}".format(absMaxBias)
+          latexResult += ("& {0:15.0%} ".format(absMaxBias)).replace('%',r'\%')
       plainResult += "\n"
       latexResult += r"\\ \hline"+"\n"
       break
@@ -1244,9 +1244,9 @@ def printBiasSummaryNevt(dataCats,energyStr=None,sigInject=None):
             if tmpAbsBias > absMaxBias:
               maxBias = tmpBias
               absMaxBias = tmpAbsBias
-          plainResult += "{0:>15.1f}".format(maxBias)
-          latexResult += ("& {0:15.1f} ".format(maxBias))
-          dictResult[catName][refName] = maxBias
+          plainResult += "{0:>15.1f}".format(absMaxBias)
+          latexResult += ("& {0:15.1f} ".format(absMaxBias))
+          dictResult[catName][refName] = absMaxBias
       plainResult += "\n"
       latexResult += r"\\ \hline"+"\n"
       break
