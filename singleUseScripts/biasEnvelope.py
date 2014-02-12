@@ -71,7 +71,13 @@ PDFTITLEMAP = PdfTitleMap({
     "VoigtPExpMm2":"Voigtian+#frac{Exp}{m^{2}}",
 })
 
-if __name__ == "__main__":
+def biasEnvelope(useRefFuncs):
+  print "+++++++++++++++++++++++++++++++++++++++++++++"
+  print "+++++++++++++++++++++++++++++++++++++++++++++"
+  print "+++++++++++++++++++++++++++++++++++++++++++++"
+  print "BIAS ENVELOPE FOR THESE REFERENCE FUNCTIONS:"
+  print useRefFuncs
+  print
   fns = glob.glob("biasMaxPkl*.pkl")
   energies = []
   for fn in fns:
@@ -88,7 +94,6 @@ if __name__ == "__main__":
     dataList = []
     if categorySet == None:
       categorySet = set()
-    refNameSet = set()
     for fn in glob.glob(globStr+"*.pkl"):
       match = re.match(globStr+"_signif([.0-9]+).pkl",fn)
       signif = float(match.group(1))
@@ -99,12 +104,9 @@ if __name__ == "__main__":
       for cat in data:
         if not cat in categorySet:
           categorySet.add(cat)
-        for refName in data[cat]:
-          if not refName in refNameSet:
-            refNameSet.add(refName)
     dataList =  sorted(dataList,key= lambda x: x[1])
     catList = sortCatNames(list(categorySet))
-    refNameList = list(refNameSet)
+    refNameList = useRefFuncs
     plainCompareTable = "#########################\n### "+energy+" Max Bias Comparison Table (Nevts)\n"
     plainCompareTable += "Included Reference Functions:"
     for refName in refNameList:
@@ -201,3 +203,13 @@ if __name__ == "__main__":
     
   print dictCompareTable
 
+
+if __name__ == "__main__":
+  onlyVoitRefs = ["Old","VoigtPMm2","VoigtPExpMm2"]
+  voitAndSMRefs = ["Old","ExpMOverSq","VoigtPMm2","VoigtPExpMm2"]
+  allRefs = ["Old","ExpMOverSq","SumExp","VoigtPMm2","Bernstein","VoigtPExpMm2"]
+
+  biasEnvelope(onlyVoitRefs)
+  biasEnvelope(voitAndSMRefs)
+  biasEnvelope(allRefs)
+  
