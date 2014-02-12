@@ -10,6 +10,66 @@ import glob
 import re
 from numpy import mean,median
 
+TITLEMAP = {
+  "Jets01PassPtG10BB": "0,1-Jet Tight BB",
+  "Jets01PassPtG10BO": "0,1-Jet Tight BO",
+  "Jets01PassPtG10BE": "0,1-Jet Tight BE",
+  "Jets01PassPtG10OO": "0,1-Jet Tight OO",
+  "Jets01PassPtG10OE": "0,1-Jet Tight OE",
+  "Jets01PassPtG10EE": "0,1-Jet Tight EE",
+  #"Jets01PassCatAll" : "0,1-Jet Tight Combination",
+                        
+  "Jets01FailPtG10BB": "0,1-Jet Loose BB",
+  "Jets01FailPtG10BO": "0,1-Jet Loose BO",
+  "Jets01FailPtG10BE": "0,1-Jet Loose BE",
+  "Jets01FailPtG10OO": "0,1-Jet Loose OO",
+  "Jets01FailPtG10OE": "0,1-Jet Loose OE",
+  "Jets01FailPtG10EE": "0,1-Jet Loose EE",
+  #"Jets01FailCatAll" : "0,1-Jet Loose Combination",
+
+  "Jet2CutsVBFPass":"2-Jet VBF Tight",
+  "Jet2CutsGFPass":"2-Jet GF Tight",
+  "Jet2CutsFailVBFGF":"2-Jet Loose",
+}
+
+class PdfTitleMap(object):
+  def __init__(self,data):
+    self.data = data
+  def __getitem__(self,key):
+    if key in self.data:
+      return self.doLatexMath(self.data[key])
+    else:
+      raise KeyError(key)
+  def __setitem__(self,key,value):
+    self.data[key] = value
+  def doLatexMath(self,name):
+    origName = name
+    name = name.replace('#','\\')
+    if "_" in origName or "^" in origName or "_" in origName:
+      return "$"+name+"$"
+    else:
+      return name
+
+PDFTITLEMAP = PdfTitleMap({
+    "ExpLog":"Exp(p_{1}m^{2}+p_{2}m+p_{3}ln(m))",
+    "MOverSq":"#frac{m}{(m-p_{1})^{2}}",
+    "Old":"Voigtian+Exp",
+    "ExpMOverSq":"#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}",
+    "ExpMOverSqP0":"#frac{Exp(-p_{1}^{2}m)}{(m-p_{2})}*(#frac{1}{m-p_{2}}+p_{3}^{2}m)",
+    "ExpMOverSqP0New":"e^{-p_{1}^{2}m}/(m-p_{2})^{2}+p_{3}^{2}e^{-p_{1}^{2}m}",
+    "Bernstein":"Bernstein",
+    "Chebychev":"Chebychev",
+    "Polynomial":"Polynomial",
+    "SumExp":"Sum of Exponentials",
+    "SumPow":"Sum of Power Functions",
+    "Laurent":"Laurent",
+    "ExpTimesBernstein":"Exp*Bernstein",
+    "ExpTimesChebychev":"Exp*Chebychev",
+    "ExpTimesPolynomial":"Exp*Polynomial",
+    "MSSM":"Exp#times(Breit-Wigner+#frac{1}{m^{2}})",
+    "VoigtPMm2":"Voigtian+#frac{1}{m^{2}}",
+    "VoigtPExpMm2":"Voigtian+#frac{Exp}{m^{2}}",
+})
 
 if __name__ == "__main__":
   fns = glob.glob("biasMaxPkl*.pkl")
@@ -45,16 +105,25 @@ if __name__ == "__main__":
     dataList =  sorted(dataList,key= lambda x: x[1])
     catList = sortCatNames(list(categorySet))
     refNameList = list(refNameSet)
-    plainCompareTable = "#########################\n### "+energy+" Max Bias Comparison Table (Nevts)\n\n"
-    latexCompareTable = "%%%%%%%%%%%%%%%%%%%%%%%%%\n%%% "+energy+" Max Bias Comparison Table (Nevts)\n\n"
+    plainCompareTable = "#########################\n### "+energy+" Max Bias Comparison Table (Nevts)\n"
+    plainCompareTable += "Included Reference Functions:"
+    for refName in refNameList:
+      plainCompareTable += " "+refName
+    plainCompareTable += "\n\n"
     plainCompareTable += "{0:20}".format("Inject Signif:")
+    latexCompareTable = "%%%%%%%%%%%%%%%%%%%%%%%%%\n%%% "+energy+" Max Bias Comparison Table (Nevts)\n\n"
+    latexCompareTable += r"\begin{tabular}{|l|"+"r|"*len(refNameList)+"} \\hline \n"
+    latexCompareTable += "{0}".format("Injected Significance")
     for dataTup in dataList:
       data, signif = dataTup
       plainCompareTable += "{0:^15.0f}".format(signif)
+      latexCompareTable += " & ${0:.0f}\sigma$".format(signif)
     plainCompareTable += "\n"
+    latexCompareTable += " \\\\ \\hline \\hline \n"
     catMaxDict = {}
     for cat in catList:
       plainCompareTable += "{0:20}".format(cat)
+      latexCompareTable += TITLEMAP[cat]
       catMax = 0.
       for dataTup in dataList:
         data, signif = dataTup
@@ -65,38 +134,70 @@ if __name__ == "__main__":
                 tmp = data[cat][refName]
                 if tmp > subMax:
                   subMax = tmp
+            else:
+              print "Error: refName: {0} not found for {1} {2} {3}sigma, exiting.".format(refName,cat,energy,signif)
+              sys.exit(1)
           plainCompareTable += "{0:^15.1f}".format(subMax)
+          latexCompareTable += " & {0:.1f}".format(subMax)
           if subMax > catMax:
             catMax = subMax
         else:
           plainCompareTable += "{0:^15}".format('-')
+          latexCompareTable += " & - "
       catMaxDict[cat] = catMax
       plainCompareTable += "\n"
+      latexCompareTable += " \\\\ \\hline \n"
 
     plainCompareTable += "\n\n"
-    latexCompareTable += "\n\n"
+    latexCompareTable += "\\end{tabular}\n"
+    latexCompareTable += "\\\\ Included Reference Functions: "
+    for refName in refNameList:
+      latexCompareTable += PDFTITLEMAP[refName]+", "
+    latexCompareTable = latexCompareTable[:-2] + "\n\n"
 
     finalDict[energy] = catMaxDict
         
     print latexCompareTable
     print plainCompareTable
 
-  plainCompareTable = "#########################\n### "+energy+" Max Bias Final Table (Nevts)\n\n"
-  latexCompareTable = "%%%%%%%%%%%%%%%%%%%%%%%%%\n%%% "+energy+" Max Bias Final Table (Nevts)\n\n"
+  plainCompareTable = "#########################\n###  Max Bias Final Table (Nevts)\n"
+  plainCompareTable += "Included Reference Functions:"
+  for refName in refNameList:
+    plainCompareTable += " "+refName
+  plainCompareTable += "\n\n"
+  latexCompareTable = "%%%%%%%%%%%%%%%%%%%%%%%%%\n%%%  Max Bias Final Table (Nevts)\n\n"
+  latexCompareTable += r"\begin{tabular}{|l|"+"r|"*len(energies)+"} \\hline \n"
   plainCompareTable += "{0:20}".format("Energy:")
+  latexCompareTable += "{0}".format("Energy")
   for energy in energies:
     plainCompareTable += "{0:^15}".format(energy)
+    latexCompareTable += " & {0:}".format(energy)
   plainCompareTable += "\n"
+  latexCompareTable += "\\\\ \\hline \\hline \n"
   for cat in sortCatNames(list(categorySet)):
     plainCompareTable += "{0:20}".format(cat)
+    latexCompareTable += "{0:}".format(TITLEMAP[cat])
     for energy in energies:
       plainCompareTable += "{0:^15.1f}".format(finalDict[energy][cat])
+      latexCompareTable += " & {0:.1f}".format(finalDict[energy][cat])
     plainCompareTable += "\n"
+    latexCompareTable += " \\\\ \\hline \n"
   plainCompareTable += "\n\n"
-  latexCompareTable += "\n\n"
+  latexCompareTable += "\\end{tabular}\n"
+  latexCompareTable += "\\\\ Included Reference Functions: "
+  for refName in refNameList:
+    latexCompareTable += PDFTITLEMAP[refName]+", "
+  latexCompareTable = latexCompareTable[:-2] + "\n\n"
       
   print latexCompareTable
   print plainCompareTable
     
+  dictName = "BakParameterizationUncDict"
+  dictCompareTable = "#########################\n###  Max Bias Final Dict (Nevts)\n\n"
+  dictCompareTable += dictName+" = {'7TeV':{},'8TeV':{}}\n"
+  for energy in energies:
+    for cat in sortCatNames(list(categorySet)):
+      dictCompareTable += dictName+"['"+energy+"']"+"{0:<21}".format("['"+cat+"']")+" = {0:.2f}\n".format(finalDict[energy][cat])
     
+  print dictCompareTable
 
