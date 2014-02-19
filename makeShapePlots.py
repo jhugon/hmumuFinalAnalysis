@@ -178,92 +178,6 @@ class ShapePlotter:
     for b,p,r in zip(binList,processList,rateList):
       result[b][p] = r
     return result, paramMap, normErrMap
-
-titleMap = {
-  "AllCat":"All Categories Comb.",
-  "IncCat":"Non-VBF Categories Comb.",
-  "VBFCat":"VBF Categories Comb.",
-
-  "IncPresel":"Non-VBF Preselection",
-  "VBFPresel":"VBF Preselection",
-
-  "Pt0to30":"p_{T}^{#mu#mu} #in [0,30]",
-  "Pt30to50":"p_{T}^{#mu#mu} #in [30,50]",
-  "Pt50to125":"p_{T}^{#mu#mu} #in [50,125]",
-  "Pt125to250":"p_{T}^{#mu#mu} #in [125,250]",
-  "Pt250":"p_{T}^{#mu#mu}>250",
-
-  "VBFLoose":"VBFL",
-  "VBFMedium":"VBFM",
-  "VBFTight":"VBFT",
-  "VBFVeryTight":"VBFVT",
-
-  "BDTCut":"BDT Cut Combination",
-  "IncBDTCut":"Non-VBF BDT Cut",
-  "VBFBDTCut":"VBF BDT Cut",
-
-  "BDTCutCat":"BDT Cut Cat. Combination",
-  "IncBDTCutCat":"Non-VBF BDT Cut",
-  "VBFBDTCutCat":"VBF BDT Cut",
-
-  "IncPreselCat":"Non-VBF Cat. Preselection",
-  "VBFPreselCat":"VBF Cat. Preselection",
-
-  "IncBDTCutBB":"Non-VBF BDT Cut BB",
-  "IncBDTCutBO":"Non-VBF BDT Cut BO",
-  "IncBDTCutBE":"Non-VBF BDT Cut BE",
-  "IncBDTCutOO":"Non-VBF BDT Cut OO",
-  "IncBDTCutOE":"Non-VBF BDT Cut OE",
-  "IncBDTCutEE":"Non-VBF BDT Cut EE",
-  "IncBDTCutNotBB":"Non-VBF BDT Cut !BB",
-  "VBFBDTCutBB":"VBF BDT Cut BB",
-  "VBFBDTCutNotBB":"VBF BDT Cut !BB",
-  "IncPreselBB":"Non-VBF Preselection BB",
-  "IncPreselBO":"Non-VBF Preselection BO",
-  "IncPreselBE":"Non-VBF Preselection BE",
-  "IncPreselOO":"Non-VBF Preselection OO",
-  "IncPreselOE":"Non-VBF Preselection OE",
-  "IncPreselEE":"Non-VBF Preselection EE",
-  "IncPreselNotBB":"Non-VBF Preselection !BB",
-  "VBFPreselBB":"VBF Preselection BB",
-  "VBFPreselNotBB":"VBF Preselection !BB",
-
-  "IncPreselPtG10BB":"Non-VBF BB",
-  "IncPreselPtG10BO":"Non-VBF BO",
-  "IncPreselPtG10BE":"Non-VBF BE",
-  "IncPreselPtG10OO":"Non-VBF OO",
-  "IncPreselPtG10OE":"Non-VBF OE",
-  "IncPreselPtG10EE":"Non-VBF EE",
-  "IncPreselPtG10NotBB":"Non-VBF !BB",
-
-  "IncPreselPtG":"Non-VBF Not Combined",
-
-  "Jets01PassPtG10BB": "0,1-Jet Tight BB",
-  "Jets01PassPtG10BO": "0,1-Jet Tight BO",
-  "Jets01PassPtG10BE": "0,1-Jet Tight BE",
-  "Jets01PassPtG10OO": "0,1-Jet Tight OO",
-  "Jets01PassPtG10OE": "0,1-Jet Tight OE",
-  "Jets01PassPtG10EE": "0,1-Jet Tight EE",
-  "Jets01PassCatAll" : "0,1-Jet Tight Combination",
-                        
-  "Jets01FailPtG10BB": "0,1-Jet Loose BB",
-  "Jets01FailPtG10BO": "0,1-Jet Loose BO",
-  "Jets01FailPtG10BE": "0,1-Jet Loose BE",
-  "Jets01FailPtG10OO": "0,1-Jet Loose OO",
-  "Jets01FailPtG10OE": "0,1-Jet Loose OE",
-  "Jets01FailPtG10EE": "0,1-Jet Loose EE",
-  "Jets01FailCatAll" : "0,1-Jet Loose Combination",
-                        
-  "Jets01SplitCatAll": "0,1-Jet Combination",
-
-
-  "Jet2CutsVBFPass":"2-Jet VBF Tight",
-  "Jet2CutsGFPass":"2-Jet GF Tight",
-  "Jet2CutsFailVBFGF":"2-Jet Loose",
-
-  "Jet2SplitCutsGFSplit" : "2-Jet Combination",
-  "CombSplitAll" : "H#rightarrow#mu#mu Combination",
-}
         
 if __name__ == "__main__":
   root.gROOT.SetBatch(True)
@@ -307,5 +221,5 @@ if __name__ == "__main__":
       continue
     
     print fn
-    s = ShapePlotter(fn,outDir,fitDir,titleMap,signalInject=args.signalInject,binWidthOverride=args.binWidthOverride)
+    s = ShapePlotter(fn,outDir,fitDir,TITLEMAP,signalInject=args.signalInject,binWidthOverride=args.binWidthOverride)
     shapePlotterList.append(s)

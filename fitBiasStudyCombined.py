@@ -12,6 +12,7 @@ import ROOT as root
 root.gROOT.SetBatch(True)
 
 from helpers import *
+from xsec import *
 
 import scipy.stats
 from numpy import mean, median, corrcoef, percentile,vstack
@@ -22,36 +23,6 @@ from numpy import std as stddev
 #root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.ERROR)
 PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 #PRINTLEVEL = root.RooFit.PrintLevel(1) #For MINUIT
-
-TITLEMAP = {
-  "Jets01PassPtG10BB": "0,1-Jet Tight BB",
-  "Jets01PassPtG10BO": "0,1-Jet Tight BO",
-  "Jets01PassPtG10BE": "0,1-Jet Tight BE",
-  "Jets01PassPtG10OO": "0,1-Jet Tight OO",
-  "Jets01PassPtG10OE": "0,1-Jet Tight OE",
-  "Jets01PassPtG10EE": "0,1-Jet Tight EE",
-  "Jets01PassCatAll" : "0,1-Jet Tight Combination",
-                        
-  "Jets01FailPtG10BB": "0,1-Jet Loose BB",
-  "Jets01FailPtG10BO": "0,1-Jet Loose BO",
-  "Jets01FailPtG10BE": "0,1-Jet Loose BE",
-  "Jets01FailPtG10OO": "0,1-Jet Loose OO",
-  "Jets01FailPtG10OE": "0,1-Jet Loose OE",
-  "Jets01FailPtG10EE": "0,1-Jet Loose EE",
-  "Jets01FailCatAll" : "0,1-Jet Loose Combination",
-
-  "Jet2CutsVBFPass":"2-Jet VBF Tight",
-  "Jet2CutsGFPass":"2-Jet GF Tight",
-  "Jet2CutsFailVBFGF":"2-Jet Loose",
-}
-
-PDFTITLEMAP = {
-    "ExpLog":"Exp(p_{1}m^{2}+p_{2}m+p_{3}ln(m))",
-    "MOverSq":"#frac{m}{(m-p_{1})^{2}}",
-    "Old":"Voigtian+Exp",
-    "ExpMOverSq":"#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}",
-    "Bernstein":"Bernstein",
-}
 
 
 ################################################################################################
