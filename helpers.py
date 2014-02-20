@@ -2979,7 +2979,7 @@ def treeCut(category,cutString,eventWeights=True,muonRequirements=True,KDString=
     result = "("+result+")*puWeight"
   return result
 
-def drawStandardCaptions(canvas,caption1,caption2="",caption3="",caption4="",preliminaryString=PRELIMINARYSTRING):
+def drawStandardCaptions(canvas,caption1,caption2="",caption3="",caption4="",caption5="",preliminaryString=PRELIMINARYSTRING):
   tlatex = root.TLatex()
   tlatex.SetNDC()
 
@@ -2993,8 +2993,9 @@ def drawStandardCaptions(canvas,caption1,caption2="",caption3="",caption4="",pre
   tlatex.SetTextAlign(12)
   tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.88,caption2)
   tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.82,caption3)
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.76,caption4)
   tlatex.SetTextAlign(32)
-  tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.88,caption4)
+  tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.88,caption5)
   return tlatex
 
 if __name__ == "__main__":
