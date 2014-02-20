@@ -2979,6 +2979,24 @@ def treeCut(category,cutString,eventWeights=True,muonRequirements=True,KDString=
     result = "("+result+")*puWeight"
   return result
 
+def drawStandardCaptions(canvas,caption1,caption2="",caption3="",caption4="",preliminaryString=PRELIMINARYSTRING):
+  tlatex = root.TLatex()
+  tlatex.SetNDC()
+
+  tlatex.SetTextFont(root.gStyle.GetLabelFont())
+  tlatex.SetTextSize(0.04)
+  tlatex.SetTextAlign(12)
+  tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,preliminaryString)
+
+  tlatex.SetTextAlign(32)
+  tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption1)
+  tlatex.SetTextAlign(12)
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.88,caption2)
+  tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.82,caption3)
+  tlatex.SetTextAlign(32)
+  tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.88,caption4)
+  return tlatex
+
 if __name__ == "__main__":
 
   root.gROOT.SetBatch(True)

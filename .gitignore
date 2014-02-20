@@ -1,4 +1,6 @@
 *.png
+*.pdf
+*.eps
 *.pyc
 diff.txt
 jobout*

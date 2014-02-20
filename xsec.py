@@ -1001,9 +1001,9 @@ class PdfTitleMap(object):
 
 PDFTITLEMAP = PdfTitleMap({
     "ExpLog":"Exp(p_{1}m^{2}+p_{2}m+p_{3}ln(m))",
-    "MOverSq":"#frac{m}{(m-p_{1})^{2}}",
+    "MOverSq":"m/(m-p_{1})^{2}",
     "Old":"Voigtian+Exp",
-    "ExpMOverSq":"#frac{Exp(p_{1}m)}{(m-p_{2})^{2}}",
+    "ExpMOverSq":"Exp(p_{1}m)/(m-p_{2})^{2}",
     "ExpMOverSqP0":"#frac{Exp(-p_{1}^{2}m)}{(m-p_{2})}*(#frac{1}{m-p_{2}}+p_{3}^{2}m)",
     "ExpMOverSqP0New":"e^{-p_{1}^{2}m}/(m-p_{2})^{2}+p_{3}^{2}e^{-p_{1}^{2}m}",
     "Bernstein":"Bernstein",
@@ -1016,9 +1016,9 @@ PDFTITLEMAP = PdfTitleMap({
     "ExpTimesBernstein":"Exp*Bernstein",
     "ExpTimesChebychev":"Exp*Chebychev",
     "ExpTimesPolynomial":"Exp*Polynomial",
-    "MSSM":"Exp#times(Breit-Wigner+#frac{1}{m^{2}})",
-    "VoigtPMm2":"Voigtian+#frac{1}{m^{2}}",
-    "VoigtPExpMm2":"Voigtian+#frac{Exp}{m^{2}}",
+    "MSSM":"Exp#times(Breit-Wigner+1/m^{2})",
+    "VoigtPMm2":"Voigtian+1/m^{2}",
+    "VoigtPExpMm2":"Voigtian+Exp/m^{2}",
 })
 
 ##################################################
