@@ -124,7 +124,7 @@ def printBiasVMass(data,useRefFuncs,outputDir):
 
   gError = root.TGraphErrors()
   gError.SetLineColor(0)
-  gError.SetFillColor(root.kGray+1)
+  gError.SetFillColor(root.kGray)
   for iPoint,hmass in enumerate(sigMasses):
     n = ERRORSDICT[energyStr][catName][hmass]
     gError.SetPoint(iPoint,hmass,0.)
@@ -150,7 +150,7 @@ def printBiasVMass(data,useRefFuncs,outputDir):
   tlatex = drawStandardCaptions(canvas,"Bias for "+altTitle,TITLEMAP[catName],energyTitle,preliminaryString="CMS Internal")
 
   canvas.RedrawAxis()
-  saveAs("BiasVMass_"+catName+"_"+energyStr+"_sig"+str(sigInject))
+  saveAs(canvas,"BiasVMass_"+catName+"_"+energyStr+"_sig"+str(sigInject))
 
 if __name__ == "__main__":
   onlyVoitRefs = ["Old","VoigtPMm2","VoigtPExpMm2"]
