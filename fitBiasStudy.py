@@ -19,6 +19,7 @@ import itertools
 from itertools import repeat as itrRepeat
 
 from helpers import *
+from xsec import *
 import makeCards
 import fitOrderChooser
 from singleUseScripts.biasPklToMu import getSMSigCounts
@@ -42,19 +43,6 @@ def madStddev(a,rescaleFactor=1.0/scipy.stats.norm.isf(1/4.)):
   the default rescaleFactor is appropriate for the normal distribution
   """
   return medianAbsoluteDeviation(a)*rescaleFactor
-
-def getOrdinalStr(inInt):
-  result = str(inInt)
-  if result[-1] == "1":
-    result += "st"
-  elif result[-1] == "2":
-    result += "nd"
-  elif result[-1] == "3":
-    result += "rd"
-  else:
-    result += "th"
-  return result
-
 
 def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFileNames,sigMasses,sigInject,toysPerJob):
       """
@@ -340,7 +328,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           data[truePdfName][hmass]['ndfBOnly'].append(ndfBOnlyVal)
           data[truePdfName][hmass]['nBakTrue'].append(nBakTrue)
           if plotThisToy:
-            trueToySBPdf.plotOn(frame,root.RooFit.LineColor(6))
+            trueToySBPdf.plotOn(frame,root.RooFit.LineColor(root.kGreen+1))
           for pdfAlt,pdfAltName,color in zip(pdfAltList,pdfAltNameList,range(2,len(pdfAltList)+2)):
               ##### Get Background Only chi^2 and nBak
               pdfAlt.fitTo(toyData,
@@ -394,6 +382,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
             tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Ref S+B GOF: {0:.2f}".format(scipy.stats.chi2.sf(chi2TrueToyVar.getVal(),ndfTrue)))
             tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.70,"Ref S+B #chi^{{2}}/NDF: {0:.2f}".format(chi2TrueToyVar.getVal()/ndfTrue))
             canvas.SaveAs("output/debug_"+truePdfName+"_"+catName+"_"+energyStr+"_"+str(hmass)+tmpJobStr+"_Toy"+str(iToy)+".png")
+            canvas.SaveAs("output/debug_"+truePdfName+"_"+catName+"_"+energyStr+"_"+str(hmass)+tmpJobStr+"_Toy"+str(iToy)+".pdf")
           #if truePdfName == "Old":
           #  print "**************************************************************"
           #  print "True PDF Parameters:"
@@ -1396,6 +1385,7 @@ if __name__ == "__main__":
       processPool = Pool(processes=NPROCS)
     for category in categories:
       bs = BiasStudy(category,dataFns8TeV,"8TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool,iJobGroup=iJobGroup,sigInject=sigInject)
+      #bs = BiasStudy(category,dataFns7TeV,"7TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool,iJobGroup=iJobGroup,sigInject=sigInject)
 #      logFile.write(bs.outStr)
       if iJobGroup == None:
         bs.plot(outDir+"bias_")

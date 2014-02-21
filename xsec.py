@@ -987,7 +987,7 @@ class PdfTitleMap(object):
     if orderMatch:
       keyNoOrder = orderMatch.group(2)
       order = orderMatch.group(1)
-      order = getOrdinalStr(order)
+      order = helpers.getOrdinalStr(order)
       if keyNoOrder in self.data:
         return order+"-Order "+self.data[keyNoOrder]
       else:

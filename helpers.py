@@ -63,6 +63,19 @@ def sortCatNames(l):
   ]
   return sorted(l,key=lambda x: orderDef.index(x))
 
+def getOrdinalStr(inInt):
+  result = str(inInt)
+  if result[-1] == "1":
+    result += "st"
+  elif result[-1] == "2":
+    result += "nd"
+  elif result[-1] == "3":
+    result += "rd"
+  else:
+    result += "th"
+  return result
+
+
 def drange(start, stop, step):
   r = start
   while r < stop:
