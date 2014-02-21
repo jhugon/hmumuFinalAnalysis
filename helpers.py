@@ -2297,6 +2297,90 @@ def fitDGFindQuantiles(hist,level):
 
     quants =  getMedianAndQuantileInterval(pdftf,level)
     return quants
+
+class RooCompareModels:
+  def __init__(self,xVar,data,pdfList,frList,pdfTitleList,title,energyStr,lumi,canvas=None):
+    self.xVar = xVar
+    self.pdfList = pdfList
+    self.data = data
+    self.frList = frList
+    self.pdfTitleList = pdfTitleList
+    self.title = title
+    self.energyStr = energyStr
+    self.lumi = lumi
+
+    self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(lumi)
+
+    self.xtitle = xVar.GetTitle()
+
+    binning = xVar.getBinning()
+    self.binning = binning
+    nBins = self.binning.numBins()
+    binWidth = (self.binning.highBound()-self.binning.lowBound())/nBins
+    self.binWidth = binWidth
+    xVar.setRange("RMPRange",self.binning.lowBound(),self.binning.highBound())
+    rangeArg = root.RooFit.Range("RMPRange")
+    self.rangeArg = rangeArg
+
+    nowStr = str(int(time.time()*1e6))
+    self.nowStr = nowStr
+    if canvas == None:
+      canvas = root.TCanvas("canvas"+nowStr)
+    self.canvas = canvas
+    
+  def draw(self,saveName):
+    canvas = self.canvas
+    data = self.data
+    xVar = self.xVar
+    xtitle = self.xtitle
+
+    rangeArg = self.rangeArg
+    binningArg = root.RooFit.Binning("")
+    lineWidthArg = root.RooFit.LineWidth(2)
+    lineDrawOptArg = root.RooFit.DrawOption("L")
+    graphDrawOptArg = root.RooFit.DrawOption("PEZ")
+
+
+    frame       = xVar.frame(root.RooFit.Title(""))
+    data.plotOn(frame,      graphDrawOptArg,binningArg)
+
+    leg = root.TLegend(0.55,0.60,0.9,0.9)
+    leg.SetFillColor(0)
+    leg.SetLineColor(0)
+
+    colors = [root.kBlue,root.kRed,root.kGreen,root.kCyan,root.kMagenta,root.kOrange-3,root.kViolet-6]
+    fakeGraphs = []
+    for iPdf, pdf in enumerate(self.pdfList):
+      fr = self.frList[iPdf]
+      pdfTitle = self.pdfTitleList[iPdf]
+      color = colors[iPdf]
+
+      #Set the PDF pars value from the FitResults
+      setPDFfromFR(fr,pdf,data)
+
+      lineColorArg = root.RooFit.LineColor(color)
+      pdf.plotOn(frame,lineDrawOptArg,lineColorArg,lineWidthArg,rangeArg)
+
+      fakeG = root.TGraph()
+      fakeG.SetLineColor(color)
+      fakeG.SetLineWidth(2)
+      leg.AddEntry(fakeG,pdfTitle,"l")
+      fakeGraphs.append(fakeG)
+
+    frame.SetTitle("")
+    frame.Draw()
+
+    unitMatch =  re.search(r"GeV([\s]*/[\s]*c\^\{2\}|[\s]*/[\s]*c)?",xtitle)
+    units = ""
+    if unitMatch:
+      units = " "+unitMatch.group(0)
+    frame.SetXTitle(xtitle)
+    frame.SetYTitle("Events/"+str(self.binWidth)+units)
+    leg.Draw()
+    energyLumiStr = "#sqrt{{s}} = {0}, L = {1:.1f} fb^{{-1}}".format(self.energyStr.replace("TeV"," TeV"),self.lumi)
+    drawStandardCaptions(canvas,self.title,energyLumiStr,preliminaryString="CMS Internal")
+
+    saveAs(canvas,saveName)
         
 class RooModelPlotter:
   def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None,RangeName="",canvas=None,caption1="",caption2=""):
@@ -2317,6 +2401,16 @@ class RooModelPlotter:
 
     self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(lumi)
 
+    xtitle = xVar.GetTitle()
+
+    binning = xVar.getBinning()
+    self.binning = binning
+    nBins = self.binning.numBins()
+    binWidth = (self.binning.highBound()-self.binning.lowBound())/nBins
+
+    if canvas == None:
+      canvas = root.TCanvas("canvas"+nowStr)
+    self.canvas = canvas
 
     #Set the PDF pars value from the FitResults
     setPDFfromFR(self.fr,self.pdf,self.data)
