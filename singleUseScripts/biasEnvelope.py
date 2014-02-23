@@ -2,6 +2,7 @@
 
 import singleHelpers
 from helpers import *
+from xsec import *
 import cPickle
 import sys
 import os
@@ -24,7 +25,7 @@ def biasEnvelope(useRefFuncs,relativeForMH=125):
   fns = glob.glob("biasMaxPkl*.pkl")
   energies = []
   for fn in fns:
-    match = re.match("biasMaxPkl_([78P14]+TeV)_signif([.0-9]+).pkl",fn)
+    match = re.match("biasMaxPkl[a-zA-Z]*_([78P14]+TeV)_signif([.0-9]+).pkl",fn)
     assert(match)
     energyStr = match.group(1)
     if not energyStr in energies:
@@ -33,7 +34,8 @@ def biasEnvelope(useRefFuncs,relativeForMH=125):
   finalDict = {}
   categorySet = None
   for energy in energies:
-    globStr = "biasMaxPkl_"+energy
+    #globStr = "biasMaxPkl_"+energy
+    globStr = "biasMaxPklHggMeasure_"+energy
     dataList = []
     if categorySet == None:
       categorySet = set()
