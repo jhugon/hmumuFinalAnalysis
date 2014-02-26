@@ -267,43 +267,39 @@ MENormDict['8TeV']['bakMEPdf'] = 0.009364
 
 # Background Parameterization Uncertainties for makeCards.py
 # in terms of number of signal events for eac category
-# All for 8 TeV, for now
-BakParameterizationUncDict = {"7TeV":{},"8TeV":{}}
-BakParameterizationUncDict["7TeV"]["Jets01PassPtG10BB"] = 20.
-BakParameterizationUncDict["7TeV"]["Jets01PassPtG10BO"] = 20.
-BakParameterizationUncDict["7TeV"]["Jets01PassPtG10BE"] = 20.
-BakParameterizationUncDict["7TeV"]["Jets01PassPtG10OO"] = 20.
-BakParameterizationUncDict["7TeV"]["Jets01PassPtG10OE"] = 20.
-BakParameterizationUncDict["7TeV"]["Jets01PassPtG10EE"] = 20.
-                      
-BakParameterizationUncDict["7TeV"]["Jets01FailPtG10BB"] = 20.
-BakParameterizationUncDict["7TeV"]["Jets01FailPtG10BO"] = 20.
-BakParameterizationUncDict["7TeV"]["Jets01FailPtG10BE"] = 20.
-BakParameterizationUncDict["7TeV"]["Jets01FailPtG10OO"] = 20.
-BakParameterizationUncDict["7TeV"]["Jets01FailPtG10OE"] = 20.
-BakParameterizationUncDict["7TeV"]["Jets01FailPtG10EE"] = 20.
-
-BakParameterizationUncDict["7TeV"]["Jet2CutsVBFPass"]   = 20.
-BakParameterizationUncDict["7TeV"]["Jet2CutsGFPass"]    = 20.
-BakParameterizationUncDict["7TeV"]["Jet2CutsFailVBFGF"] = 20.
-
-BakParameterizationUncDict["8TeV"]["Jets01PassPtG10BB"] = 50.
-BakParameterizationUncDict["8TeV"]["Jets01PassPtG10BO"] = 50.
-BakParameterizationUncDict["8TeV"]["Jets01PassPtG10BE"] = 50.
-BakParameterizationUncDict["8TeV"]["Jets01PassPtG10OO"] = 50.
-BakParameterizationUncDict["8TeV"]["Jets01PassPtG10OE"] = 50.
-BakParameterizationUncDict["8TeV"]["Jets01PassPtG10EE"] = 50.
-                      
-BakParameterizationUncDict["8TeV"]["Jets01FailPtG10BB"] = 50.
-BakParameterizationUncDict["8TeV"]["Jets01FailPtG10BO"] = 50.
-BakParameterizationUncDict["8TeV"]["Jets01FailPtG10BE"] = 50.
-BakParameterizationUncDict["8TeV"]["Jets01FailPtG10OO"] = 50.
-BakParameterizationUncDict["8TeV"]["Jets01FailPtG10OE"] = 50.
-BakParameterizationUncDict["8TeV"]["Jets01FailPtG10EE"] = 50.
-
-BakParameterizationUncDict["8TeV"]["Jet2CutsVBFPass"]   = 50.
-BakParameterizationUncDict["8TeV"]["Jet2CutsGFPass"]    = 50.
-BakParameterizationUncDict["8TeV"]["Jet2CutsFailVBFGF"] = 50.
+# For group 3 reference functions (including Bernstein)
+# Using H->gamma gamma bias measure: N(alt)-N(ref)
+BakParameterizationUncDict = {'7TeV':{},'8TeV':{}}
+BakParameterizationUncDict['7TeV']['Jets01PassPtG10BB'] = 22.70
+BakParameterizationUncDict['7TeV']['Jets01PassPtG10BO'] = 42.22
+BakParameterizationUncDict['7TeV']['Jets01PassPtG10BE'] = 18.66
+BakParameterizationUncDict['7TeV']['Jets01PassPtG10OO'] = 11.48
+BakParameterizationUncDict['7TeV']['Jets01PassPtG10OE'] = 25.54
+BakParameterizationUncDict['7TeV']['Jets01PassPtG10EE'] = 11.18
+BakParameterizationUncDict['7TeV']['Jets01FailPtG10BB'] = 17.90
+BakParameterizationUncDict['7TeV']['Jets01FailPtG10BO'] = 18.94
+BakParameterizationUncDict['7TeV']['Jets01FailPtG10BE'] = 17.66
+BakParameterizationUncDict['7TeV']['Jets01FailPtG10OO'] = 19.78
+BakParameterizationUncDict['7TeV']['Jets01FailPtG10OE'] = 16.24
+BakParameterizationUncDict['7TeV']['Jets01FailPtG10EE'] = 5.64
+BakParameterizationUncDict['7TeV']['Jet2CutsVBFPass']   = 0.41
+BakParameterizationUncDict['7TeV']['Jet2CutsGFPass']    = 2.05
+BakParameterizationUncDict['7TeV']['Jet2CutsFailVBFGF'] = 8.36
+BakParameterizationUncDict['8TeV']['Jets01PassPtG10BB'] = 45.53
+BakParameterizationUncDict['8TeV']['Jets01PassPtG10BO'] = 104.31
+BakParameterizationUncDict['8TeV']['Jets01PassPtG10BE'] = 65.41
+BakParameterizationUncDict['8TeV']['Jets01PassPtG10OO'] = 47.03
+BakParameterizationUncDict['8TeV']['Jets01PassPtG10OE'] = 151.19
+BakParameterizationUncDict['8TeV']['Jets01PassPtG10EE'] = 33.60
+BakParameterizationUncDict['8TeV']['Jets01FailPtG10BB'] = 42.32
+BakParameterizationUncDict['8TeV']['Jets01FailPtG10BO'] = 87.05
+BakParameterizationUncDict['8TeV']['Jets01FailPtG10BE'] = 74.24
+BakParameterizationUncDict['8TeV']['Jets01FailPtG10OO'] = 33.67
+BakParameterizationUncDict['8TeV']['Jets01FailPtG10OE'] = 78.07
+BakParameterizationUncDict['8TeV']['Jets01FailPtG10EE'] = 19.07
+BakParameterizationUncDict['8TeV']['Jet2CutsVBFPass']   = 1.58
+BakParameterizationUncDict['8TeV']['Jet2CutsGFPass']    = 12.03
+BakParameterizationUncDict['8TeV']['Jet2CutsFailVBFGF'] = 27.49
 
 
 class NuisanceMap:

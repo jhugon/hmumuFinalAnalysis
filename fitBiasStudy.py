@@ -24,7 +24,7 @@ import makeCards
 import fitOrderChooser
 from singleUseScripts.biasPklToMu import getSMSigCounts
 
-from numpy import mean, median, corrcoef, percentile
+from numpy import mean, median, corrcoef, percentile, array
 from numpy import std as stddev
 
 #root.gErrorIgnoreLevel = root.kWarning
@@ -524,7 +524,7 @@ class BiasStudy:
           self.pullSummaryDict[refPdfName][pdfAltName][hmass] = median(data[refPdfName][hmass][pdfAltName]['pull'])
           self.pullSummaryDict[refPdfName]['orderRef'] = data[refPdfName][hmass]['orderTrue']
           self.zSigmaSummaryDict[refPdfName][pdfAltName][hmass] = stddev(data[refPdfName][hmass][pdfAltName]['z'])
-          self.nevtSummaryDict[refPdfName][pdfAltName][hmass] = median(data[refPdfName][hmass][pdfAltName]['n'])
+          self.nevtSummaryDict[refPdfName][pdfAltName][hmass] = median(array(data[refPdfName][hmass][pdfAltName]['n'])-array(data[refPdfName][hmass]['nTrue']))
           self.nevtSummaryDict[refPdfName]['orderRef'] = data[refPdfName][hmass]['orderTrue']
 
   def plot(self,outputPrefix):
@@ -544,52 +544,35 @@ class BiasStudy:
       refPdfNameOrder = refPdfName
       if self.data[refPdfName][self.sigMasses[0]]['orderTrue'] != None:
         refPdfNameOrder = str(self.data[refPdfName][self.sigMasses[0]]['orderTrue'])+refPdfNameOrder
-      ###### Pull plots 1D
-      #for hmass in self.sigMasses:
-      #  if len(self.pdfAltNamesDict[refPdfName])>1:
-      #    hist = root.TH1F("hist"+str(iHist),"",30,-3,3)
-      #    setHistTitles(hist,"(N_{sig}(Alt)-N_{sig}(Ref))/#DeltaN_{sig}(Alt)","N_{Toys}")
-      #    iHist += 1
-      #    for pull in self.data[refPdfName][hmass]['pullAll']:
-      #        hist.Fill(pull)
-      #    medianPull = median(self.data[refPdfName][hmass]['pullAll'])
-      #    hist.Draw()
-      #    tlatex.SetTextAlign(12)
-      #    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
-      #    tlatex.SetTextAlign(12)
-      #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfNameOrder])
-      #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"All Alternate PDFs")
-      #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
-      #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.60,"Median: {0:.2f}".format(medianPull))
-      #    tlatex.SetTextAlign(32)
-      #    tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
-      #    tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"{0:.2f}".format(medianPull))
-      #    line = self.setYMaxAndDrawVertLines(hist,medianPull)
-      #    canvas.RedrawAxis()
-      #    saveAs(canvas,outputPrefix+self.catName+"_"+str(hmass)+"_AllPulls_Ref"+refPdfName)
-      #    canvas.Clear()
-
-      #  for pdfAltName in self.pdfAltNamesDict[refPdfName]:
-      #    hist = root.TH1F("hist"+str(iHist),"",30,-3,3)
-      #    setHistTitles(hist,"(N_{sig}(Alt)-N_{sig}(Ref))/#DeltaN_{sig}(Alt)","N_{Toys}")
-      #    iHist += 1
-      #    for pull in self.data[refPdfName][hmass][pdfAltName]['pull']:
-      #        hist.Fill(pull)
-      #    medianPull = median(self.data[refPdfName][hmass][pdfAltName]['pull'])
-      #    hist.Draw()
-      #    tlatex.SetTextAlign(12)
-      #    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
-      #    tlatex.SetTextAlign(12)
-      #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfNameOrder])
-      #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
-      #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
-      #    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.60,"Median: {0:.2f}".format(medianPull))
-      #    tlatex.SetTextAlign(32)
-      #    tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
-      #    line = self.setYMaxAndDrawVertLines(hist,medianPull)
-      #    canvas.RedrawAxis()
-      #    saveAs(canvas,outputPrefix+self.catName+"_"+str(hmass)+"_Pulls_Ref"+refPdfName+"_Alt"+pdfAltName)
-      #    canvas.Clear()
+      ##### Pull plots 1D
+      for hmass in self.sigMasses:
+        for pdfAltName in self.pdfAltNamesDict[refPdfName]:
+          hist = root.TH1F("hist"+str(iHist),"",30,-3,3)
+          setHistTitles(hist,"(N_{sig}(Alt)-N_{sig}(Ref))/#DeltaN_{sig}(Alt)","N_{Toys}")
+          iHist += 1
+          for pull in self.data[refPdfName][hmass][pdfAltName]['pull']:
+              hist.Fill(pull)
+          medianPull = median(self.data[refPdfName][hmass][pdfAltName]['pull'])
+          fitFn = root.TF1("gausPull"+str(hmass),"gaus",-3,3)
+          fitResult = hist.Fit(fitFn,"LSMEQ") 
+          hist.Draw()
+          tlatex.SetTextAlign(12)
+          tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+          tlatex.SetTextAlign(12)
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Reference PDF: "+PDFTITLEMAP[refPdfNameOrder])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.75,"Alternate PDF: "+PDFTITLEMAP[pdfAltName])
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.68,"m_{H} = "+str(hmass)+" GeV/c^{2}")
+          tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.58,"Median: {0:.2f}".format(medianPull))
+          tlatex.SetTextAlign(32)
+          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.68,"Mean: {0:.2f} #pm {1:.2f}".format(fitFn.GetParameter(1),fitFn.GetParError(1)))
+          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.58,"#sigma: {0:.2f} #pm {1:.2f}".format(fitFn.GetParameter(2),fitFn.GetParError(2)))
+          tlatex.SetTextAlign(32)
+          tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
+          tlatex.SetTextColor(1)
+          line = self.setYMaxAndDrawVertLines(hist,medianPull)
+          canvas.RedrawAxis()
+          saveAs(canvas,outputPrefix+self.catName+"_"+str(hmass)+"_Pulls_Ref"+refPdfName+"_Alt"+pdfAltName)
+          canvas.Clear()
 
 #      ##### Median pull plots v. mass
 #      for pdfAltName in self.pdfAltNamesDict[refPdfName]:
@@ -1182,7 +1165,7 @@ def printBiasSummaryNevt(dataCats,energyStr=None,sigInject=None):
   print plainResult
   print latexResult
 
-  pklFileName = "biasMaxPkl"
+  pklFileName = "biasMaxPklHggMeasure"
   if energyStr != None:
     pklFileName += "_"+energyStr
   if sigInject != None:

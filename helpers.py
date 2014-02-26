@@ -3105,6 +3105,30 @@ def drawStandardCaptions(canvas,caption1,caption2="",caption3="",caption4="",cap
   tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.88,caption5)
   return tlatex
 
+def copyTreeBranchToNewNameTree(tree,oldBranchName,newBranchName):
+  """
+  Returns a new tree with the contents of oldBranchName in the old tree, but with
+  the branch name newBranchName
+
+  Assumes both branches just contain floats!!
+  """
+  result = root.TTree(tree.GetName()+"_newNames","")
+
+  newVal = array.array( 'f', [ 0. ] ) # one element array so we get a pointer to the value
+  newBranch = result.Branch( newBranchName, newVal, newBranchName+'/F' )
+
+  nEntries = tree.GetEntries()
+
+  for i in range(nEntries):
+    tree.GetEntry(i)
+    oldVal = getattr(tree,oldBranchName)
+    newVal[0] = oldVal
+    #print i,newVal[0]
+    result.Fill()
+  newBranch.SetAddress(0)
+  return result
+  
+
 if __name__ == "__main__":
 
   root.gROOT.SetBatch(True)
