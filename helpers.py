@@ -2541,8 +2541,20 @@ class RooModelPlotter:
     #  self.frame.SetMinimum(0)
 
     self.chi2 = None
-    nparams = pdf.getParameters(data).getSize()
-    self.chi2 = frame.chiSquare(nparams)
+    pdfParams = pdf.getParameters(data)
+    nparams = pdfParams.getSize()
+    nparamsFree = 0
+    pdfParamIter = pdfParams.createIterator()
+    pdfParam = pdfParamIter.Next()
+    while pdfParam:
+      #pdfParam.Print()
+      if not pdfParam.isConstant():
+        nparamsFree += 1
+      pdfParam = pdfParamIter.Next()
+    self.chi2 = frame.chiSquare(nparamsFree)
+    #print "nparams: {0}".format(nparams)
+    #print "nparamsFree: {0}".format(nparamsFree)
+    #print "chi2/ndf: {0:.2f}".format(self.chi2)
 
     # Pulls Frame
     pullsHist = self.makePullPlotHist(frame,tmpDataHistName,tmpBakPDFName)
@@ -2565,7 +2577,6 @@ class RooModelPlotter:
     self.pullsHist.GetYaxis().SetTitleSize(0.097*1.2)
     self.pullsHist.GetYaxis().SetLabelSize(0.097)
     self.pullsHist.GetYaxis().SetTitleOffset(0.70*0.9)
-
 
     # Bkg Sub Hist
     bkgSubHist = self.makeBkgSubHist(frame,tmpDataHistName,tmpBakPDFName)
@@ -2716,6 +2727,11 @@ class RooModelPlotter:
 
     if (filenameNoExt != ""):
       saveAs(canvas,filenameNoExt)
+
+    ### Save a copy of the pull histogram
+    #pullHistFile = root.TFile(filenameNoExt+"_pullHist.root","RECREATE")
+    #self.pullsHist.Write("pullHist")
+    #pullHistFile.Close()
 
   def drawWithParams(self,filenameNoExt,paramsToPlot=None):
     rightPad = self.canvas2.cd(2)
