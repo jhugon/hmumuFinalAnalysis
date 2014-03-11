@@ -2411,6 +2411,8 @@ class RooModelPlotter:
     self.nowStr = nowStr
     self.caption1 = caption1
     self.caption2 = caption2
+    self.myCurveHist = None
+    self.myDataHist = None
 
     self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(lumi)
 
@@ -2728,10 +2730,14 @@ class RooModelPlotter:
     if (filenameNoExt != ""):
       saveAs(canvas,filenameNoExt)
 
-    ### Save a copy of the pull histogram
-    #pullHistFile = root.TFile(filenameNoExt+"_pullHist.root","RECREATE")
-    #self.pullsHist.Write("pullHist")
-    #pullHistFile.Close()
+    #### Save a copy of the pull histogram
+    ##pullHistFile = root.TFile(filenameNoExt+"_pullHist.root","RECREATE")
+    ##self.pullsHist.Write("pullHist")
+    ##if self.myDataHist != None:
+    ##  self.myDataHist.Write("dataHist")
+    ##if self.myCurveHist != None:
+    ##  self.myCurveHist.Write("fitHist")
+    ##pullHistFile.Close()
 
   def drawWithParams(self,filenameNoExt,paramsToPlot=None):
     rightPad = self.canvas2.cd(2)
@@ -2959,6 +2965,13 @@ class RooModelPlotter:
     pullsHist = root.TH1F("pulls_"+histPlotName+"_"+pdfPlotName,"",
                           int(nBins), lowB, highB
                           )
+    myCurveHist =  root.TH1F("myCurveHist_"+histPlotName+"_"+pdfPlotName,"",
+                          int(nBins), lowB, highB
+                          )
+    myDataHist =  root.TH1F("myDataHist_"+histPlotName+"_"+pdfPlotName,"",
+                          int(nBins), lowB, highB
+                          )
+
     #print "pullsHist", pullsHist.GetNbinsX(), pullsHist.GetXaxis().GetXmin(), pullsHist.GetXaxis().GetXmax()
       
     x = root.Double(0.)
@@ -2975,9 +2988,11 @@ class RooModelPlotter:
       pull = float(y)
       if (float(x) < lowB or float(x) > highB):
         continue
+      myDataHist.SetBinContent(iBin,y)
       #print("hist bin: %10i, x: %10.2f, y: %10.2f" % (iBin,float(x),float(y)))
       if x > xCurveMin and x < xCurveMax:
         curvePoint = curve.interpolate(x)
+        myCurveHist.SetBinContent(iBin,curvePoint)
         if curvePoint == 0.:
           pull = 0.
         else:
@@ -2990,6 +3005,9 @@ class RooModelPlotter:
       #print(" pull: %10.2f" % (pull))
       pullsHist.SetBinContent(iBin,pull)
       iBin += 1
+
+    self.myCurveHist = myCurveHist
+    self.myDataHist = myDataHist
       
     return pullsHist
 
