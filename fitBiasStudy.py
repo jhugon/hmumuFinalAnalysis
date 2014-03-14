@@ -394,7 +394,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           del toyDataHist
 
       if debug:
-        debugFile = root.TFile("output/debug_RooFit_"+truePdfName+"_"+catName+"_"+energyStr+tmpJobStr,"RECREATE")
+        debugFile = root.TFile("output/debug_RooFit_"+truePdfName+"_"+catName+"_"+energyStr+tmpJobStr+".root","RECREATE")
         debugFile.cd()
         debugWorkspace.Write()
         debugFile.Close()
