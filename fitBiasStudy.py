@@ -48,7 +48,9 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
       """
         Pure function so that we can do multiprocessing!!
       """
-      plotEveryNToys = 10
+      debug = False
+      debugWorkspace = root.RooWorkspace("debugWorkspace")
+      debugImport = getattr(debugWorkspace,"import")
 
       tmpJobStr = "_job"+str(iJob)
       if iJobGroup != None:
@@ -137,6 +139,9 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
                                       "realDataZ"+catName+energyStr,
                                           dataTree,root.RooArgSet(dimuonMassZ)
                                         )
+      if debug:
+        debugImport(realData)
+        debugImport(realDataZ)
 
       ### Make Bak Pdfs
 
@@ -157,9 +162,13 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
       nDataVar = root.RooFit.RooConst(nData)
       truePdfE = root.RooExtendPdf(truePdfName+"E","True PDF Extended",truePdf,nDataVar)
 
+      if debug:
+        debugImport(truePdf)
+        debugImport(truePdfE)
+        debugImport(trueToyPdf)
+
       # Debug plot for fit to data
-      if toysPerJob > 2:
-      #if True:
+      if debug:
         rmpReal = RooModelPlotter(dimuonMass,truePdf,realData,trueFR,TITLEMAP[catName],energyStr,lumiDict[energyStr],canvas=canvas,caption2="Reference Fit to Real Data")
         rmpReal.draw("output/debug_RealData_"+truePdfName+"_"+catName+"_"+energyStr+tmpJobStr)
         rmpReal.drawWithParams("output/debug_RealData_"+truePdfName+"_"+catName+"_"+energyStr+tmpJobStr+"_params",["mixParam","bwWidth","bwmZ","expParam"])
@@ -200,6 +209,8 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
               x.setConstant(True)
         pdfAltList.append(altPdf)
         pdfAltwList.append(wAlt)
+        if debug:
+          debugImport(altPdf)
 
       nBakVar = root.RooRealVar("nBak","N_{B}",nData/2.,nData*2)
 
@@ -220,6 +231,8 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
         wSigs.append(wSig)
         sigPdfE = root.RooExtendPdf(sigPdf.GetName()+"E",sigPdf.GetTitle()+" Extended",sigPdf,nSigVar)
         sigPdfEs.append(sigPdfE)
+        if debug and (float(hmass) == 125. or len(sigMasses) == 1):
+          debugImport(sigPdfE)
 
       ## Load the 1*SM N signal events
       nSigSMs = []
@@ -274,6 +287,9 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
             toyData = truePdfPlusSigPdf.generate(root.RooArgSet(dimuonMass),int(nData))
             toyData.SetName("toyData"+catName+energyStr+str(iToy))
             toyDataHist = toyData.binnedClone("toyDataHist"+catName+energyStr+str(iToy))
+          if debug:
+            debugImport(toyData)
+            debugImport(toyDataHist)
           frame = None 
           # Check Chi^2 for ref background only fit
           trueToyPdf.fitTo(toyData,
@@ -350,9 +366,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
               data[truePdfName][hmass][pdfAltName]['chi2BOnly'].append(chi2BOnlyVal)
               data[truePdfName][hmass][pdfAltName]['ndfBOnly'].append(ndfBOnly)
               data[truePdfName][hmass][pdfAltName]['nBak'].append(nBakAlt)
-              # toy plot
-              if (iToy % plotEveryNToys == 5):
-              #if True :
+              if debug:
                 rmp = RooModelPlotter(dimuonMass,altSBPdf,toyData,toyAltFR,
                                       TITLEMAP[catName],energyStr,lumiDict[energyStr],
                                       canvas=canvas,
@@ -375,8 +389,15 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           #  for x in rooArgSet2List(trueToyPdf.getParameters(realData)):
           #      x.Print()
           #  print "**************************************************************"
-        del toyData
-        del toyDataHist
+        if not debug:
+          del toyData
+          del toyDataHist
+
+      if debug:
+        debugFile = root.TFile("output/debug_RooFit_"+truePdfName+"_"+catName+"_"+energyStr+tmpJobStr,"RECREATE")
+        debugFile.cd()
+        debugWorkspace.Write()
+        debugFile.Close()
       for i in reversed(range(len(rmpList))):
         del rmpList[i]
       del rmpList
