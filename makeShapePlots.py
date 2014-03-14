@@ -118,7 +118,7 @@ class ShapePlotter:
         if key != "bak":
           nSignal += self.processNameMap[channelNameOrig][key]
       nSignal *= signalInject
-      signalLegEntry = "SM Higgs#times{0:.0f}".format(signalInject)
+      legEntrySignal = "SM Higgs#times{0:.0f}".format(signalInject)
 
       #Set the PDF pars value from the FitResults
       setPDFfromFR(fr,bakPDF,data_obs)
@@ -127,7 +127,7 @@ class ShapePlotter:
       rmp = RooModelPlotter(mMuMu,bakPDF,data_obs,fr,
                             channelTitle,self.energyStr,self.lumi,
                             nSignal=nSignal,signalPdf=sigPDF,
-                            signalLegEntry=signalLegEntry,
+                            legEntrySignal=legEntrySignal,
                             caption1="Analysis A"
                             )
       #rmp.draw(saveName)

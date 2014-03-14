@@ -96,8 +96,8 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
         else:
           pdfAltFuncList.append(getattr(makeCards,"makePDFBak"+i))
 
-      #dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",110.,170.)
-      dimuonMass = root.RooRealVar("dimuonMass","m [GeV/c^{2}]",110.,160.)
+      #dimuonMass = root.RooRealVar("dimuonMass","M(#mu#mu) [GeV/c^{2}]",110.,170.)
+      dimuonMass = root.RooRealVar("dimuonMass","M(#mu#mu) [GeV/c^{2}]",110.,160.)
       #dimuonMass.setBins(60)
       dimuonMass.setBins(50)
       dimuonMass.setRange("exprange",120,160)
@@ -115,6 +115,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
       wTrueToyImport = getattr(wTrueToy,"import")
 
       canvas = root.TCanvas("canvas"+catName+energyStr+truePdfName+str(iJob))
+      rmpList = []
       tlatex = root.TLatex()
       tlatex.SetNDC()
       tlatex.SetTextFont(root.gStyle.GetLabelFont())
@@ -143,8 +144,9 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
       truePdf = wTrue.pdf("bak")
       truePdf.SetName(truePdfName)
       truePdf.SetTitle("True PDF ")
-      truePdf.fitTo(realData,
-                             PRINTLEVEL
+      trueFR = truePdf.fitTo(realData,
+                             PRINTLEVEL,
+                             root.RooFit.Save(True)
                            )
 
       trueToyPdfName = "trueToy"+catName+energyStr
@@ -157,25 +159,12 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
 
       # Debug plot for fit to data
       if toysPerJob > 2:
-        frame = dimuonMass.frame()
-        realDataHist = realData.binnedClone("realDataHist"+catName+energyStr+str(iJob))
-        chi2RealDataVar = truePdf.createChi2(realDataHist)
-        ndfRealData = dimuonMass.getBins() - 1  # b/c roofit normalizes
-        ndfRealData -= rooPdfNFreeParams(truePdf,realDataHist)
-        realData.plotOn(frame)
-        truePdf.plotOn(frame,root.RooFit.Range('low,signal,high'),root.RooFit.NormRange('low,signal,high'))
-        frame.Draw()
-        frame.SetTitle("")
-        frame.GetYaxis().SetTitle("Events / 1 GeV/c^{2}")
-        tlatex.SetTextAlign(12)
-        tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
-        tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Ref PDF: "+truePdfName)
-        tlatex.SetTextAlign(32)
-        tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,catName+" "+energyStr)
-        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Ref. Fit to Obs. Data")
-        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.80,"Ref. GOF: {0:.2f}".format(scipy.stats.chi2.sf(chi2RealDataVar.getVal(),ndfRealData)))
-        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Ref. #chi^{{2}}/NDF: {0:.2f}".format(chi2RealDataVar.getVal()/ndfRealData))
-        canvas.SaveAs("output/debug_RealData_"+truePdfName+"_"+catName+"_"+energyStr+tmpJobStr+".png")
+      #if True:
+        rmpReal = RooModelPlotter(dimuonMass,truePdf,realData,trueFR,TITLEMAP[catName],energyStr,lumiDict[energyStr],canvas=canvas,caption2="Reference Fit to Real Data")
+        rmpReal.draw("output/debug_RealData_"+truePdfName+"_"+catName+"_"+energyStr+tmpJobStr)
+        rmpReal.drawWithParams("output/debug_RealData_"+truePdfName+"_"+catName+"_"+energyStr+tmpJobStr+"_params",["mixParam","bwWidth","bwmZ","expParam"])
+        rmpList.append(rmpReal)
+        canvas.Clear()
 
       # Make sure Voigt params are set to True vals and constant
       if truePdfName == "Old":
@@ -278,8 +267,6 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           toyData = truePdf.generate(root.RooArgSet(dimuonMass),int(nData))
           toyData.SetName("toyData"+catName+energyStr+str(iToy))
           toyDataHist = toyData.binnedClone("toyDataHist"+catName+energyStr+str(iToy))
-        plotThisToy = (iToy % plotEveryNToys == 5)
-        #plotThisToy = True
         for hmass,sigPdf,sigPdfE,nSigSM,nSig1Sigma in zip(sigMasses,sigPdfs,sigPdfEs,nSigSMs,nSig1Sigmas):
           if sigInject != 0.:
             nSigVar.setVal(nSig1Sigma*sigInject)
@@ -288,9 +275,6 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
             toyData.SetName("toyData"+catName+energyStr+str(iToy))
             toyDataHist = toyData.binnedClone("toyDataHist"+catName+energyStr+str(iToy))
           frame = None 
-          if plotThisToy:
-            frame = dimuonMass.frame()
-            toyData.plotOn(frame)
           # Check Chi^2 for ref background only fit
           trueToyPdf.fitTo(toyData,
                              PRINTLEVEL
@@ -307,8 +291,9 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
                               root.RooArgList(trueToyPdf,sigPdf),
                               root.RooArgList(nBakVar,nSigVar)
                           )
-          trueToySBPdf.fitTo(toyData,
-                             PRINTLEVEL
+          toyRefFR = trueToySBPdf.fitTo(toyData,
+                             PRINTLEVEL,
+                             root.RooFit.Save()
                            )
           chi2TrueToyVar = trueToySBPdf.createChi2(toyDataHist)
           ndfTrue = dimuonMass.getBins() - 1  # b/c roofit normalizes
@@ -327,8 +312,6 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           data[truePdfName][hmass]['chi2BOnly'].append(chi2BOnlyVal)
           data[truePdfName][hmass]['ndfBOnly'].append(ndfBOnlyVal)
           data[truePdfName][hmass]['nBakTrue'].append(nBakTrue)
-          if plotThisToy:
-            trueToySBPdf.plotOn(frame,root.RooFit.LineColor(root.kGreen+1))
           for pdfAlt,pdfAltName,color in zip(pdfAltList,pdfAltNameList,range(2,len(pdfAltList)+2)):
               ##### Get Background Only chi^2 and nBak
               pdfAlt.fitTo(toyData,
@@ -345,8 +328,9 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
                               root.RooArgList(pdfAlt,sigPdf),
                               root.RooArgList(nBakVar,nSigVar)
                           )
-              altSBPdf.fitTo(toyData,
-                              PRINTLEVEL
+              toyAltFR = altSBPdf.fitTo(toyData,
+                              PRINTLEVEL,
+                              root.RooFit.Save()
                               )
               altChi2Var = altSBPdf.createChi2(toyDataHist)
               ndfAlt = dimuonMass.getBins() - 1  # b/c roofit normalizes
@@ -366,23 +350,22 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
               data[truePdfName][hmass][pdfAltName]['chi2BOnly'].append(chi2BOnlyVal)
               data[truePdfName][hmass][pdfAltName]['ndfBOnly'].append(ndfBOnly)
               data[truePdfName][hmass][pdfAltName]['nBak'].append(nBakAlt)
-              if plotThisToy:
-                altSBPdf.plotOn(frame,root.RooFit.LineColor(color))
-          if plotThisToy:
-            frame.Draw()
-            frame.SetTitle("")
-            frame.GetYaxis().SetTitle("Events / 1 GeV/c^{2}")
-            tlatex.SetTextAlign(12)
-            tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
-            tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.85,"Ref PDF: "+truePdfName)
-            tlatex.SetTextAlign(32)
-            tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,catName+" "+energyStr)
-            tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.85,"Ref B-Only GOF: {0:.2f}".format(scipy.stats.chi2.sf(chi2BOnlyVal,ndfBOnlyVal)))
-            tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.80,"Ref B-Only #chi^{{2}}/NDF: {0:.2f}".format(chi2BOnlyVal/ndfBOnlyVal))
-            tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.75,"Ref S+B GOF: {0:.2f}".format(scipy.stats.chi2.sf(chi2TrueToyVar.getVal(),ndfTrue)))
-            tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.70,"Ref S+B #chi^{{2}}/NDF: {0:.2f}".format(chi2TrueToyVar.getVal()/ndfTrue))
-            canvas.SaveAs("output/debug_"+truePdfName+"_"+catName+"_"+energyStr+"_"+str(hmass)+tmpJobStr+"_Toy"+str(iToy)+".png")
-            canvas.SaveAs("output/debug_"+truePdfName+"_"+catName+"_"+energyStr+"_"+str(hmass)+tmpJobStr+"_Toy"+str(iToy)+".pdf")
+              # toy plot
+              if (iToy % plotEveryNToys == 5):
+              #if True :
+                rmp = RooModelPlotter(dimuonMass,altSBPdf,toyData,toyAltFR,
+                                      TITLEMAP[catName],energyStr,lumiDict[energyStr],
+                                      canvas=canvas,
+                                      legEntryData="Toy Data", legEntryModel="S+B Model (Alt.)",
+                                      extraPDFs=[trueToySBPdf],extraLegEntries=["S+B Model (Ref.)"],
+                                      pdfDotLineName=pdfAlt.GetName(),
+                                      extraPDFDotLineNames=[trueToyPdf.GetName()],
+                                      pullsYLabel="#frac{Data-Alt. Fit}{#sqrt{Alt. Fit}}"
+                                      )
+                rmp.draw("output/debug_Ref"+truePdfName+"_Alt"+pdfAltName+"_"+catName+"_"+energyStr+"_"+str(hmass)+tmpJobStr+"_Toy"+str(iToy))
+                rmp.drawWithParams("output/debug_Ref"+truePdfName+"_Alt"+pdfAltName+"_"+catName+"_"+energyStr+"_"+str(hmass)+tmpJobStr+"_Toy"+str(iToy)+"_params",["mixParam","bwWidth","bwmZ","expParam"])
+                rmpList.append(rmp)
+                canvas.Clear()
           #if truePdfName == "Old":
           #  print "**************************************************************"
           #  print "True PDF Parameters:"
@@ -394,6 +377,10 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           #  print "**************************************************************"
         del toyData
         del toyDataHist
+      for i in reversed(range(len(rmpList))):
+        del rmpList[i]
+      del rmpList
+      del canvas
       return data
 
 def runStudyStar(argList):
