@@ -85,6 +85,7 @@ def debugFR(fr):
 
     rowString += "{0:20}".format("[{0:.3g},{1:.3g}]".format(nuis_s.getMin(),nuis_s.getMax()))
     result += rowString + "\n"
+    #print name, nuis_s.getVal()
   return result 
 
 def debugChi2(pdf,data):
@@ -101,18 +102,62 @@ def debugChi2(pdf,data):
       nparamsFree += 1
   ndf = nBins - nparamsFree
   #for errsForChi2, errsForChi2Label in zip([root.RooAbsData.Expected,root.RooAbsData.SumW2,root.RooAbsData.Poisson],["Errors from PDF","Errors Data Weights^2","Errors Poisson"]):
-  for errsForChi2, errsForChi2Label in zip([getattr(root.RooAbsData,"None"),root.RooAbsData.Auto,root.RooAbsData.SumW2,root.RooAbsData.Poisson],["Errors None","Errors Auto","Errors Data Weights^2","Errors Poisson"]):
+  #for errsForChi2, errsForChi2Label in zip([getattr(root.RooAbsData,"None"),root.RooAbsData.Auto,root.RooAbsData.SumW2,root.RooAbsData.Poisson],["Errors None","Errors Auto","Errors Data Weights^2","Errors Poisson"]):
+  for errsForChi2, errsForChi2Label in zip([root.RooAbsData.Poisson],["Errors Poisson"]):
     chi2Var = pdf.createChi2(data,root.RooFit.DataError(errsForChi2))
     chi2 = chi2Var.getVal()
+    chi2Prob = scipy.stats.chi2.sf(chi2,ndf)
     normChi2 = chi2/ndf
     result += "{0}:\n".format("Chi2 Info Using "+errsForChi2Label+" "+str(errsForChi2))
     result += "{0:20}: {1:<10.3g}\n".format("chi2",chi2)
     result += "{0:20}: {1:<10.3g}\n".format("chi2/ndf",normChi2)
+    result += "{0:20}: {1:<10.3g}\n".format("chi2 Prob",chi2Prob)
     result += "{0:20}: {1:<10.3g}\n".format("ndf",ndf)
     result += "{0:20}: {1:<10.3g}\n".format("nBins",nBins)
     result += "{0:20}: {1:<10.3g}\n".format("nParams Free",nparamsFree)
     result += "{0:20}: {1:<10.3g}\n".format("nParams",nparams)
   return result
+
+class PDFBakMSSM(object):
+  def __init__(self,dimuonMass):
+    channelName = "MSSM"
+
+    self.dimuonMass = dimuonMass
+    self.bwWidth = root.RooRealVar(channelName+"_bwWidth","bwWidth",3.80102314028)
+    self.bwmZ = root.RooRealVar(channelName+"_bwmZ","bwmZ",91.055064672)
+    self.expParam = root.RooRealVar(channelName+"_expParam","expParam",-1e-03,-1e-01,1e-01)
+    self.mixParam = root.RooRealVar(channelName+"_mixParam","mixParam",0.5,0,1)
+
+    self.phoExpMmumu = root.RooGenericPdf("phoExpMmumu","exp(@0*@1)*pow(@0,-2)",root.RooArgList(self.dimuonMass,self.expParam))
+    self.bwExpMmumu  = root.RooGenericPdf("bwExpMmumu","exp(@0*@3)*(@2)/(pow(@0-@1,2)+0.25*pow(@2,2))",root.RooArgList(self.dimuonMass,self.bwmZ,self.bwWidth,self.expParam))
+    self.pdfMmumu = root.RooAddPdf("bak","bak",root.RooArgList(self.bwExpMmumu,self.phoExpMmumu),root.RooArgList(self.mixParam))
+    self.pdf = self.pdfMmumu
+
+
+class PDFBakMSSMPrime(object):
+  def __init__(self,dimuonMass):
+    channelName = "MSSMPrime"
+
+    self.dimuonMass = dimuonMass
+    self.bwWidth = root.RooRealVar(channelName+"_bwWidth","bwWidth",3.80102314028)
+    self.bwmZ = root.RooRealVar(channelName+"_bwmZ","bwmZ",91.055064672)
+    self.expParam = root.RooRealVar(channelName+"_expParam","expParam",-1e-03,-1e-01,1e-01)
+    #self.phoCoef = root.RooRealVar(channelName+"_phoCoef","Photon Term Coef",0.5,0,1)
+    #self.bwCoef = root.RooRealVar(channelName+"_bwCoef","Breit-Wigner Term Coef",0.5,0,1)
+    #self.phoCoef = root.RooRealVar(channelName+"_phoCoef","Photon Term Coef",1e-10)
+    #self.bwCoef = root.RooRealVar(channelName+"_bwCoef","Breit-Wigner Term Coef",0.5,0,1)
+    self.phoCoef = root.RooRealVar(channelName+"_phoCoef","Photon Term Coef",0.5,0,1)
+    self.bwCoef = root.RooRealVar(channelName+"_bwCoef","Breit-Wigner Term Coef",1e-10)
+
+    #self.phoExpMmumu = root.RooGenericPdf("phoExpMmumu","exp(@0*@1)*pow(@0,-2)",root.RooArgList(self.dimuonMass,self.expParam))
+    #self.bwExpMmumu  = root.RooGenericPdf("bwExpMmumu","exp(@0*@3)*(@2)/(pow(@0-@1,2)+0.25*pow(@2,2))",root.RooArgList(self.dimuonMass,self.bwmZ,self.bwWidth,self.expParam))
+    #self.phoExpMmumuE = root.RooExtendPdf("phoExpMmumuE","phoExpMmumuE",self.phoExpMmumu,self.phoCoef)
+    #self.bwExpMmumuE = root.RooExtendPdf("bwExpMmumuE","bwExpMmumuE",self.bwExpMmumu,self.bwCoef)
+    #self.pdfMmumu = root.RooAddPdf("bak","bak",root.RooArgList(self.bwExpMmumuE,self.phoExpMmumuE))
+    #self.pdf = self.pdfMmumu
+
+    self.pdfMmumu = root.RooGenericPdf("bak","@4*exp(@0*@1)*pow(@0,-2)+@5*exp(@0*@1)/(pow(@0-@2,2)+0.25*pow(@3,2))",root.RooArgList(self.dimuonMass,self.expParam,self.bwmZ,self.bwWidth,self.phoCoef,self.bwCoef))
+    self.pdf = self.pdfMmumu
 
 #########################################################################
 #########################################################################
@@ -127,13 +172,19 @@ inputFile = root.TFile("output/debug_RooFit_Bernstein_Jets01PassPtG10BB_8TeV_job
 w = inputFile.Get("debugWorkspace")
 #w.Print()
 
-pdfs =  getPDFList(w)
-pdf = None
-for i in pdfs:
-  if "MSSM" in i.GetName():
-    pdf = i
-
 dimuonMass = w.var("dimuonMass")
+
+### Load PDF from file
+#pdfs =  getPDFList(w)
+#pdf = None
+#for i in pdfs:
+#  if "MSSM" in i.GetName():
+#    pdf = i
+
+## Make PDF here
+#pdfObj = PDFBakMSSM(dimuonMass)
+pdfObj = PDFBakMSSMPrime(dimuonMass)
+pdf = pdfObj.pdf
 
 nToys = 10
 toyDataSets = []
@@ -146,31 +197,16 @@ rmpList = []
 for iToy,ds in enumerate(toyDataSets):
   if iToy > 0:
     break
+
   dh = ds.binnedClone()
   log.write("#####################################################\n")
   log.write("Toy: {0}\n".format(iToy))
 
-  log.write("\nDefault Fit:\n")
-  fr = pdf.fitTo(ds,
+  # Prefit
+  pdf.fitTo(dh,
                  PRINTLEVEL,
-                 root.RooFit.Save()
                 )
-  log.write(debugFR(fr))
-  rmp = RooModelPlotter(dimuonMass,pdf,ds,fr,
-                        "0,1-Jet Tight BB","8TeV",lumiDict["8TeV"],
-                        caption2="Default Fit",
-                        legEntryData="Toy Data", legEntryModel="MSSM Bkg. Model"
-                        )
-  rmp.draw("output/fitInvestigate_Toy"+str(iToy)+"_default")
-  rmpList.append(rmp)
-  rmp = RooModelPlotter(dimuonMass,pdf,ds,fr,
-                        "0,1-Jet Tight BB","8TeV",lumiDict["8TeV"],
-                        caption2="Default Fit; New Band",
-                        doLinearErrs=False,
-                        legEntryData="Toy Data", legEntryModel="MSSM Bkg. Model"
-                        )
-  rmp.draw("output/fitInvestigate_Toy"+str(iToy)+"_default_sampleErrBands")
-  rmpList.append(rmp)
+
 
   log.write("\nMINOS Fit:\n")
   fr = pdf.fitTo(ds,
@@ -193,101 +229,6 @@ for iToy,ds in enumerate(toyDataSets):
                         legEntryData="Toy Data", legEntryModel="MSSM Bkg. Model"
                         )
   rmp.draw("output/fitInvestigate_Toy"+str(iToy)+"_minos_sampleErrBand")
-  rmpList.append(rmp)
-
-  log.write("\nOldMinuit MINOS Fit:\n")
-  fr = pdf.fitTo(ds,
-                 root.RooFit.Minimizer("OldMinuit","migrad"),
-                 root.RooFit.Minos(True),
-                 PRINTLEVEL,
-                 root.RooFit.Save()
-                )
-  log.write(debugFR(fr))
-  rmp = RooModelPlotter(dimuonMass,pdf,ds,fr,
-                        "0,1-Jet Tight BB","8TeV",lumiDict["8TeV"],
-                        caption2="Old MINUIT & MINOS Fit",
-                        legEntryData="Toy Data", legEntryModel="MSSM Bkg. Model"
-                        )
-  rmp.draw("output/fitInvestigate_Toy"+str(iToy)+"_oldminuitminos")
-  rmpList.append(rmp)
-  rmp = RooModelPlotter(dimuonMass,pdf,ds,fr,
-                        "0,1-Jet Tight BB","8TeV",lumiDict["8TeV"],
-                        caption2="Old MINUIT & MINOS Fit; New Band",
-                        legEntryData="Toy Data", legEntryModel="MSSM Bkg. Model"
-                        )
-  rmp.draw("output/fitInvestigate_Toy"+str(iToy)+"_oldminuitminos_sampleErrBand")
-  rmpList.append(rmp)
-
-
-  log.write("\nMinuit2 MINOS Fit:\n")
-  fr = pdf.fitTo(ds,
-                 root.RooFit.Minimizer("Minuit2","migrad"),
-                 root.RooFit.Minos(True),
-                 PRINTLEVEL,
-                 root.RooFit.Save()
-                )
-  log.write(debugFR(fr))
-  rmp = RooModelPlotter(dimuonMass,pdf,ds,fr,
-                        "0,1-Jet Tight BB","8TeV",lumiDict["8TeV"],
-                        caption2="MINUIT2 & MINOS Fit",
-                        legEntryData="Toy Data", legEntryModel="MSSM Bkg. Model"
-                        )
-  rmp.draw("output/fitInvestigate_Toy"+str(iToy)+"_minuit2minos")
-  rmpList.append(rmp)
-  rmp = RooModelPlotter(dimuonMass,pdf,ds,fr,
-                        "0,1-Jet Tight BB","8TeV",lumiDict["8TeV"],
-                        caption2="MINUIT2 & MINOS Fit; New Band",
-                        legEntryData="Toy Data", legEntryModel="MSSM Bkg. Model"
-                        )
-  rmp.draw("output/fitInvestigate_Toy"+str(iToy)+"_minuit2minos_sampleErrBand")
-  rmpList.append(rmp)
-
-  log.write("\nDefault Hist Fit:\n")
-  pdf.Print()
-  dh.Print()
-  fr = pdf.fitTo(dh,
-                 PRINTLEVEL,
-                 root.RooFit.Save()
-                )
-  log.write(debugFR(fr))
-  rmp = RooModelPlotter(dimuonMass,pdf,dh,fr,
-                        "0,1-Jet Tight BB","8TeV",lumiDict["8TeV"],
-                        caption2="Default Hist Fit",
-                        legEntryData="Toy Data", legEntryModel="MSSM Bkg. Model"
-                        )
-  rmp.draw("output/fitInvestigate_Toy"+str(iToy)+"_defaultHist")
-  rmpList.append(rmp)
-  rmp = RooModelPlotter(dimuonMass,pdf,dh,fr,
-                        "0,1-Jet Tight BB","8TeV",lumiDict["8TeV"],
-                        caption2="Default Hist Fit; New Band",
-                        doLinearErrs=False,
-                        legEntryData="Toy Data", legEntryModel="MSSM Bkg. Model"
-                        )
-  rmp.draw("output/fitInvestigate_Toy"+str(iToy)+"_defaultHist_sampleErrBand")
-  rmpList.append(rmp)
-  log.write(debugChi2(pdf,dh))
-
-  log.write("\nMINOS Hist Fit:\n")
-  fr = pdf.fitTo(dh,
-                 root.RooFit.Minos(True),
-                 PRINTLEVEL,
-                 root.RooFit.Save()
-                )
-  log.write(debugFR(fr))
-  rmp = RooModelPlotter(dimuonMass,pdf,dh,fr,
-                        "0,1-Jet Tight BB","8TeV",lumiDict["8TeV"],
-                        caption2="MINOS Hist Fit",
-                        legEntryData="Toy Data", legEntryModel="MSSM Bkg. Model"
-                        )
-  rmp.draw("output/fitInvestigate_Toy"+str(iToy)+"_minosHist")
-  rmpList.append(rmp)
-  rmp = RooModelPlotter(dimuonMass,pdf,dh,fr,
-                        "0,1-Jet Tight BB","8TeV",lumiDict["8TeV"],
-                        caption2="MINOS Hist Fit; New Band",
-                        doLinearErrs=False,
-                        legEntryData="Toy Data", legEntryModel="MSSM Bkg. Model"
-                        )
-  rmp.draw("output/fitInvestigate_Toy"+str(iToy)+"_minosHist_sampleErrBand")
   rmpList.append(rmp)
   log.write(debugChi2(pdf,dh))
 
