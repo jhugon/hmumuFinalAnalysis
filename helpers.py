@@ -2406,7 +2406,8 @@ class RooModelPlotter:
                 pullsYLabel="#frac{Data-Fit}{#sqrt{Fit}}",
                 extraPDFs=[],
                 extraLegEntries=[],
-                extraPDFDotLineNames=[]
+                extraPDFDotLineNames=[],
+                doLinearErrs=True
               ):
     self.xVar = xVar
     self.pdf = pdf
@@ -2432,6 +2433,7 @@ class RooModelPlotter:
     assert(len(self.extraPDFs)<=len(self.extraPDFColors))
     self.extraLegEntries = extraLegEntries
     self.extraPDFDotLineNames = extraPDFDotLineNames
+    self.doLinearErrs = doLinearErrs
 
     self.legEntryData = legEntryData
     self.legEntryModel = legEntryModel
@@ -2476,8 +2478,7 @@ class RooModelPlotter:
     self.tlatex.SetTextSize(root.gStyle.GetLabelSize())
     self.tlatex.SetTextAlign(22)
 
-    doLinearErrs = True
-    errVisArg = root.RooFit.VisualizeError(fr,1,doLinearErrs)
+    errVisArg = root.RooFit.VisualizeError(fr,1,self.doLinearErrs)
     errColorArg = root.RooFit.FillColor(root.kCyan)
     lineColorArg = root.RooFit.LineColor(root.kBlue)
     lineWidthArg = root.RooFit.LineWidth(2)
