@@ -56,6 +56,11 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
       if iJobGroup != None:
         tmpJobStr = "_jobGrp"+str(iJobGroup)+tmpJobStr
 
+      debugLog = None
+      if debug:
+        debugLog = open("output/debug_log_"+truePdfName+"_"+catName+"_"+energyStr+tmpJobStr+".log",'w')
+        debugLog.write("### Debug Log for "+truePdfName+" "+catName+" "+energyStr+" Job: "+tmpJobStr+"\n\n")
+
       randomGenerator = root.RooRandom.randomGenerator()
       iSeed = 10001+iJob
       if iJobGroup != None:
@@ -134,11 +139,13 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
                                       "realData"+catName+energyStr,
                                           dataTree,root.RooArgSet(dimuonMass)
                                         )
+      realDataHist = realData.binnedClone()
       nData = realData.sumEntries()
       realDataZ = root.RooDataSet("realDataZ"+catName+energyStr,
                                       "realDataZ"+catName+energyStr,
                                           dataTree,root.RooArgSet(dimuonMassZ)
                                         )
+      realDataZHist = realDataZ.binnedClone()
       if debug:
         debugImport(realData)
         debugImport(realDataZ)
@@ -166,6 +173,10 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
         debugImport(truePdf)
         debugImport(truePdfE)
         debugImport(trueToyPdf)
+        debugLog.write("### Info For Real Data Fit:\n")
+        debugLog.write(rooDebugFR(trueFR))
+        debugLog.write(rooDebugChi2(truePdf,realDataHist))
+        debugLog.write("\n")
 
       # Debug plot for fit to data
       if debug:
@@ -328,6 +339,12 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           data[truePdfName][hmass]['chi2BOnly'].append(chi2BOnlyVal)
           data[truePdfName][hmass]['ndfBOnly'].append(ndfBOnlyVal)
           data[truePdfName][hmass]['nBakTrue'].append(nBakTrue)
+
+          if debug:
+            debugLog.write("### Info For Reference PDF S+B Refit iToy {0} hmass {1}:\n".format(iToy,hmass))
+            debugLog.write(rooDebugFR(toyRefFR))
+            debugLog.write(rooDebugChi2(trueToySBPdf,toyDataHist))
+            debugLog.write("\n")
           for pdfAlt,pdfAltName,color in zip(pdfAltList,pdfAltNameList,range(2,len(pdfAltList)+2)):
               ##### Get Background Only chi^2 and nBak
               pdfAlt.fitTo(toyData,
@@ -367,6 +384,10 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
               data[truePdfName][hmass][pdfAltName]['ndfBOnly'].append(ndfBOnly)
               data[truePdfName][hmass][pdfAltName]['nBak'].append(nBakAlt)
               if debug:
+                debugLog.write("### Info For Alt PDF S+B Fit iToy {0} hmass {1} alt {2}:\n".format(iToy,hmass,pdfAltName))
+                debugLog.write(rooDebugFR(toyAltFR))
+                debugLog.write(rooDebugChi2(altSBPdf,toyDataHist))
+                debugLog.write("\n")
                 rmp = RooModelPlotter(dimuonMass,altSBPdf,toyData,toyAltFR,
                                       TITLEMAP[catName],energyStr,lumiDict[energyStr],
                                       canvas=canvas,
@@ -398,6 +419,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
         debugFile.cd()
         debugWorkspace.Write()
         debugFile.Close()
+        debugLog.close()
       for i in reversed(range(len(rmpList))):
         del rmpList[i]
       del rmpList
