@@ -2401,7 +2401,7 @@ class RooModelPlotter:
                 nSignal=0,signalPdf=None,
                 RangeName="",
                 canvas=None,
-                caption1="",caption2="",
+                caption1="",caption2="",caption3="",caption4="",
                 legEntryData="Data",legEntryModel="Background Model",legEntrySignal="Signal",
                 pullsYLabel="#frac{Data-Fit}{#sqrt{Fit}}",
                 extraPDFs=[],
@@ -2426,6 +2426,8 @@ class RooModelPlotter:
     self.nowStr = nowStr
     self.caption1 = caption1
     self.caption2 = caption2
+    self.caption3 = caption3
+    self.caption4 = caption4
     assert(len(extraPDFs) == len(extraLegEntries))
     self.extraPDFs = extraPDFs
     #self.extraPDFColors = [root.kGreen+3,root.kMagenta+3,root.kOrange-3]
@@ -2576,21 +2578,12 @@ class RooModelPlotter:
     #else:
     #  self.frame.SetMinimum(0)
 
-    self.chi2 = None
-    pdfParams = pdf.getParameters(data)
-    nparams = pdfParams.getSize()
-    nparamsFree = 0
-    pdfParamIter = pdfParams.createIterator()
-    pdfParam = pdfParamIter.Next()
-    while pdfParam:
-      #pdfParam.Print()
-      if not pdfParam.isConstant():
-        nparamsFree += 1
-      pdfParam = pdfParamIter.Next()
-    self.chi2 = frame.chiSquare(nparamsFree)
-    #print "nparams: {0}".format(nparams)
-    #print "nparamsFree: {0}".format(nparamsFree)
-    #print "chi2/ndf: {0:.2f}".format(self.chi2)
+    dataHist = None
+    if type(self.data) == root.RooDataHist:
+      dataHist = self.data
+    else:
+      dataHist = self.data.binnedClone()
+    self.chi2 = rooCalcChi2(self.pdf,dataHist)
 
     # Pulls Frame
     pullsHist = self.makePullPlotHist(frame,tmpDataHistName,tmpBakPDFName)
@@ -2762,12 +2755,19 @@ class RooModelPlotter:
       self.tlatex.DrawLatex(self.legPos[0]-0.01,0.875,"#sqrt{s} = "+self.energyStr)
 
     if self.caption2 != "":
-      self.tlatex.DrawLatex(self.legPos[0]-0.01,0.765,self.caption2)
+      self.tlatex.DrawLatex(self.legPos[0]-0.01,0.76,self.caption2)
+
+    if self.caption3 != "":
+      self.tlatex.DrawLatex(self.legPos[0]-0.01,0.70,self.caption3)
+
+    if self.caption4 != "":
+      self.tlatex.DrawLatex(self.legPos[0]-0.01,0.64,self.caption4)
 
     pad2.cd()
     self.tlatex.SetTextSize(self.pullsHist.GetYaxis().GetLabelSize())
     self.tlatex.SetTextAlign(12)
-    self.tlatex.DrawLatex(0.18,0.41,"#chi^{{2}}/NDF: {0:.3g}".format(self.chi2))
+    #self.tlatex.DrawLatex(0.18,0.41,"#chi^{{2}}/NDF: {0:.3g}".format(self.chi2))
+    self.tlatex.DrawLatex(0.18,0.41,"#chi^{{2}}/NDF = {0:.1f}/{1} = {2:.3g}; Probability: {3:.3g}".format(self.chi2[0],self.chi2[1],self.chi2[0]/self.chi2[1],self.chi2[2]))
 
     if (filenameNoExt != ""):
       saveAs(canvas,filenameNoExt)
@@ -3234,6 +3234,29 @@ def rooDebugFR(fr):
     result += rowString + "\n"
     #print name, nuis_s.getVal()
   return result 
+
+def rooCalcChi2(pdf,dataHist):
+  """
+  Returns (chi^2,ndf,chi^2 Probablility)
+  """
+  assert(type(dataHist) == root.RooDataHist)
+  observables = rooArgSet2List(pdf.getObservables(dataHist))
+  assert(len(observables)==1)
+  binning = observables[0].getBinning()
+  nBins = binning.numBins()
+  pdfParams = rooArgSet2List(pdf.getParameters(dataHist))
+  nparams = len(pdfParams)
+  nparamsFree = 0
+  for p in pdfParams:
+    if not p.isConstant():
+      nparamsFree += 1
+  ndf = nBins - nparamsFree
+  #for errsForChi2, errsForChi2Label in zip([root.RooAbsData.Expected,root.RooAbsData.SumW2,root.RooAbsData.Poisson],["Errors from PDF","Errors Data Weights^2","Errors Poisson"]):
+  #for errsForChi2, errsForChi2Label in zip([getattr(root.RooAbsData,"None"),root.RooAbsData.Auto,root.RooAbsData.SumW2,root.RooAbsData.Poisson],["Errors None","Errors Auto","Errors Data Weights^2","Errors Poisson"]):
+  chi2Var = pdf.createChi2(dataHist,root.RooFit.DataError(root.RooAbsData.Poisson))
+  chi2 = chi2Var.getVal()
+  chi2Prob = scipy.stats.chi2.sf(chi2,ndf)
+  return (chi2,ndf,chi2Prob)
 
 def rooDebugChi2(pdf,data):
   result = ""
