@@ -56,8 +56,8 @@ class PDFBakMSSMPrime(object):
     #self.bwCoef = root.RooRealVar(channelName+"_bwCoef","Breit-Wigner Term Coef",0.5,0,1)
     #self.phoCoef = root.RooRealVar(channelName+"_phoCoef","Photon Term Coef",1e-10)
     #self.bwCoef = root.RooRealVar(channelName+"_bwCoef","Breit-Wigner Term Coef",0.5,0,1)
-    self.phoCoef = root.RooRealVar(channelName+"_phoCoef","Photon Term Coef",0.5,0,1)
-    self.bwCoef = root.RooRealVar(channelName+"_bwCoef","Breit-Wigner Term Coef",1e-10)
+    self.phoCoef = root.RooRealVar(channelName+"_phoCoef","Photon Term Coef",0.01,-0.6,0.6)
+    self.bwCoef = root.RooRealVar(channelName+"_bwCoef","Breit-Wigner Term Coef",1)
 
     #self.phoExpMmumu = root.RooGenericPdf("phoExpMmumu","exp(@0*@1)*pow(@0,-2)",root.RooArgList(self.dimuonMass,self.expParam))
     #self.bwExpMmumu  = root.RooGenericPdf("bwExpMmumu","exp(@0*@3)*(@2)/(pow(@0-@1,2)+0.25*pow(@2,2))",root.RooArgList(self.dimuonMass,self.bwmZ,self.bwWidth,self.expParam))

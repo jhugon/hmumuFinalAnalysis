@@ -3188,7 +3188,7 @@ def copyTreeBranchToNewNameTree(tree,oldBranchName,newBranchName):
   newBranch.SetAddress(0)
   return result
   
-def rooDebugFR(fr):
+def rooDebugFR(fr,printCorrelation=True):
   result = ""
   result += "{0:20}: {1:10.3g}\n".format("Status",fr.status())
   result += "{0:20}: {1:10.3g}\n".format("EDM",fr.edm())
@@ -3233,6 +3233,25 @@ def rooDebugFR(fr):
     rowString += "{0:20}".format("[{0:.3g},{1:.3g}]".format(nuis_s.getMin(),nuis_s.getMax()))
     result += rowString + "\n"
     #print name, nuis_s.getVal()
+  if printCorrelation:
+    result += "Correlations:\n"
+
+    rowString = " "*12
+    for j in range(fpf_s.getSize()): # Columns
+      name = fpf_s.at(j).GetName()
+      if '_' in name:
+        name = name[-[i for i in reversed(name)].index("_"):]
+      rowString += "{0:10}  ".format(name)
+    result += rowString + "\n"
+    for i in range(fpf_s.getSize()): # Rows
+      name = fpf_s.at(i).GetName()
+      if '_' in name:
+        name = name[-[k for k in reversed(name)].index("_"):]
+      rowString = "{0:10}  ".format(name)
+      for j in range(fpf_s.getSize()): # Columns
+        corr = fr.correlation(fpf_s.at(i),fpf_s.at(j))
+        rowString += "{0:10.3g}  ".format(corr)
+      result += rowString + "\n"
   return result 
 
 def rooCalcChi2(pdf,dataHist):
