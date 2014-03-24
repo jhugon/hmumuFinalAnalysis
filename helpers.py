@@ -272,6 +272,17 @@ def rooArgSet2List(x):
       break
   return result
 
+def rooArgSet2Dict(x):
+  itr = x.createIterator()
+  result = {}
+  while True:
+    ele = itr.Next()
+    if ele:
+      result[ele.GetName()] = ele
+    else:
+      break
+  return result
+
 def rooPdfNFreeParams(pdf,data):
   paramList = rooArgSet2List(pdf.getParameters(data))
   n = 0
@@ -761,6 +772,7 @@ def setStyle():
   gStyle.SetLegendFont(42)
   gStyle.SetMarkerSize(1.2)
   gStyle.SetMarkerStyle(20)
+  gStyle.SetHistLineColor(1)
  
   gStyle.SetLabelSize(0.040,"X")
   gStyle.SetLabelSize(0.040,"Y")
@@ -3229,8 +3241,6 @@ def rooDebugFR(fr,printCorrelation=True):
     rowString = ""
     rowString += "{0:30}".format(re.sub(r".*TeV_","",name))
     rowString += "{0:10.3g}  FIXED  ".format(nuis_s.getVal())
-
-    rowString += "{0:20}".format("[{0:.3g},{1:.3g}]".format(nuis_s.getMin(),nuis_s.getMax()))
     result += rowString + "\n"
     #print name, nuis_s.getVal()
   if printCorrelation:
