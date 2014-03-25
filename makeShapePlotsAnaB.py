@@ -134,7 +134,7 @@ def makePlot(filename,title,saveName,energyStr,binWidth=1.,signal=None):
   #print "sigN: ",sigN
   #print "sigSF: ",sigSF
   
-  signalLegEntry = "SM Higgs#times{0:.0f}".format(sigSF)
+  legEntrySignal = "SM Higgs#times{0:.0f}".format(sigSF)
 
   ### Plot time
 
@@ -143,7 +143,7 @@ def makePlot(filename,title,saveName,energyStr,binWidth=1.,signal=None):
   rmp = RooModelPlotter(dimuonMass,pdfMmumu,rooDataset,fr,
                                     title,energyStr,lumiDict[energyStr],
                                     nSignal=sigN,signalPdf=pdfSignal,
-                                    signalLegEntry=signalLegEntry,
+                                    legEntrySignal=legEntrySignal,
                                     )
   #sigDataHist.plotOn(rmp.frame,root.RooFit.MarkerColor(root.kRed),root.RooFit.LineColor(root.kRed))
   rmp.draw(saveName)

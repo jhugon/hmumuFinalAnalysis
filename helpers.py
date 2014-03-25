@@ -2595,9 +2595,21 @@ class RooCompareModels:
     return myPullHist
 
 class RooModelPlotter:
-  def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None,RangeName="",canvas=None,caption1="",caption2=""):
+  def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,
+                backgroundPDFName=None,signalPDFName=None,pdfDotLineName=None,
+                nSignal=0,signalPdf=None,
+                RangeName="",
+                canvas=None,
+                caption1="",caption2="",
+                legEntryData="Data",legEntryModel="Background Model",legEntrySignal="Signal",
+                pullsYLabel="#frac{Data-Fit}{#sqrt{Fit}}",
+                extraPDFs=[],
+                extraLegEntries=[],
+                extraPDFDotLineNames=[]
+              ):
     self.xVar = xVar
     self.pdf = pdf
+    self.pdfName = pdf.GetName()
     self.data = data
     self.fr = fr
     self.title = title
@@ -2605,13 +2617,25 @@ class RooModelPlotter:
     self.lumi = lumi
     self.backgroundPDFName = backgroundPDFName
     self.signalPDFName = signalPDFName
+    self.pdfDotLineName = pdfDotLineName
     self.nSignal = nSignal
+    self.pullsYLabel = pullsYLabel
     nowStr = str(int(time.time()*1e6))
     self.nowStr = nowStr
     self.caption1 = caption1
     self.caption2 = caption2
     self.myCurveHist = None
     self.myDataHist = None
+    assert(len(extraPDFs) == len(extraLegEntries))
+    self.extraPDFs = extraPDFs
+    #self.extraPDFColors = [root.kGreen+3,root.kMagenta+3,root.kOrange-3]
+    self.extraPDFColors = [root.kSpring-7,root.kMagenta+3,root.kOrange-3]
+    assert(len(self.extraPDFs)<=len(self.extraPDFColors))
+    self.extraLegEntries = extraLegEntries
+    self.extraPDFDotLineNames = extraPDFDotLineNames
+
+    self.legEntryData = legEntryData
+    self.legEntryModel = legEntryModel
 
     self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(lumi)
 
@@ -2661,6 +2685,7 @@ class RooModelPlotter:
     lineDrawOptArg = root.RooFit.DrawOption("L")
     graphDrawOptArg = root.RooFit.DrawOption("PEZ")
     sigLineColorArg = root.RooFit.LineColor(root.kRed)
+    dotLineStyleArg = root.RooFit.LineStyle(2)
 
     binningArg = root.RooFit.Binning("")
     xVar.setRange("RMPRange",self.binning.lowBound(),self.binning.highBound())
@@ -2699,9 +2724,19 @@ class RooModelPlotter:
     if backgroundPDFName != None:
       bakCompArg = root.RooFit.Components(backgroundPDFName)
       pdf.plotOn(frame,errVisArg,errColorArg,bakCompArg,rangeArg,tmpBakPDFErrorNameArg)
+      for iColor,extraPdf in enumerate(self.extraPDFs):
+        extraPdf.plotOn(frame,lineDrawOptArg,root.RooFit.LineColor(self.extraPDFColors[iColor]),lineWidthArg,rangeArg)
       pdf.plotOn(frame,lineDrawOptArg,lineColorArg,lineWidthArg,bakCompArg,rangeArg,tmpBakPDFNameArg)
     else:
       pdf.plotOn(frame,errVisArg,errColorArg,rangeArg,tmpBakPDFErrorNameArg)
+      for iColor,extraPdf in enumerate(self.extraPDFs):
+        extraPdf.plotOn(frame,lineDrawOptArg,root.RooFit.LineColor(self.extraPDFColors[iColor]),lineWidthArg,rangeArg)
+        if len(self.extraPDFDotLineNames) == len(self.extraPDFs):
+          dotLineCompArg = root.RooFit.Components(self.extraPDFDotLineNames[iColor])
+          extraPdf.plotOn(frame,lineDrawOptArg,root.RooFit.LineColor(self.extraPDFColors[iColor]),lineWidthArg,dotLineStyleArg,dotLineCompArg,rangeArg)
+      if self.pdfDotLineName != None:
+        dotLineCompArg = root.RooFit.Components(self.pdfDotLineName)
+        pdf.plotOn(frame,lineDrawOptArg,lineColorArg,lineWidthArg,dotLineStyleArg,dotLineCompArg,rangeArg)
       pdf.plotOn(frame,lineDrawOptArg,lineColorArg,lineWidthArg,rangeArg,tmpBakPDFNameArg)
 
     data.plotOn(frame,graphDrawOptArg,binningArg,tmpDataHistNameArg)
@@ -2764,7 +2799,7 @@ class RooModelPlotter:
     pullsHist.SetLineWidth(2)
     pullsHist.SetFillColor(856)
     pullsHist.SetFillStyle(1001)
-    setHistTitles(pullsHist,xtitle,"#frac{Data-Fit}{#sqrt{Fit}}")
+    setHistTitles(pullsHist,xtitle,self.pullsYLabel)
 
     pullsHist.GetXaxis().SetTitle(xtitle)
     pullsHist.GetXaxis().CenterTitle(1)
@@ -2828,6 +2863,12 @@ class RooModelPlotter:
     self.phonySigLegHist = root.TH1F("phonySigDat"+nowStr,"",1,0,1)
     self.phonySigLegHist.SetLineColor(root.kRed)
     self.phonySigLegHist.SetLineWidth(2)
+    self.phonyExtraPDFLegHists = []
+    for iColor in range(len(self.extraPDFs)):
+        tmpHist = root.TH1F("phonyExtraPDFHist"+str(iColor)+nowStr,"",1,0,1)
+        tmpHist.SetLineColor(self.extraPDFColors[iColor])
+        tmpHist.SetLineWidth(2)
+        self.phonyExtraPDFLegHists.append(tmpHist)
     
     legPos = [0.65,0.65,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
     #legPos = [0.73,0.65,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
@@ -2835,8 +2876,10 @@ class RooModelPlotter:
     self.leg = root.TLegend(*legPos)
     self.leg.SetFillColor(0)
     self.leg.SetLineColor(0)
-    self.leg.AddEntry(self.phonyDatLegHist,"Data","lp")
-    self.leg.AddEntry(self.phonyFitLegHist,"Background Model","lf")
+    self.leg.AddEntry(self.phonyDatLegHist,self.legEntryData,"lp")
+    self.leg.AddEntry(self.phonyFitLegHist,self.legEntryModel,"lf")
+    for hist, legEntry in zip(self.phonyExtraPDFLegHists,self.extraLegEntries):
+      self.leg.AddEntry(hist,legEntry,"l")
 
     legPosBkgSub = [0.64,0.72,0.92,0.88]
     self.legBkgSub = root.TLegend(*legPosBkgSub)
@@ -3215,9 +3258,9 @@ class RooModelPlotter:
     bakErrCurve = None
     for i in pad.GetListOfPrimitives():
       name = i.GetName()
-      if re.match(r"bak[\d]+",name):
+      if re.match(self.pdfName+r"[\d]+",name):
         bakCurve = pad.FindObject(name)
-      elif re.match(r"bakError[\d]+",name):
+      elif re.match(self.pdfName+r"Error[\d]+",name):
         bakErrCurve = pad.FindObject(name)
     assert(bakCurve)
     assert(bakErrCurve)
