@@ -2340,6 +2340,8 @@ class RooCompareModels:
     if canvas == None:
       canvas = root.TCanvas("canvas"+nowStr)
     self.canvas = canvas
+
+    self.colors = [root.kBlue,root.kRed,root.kGreen,root.kCyan,root.kMagenta,root.kOrange-3,root.kViolet-6]
     
   def draw(self,saveName):
     canvas = self.canvas
@@ -2361,12 +2363,11 @@ class RooCompareModels:
     leg.SetFillColor(0)
     leg.SetLineColor(0)
 
-    colors = [root.kBlue,root.kRed,root.kGreen,root.kCyan,root.kMagenta,root.kOrange-3,root.kViolet-6]
     fakeGraphs = []
     for iPdf, pdf in enumerate(self.pdfList):
       fr = self.frList[iPdf]
       pdfTitle = self.pdfTitleList[iPdf]
-      color = colors[iPdf]
+      color = self.colors[iPdf]
 
       #Set the PDF pars value from the FitResults
       setPDFfromFR(fr,pdf,data)
@@ -2394,7 +2395,122 @@ class RooCompareModels:
     drawStandardCaptions(canvas,self.title,energyLumiStr,preliminaryString="CMS Internal")
 
     saveAs(canvas,saveName)
+
+  def drawCurveHists(self,saveName):
+    canvas = self.canvas
+    hists = []
+    leg = root.TLegend(0.55,0.60,0.9,0.9)
+    leg.SetFillColor(0)
+    leg.SetLineColor(0)
+    xtitle = self.xtitle
+    unitMatch =  re.search(r"GeV([\s]*/[\s]*c\^\{2\}|[\s]*/[\s]*c)?",xtitle)
+    units = ""
+    if unitMatch:
+      units = " "+unitMatch.group(0)
+    for i,model in enumerate(self.pdfList):
+      hist = self.getHistFromModel(model)
+      setHistTitles(hist,xtitle,"Events/"+str(self.binWidth)+units)
+      color = self.colors[i]
+      pdfTitle = self.pdfTitleList[i]
+      hist.SetLineColor(color)
+      leg.AddEntry(hist,pdfTitle,"l")
+      if i == 0:
+        hist.Draw()
+      else:
+        hist.Draw("SAME")
+      hists.append(hist)
+    leg.Draw()
+    energyLumiStr = "#sqrt{{s}} = {0}, L = {1:.1f} fb^{{-1}}".format(self.energyStr.replace("TeV"," TeV"),self.lumi)
+    drawStandardCaptions(canvas,self.title,energyLumiStr,preliminaryString="CMS Internal")
+    canvas.RedrawAxis()
+    saveAs(canvas,saveName)
         
+  def drawDiff(self,iModel,saveName):
+    canvas = self.canvas
+    hists = []
+    leg = root.TLegend(0.55,0.60,0.9,0.9)
+    leg.SetFillColor(0)
+    leg.SetLineColor(0)
+    xtitle = self.xtitle
+    unitMatch =  re.search(r"GeV([\s]*/[\s]*c\^\{2\}|[\s]*/[\s]*c)?",xtitle)
+    units = ""
+    if unitMatch:
+      units = " "+unitMatch.group(0)
+    axisHist = root.TH2F("axisHist","",1,110,160,1,-75,100)
+    setHistTitles(axisHist,xtitle,"PDF - "+self.pdfList[iModel].GetName()+" [Events/"+str(self.binWidth)+units+"]")
+    zeroGraph = root.TGraph()
+    zeroGraph.SetLineStyle(3)
+    zeroGraph.SetPoint(0,110,0)
+    zeroGraph.SetPoint(1,160,0)
+    for i,model in enumerate(self.pdfList):
+      hist = self.getHistFromModel(model)
+      setHistTitles(hist,xtitle,"PDF - "+self.pdfList[iModel].GetName()+" [Events/"+str(self.binWidth)+units+"]")
+      color = self.colors[i]
+      pdfTitle = self.pdfTitleList[i]
+      hist.SetLineColor(color)
+      hists.append(hist)
+      if i != iModel:
+        leg.AddEntry(hist,pdfTitle,"l")
+    iModelHist = hists[iModel]
+    drawn = False
+    axisHist.Draw()
+    zeroGraph.Draw("L")
+    drawn = True
+    for i,hist in enumerate(hists):
+      if i == iModel:
+        continue
+      hist.Add(iModelHist,-1)
+      if drawn:
+        hist.Draw("SAME")
+      else:
+        hist.Draw()
+        drawn = True
+    leg.Draw()
+    energyLumiStr = "#sqrt{{s}} = {0}, L = {1:.1f} fb^{{-1}}".format(self.energyStr.replace("TeV"," TeV"),self.lumi)
+    drawStandardCaptions(canvas,self.title,energyLumiStr,preliminaryString="CMS Internal")
+    canvas.RedrawAxis()
+    saveAs(canvas,saveName)
+        
+  def getHistFromModel(self,model):
+    nowStr = str(int(time.time()*1e6))
+    frame = self.xVar.frame(root.RooFit.Name("frameToGetHist"+nowStr),self.rangeArg)
+    histPlotName = self.data.GetName()+nowStr
+    pdfPlotName = model.GetName()+nowStr
+    self.data.plotOn(frame,root.RooFit.Name(histPlotName))
+    model.plotOn(frame,root.RooFit.Name(pdfPlotName),self.rangeArg)
+
+    hist = frame.findObject(histPlotName)
+    curve = frame.findObject(pdfPlotName)
+    assert(hist)
+    assert(curve)
+
+    nBins = self.binning.numBins()
+    lowB  = self.binning.lowBound() 
+    highB = self.binning.highBound() 
+
+    myCurveHist =  root.TH1F("myCurveHist_"+model.GetName()+"_"+nowStr,"",
+                          int(nBins), lowB, highB
+                          )
+      
+    x = root.Double(0.)
+    y = root.Double(0.)
+
+    curve.GetPoint(0,x,y) # Get Curve Start X
+    xCurveMin = float(x)
+    curve.GetPoint(curve.GetN()-1,x,y) # Get Curve End X
+    xCurveMax = float(x)
+    iBin = 1
+    for i in range(1,self.binning.numBins()+1):
+      hist.GetPoint(i-1,x,y)
+      if (float(x) < lowB or float(x) > highB):
+        continue
+      if x > xCurveMin and x < xCurveMax:
+        curvePoint = curve.interpolate(x)
+        myCurveHist.SetBinContent(iBin,curvePoint)
+      iBin += 1
+
+    return myCurveHist
+
 class RooModelPlotter:
   def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None,RangeName="",canvas=None,caption1="",caption2=""):
     self.xVar = xVar

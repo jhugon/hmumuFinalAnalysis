@@ -21,7 +21,7 @@ from itertools import repeat as itrRepeat
 from helpers import *
 from makeCards import *
 from xsec import *
-from fitOrderChooser import makePDFBakSumExp
+from fitOrderChooser import makePDFBakSumExp,makePDFBakBernstein
 
 from numpy import mean, median, corrcoef, percentile
 from numpy import std as stddev
@@ -79,6 +79,7 @@ class PlotBgkFits:
 
 
     ### Make Bak Pdfs
+    pdfTitles = []
     self.rmpList = []
     self.pdfList = []
     self.frList = []
@@ -91,12 +92,18 @@ class PlotBgkFits:
     self.latexStrDetail = ""
     self.outStrDetail = "##############################################################\n\n"
     self.outStrDetail += catName + energyStr + "\n\n"
-    for pdfBaseName in pdfsToTry:
+    for pdfName in pdfsToTry:
+      pdfOrder = None
+      pdfBaseName = pdfName
+      orderMatch = re.match(r"([\d]+)(.+)",pdfBaseName)
+      if orderMatch:
+        pdfBaseName = orderMatch.group(2)
+        pdfOrder = int(orderMatch.group(1))
+
       w = root.RooWorkspace("w"+pdfBaseName)
       wImport = getattr(w,"import")
-      pdfName = pdfBaseName
       pdfFunc = globals()["makePDFBak"+pdfBaseName]
-      tmpParamList,tmpNormTup,tmpDebug,tmpOrder = pdfFunc(pdfName+catName+energyStr,realData,dimuonMass,110,160,wImport,dimuonMassZ,realDataZ)
+      tmpParamList,tmpNormTup,tmpDebug,tmpOrder = pdfFunc(pdfName+catName+energyStr,realData,dimuonMass,110,160,wImport,dimuonMassZ,realDataZ,order=pdfOrder)
       pdf = w.pdf("bak")
       fr = pdf.fitTo(realData, 
                          #root.RooFit.Hesse(True), 
@@ -109,8 +116,8 @@ class PlotBgkFits:
                         TITLEMAP[catName],energyStr,lumiDict[energyStr],
                         caption2=PDFTITLEMAP[pdfBaseName]
                         )
-      rmp.draw(outPrefix+"_Shape_"+energyStr+catName+"_"+pdfBaseName)
-      rmp.drawWithParams(outPrefix+"_Shape_"+energyStr+catName+"_"+pdfBaseName+"_params")
+      rmp.draw(outPrefix+"_Shape_"+energyStr+catName+"_"+pdfName)
+      rmp.drawWithParams(outPrefix+"_Shape_"+energyStr+catName+"_"+pdfName+"_params")
       floatParsFinal = fr.floatParsFinal()
       self.outStrDetail += "\n{0}\n".format(pdf.GetTitle())
       #self.outStrDetail += tmpDebug + "\n"
@@ -135,8 +142,10 @@ class PlotBgkFits:
       self.pdfList.append(pdf)
       self.frList.append(fr)
       self.wList.append(w)
-
-    pdfTitles = [ PDFTITLEMAP[i] for i in pdfsToTry ]
+      pdfTitle = PDFTITLEMAP[pdfBaseName]
+      if tmpOrder != None:
+        pdfTitle = str(tmpOrder)+"-"+pdfTitle
+      pdfTitles.append(pdfTitle)
     
     print "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
     print "About to start RooCompareModels..."
@@ -171,6 +180,7 @@ class PlotBgkFits:
                               TITLEMAP[catName],energyStr,lumiDict[energyStr]
                               )
     self.rcm.draw(outPrefix+"_Comb_"+energyStr+"_"+catName)
+    self.rcm.drawDiff(0,outPrefix+"_Comb_"+energyStr+"_"+catName+"Diff")
     
         
 if __name__ == "__main__":
@@ -179,7 +189,9 @@ if __name__ == "__main__":
 
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
   #pdfsToTry = ["SumExp","Bernstein"]
-  pdfsToTry = ["BernsteinProd","ExpMOverSq","MSSM","VoigtPMm2","VoigtPExpMm2","Old","SumExp"]
+  #pdfsToTry = ["BernsteinProd","ExpMOverSq","MSSM","VoigtPMm2","VoigtPExpMm2","Old","SumExp"]
+  #pdfsToTry = ["MSSM","3Bernstein","4Bernstein","5Bernstein","6Bernstein"]
+  pdfsToTry = ["MSSM","3Bernstein","4Bernstein","5Bernstein","6Bernstein"]
 
   categories = []
 
@@ -187,10 +199,10 @@ if __name__ == "__main__":
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
-  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
+  #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
