@@ -98,7 +98,7 @@ def makePDFBakExpTimesBernstein(name,rooDataset,dimuonMass,minMass,maxMass,works
     expArg = root.RooRealVar(channelName+"_E","Exp Param ", -0.01, -1, 1.)
     rooParamList.append(expArg)
     for i in range(order):
-      tmpArg = root.RooRealVar(channelName+"_B"+str(i),"Bernstein Coef "+str(i), 0.0, 0., 1.)
+      tmpArg = root.RooRealVar(channelName+"_B"+str(i),"Bernstein Coef "+str(i), 0.5, 0., 1.)
       rooArgList.add(tmpArg)
       rooParamList.append(tmpArg)
 
@@ -444,7 +444,9 @@ def makePDFBakBernstein(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
     rooParamList = []
     rooArgList = root.RooArgList()
     for i in range(order+1):
-      tmpArg = root.RooRealVar(channelName+"_B"+str(i),"Bernstein Coef "+str(i), 0.0, 0., 1.)
+      tmpArg = root.RooRealVar(channelName+"_B"+str(i),"Bernstein Coef "+str(i), 1e-6, 0., 1.)
+      if i == 0:
+        tmpArg.setConstant(True)
       rooArgList.add(tmpArg)
       rooParamList.append(tmpArg)
 
@@ -1237,9 +1239,9 @@ if __name__ == "__main__":
   outDir = "output/"
 
   #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
-  #pdfsToTry = ["SumExp","Bernstein"]
-  pdfsToTry = ["ExpTimesBernstein","ExpTimesChebychev","ExpTimesPolynomial"]
-  ordersToTry= range(0,6)
+  pdfsToTry = ["Bernstein"]
+  #ordersToTry= range(1,6)
+  ordersToTry= range(1,6)
 
   categories = []
 
@@ -1247,14 +1249,14 @@ if __name__ == "__main__":
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
-  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
-  categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
-  #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
-  #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
+  categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
+  categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
   dataDir = getDataStage2Directory()
   #dataDir = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
