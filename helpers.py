@@ -2424,6 +2424,41 @@ class RooCompareModels:
     drawStandardCaptions(canvas,self.title,energyLumiStr,preliminaryString="CMS Internal")
     canvas.RedrawAxis()
     saveAs(canvas,saveName)
+
+  def drawPullHists(self,saveName):
+    canvas = self.canvas
+    hists = []
+    leg = root.TLegend(0.55,0.60,0.9,0.9)
+    leg.SetFillColor(0)
+    leg.SetLineColor(0)
+    xtitle = self.xtitle
+    unitMatch =  re.search(r"GeV([\s]*/[\s]*c\^\{2\}|[\s]*/[\s]*c)?",xtitle)
+    units = ""
+    if unitMatch:
+      units = " "+unitMatch.group(0)
+    axisHist = root.TH2F("axisHist","",1,110,160,1,-3,8)
+    setHistTitles(axisHist,xtitle,"#frac{Data-Fit}{#sqrt{Fit}}")
+    zeroGraph = root.TGraph()
+    zeroGraph.SetLineStyle(3)
+    zeroGraph.SetPoint(0,110,0)
+    zeroGraph.SetPoint(1,160,0)
+    axisHist.Draw()
+    zeroGraph.Draw("L")
+    for i,model in enumerate(self.pdfList):
+      hist = self.getPullHistFromModel(model)
+      setHistTitles(hist,xtitle,"#frac{Data-Fit}{#sqrt{Fit}}")
+      color = self.colors[i]
+      pdfTitle = self.pdfTitleList[i]
+      hist.SetLineColor(color)
+      leg.AddEntry(hist,pdfTitle,"l")
+      hists.append(hist)
+    for hist in reversed(hists):
+      hist.Draw("same")
+    leg.Draw()
+    energyLumiStr = "#sqrt{{s}} = {0}, L = {1:.1f} fb^{{-1}}".format(self.energyStr.replace("TeV"," TeV"),self.lumi)
+    drawStandardCaptions(canvas,self.title,energyLumiStr,preliminaryString="CMS Internal")
+    canvas.RedrawAxis()
+    saveAs(canvas,saveName)
         
   def drawDiff(self,iModel,saveName):
     canvas = self.canvas
@@ -2510,6 +2545,54 @@ class RooCompareModels:
       iBin += 1
 
     return myCurveHist
+
+  def getPullHistFromModel(self,model):
+    nowStr = str(int(time.time()*1e6))
+    frame = self.xVar.frame(root.RooFit.Name("frameToGetHist"+nowStr),self.rangeArg)
+    histPlotName = self.data.GetName()+nowStr
+    pdfPlotName = model.GetName()+nowStr
+    self.data.plotOn(frame,root.RooFit.Name(histPlotName))
+    model.plotOn(frame,root.RooFit.Name(pdfPlotName),self.rangeArg)
+
+    hist = frame.findObject(histPlotName)
+    curve = frame.findObject(pdfPlotName)
+    assert(hist)
+    assert(curve)
+
+    nBins = self.binning.numBins()
+    lowB  = self.binning.lowBound() 
+    highB = self.binning.highBound() 
+
+    myPullHist =  root.TH1F("myPullHist_"+model.GetName()+"_"+nowStr,"",
+                          int(nBins), lowB, highB
+                          )
+      
+    x = root.Double(0.)
+    y = root.Double(0.)
+
+    curve.GetPoint(0,x,y) # Get Curve Start X
+    xCurveMin = float(x)
+    curve.GetPoint(curve.GetN()-1,x,y) # Get Curve End X
+    xCurveMax = float(x)
+    iBin = 1
+    for i in range(1,self.binning.numBins()+1):
+      hist.GetPoint(i-1,x,y)
+      pull = float(y)
+      if (float(x) < lowB or float(x) > highB):
+        continue
+      if x > xCurveMin and x < xCurveMax:
+        curvePoint = curve.interpolate(x)
+        if curvePoint == 0.:
+          pull = 0.
+        else:
+          pull -= curvePoint
+          pull /= sqrt(curvePoint)
+      else:
+        pull = 0.
+      myPullHist.SetBinContent(iBin,pull)
+      iBin += 1
+
+    return myPullHist
 
 class RooModelPlotter:
   def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,backgroundPDFName=None,signalPDFName=None,nSignal=0,signalPdf=None,signalLegEntry=None,RangeName="",canvas=None,caption1="",caption2=""):

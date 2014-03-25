@@ -156,11 +156,13 @@ if __name__ == "__main__":
   onlyVoitRefs = ["Old","VoigtPMm2","VoigtPExpMm2"]
   voitAndSMRefs = ["Old","ExpMOverSq","VoigtPMm2","VoigtPExpMm2"]
   allRefs = ["Old","ExpMOverSq","SumExp","VoigtPMm2","Bernstein","VoigtPExpMm2"]
+  bernRefs = ["3Bernstein","4Bernstein","5Bernstein"]
 
   outputDir = "output/"
 
   allData = getBiasStudies()
   for i in allData:
-    printBiasVMass(i,onlyVoitRefs,outputDir)
+    #printBiasVMass(i,onlyVoitRefs,outputDir)
+    printBiasVMass(i,bernRefs,outputDir)
   #printBiasVMass(onlyVoitRefs,outputDir)
   

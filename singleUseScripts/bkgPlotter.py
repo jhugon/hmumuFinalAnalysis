@@ -181,6 +181,7 @@ class PlotBgkFits:
                               )
     self.rcm.draw(outPrefix+"_Comb_"+energyStr+"_"+catName)
     self.rcm.drawDiff(0,outPrefix+"_Comb_"+energyStr+"_"+catName+"Diff")
+    self.rcm.drawPullHists(outPrefix+"_Comb_"+energyStr+"_"+catName+"Pulls")
     
         
 if __name__ == "__main__":
