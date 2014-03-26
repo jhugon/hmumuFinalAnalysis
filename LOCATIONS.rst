@@ -55,14 +55,36 @@ H->mumu Datacards
 H->mumu All Categories Bias Data
 --------------------------------
 
-**7TeV bias study performed with 8TeV Bernstein reference orders**
-
 /raid/raid9/jhugon/biasData/
 
 Backup in /afs/cern.ch/user/j/jhugon/work/public/hmumuBkgBias/
 
-Old
-+++
+2014/03/28
++++++++++++++++
+
+MSSM v. Bernstein Bias studies with a veriety of reference orders:
+
+0,1-Jet Tight BB: 3,4,5
+0,1-Jet Tight BO: 5,6,7,8
+2-Jet Tight VBF & GF: 2,3,4,5
+All Else: 3,4,5,6
+
+2014/03/11
+++++++++++++++++++++
+
+8 TeV 0 sigma bias of MSSM w.r.t. 4-Bernsteins with p0 fixed to 1e-6
+
+2014/02/10
++++++++++++
+
+Included 0 & 3 sigma signal injection on 7 and 8 TeV. Included 
+Bernstein, SumExp, V+E, SM PAS, V+1/m^2, V+Exp/m^2 as Ref functions 
+and MSSM as alt function.  Used Reference Study Orders for Bernstein and SumExp.  
+Bernstein had all parameters floating. 
+**7TeV bias study performed with 8TeV Bernstein reference orders**
+
+2014/01/09
++++++++++++
 
 Created 2014/01/09 with Bernstein Alts and Bernsteins and SumExp Refs (Reference SumExp 2nd Order for all)
 
