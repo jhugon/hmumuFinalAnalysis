@@ -64,10 +64,11 @@ Backup in /afs/cern.ch/user/j/jhugon/work/public/hmumuBkgBias/
 
 MSSM v. Bernstein Bias studies with a veriety of reference orders:
 
-0,1-Jet Tight BB: 3,4,5
 0,1-Jet Tight BO: 5,6,7,8
 2-Jet Tight VBF & GF: 2,3,4,5
 All Else: 3,4,5,6
+
+7 & 8 TeV 0 & 3 sig injected, Bernstein with p0 fixed to 1e-6
 
 2014/03/11
 ++++++++++++++++++++
