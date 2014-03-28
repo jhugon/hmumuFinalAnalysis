@@ -166,8 +166,10 @@ if __name__ == "__main__":
   onlyVoitRefs = ["Old","VoigtPMm2","VoigtPExpMm2"]
   voitAndSMRefs = ["Old","ExpMOverSq","VoigtPMm2","VoigtPExpMm2"]
   allRefs = ["Old","ExpMOverSq","SumExp","VoigtPMm2","Bernstein","VoigtPExpMm2"]
+  allRefsButBern = ["Old","ExpMOverSq","SumExp","VoigtPMm2","VoigtPExpMm2"]
 
-  biasEnvelope(onlyVoitRefs)
-  biasEnvelope(voitAndSMRefs)
-  biasEnvelope(allRefs)
+  #biasEnvelope(onlyVoitRefs)
+  #biasEnvelope(voitAndSMRefs)
+  #biasEnvelope(allRefs)
+  biasEnvelope(allRefsButBern)
   

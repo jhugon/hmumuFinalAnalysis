@@ -182,7 +182,6 @@ class PlotBgkFits:
     self.rcm.draw(outPrefix+"_Comb_"+energyStr+"_"+catName)
     self.rcm.drawDiff(0,outPrefix+"_Comb_"+energyStr+"_"+catName+"Diff")
     self.rcm.drawPullHists(outPrefix+"_Comb_"+energyStr+"_"+catName+"Pulls")
-    
         
 if __name__ == "__main__":
   canvas = root.TCanvas()
@@ -192,7 +191,11 @@ if __name__ == "__main__":
   #pdfsToTry = ["SumExp","Bernstein"]
   #pdfsToTry = ["BernsteinProd","ExpMOverSq","MSSM","VoigtPMm2","VoigtPExpMm2","Old","SumExp"]
   #pdfsToTry = ["MSSM","3Bernstein","4Bernstein","5Bernstein","6Bernstein"]
-  pdfsToTry = ["MSSM","3Bernstein","4Bernstein","5Bernstein","6Bernstein"]
+
+
+  pdfsToTry = ["MSSM","2Bernstein","3Bernstein","4Bernstein","5Bernstein"] # For 2-Jet VBF and GF
+  #pdfsToTry = ["MSSM","5Bernstein","6Bernstein","7Bernstein","8Bernstein"] # For Tight BO
+  #pdfsToTry = ["MSSM","3Bernstein","4Bernstein","5Bernstein","6Bernstein"] # For all others
 
   categories = []
 
@@ -200,12 +203,13 @@ if __name__ == "__main__":
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
-  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10BE",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10OE",  "dimuonPt>10." +jet01PtCuts]]
   #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 

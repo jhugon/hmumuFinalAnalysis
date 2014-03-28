@@ -9,6 +9,7 @@ import os
 import os.path
 import glob
 import re
+import numpy
 from numpy import mean,median
 
 from fitBiasStudy import mergeDicts
@@ -64,6 +65,33 @@ def getBiasStudies():
           mergeDicts(resultData,tmpD,True)
         tmpF.close()
       result.append(resultData)
+  # Sort result by category name
+  orderDef = [
+    "CombSplitAll",
+    "Jets01SplitCatAll",
+    "Jet2SplitCutsGFSplit",
+    "Jets01PassCatAll" ,
+    "Jets01FailCatAll" ,
+
+    "Jets01PassPtG10BB",
+    "Jets01PassPtG10BO",
+    "Jets01PassPtG10BE",
+    "Jets01PassPtG10OO",
+    "Jets01PassPtG10OE",
+    "Jets01PassPtG10EE",
+                          
+    "Jets01FailPtG10BB",
+    "Jets01FailPtG10BO",
+    "Jets01FailPtG10BE",
+    "Jets01FailPtG10OO",
+    "Jets01FailPtG10OE",
+    "Jets01FailPtG10EE",
+
+    "Jet2CutsVBFPass",
+    "Jet2CutsGFPass",
+    "Jet2CutsFailVBFGF",
+  ]
+  result.sort(key=lambda x: orderDef.index(x['meta']['catName']))
   return result
 
 def printBiasVMass(data,useRefFuncs,outputDir):
@@ -86,6 +114,7 @@ def printBiasVMass(data,useRefFuncs,outputDir):
   altName = pdfAltNamesDict[refPdfNameList[0]][0]
   altTitle = PDFTITLEMAP[altName]
   gList = []
+  maxNUncList = []
 
   canvas = root.TCanvas()
 
@@ -104,18 +133,23 @@ def printBiasVMass(data,useRefFuncs,outputDir):
     g = root.TGraph()
     g.SetMarkerColor(colors[iRef])
     g.SetLineColor(colors[iRef])
+    maxNUnc = 0.
     for iPoint,hmass in enumerate(sigMasses):
       #print refName
       #print hmass
       #print altName
       #print iPoint
-      nList = data[refName][hmass][altName]['n']
+      ## Use H->gg inspired bias measure
+      ##  it absorbs low stats funny business :-)
+      nList = median(numpy.array(data[refName][hmass][altName]['n'])-numpy.array(data[refName][hmass]['nTrue']))
       n = median(nList)
       g.SetPoint(iPoint,hmass,n)
       maxN = max(maxN,n)
       minN = min(minN,n)
+      maxNUnc = max(maxNUnc,abs(n))
     gList.append(g)
     leg.AddEntry(g,refTitle,"lp")
+    maxNUncList.append(maxNUnc)
 
   gZero = root.TGraph()
   gZero.SetLineStyle(2)
@@ -152,6 +186,28 @@ def printBiasVMass(data,useRefFuncs,outputDir):
   canvas.RedrawAxis()
   saveAs(canvas,"BiasVMass_"+catName+"_"+energyStr+"_sig"+str(int(sigInject)))
 
+  ### Now to print table
+  statUnc125 = ERRORSDICT[energyStr][catName][125]
+  sigInjectTitle = r"${0}\sigma$ Signal Injected".format(sigInject)
+  if sigInject == 0.:
+    sigInjectTitle = "No Signal Injected"
+  outStr = r"\normalsize"+"\n"
+  outStr += r"{0} {1} {2} \\".format(TITLEMAP[catName],energyStr.replace("TeV"," TeV"), sigInjectTitle)+"\n"
+  outStr += "Bias for "+altName+r" \\ "+"\n"
+  outStr += r"\tiny"+"\n"
+  outStr += r"\begin{tabular}{|l|r|r|} \hline"+"\n"
+  outStr += r"Reference PDF & N_{bias} & Relative Bias \\ \hline \hline"+"\n"
+  for refPdfName,maxNUnc in zip(refPdfNameList,maxNUncList):
+    refPdfTitle = PDFTITLEMAP[refPdfName]
+    outStr += r"{0:40} & {1:15.1f} & {2:15.0f}\% \\ \hline".format(refPdfTitle,maxNUnc,maxNUnc*100./statUnc125)+"\n"
+  outStr += r"\end{tabular}"+"\n\n"
+  print outStr
+
+  resultNBiasDict = {}
+  for refPdfName,maxNUnc in zip(refPdfNameList,maxNUncList):
+    resultNBiasDict[refPdfName] = maxNUnc
+  return resultNBiasDict
+
 if __name__ == "__main__":
   onlyVoitRefs = ["Old","VoigtPMm2","VoigtPExpMm2"]
   voitAndSMRefs = ["Old","ExpMOverSq","VoigtPMm2","VoigtPExpMm2"]
@@ -160,9 +216,18 @@ if __name__ == "__main__":
 
   outputDir = "output/"
 
+  nBiasMaxDict = {}
+  energyStr = None
+  sigInject = None
+  
   allData = getBiasStudies()
   for i in allData:
-    #printBiasVMass(i,onlyVoitRefs,outputDir)
-    printBiasVMass(i,bernRefs,outputDir)
-  #printBiasVMass(onlyVoitRefs,outputDir)
-  
+    nBiasMaxDict[i['meta']['catName']] = printBiasVMass(i,None,outputDir)
+    energyStr = i['meta']['energyStr']
+    sigInject = i['meta']['sigInjectNsigma']
+  assert(energyStr)
+  if sigInject == None:
+    sigInject = 0.
+  outPklFile = open("BiasDataVRefFunc_{0}_{1:.0f}Sig.pkl".format(energyStr,sigInject),"w")
+  cPickle.dump(nBiasMaxDict,outPklFile)
+  outPklFile.close()

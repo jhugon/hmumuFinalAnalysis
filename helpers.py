@@ -2484,6 +2484,8 @@ class RooCompareModels:
     if unitMatch:
       units = " "+unitMatch.group(0)
     axisHist = root.TH2F("axisHist","",1,110,160,1,-75,100)
+    #axisHist = root.TH2F("axisHist","",1,110,160,1,-15,20)
+    #axisHist = root.TH2F("axisHist","",1,110,160,1,-2,6)
     setHistTitles(axisHist,xtitle,"PDF - "+self.pdfList[iModel].GetName()+" [Events/"+str(self.binWidth)+units+"]")
     zeroGraph = root.TGraph()
     zeroGraph.SetLineStyle(3)

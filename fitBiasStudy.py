@@ -980,6 +980,7 @@ def printBiasSummary(dataCats):
   for catName in catNames:
     catTitle = TITLEMAP[catName]
     data = dataCats[catName]
+    refNames = sorted(data.keys())
     for altName in allAltNames:
       plainResult += "{0:<15}".format(catName)
       latexResult += "{0:15} ".format(catTitle)
@@ -1165,6 +1166,7 @@ def printBiasSummaryNevt(dataCats,energyStr=None,sigInject=None):
   for catName in catNames:
     catTitle = TITLEMAP[catName]
     data = dataCats[catName]
+    refNames = sorted(data.keys())
     dictResult[catName] = {}
     for altName in allAltNames:
       plainResult += "{0:<15}".format(catName)
@@ -1333,6 +1335,7 @@ if __name__ == "__main__":
   tmpJobGroupStr = ""
   energyStr = None
   foundNSigma = None
+  usedSigInject = None
   if iJobGroup != None:
     tmpJobGroupStr = "_jobGrp"+str(iJobGroup)
 #  logFile = open(outDir+"biasStudy.log",'w')
