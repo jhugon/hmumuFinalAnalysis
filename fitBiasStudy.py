@@ -1233,18 +1233,18 @@ if __name__ == "__main__":
   ############################################
   ### Define number of toys to run over
 
-  nToys = 1
+  nToys = 5
 
   ############################################
   ### Define which reference functions to use
 
   refPdfNameList = [
-          "Old",
-          "ExpMOverSq",
-          "Bernstein",
-          "SumExp",
-          "VoigtPExpMm2",
-          "VoigtPMm2",
+      #    "Old",
+      #    "ExpMOverSq",
+      #    "Bernstein",
+      #    "SumExp",
+      #    "VoigtPExpMm2",
+      #    "VoigtPMm2",
       #    "ExpMOverSqP0",
       #    "ExpLog",
       #    "MOverSq",
@@ -1252,6 +1252,21 @@ if __name__ == "__main__":
       #    "Laurent",
       #    "Chebychev",
       #    "Polynomial",
+##  For BO:
+#          "5Bernstein",
+#          "6Bernstein",
+#          "7Bernstein",
+#          "8Bernstein",
+##  For most categories:
+#          "3Bernstein",
+#          "4Bernstein",
+#          "5Bernstein",
+#          "6Bernstein",
+###  For 2-Jet Tight VBF & GF:
+          "2Bernstein",
+          "3Bernstein",
+          "4Bernstein",
+          "5Bernstein",
   ]
   ###############################################
   ### Define which alternate functions to test
@@ -1271,6 +1286,15 @@ if __name__ == "__main__":
       "Polynomial":["MSSM"],          
       "VoigtPExpMm2":["MSSM"],
       "VoigtPMm2":["MSSM"],
+      "1Bernstein":["MSSM"],
+      "2Bernstein":["MSSM"],
+      "3Bernstein":["MSSM"],
+      "4Bernstein":["MSSM"],
+      "5Bernstein":["MSSM"],
+      "6Bernstein":["MSSM"],
+      "7Bernstein":["MSSM"],
+      "8Bernstein":["MSSM"],
+      "9Bernstein":["MSSM"],
   }
 
   ########################################

@@ -14,10 +14,20 @@
 # This controls what job group numbers are used
 
 ##PBS -t 0-140
-#PBS -t 0-1400
+##PBS -t 0-1400
+##PBS -t 0-10
+##PBS -t 0-10
+##PBS -t 0-500
+##PBS -t 0-3100
+#PBS -t 0-110
 
 ##Job Resources
-#PBS -l walltime=1:00:00
+## For BO
+##PBS -l walltime=2:00:00
+## For Others
+##PBS -l walltime=1:30:00
+## For 2-Jet VBF and GF
+#PBS -l walltime=0:30:00
 #PBS -l nodes=1:ppn=1
 #PBS -l pmem=3000mb
 
@@ -56,8 +66,13 @@ categoriesAll=$categories01Tight" "$categories01Loose" "$categories2  # 15 total
 categoriesImportant="Jets01PassPtG10BB Jets01PassPtG10BO Jets01PassPtG10BE Jet2CutsVBFPass Jet2CutsGFPass Jet2CutsFailVBFGF"
 categoriesImportant01="Jets01PassPtG10BB Jets01PassPtG10BO Jets01PassPtG10BE"
 
+
 #categoriesToRun=$categoriesImportant
-categoriesToRun=$categoriesAll
+#categoriesToRun=$categoriesAll
+#categoriesToRun="Jets01PassPtG10BO"
+#categoriesToRun="Jets01PassPtG10BB"
+#categoriesToRun="Jets01PassPtG10BB Jets01PassPtG10BE Jets01PassPtG10OO Jets01PassPtG10OE Jets01PassPtG10EE Jet2CutsFailVBFGF "$categories01Loose
+categoriesToRun="Jet2CutsVBFPass Jet2CutsGFPass"
 
 nCats=$(echo $categoriesToRun | wc -w)
 #echo $nCats" "$categoriesToRun
