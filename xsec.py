@@ -266,9 +266,12 @@ MENormDict['8TeV']['sigMEPdf'] = 0.008808
 MENormDict['8TeV']['bakMEPdf'] = 0.009364
 
 # Background Parameterization Uncertainties for makeCards.py
-# in terms of number of signal events for eac category
+# in terms of number of signal events for each category
 # For group 3 reference functions (including Bernstein)
 # Using H->gamma gamma bias measure: N(alt)-N(ref)
+# Bernstein ref func p0 fixed to 1e-6
+# Bernstein order chosen using H->gg procedure, except when
+# a higher order would show lower bias.
 BakParameterizationUncDict = {'7TeV':{},'8TeV':{}}
 BakParameterizationUncDict['7TeV']['Jets01PassPtG10BB'] = 22.8
 BakParameterizationUncDict['7TeV']['Jets01PassPtG10BO'] = 42.2
