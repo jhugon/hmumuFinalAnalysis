@@ -2608,6 +2608,56 @@ class RooCompareModels:
 
     return myPullHist
 
+  def printGOFTable(self,log=sys.stdout):
+    log.write("% GOF Comparison: "+self.title+" "+self.energyStr+"\n")
+    log.write(r"\begin{tabular}{|l|r|r|} \hline"+"\n")
+    log.write(r"\multicolumn{3}{|c|}{\textbf{"+self.title+" "+self.energyStr.replace("TeV"," TeV")+r"}} \\ \hline"+"\n")
+    log.write(r"PDF & $\chi^2/$NDF & $\chi^2$ Probability \\ \hline \hline"+"\n")
+    dataHist = self.data.binnedClone()
+    for i,model in enumerate(self.pdfList):
+      chi2,ndf,chi2Prob = rooCalcChi2(model,dataHist)
+      pdfTitle = self.pdfTitleList[i]
+      if "#" in pdfTitle or "^" in pdfTitle or "_" in pdfTitle:
+        pdfTitle = r"$\mathrm{"+pdfTitle+"}$"
+        pdfTitle = pdfTitle.replace("#",'\\')
+      log.write(r"{0} & {1:.1f}/{2} & {3:.3g} \\ \hline".format(pdfTitle,chi2,ndf,chi2Prob)+"\n")
+    log.write(r"\end{tabular}"+"\n\n")
+
+  def printDiffTable(self,iModel,log=sys.stdout):
+    hists = []
+    for i,model in enumerate(self.pdfList):
+      hist = self.getHistFromModel(model)
+      hists.append(hist)
+    iModelHist = hists[iModel]
+    nBins = iModelHist.GetNbinsX()
+    ndf = nBins
+    iModelTitle = self.pdfTitleList[iModel]
+    if "#" in iModelTitle or "^" in iModelTitle or "_" in iModelTitle:
+      iModelTitle = r"$\bm{\mathrm{"+iModelTitle+"}}$"
+      iModelTitle = iModelTitle.replace("#",'\\')
+    log.write("% Difference Between PDFs: "+self.title+" "+self.energyStr+"\n")
+    log.write(r"\begin{tabular}{|l|r|r|} \hline"+"\n")
+    log.write(r"\multicolumn{3}{|c|}{\textbf{PDF Fit Difference with "+iModelTitle+r"}} \\"+"\n")
+    log.write(r"\multicolumn{3}{|c|}{\textbf{"+self.title+" "+self.energyStr.replace("TeV"," TeV")+r"}} \\ \hline"+"\n")
+    #log.write(r"PDF & $\chi^2/$NDF & $\chi^2$ Probability \\ \hline \hline"+"\n")
+    log.write(r"PDF & $\chi^2$ & $N_{bins}$ \\ \hline \hline"+"\n")
+    for i,hist in enumerate(hists):
+      if i == iModel:
+        continue
+      chi2 = 0.
+      for iBin in range(1,nBins+1):
+        nEvt = hist.GetBinContent(iBin)
+        nEvtIModel = iModelHist.GetBinContent(iBin)
+        chi2 += (nEvt-nEvtIModel)**2/nEvtIModel
+      pdfTitle = self.pdfTitleList[i]
+      if "#" in pdfTitle or "^" in pdfTitle or "_" in pdfTitle:
+        pdfTitle = r"$\mathrm{"+pdfTitle+"}$"
+        pdfTitle = pdfTitle.replace("#",'\\')
+      #chi2Prob = scipy.stats.chi2.sf(chi2,ndf)
+      #log.write(r"{0} & {1:.1f}/{2} & {3:.3g} \\ \hline".format(pdfTitle,chi2,ndf,chi2Prob)+"\n")
+      log.write(r"{0} & {1:.2f} & {2} \\ \hline".format(pdfTitle,chi2,ndf)+"\n")
+    log.write(r"\end{tabular}"+"\n\n")
+
 class RooModelPlotter:
   def __init__(self,xVar,pdf,data,fr,title,energyStr,lumi,
                 backgroundPDFName=None,signalPDFName=None,pdfDotLineName=None,
