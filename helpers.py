@@ -30,6 +30,8 @@ def getDataStage2Directory():
     result = "/data/uftrig01b/jhugon/hmumu/analysisV00-01-10/forGPReRecoMuScleFit/"
   elif "cern" in hostname: # Works on lxplus and lxbatch
     result = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
+  elif "cyril" == hostname:
+    result = "/opt/hep/data/hmumu/stage2/"
   else: # Works on ihepa computers and UF HPC
     result = "/cms/data/store/user/jhugon/hmumu/stage2/"
   #print "Using Input Directory: ",result
