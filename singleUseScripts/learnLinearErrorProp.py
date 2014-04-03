@@ -91,7 +91,7 @@ for iBin in range(20):
 
   fpf = rooArgSet2List(fr.floatParsFinal())
   parList = rooArgSet2List(pdf.getParameters(data))
-  pdfDerivParList = []
+  pdfErrParList = []
   for par in parList:
     originalVal = par.getVal()
     paramUnc = par.getError()
@@ -103,25 +103,20 @@ for iBin in range(20):
     pointErr = abs(pdfErrVal-pdfVal)*nEvents
     pointErr = max(abs(pdfErrVal-pdfVal)*nEvents,pointErr)
 
-    pdfDerivParList.append(pointErr/paramUnc)
+    pdfErrParList.append(pointErr)
     par.setVal(originalVal)
 
   totalVariance = 0.
   for i in range(len(parList)):
     iParam = parList[i]
-    iUnc = iParam.getError()
-    iDeriv = pdfDerivParList[i]
+    iPdfErr = pdfErrParList[i]
     for j in range(i,len(parList)):
       jParam = parList[j]
-      jUnc = jParam.getError()
-      jDeriv = pdfDerivParList[j]
-      totalVariance += iDeriv*jDeriv*iUnc*jUnc*fr.correlation(iParam,jParam)
+      jPdfErr = pdfErrParList[j]
+      totalVariance += iPdfErr*jPdfErr*fr.correlation(iParam,jParam)
     
   totalUncertainty = sqrt(totalVariance)
   errGraph.SetPointError(iBin,0,0,totalUncertainty,totalUncertainty)
-      
-      
-      
 
 errGraph.Draw("P")
 
