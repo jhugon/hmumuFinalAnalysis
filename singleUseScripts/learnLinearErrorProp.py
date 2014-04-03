@@ -69,7 +69,6 @@ for iBin in range(100):
   x.setRange(rangeName,iBin*10./100-0.25,iBin*10./100+0.25)
   pdfVal = pdf.createIntegral(observables,observables,rangeName).getVal()
   pdfGraph2.SetPoint(iBin,iBin*10./100,pdfVal*pdfSF)
-pdfGraph2.Draw("L")
 
 #######################################################333
 #######################################################333
@@ -77,49 +76,15 @@ pdfGraph2.Draw("L")
 #######################################################333
 #######################################################333
 
-errGraph = root.TGraphAsymmErrors()
+errGraph = rooLinearErrorPropagation(pdf,fr,x,pdf.getParameters(data),nEvents)
 errGraph.SetLineColor(root.kRed)
 errGraph.SetMarkerColor(root.kRed)
-for iBin in range(20):
-  xNow = binWidth/2.+iBin*binWidth
+errGraph.SetFillColor(root.kRed)
+errGraph.Draw("3")
+frame.Draw("same")
 
-  rangeName = "binAgain_{0}".format(iBin)
-  x.setRange(rangeName,xNow-binWidth/2.,xNow+binWidth/2.)
-  pdfInt =  pdf.createIntegral(observables,observables,rangeName)
-  pdfVal = pdfInt.getVal()
-  errGraph.SetPoint(iBin,xNow,nEvents * pdfVal)
-
-  fpf = rooArgSet2List(fr.floatParsFinal())
-  parList = rooArgSet2List(pdf.getParameters(data))
-  pdfErrParList = []
-  for par in parList:
-    originalVal = par.getVal()
-    paramUnc = par.getError()
-
-    par.setVal(originalVal+paramUnc)
-    pdfErrVal = pdfInt.getVal()
-    pointErr = abs(pdfErrVal-pdfVal)*nEvents
-    par.setVal(originalVal-paramUnc)
-    pointErr = abs(pdfErrVal-pdfVal)*nEvents
-    pointErr = max(abs(pdfErrVal-pdfVal)*nEvents,pointErr)
-
-    pdfErrParList.append(pointErr)
-    par.setVal(originalVal)
-
-  totalVariance = 0.
-  for i in range(len(parList)):
-    iParam = parList[i]
-    iPdfErr = pdfErrParList[i]
-    for j in range(i,len(parList)):
-      jParam = parList[j]
-      jPdfErr = pdfErrParList[j]
-      totalVariance += iPdfErr*jPdfErr*fr.correlation(iParam,jParam)
-    
-  totalUncertainty = sqrt(totalVariance)
-  errGraph.SetPointError(iBin,0,0,totalUncertainty,totalUncertainty)
-
-errGraph.Draw("P")
-
+pdfGraph2.Draw("L")
+  
 saveAs(canvas,"output/ErrBand")
 
 ### Need to scale uncertainty by the scalefactor from the function to the plotted fit

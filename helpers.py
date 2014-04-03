@@ -3693,6 +3693,57 @@ class RooPredictionIntervalPlotter:
     result = root.RooProdPdf(pdf.GetName()+"withConstrainedHessePdf","",pdf,paramPdf)
     return result, paramPdf
 
+def rooLinearErrorPropagation(pdf,fr,xVar,parameters,nEvents,nPoints=100):
+  errGraph = root.TGraphAsymmErrors()
+  binning = xVar.getBinning()
+  xMin = binning.lowBound()
+  xMax = binning.highBound()
+  binWidth = binning.averageBinWidth()
+  pointWidth = (xMax-xMin)/(nPoints-1)
+  observables = root.RooArgSet(xVar)
+  parList = rooArgSet2List(parameters)
+  parListFR = rooArgSet2List(fr.floatParsFinal())
+  assert(len(parList) == len(parListFR))
+  for par,parFR in zip(parList,parListFR):
+    par.setVal(parFR.getVal())
+  relStatUnc = nEvents**(-0.5)
+  for iPoint in range(nPoints):
+    xNow = iPoint*pointWidth
+  
+    rangeName = "linearErrPropRange_{0}".format(iPoint)
+    xVar.setRange(rangeName,xNow-binWidth/2.,xNow+binWidth/2.)
+    pdfInt =  pdf.createIntegral(observables,observables,rangeName)
+    pdfVal = pdfInt.getVal()
+    errGraph.SetPoint(iPoint,xNow,nEvents * pdfVal)
+  
+    pdfErrParList = []
+    for par,parFR in zip(parList,parListFR):
+      originalVal = parFR.getVal()
+      paramUnc = parFR.getError()
+  
+      par.setVal(originalVal+paramUnc)
+      pdfErrVal = pdfInt.getVal()
+      pointErr = abs(pdfErrVal-pdfVal)*nEvents
+      par.setVal(originalVal-paramUnc)
+      pointErr = abs(pdfErrVal-pdfVal)*nEvents
+      pointErr = max(abs(pdfErrVal-pdfVal)*nEvents,pointErr)
+  
+      pdfErrParList.append(pointErr)
+      par.setVal(originalVal)
+  
+    totalVariance = pdfVal*relStatUnc # Include Stat unc of normalization
+    for i in range(len(parList)):
+      iParam = parList[i]
+      iPdfErr = pdfErrParList[i]
+      for j in range(i,len(parList)):
+        jParam = parList[j]
+        jPdfErr = pdfErrParList[j]
+        totalVariance += iPdfErr*jPdfErr*fr.correlation(iParam,jParam)
+      
+    totalUncertainty = sqrt(totalVariance)
+    errGraph.SetPointError(iPoint,binWidth/2.,binWidth/2.,totalUncertainty,totalUncertainty)
+  return errGraph
+
 if __name__ == "__main__":
 
   root.gROOT.SetBatch(True)
