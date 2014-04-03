@@ -3589,7 +3589,7 @@ def rooDebugChi2(pdf,data):
     result += "{0:20}: {1:<10.3g}\n".format("nParams",nparams)
   return result
 
-class RooPredictionTolerenceIntervalPlotter:
+class RooPredictionIntervalPlotter:
   def __init__(self,xVar,pdf,data,fr,nToys=1000):
     self.xVar = xVar
     self.xBinning = self.xVar.getBinning()
@@ -3601,18 +3601,33 @@ class RooPredictionTolerenceIntervalPlotter:
     self.data = data
     self.fr = fr
     self.nToys = nToys
-    self.toyHists = []
     self.nData = data.sumEntries()
-    self.trandom = root.TRandom3(1252361)
-    self.fitPdf = self.makeFitPdf()
+    self.pdfE = pdf
+    self.toyHists = []
+    if not self.pdfE.InheritsFrom("RooExtendPdf"):
+        self.nDataVar = root.RooRealVar(pdf.GetName()+"_extendPdf_nDataVar","",self.nData)
+        self.pdfE = root.RooExtendPdf(pdf.GetName()+"_extendPdf","",self.pdf,self.nDataVar)
+    self.studyPdf, self.paramPdf = self.makeStudyPdf(self.pdfE,fr)
+    self.constraintParamSet = root.RooArgSet(*rooArgSet2List(fr.floatParsFinal()))
+    self.mcStudy = root.RooMCStudy(self.studyPdf,root.RooArgSet(self.xVar),
+                                    root.RooFit.Binned(True),
+                                    root.RooFit.Silence(),
+                                    root.RooFit.Extended(),
+                                    root.RooFit.FitOptions(
+                                            root.RooFit.Save(True),
+                                            root.RooFit.PrintEvalErrors(0)
+                                    ),
+                                    root.RooFit.Constrain(self.constraintParamSet),
+    )
+    self.mcStudy.generate(self.nToys,0,True)
+    #self.mcStudy.generateAndFit(self.nToys,0,True)  ## Helps to be able to debug constriant parameters
+    #fitParamDataSet = self.mcStudy.fitParDataSet()
     for iToy in range(nToys):
-      iEvents = self.trandom.Poisson(self.nData)
-      tmpToy = self.fitPdf.generateBinned(root.RooArgSet(xVar),iEvents)
-      assert(tmpToy.numEntries()==self.nBins)
-      tmpToyHist = tmpToy.createHistogram(self.pdf.GetName()+"toyPredTolHist{0}".format(iToy),self.xVar,
+      toyDataSet = self.mcStudy.genData(iToy)
+      toyHist = toyDataSet.createHistogram(self.pdf.GetName()+"toyPredTolHist{0}".format(iToy),self.xVar,
                         root.RooFit.Binning(self.nBins,self.xMin,self.xMax)
             )
-      self.toyHists.append(tmpToyHist)
+      self.toyHists.append(toyHist)
 
   def drawPrediction(self,sigmas=1,color=root.kRed-9,drawOpt="2"):
     predGraph = root.TGraphAsymmErrors()
@@ -3646,39 +3661,6 @@ class RooPredictionTolerenceIntervalPlotter:
     #    hist.SetLineColor(root.kGreen+1)
     #    hist.Draw("same hist")
 
-  def drawTolerence(self,sigmas=1,cl=0.95,color=root.kGreen-9,drawOpt="2"):
-    return
-    tolGraph = root.TGraphAsymmErrors()
-    tolGraph.SetMarkerColor(color)
-    tolGraph.SetLineColor(color)
-    tolGraph.SetFillColor(color)
-    for iBin in range(self.nBins):
-      x = self.xBinning.binCenter(iBin)
-      xLow = x-self.xBinning.binLow(iBin)
-      xHigh = self.xBinning.binHigh(iBin)-x
-      yToyList = numpy.zeros(self.nToys)
-      for iToy in range(self.nToys):
-        yToy = self.toyHists[iToy].GetBinContent(iBin+1)
-        yToyList[iToy] = yToy
-      quantiles = numpy.percentile(yToyList,
-                    [
-                        100.*scipy.stats.norm.cdf(-sigmas),
-                        50.,
-                        100.*scipy.stats.norm.cdf(sigmas)
-                    ]
-      )
-      y = quantiles[1]
-      yLow = y-quantiles[0]
-      yHigh = quantiles[2]-y
-      tolGraph.SetPoint(iBin,x,y)
-      tolGraph.SetPointError(iBin,xLow,xHigh,yLow,yHigh)
-    self.tolGraph = tolGraph
-    self.tolGraph.Draw(drawOpt)
-    # For debugging
-    #for hist in self.toyHists:
-    #    hist.SetLineColor(root.kGreen+1)
-    #    hist.Draw("same hist")
-
   def drawStatOnly(self,sigmas=1,color=root.kMagenta-9,drawOpt="2"):
     statErrGraph = root.TGraphAsymmErrors()
     statErrGraph = root.TGraphAsymmErrors()
@@ -3704,11 +3686,12 @@ class RooPredictionTolerenceIntervalPlotter:
     #    hist.Draw("same hist")
 
 
-  def makeFitPdf(self):
-    fitFloatParams = rooArgSet2List(self.fr.floatParsFinal())
-    self.paramPdf = self.fr.createHessePdf(root.RooArgSet(*fitFloatParams))
-    result = root.RooProdPdf(self.pdf.GetName()+"withConstrainedHessePdf","",self.pdf,self.paramPdf)
-    return result
+  def makeStudyPdf(self,pdf,fr):
+    fitFloatParams = rooArgSet2List(fr.floatParsFinal())
+    paramPdf = fr.createHessePdf(root.RooArgSet(*fitFloatParams))
+    #paramPdf = root.RooGaussian("sillyJustin","",fitFloatParams[0],root.RooFit.RooConst(fitFloatParams[0].getVal()),root.RooFit.RooConst(fitFloatParams[0].getVal()*0.5))
+    result = root.RooProdPdf(pdf.GetName()+"withConstrainedHessePdf","",pdf,paramPdf)
+    return result, paramPdf
 
 if __name__ == "__main__":
 

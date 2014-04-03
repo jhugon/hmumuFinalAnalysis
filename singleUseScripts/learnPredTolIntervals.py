@@ -22,14 +22,15 @@ PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 
 x = root.RooRealVar("x","x",0,10)
 x.setRange("all",0,10)
-x.setRange("fitRange",0,2)
+#x.setRange("fitRange",0,2)
+x.setRange("fitRange",0,10)
 x.setBins(20)
 observables = root.RooArgSet(x)
 
 a = root.RooRealVar("a","a",0.1,-5,5)
 pdf = root.RooGenericPdf("pdfPol","0.2+@0*@1",root.RooArgList(x,a))
 
-data = pdf.generateBinned(root.RooArgSet(x),1000)
+data = pdf.generateBinned(root.RooArgSet(x),10000)
 nEvents = data.sumEntries()
 
 fr = pdf.fitTo(data,root.RooFit.Save(),root.RooFit.Minos(),PRINTLEVEL,root.RooFit.Range("fitRange"))
@@ -43,10 +44,9 @@ curveData2 = data.plotOn(frame)
 
 canvas = root.TCanvas("canvas")
 frame.Draw()
-rptip = RooPredictionTolerenceIntervalPlotter(x,pdf,data,fr)
-rptip.drawTolerence()
+rptip = RooPredictionIntervalPlotter(x,pdf,data,fr)
 rptip.drawPrediction()
-rptip.drawStatOnly()
+#rptip.drawStatOnly()
 
 frame.Draw("same")
 
