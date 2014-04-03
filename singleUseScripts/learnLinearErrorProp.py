@@ -22,6 +22,8 @@ PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 
 x = root.RooRealVar("x","x",0,10)
 x.setBins(20)
+binning = x.getBinning()
+binWidth = binning.averageBinWidth()
 observables = root.RooArgSet(x)
 
 a = root.RooRealVar("a","a",0.1,-5,5)
@@ -59,6 +61,7 @@ for iBin in range(100):
   x.setRange(rangeName,iBin*10./100-0.25,iBin*10./100+0.25)
   pdfVal = pdf.createIntegral(observables,observables,rangeName).getVal()
   pdfGraph2.SetPoint(iBin,iBin*10./100,pdfVal*pdfSF)
+  print iBin*10/100.,pdfVal*pdfSF
 pdfGraph2.Draw("L")
 
 #######################################################333
@@ -67,52 +70,39 @@ pdfGraph2.Draw("L")
 #######################################################333
 #######################################################333
 
+def myFunc(x,a):
+  return 0.2+a*x
+def myFuncIntX(x,a,xmin=0.,xmax=10.):
+  return xmax**2/2.- xmin**2/2.
+def myFuncDerivX(x,a):
+  return a
+
 covaa = fr.correlation(a,a)*a.getError()*a.getError()
   
-errUpGraph = root.TGraph()
-errDownGraph = root.TGraph()
-errUpGraph.SetLineColor(root.kRed)
-errDownGraph.SetLineColor(root.kRed)
-errUpGraph.SetMarkerColor(root.kRed)
-errDownGraph.SetMarkerColor(root.kRed)
+errGraph = root.TGraphAsymmErrors()
+errGraph.SetLineColor(root.kRed)
+errGraph.SetMarkerColor(root.kRed)
 for iBin in range(20):
-  xNow = iBin*0.5
-  x.setVal(xNow)
-  a.setVal(aVal)
-  aDeriv = pdf.derivative(a).getVal()
-  a.setVal(aVal)
-  variance = 0.
-  variance += aDeriv*aDeriv*covaa
-  unc = sqrt(variance)
-  myVariance =  0.
-  myVariance += (xNow*a.getError())**2 ## a unc 
-  myUnc = sqrt(myVariance)
-  
-  rangeName = "binAgain{0}".format(iBin)
-  x.setRange(rangeName,xNow-0.25,xNow+0.25)
-  a.setVal(aVal)
-  pdfVal = pdf.createIntegral(observables,observables,rangeName).getVal()
-  a.setVal(aVal)
-  funcVal = pdf.getVal()
-  relUnc = unc/funcVal
+  xNow = binWidth/2.+iBin*binWidth
+  intAll = 10**2/2.*a.getVal()
+  C = 1./myFuncIntX(xNow,a.getVal())
+  myPdfVal = nEvents * C * myFuncIntX(xNow,a.getVal(),xNow-binWidth/2.,xNow+binWidth/2.)
+  errGraph.SetPoint(iBin,xNow,myPdfVal)
+  #print
+  #print "x: ",xNow
+  #print "pdf: ",myPdfVal
+errGraph.Draw("P")
 
-  myFuncVal = 0.2+a.getVal()*xNow
-  myRelUnc = myUnc/myFuncVal
-
-  print 
-  print xNow
-  print "aDeriv: ",aDeriv,"  covaa: ",covaa, "a unc: ",sqrt(covaa)
-  print "unc: ",unc,myUnc
-  print "relUnc: ",relUnc,myRelUnc
-  print "funcVal: ",funcVal,myFuncVal
-  print "pdfVal*pdfSF: ",pdfVal*pdfSF
-
-  errUpGraph.SetPoint(iBin,xNow,pdfVal*pdfSF*(1.+relUnc))
-  errDownGraph.SetPoint(iBin,xNow,pdfVal*pdfSF*(1.-relUnc))
-  #errUpGraph.SetPoint(iBin,xNow,pdfVal*pdfSF+unc*pdfVal/funcVal*pdfSF)
-  #errDownGraph.SetPoint(iBin,xNow,pdfVal*pdfSF-unc*pdfVal/funcVal*pdfSF)
-errUpGraph.Draw("P")
-errDownGraph.Draw("P")
+err2Graph = root.TGraphAsymmErrors()
+err2Graph.SetLineColor(root.kGreen+1)
+err2Graph.SetMarkerColor(root.kGreen+1)
+for iBin in range(20):
+  xNow = binWidth/2.+iBin*binWidth
+  intAll = 10**2/2.*a.getVal()
+  C = 1./myFuncIntX(xNow,a.getVal())
+  myPdfVal = nEvents * C * myFunc(xNow,a.getVal())*5
+  err2Graph.SetPoint(iBin,xNow,myPdfVal)
+err2Graph.Draw("P")
 
 saveAs(canvas,"output/ErrBand")
 
