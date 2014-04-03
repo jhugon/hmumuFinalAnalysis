@@ -11,6 +11,7 @@ from math import log10
 import math
 import numpy
 import scipy
+import scipy.stats
 import array
 import os
 import sys
@@ -3588,6 +3589,126 @@ def rooDebugChi2(pdf,data):
     result += "{0:20}: {1:<10.3g}\n".format("nParams",nparams)
   return result
 
+class RooPredictionTolerenceIntervalPlotter:
+  def __init__(self,xVar,pdf,data,fr,nToys=1000):
+    self.xVar = xVar
+    self.xBinning = self.xVar.getBinning()
+    self.nBins = self.xBinning.numBins()
+    self.xMin = self.xBinning.lowBound()
+    self.xMax = self.xBinning.highBound()
+    self.binWidth = self.xBinning.averageBinWidth()
+    self.pdf = pdf
+    self.data = data
+    self.fr = fr
+    self.nToys = nToys
+    self.toyHists = []
+    self.nData = data.sumEntries()
+    self.trandom = root.TRandom3(1252361)
+    self.fitPdf = self.makeFitPdf()
+    for iToy in range(nToys):
+      iEvents = self.trandom.Poisson(self.nData)
+      tmpToy = self.fitPdf.generateBinned(root.RooArgSet(xVar),iEvents)
+      assert(tmpToy.numEntries()==self.nBins)
+      tmpToyHist = tmpToy.createHistogram(self.pdf.GetName()+"toyPredTolHist{0}".format(iToy),self.xVar,
+                        root.RooFit.Binning(self.nBins,self.xMin,self.xMax)
+            )
+      self.toyHists.append(tmpToyHist)
+
+  def drawPrediction(self,sigmas=1,color=root.kRed-9,drawOpt="2"):
+    predGraph = root.TGraphAsymmErrors()
+    predGraph.SetMarkerColor(color)
+    predGraph.SetLineColor(color)
+    predGraph.SetFillColor(color)
+    for iBin in range(self.nBins):
+      x = self.xBinning.binCenter(iBin)
+      xLow = x-self.xBinning.binLow(iBin)
+      xHigh = self.xBinning.binHigh(iBin)-x
+      yToyList = numpy.zeros(self.nToys)
+      for iToy in range(self.nToys):
+        yToy = self.toyHists[iToy].GetBinContent(iBin+1)
+        yToyList[iToy] = yToy
+      quantiles = numpy.percentile(yToyList,
+                    [
+                        100.*scipy.stats.norm.cdf(-sigmas),
+                        50.,
+                        100.*scipy.stats.norm.cdf(sigmas)
+                    ]
+      )
+      y = quantiles[1]
+      yLow = y-quantiles[0]
+      yHigh = quantiles[2]-y
+      predGraph.SetPoint(iBin,x,y)
+      predGraph.SetPointError(iBin,xLow,xHigh,yLow,yHigh)
+    self.predGraph = predGraph
+    self.predGraph.Draw(drawOpt)
+    # For debugging
+    #for hist in self.toyHists:
+    #    hist.SetLineColor(root.kGreen+1)
+    #    hist.Draw("same hist")
+
+  def drawTolerence(self,sigmas=1,cl=0.95,color=root.kGreen-9,drawOpt="2"):
+    return
+    tolGraph = root.TGraphAsymmErrors()
+    tolGraph.SetMarkerColor(color)
+    tolGraph.SetLineColor(color)
+    tolGraph.SetFillColor(color)
+    for iBin in range(self.nBins):
+      x = self.xBinning.binCenter(iBin)
+      xLow = x-self.xBinning.binLow(iBin)
+      xHigh = self.xBinning.binHigh(iBin)-x
+      yToyList = numpy.zeros(self.nToys)
+      for iToy in range(self.nToys):
+        yToy = self.toyHists[iToy].GetBinContent(iBin+1)
+        yToyList[iToy] = yToy
+      quantiles = numpy.percentile(yToyList,
+                    [
+                        100.*scipy.stats.norm.cdf(-sigmas),
+                        50.,
+                        100.*scipy.stats.norm.cdf(sigmas)
+                    ]
+      )
+      y = quantiles[1]
+      yLow = y-quantiles[0]
+      yHigh = quantiles[2]-y
+      tolGraph.SetPoint(iBin,x,y)
+      tolGraph.SetPointError(iBin,xLow,xHigh,yLow,yHigh)
+    self.tolGraph = tolGraph
+    self.tolGraph.Draw(drawOpt)
+    # For debugging
+    #for hist in self.toyHists:
+    #    hist.SetLineColor(root.kGreen+1)
+    #    hist.Draw("same hist")
+
+  def drawStatOnly(self,sigmas=1,color=root.kMagenta-9,drawOpt="2"):
+    statErrGraph = root.TGraphAsymmErrors()
+    statErrGraph = root.TGraphAsymmErrors()
+    statErrGraph.SetMarkerColor(color)
+    statErrGraph.SetLineColor(color)
+    statErrGraph.SetFillColor(color)
+    for iBin in range(self.nBins):
+      x = self.xBinning.binCenter(iBin)
+      xLow = x-self.xBinning.binLow(iBin)
+      xHigh = self.xBinning.binHigh(iBin)-x
+      yToyList = numpy.zeros(self.nToys)
+      for iToy in range(self.nToys):
+        yToy = self.toyHists[iToy].GetBinContent(iBin+1)
+        yToyList[iToy] = yToy
+      y = numpy.median(yToyList)
+      statErrGraph.SetPoint(iBin,x,y)
+      statErrGraph.SetPointError(iBin,xLow,xHigh,sqrt(y),sqrt(y))
+    self.statErrGraph = statErrGraph
+    self.statErrGraph.Draw(drawOpt)
+    # For debugging
+    #for hist in self.toyHists:
+    #    hist.SetLineColor(root.kGreen+1)
+    #    hist.Draw("same hist")
+
+
+  def makeFitPdf(self):
+    fitFloatParams = rooArgSet2List(self.fr.floatParsFinal())
+    self.paramPdf = self.fr.createHessePdf(root.RooArgSet(*fitFloatParams))
+    result = root.RooProdPdf(self.pdf.GetName()+"withConstrainedHessePdf","",self.pdf,self.paramPdf)
+    return result
 
 if __name__ == "__main__":
 
