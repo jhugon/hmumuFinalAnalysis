@@ -73,9 +73,11 @@ pdfGraph2.Draw("L")
 def myFunc(x,a):
   return 0.2+a*x
 def myFuncIntX(x,a,xmin=0.,xmax=10.):
-  return xmax**2/2.- xmin**2/2.
+  return 0.2*xmax - 0.2*xmin + a*xmax**2/2. - a*xmin**2/2.
 def myFuncDerivX(x,a):
   return a
+def myNormFactorDerivA(x,a,xmin=0.,xmax=10.):
+  return -0.5*(xmax**2-xmin**2)*myFuncIntX(x,a,xmin,xmax)**2
 
 covaa = fr.correlation(a,a)*a.getError()*a.getError()
   
@@ -88,9 +90,23 @@ for iBin in range(20):
   C = 1./myFuncIntX(xNow,a.getVal())
   myPdfVal = nEvents * C * myFuncIntX(xNow,a.getVal(),xNow-binWidth/2.,xNow+binWidth/2.)
   errGraph.SetPoint(iBin,xNow,myPdfVal)
-  #print
-  #print "x: ",xNow
-  #print "pdf: ",myPdfVal
+
+
+  deriv = nEvents * C * myFuncDerivX(xNow,a.getVal())
+  deriv += nEvents * myFunc(xNow,a.getVal()) * myNormFactorDerivA(xNow,a.getVal())
+
+  error = deriv*sqrt(covaa)
+
+  errGraph.SetPointError(iBin,0,0,error,error)
+  print
+  print "x: ",xNow
+  print "pdf: ",myPdfVal
+  print "func deriv: ",myFuncDerivX(xNow,a.getVal())
+  print "C: ",C
+  print "dC/da: ", myNormFactorDerivA(xNow,a.getVal())
+  print "pdf deriv: ",deriv
+  print "unc(a) :", sqrt(covaa)
+  print "error: ",error
 errGraph.Draw("P")
 
 err2Graph = root.TGraphAsymmErrors()
@@ -105,7 +121,6 @@ for iBin in range(20):
 err2Graph.Draw("P")
 
 saveAs(canvas,"output/ErrBand")
-
 
 ### Need to scale uncertainty by the scalefactor from the function to the plotted fit
 ### Can just take the plotted value and divide by pdf.getVal() at the xpoint
