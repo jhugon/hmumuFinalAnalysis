@@ -114,7 +114,10 @@ class PlotBgkFits:
 
       rmp = RooModelPlotter(dimuonMass,pdf,realData,fr,
                         TITLEMAP[catName],energyStr,lumiDict[energyStr],
-                        caption2=PDFTITLEMAP[pdfBaseName]
+                        caption2=PDFTITLEMAP[pdfBaseName],
+                        showPredictionBand=True,
+                        showLinearErrorBand=True,
+                        showRooFitErrorBand=True
                         )
       rmp.draw(outPrefix+"_Shape_"+energyStr+catName+"_"+pdfName)
       rmp.drawWithParams(outPrefix+"_Shape_"+energyStr+catName+"_"+pdfName+"_params")

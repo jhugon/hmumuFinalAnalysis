@@ -2673,7 +2673,10 @@ class RooModelPlotter:
                 extraPDFs=[],
                 extraLegEntries=[],
                 extraPDFDotLineNames=[],
-                doLinearErrs=True
+                doLinearErrs=True,
+                showRooFitErrorBand=True,
+                showLinearErrorBand=False,
+                showPredictionBand=False
               ):
     self.xVar = xVar
     self.pdf = pdf
@@ -2704,6 +2707,9 @@ class RooModelPlotter:
     self.extraLegEntries = extraLegEntries
     self.extraPDFDotLineNames = extraPDFDotLineNames
     self.doLinearErrs = doLinearErrs
+    self.showRooFitErrorBand = showRooFitErrorBand
+    self.showLinearErrorBand = showLinearErrorBand
+    self.showPredictionBand = showPredictionBand
 
     self.legEntryData = legEntryData
     self.legEntryModel = legEntryModel
@@ -2793,12 +2799,14 @@ class RooModelPlotter:
     #print "backgroundPDFName = %s" % backgroundPDFName 
     if backgroundPDFName != None:
       bakCompArg = root.RooFit.Components(backgroundPDFName)
-      pdf.plotOn(frame,errVisArg,errColorArg,bakCompArg,rangeArg,tmpBakPDFErrorNameArg)
+      if showRooFitErrorBand:
+        pdf.plotOn(frame,errVisArg,errColorArg,bakCompArg,rangeArg,tmpBakPDFErrorNameArg)
       for iColor,extraPdf in enumerate(self.extraPDFs):
         extraPdf.plotOn(frame,lineDrawOptArg,root.RooFit.LineColor(self.extraPDFColors[iColor]),lineWidthArg,rangeArg)
       pdf.plotOn(frame,lineDrawOptArg,lineColorArg,lineWidthArg,bakCompArg,rangeArg,tmpBakPDFNameArg)
     else:
-      pdf.plotOn(frame,errVisArg,errColorArg,rangeArg,tmpBakPDFErrorNameArg)
+      if showRooFitErrorBand:
+        pdf.plotOn(frame,errVisArg,errColorArg,rangeArg,tmpBakPDFErrorNameArg)
       for iColor,extraPdf in enumerate(self.extraPDFs):
         extraPdf.plotOn(frame,lineDrawOptArg,root.RooFit.LineColor(self.extraPDFColors[iColor]),lineWidthArg,rangeArg)
         if len(self.extraPDFDotLineNames) == len(self.extraPDFs):
@@ -2956,6 +2964,13 @@ class RooModelPlotter:
         self.leg.AddEntry(self.phonySigLegHist,"Signal","l")
         self.legBkgSub.AddEntry(self.phonySigLegHist,"Signal","l")
 
+    if self.showLinearErrorBand:
+      self.linearErrGraph = rooLinearErrorPropagation(self.pdf,self.fr,self.xVar,self.pdf.getParameters(self.data),self.data.sumEntries())
+      self.linearErrGraph.SetFillColor(root.kRed-9)
+      self.linearErrGraph.SetFillStyle(1)
+    if self.showPredictionBand:
+      binnedData = self.data.binnedClone()
+      self.predIntervalPlotter = RooPredictionIntervalPlotter(self.xVar,self.pdf,binnedData,self.fr)
 
   def draw(self,filenameNoExt,canvas=None,motherPad=None):
     if canvas==None:
@@ -2988,7 +3003,13 @@ class RooModelPlotter:
     # Main Pad
     pad1.cd();
     self.frame.Draw()
-    self.addPDFNormError(pad1)
+    if self.showPredictionBand:
+      self.predIntervalPlotter.drawPrediction()
+    if self.showLinearErrorBand:
+      self.linearErrGraph.Draw("3")
+      self.frame.Draw("same")
+    if self.showRooFitErrorBand:
+      self.addPDFNormError(pad1)
     self.leg.Draw()
 
     # Pulls Pad
@@ -3608,6 +3629,8 @@ class RooPredictionIntervalPlotter:
         self.nDataVar = root.RooRealVar(pdf.GetName()+"_extendPdf_nDataVar","",self.nData)
         self.pdfE = root.RooExtendPdf(pdf.GetName()+"_extendPdf","",self.pdf,self.nDataVar)
     self.studyPdf, self.paramPdf = self.makeStudyPdf(self.pdfE,fr)
+    if not self.studyPdf:
+      return
     self.constraintParamSet = root.RooArgSet(*rooArgSet2List(fr.floatParsFinal()))
     self.mcStudy = root.RooMCStudy(self.studyPdf,root.RooArgSet(self.xVar),
                                     root.RooFit.Binned(True),
@@ -3629,7 +3652,9 @@ class RooPredictionIntervalPlotter:
             )
       self.toyHists.append(toyHist)
 
-  def drawPrediction(self,sigmas=1,color=root.kRed-9,drawOpt="2"):
+  def drawPrediction(self,sigmas=1,color=root.kGreen-9,drawOpt="2"):
+    if not self.studyPdf:
+        return
     predGraph = root.TGraphAsymmErrors()
     predGraph.SetMarkerColor(color)
     predGraph.SetLineColor(color)
@@ -3662,6 +3687,8 @@ class RooPredictionIntervalPlotter:
     #    hist.Draw("same hist")
 
   def drawStatOnly(self,sigmas=1,color=root.kMagenta-9,drawOpt="2"):
+    if not self.studyPdf:
+        return
     statErrGraph = root.TGraphAsymmErrors()
     statErrGraph = root.TGraphAsymmErrors()
     statErrGraph.SetMarkerColor(color)
@@ -3687,10 +3714,13 @@ class RooPredictionIntervalPlotter:
 
 
   def makeStudyPdf(self,pdf,fr):
+    print rooDebugFR(fr)
     fitFloatParams = rooArgSet2List(fr.floatParsFinal())
     paramPdf = fr.createHessePdf(root.RooArgSet(*fitFloatParams))
     #paramPdf = root.RooGaussian("sillyJustin","",fitFloatParams[0],root.RooFit.RooConst(fitFloatParams[0].getVal()),root.RooFit.RooConst(fitFloatParams[0].getVal()*0.5))
-    result = root.RooProdPdf(pdf.GetName()+"withConstrainedHessePdf","",pdf,paramPdf)
+    result = None
+    if paramPdf:
+      result = root.RooProdPdf(pdf.GetName()+"withConstrainedHessePdf","",pdf,paramPdf)
     return result, paramPdf
 
 def rooLinearErrorPropagation(pdf,fr,xVar,parameters,nEvents,nPoints=100):
@@ -3701,7 +3731,11 @@ def rooLinearErrorPropagation(pdf,fr,xVar,parameters,nEvents,nPoints=100):
   binWidth = binning.averageBinWidth()
   pointWidth = (xMax-xMin)/(nPoints-1)
   observables = root.RooArgSet(xVar)
-  parList = rooArgSet2List(parameters)
+  allParList = rooArgSet2List(parameters)
+  parList = []
+  for par in allParList:
+    if not par.isConstant():
+      parList.append(par)
   parListFR = rooArgSet2List(fr.floatParsFinal())
   assert(len(parList) == len(parListFR))
   for par,parFR in zip(parList,parListFR):
