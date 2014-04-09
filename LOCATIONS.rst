@@ -59,6 +59,14 @@ H->mumu All Categories Bias Data
 
 Backup in /afs/cern.ch/user/j/jhugon/work/public/hmumuBkgBias/
 
+2014/04/09
++++++++++++++++
+
+Used singleUseScripts/updateAllPkls.py to merge 2014/03/28 Bernstein functions
+for Hgg style reference orders with other functions from 2014/02/10
+
+7 & 8 TeV, 0 & 3 sig injected
+
 2014/03/28
 +++++++++++++++
 
