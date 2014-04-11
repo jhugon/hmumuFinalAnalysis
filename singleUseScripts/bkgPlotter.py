@@ -106,18 +106,18 @@ class PlotBgkFits:
       tmpParamList,tmpNormTup,tmpDebug,tmpOrder = pdfFunc(pdfName+catName+energyStr,realData,dimuonMass,110,160,wImport,dimuonMassZ,realDataZ,order=pdfOrder)
       pdf = w.pdf("bak")
       fr = pdf.fitTo(realData, 
-                         #root.RooFit.Hesse(True), 
-                         #root.RooFit.Minos(True), # Doesn't Help, just makes it run longer
+                         root.RooFit.Hesse(True), 
+                         root.RooFit.Minos(True), # Doesn't Help, just makes it run longer
                          root.RooFit.Save(True),
                          PRINTLEVEL
                        )
 
-      rmp = RooModelPlotter(dimuonMass,pdf,realData,fr,
-                        TITLEMAP[catName],energyStr,lumiDict[energyStr],
-                        caption2=PDFTITLEMAP[pdfBaseName]
-                        )
-      rmp.draw(outPrefix+"_Shape_"+energyStr+catName+"_"+pdfName)
-      rmp.drawWithParams(outPrefix+"_Shape_"+energyStr+catName+"_"+pdfName+"_params")
+      #rmp = RooModelPlotter(dimuonMass,pdf,realData,fr,
+      #                  TITLEMAP[catName],energyStr,lumiDict[energyStr],
+      #                  caption2=PDFTITLEMAP[pdfBaseName]
+      #                  )
+      #rmp.draw(outPrefix+"_Shape_"+energyStr+catName+"_"+pdfName)
+      #rmp.drawWithParams(outPrefix+"_Shape_"+energyStr+catName+"_"+pdfName+"_params")
       floatParsFinal = fr.floatParsFinal()
       self.outStrDetail += "\n{0}\n".format(pdf.GetTitle())
       #self.outStrDetail += tmpDebug + "\n"
@@ -138,7 +138,7 @@ class PlotBgkFits:
       #nll = fr.minNll()
       ##self.outStr+= "{0:15} chi2: {1:.2f} ndf: {2:.0f} nll: {3:.3g}\n".format(pdfName,chi2,ndf,nll)
 
-      self.rmpList.append(rmp)
+      #self.rmpList.append(rmp)
       self.pdfList.append(pdf)
       self.frList.append(fr)
       self.wList.append(w)
@@ -191,15 +191,7 @@ if __name__ == "__main__":
   canvas = root.TCanvas()
   outDir = "output/"
 
-  #pdfsToTry = ["Bernstein","Chebychev","Polynomial","SumExp","SumPow","Laurent"]
-  #pdfsToTry = ["SumExp","Bernstein"]
-  #pdfsToTry = ["BernsteinProd","ExpMOverSq","MSSM","VoigtPMm2","VoigtPExpMm2","Old","SumExp"]
-  #pdfsToTry = ["MSSM","3Bernstein","4Bernstein","5Bernstein","6Bernstein"]
-
-
-  #pdfsToTry = ["MSSM","2Bernstein","3Bernstein","4Bernstein","5Bernstein"] # For 2-Jet VBF and GF
-  #pdfsToTry = ["MSSM","5Bernstein","6Bernstein","7Bernstein","8Bernstein"] # For Tight BO
-  pdfsToTry = ["MSSM","3Bernstein","4Bernstein","5Bernstein","6Bernstein"] # For all others
+  pdfsToTry = ["MSSM","Bernstein","ExpMOverSq","VoigtPMm2","VoigtPExpMm2","Old","SumExp"]
 
   categories = []
 
