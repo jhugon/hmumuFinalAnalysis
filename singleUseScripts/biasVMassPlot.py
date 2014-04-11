@@ -94,7 +94,7 @@ def getBiasStudies():
   result.sort(key=lambda x: orderDef.index(x['meta']['catName']))
   return result
 
-def printBiasVMass(data,useRefFuncs,outputDir):
+def biasVMass(data,useRefFuncs,outputDir):
 
   refPdfNameList = data['meta']['refPdfNameList']
   pdfAltNamesDict = data['meta']['pdfAltNamesDict']
@@ -118,7 +118,7 @@ def printBiasVMass(data,useRefFuncs,outputDir):
 
   canvas = root.TCanvas()
 
-  leg = root.TLegend(0.58,0.65,0.9,0.9)
+  leg = root.TLegend(0.55,0.60,0.9,0.9)
   leg.SetFillColor(0)
   leg.SetLineColor(0)
   leg.SetHeader("Reference Functions")
@@ -181,53 +181,16 @@ def printBiasVMass(data,useRefFuncs,outputDir):
 
   energyTitle = energyStr
   energyTitle = "#sqrt{s} = "+energyTitle.replace("TeV"," TeV")
-  tlatex = drawStandardCaptions(canvas,"Bias for "+altTitle,TITLEMAP[catName],energyTitle,preliminaryString="CMS Internal")
+  lumiTitle = "L = {0:0.1f} fb^{{-1}}".format(lumiDict[energyStr])
+  tlatex = drawStandardCaptions(canvas,TITLEMAP[catName],energyTitle,lumiTitle,preliminaryString="CMS Internal")
 
   canvas.RedrawAxis()
-  saveAs(canvas,"BiasVMass_"+catName+"_"+energyStr+"_sig"+str(int(sigInject)))
-
-  ### Now to print table
-  statUnc125 = ERRORSDICT[energyStr][catName][125]
-  sigInjectTitle = r"${0}\sigma$ Signal Injected".format(sigInject)
-  if sigInject == 0.:
-    sigInjectTitle = "No Signal Injected"
-  outStr = r"\normalsize"+"\n"
-  outStr += r"{0} {1} {2} \\".format(TITLEMAP[catName],energyStr.replace("TeV"," TeV"), sigInjectTitle)+"\n"
-  outStr += "Bias for "+altName+r" \\ "+"\n"
-  outStr += r"\tiny"+"\n"
-  outStr += r"\begin{tabular}{|l|r|r|} \hline"+"\n"
-  outStr += r"Reference PDF & N_{bias} & Relative Bias \\ \hline \hline"+"\n"
-  for refPdfName,maxNUnc in zip(refPdfNameList,maxNUncList):
-    refPdfTitle = PDFTITLEMAP[refPdfName]
-    outStr += r"{0:40} & {1:15.1f} & {2:15.0f}\% \\ \hline".format(refPdfTitle,maxNUnc,maxNUnc*100./statUnc125)+"\n"
-  outStr += r"\end{tabular}"+"\n\n"
-  print outStr
-
-  resultNBiasDict = {}
-  for refPdfName,maxNUnc in zip(refPdfNameList,maxNUncList):
-    resultNBiasDict[refPdfName] = maxNUnc
-  return resultNBiasDict
+  saveAs(canvas,outputDir+"BiasVMass_"+catName+"_"+energyStr+"_sig"+str(int(sigInject)))
 
 if __name__ == "__main__":
-  onlyVoitRefs = ["Old","VoigtPMm2","VoigtPExpMm2"]
-  voitAndSMRefs = ["Old","ExpMOverSq","VoigtPMm2","VoigtPExpMm2"]
-  allRefs = ["Old","ExpMOverSq","SumExp","VoigtPMm2","Bernstein","VoigtPExpMm2"]
-  bernRefs = ["3Bernstein","4Bernstein","5Bernstein"]
 
   outputDir = "output/"
-
-  nBiasMaxDict = {}
-  energyStr = None
-  sigInject = None
   
   allData = getBiasStudies()
   for i in allData:
-    nBiasMaxDict[i['meta']['catName']] = printBiasVMass(i,None,outputDir)
-    energyStr = i['meta']['energyStr']
-    sigInject = i['meta']['sigInjectNsigma']
-  assert(energyStr)
-  if sigInject == None:
-    sigInject = 0.
-  outPklFile = open("BiasDataVRefFunc_{0}_{1:.0f}Sig.pkl".format(energyStr,sigInject),"w")
-  cPickle.dump(nBiasMaxDict,outPklFile)
-  outPklFile.close()
+    biasVMass(i,None,outputDir)
