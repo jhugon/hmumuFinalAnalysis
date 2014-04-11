@@ -30,7 +30,7 @@ root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.ERROR)
 PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 
 class ShapePlotter:
-  def __init__(self,filename,outDir,fitDir,titleMap,signalInject=20.,binWidthOverride=0):
+  def __init__(self,filename,outDir,fitDir,titleMap,signalInject=20.,binWidthOverride=0,energyStr=None):
     self.signalInject=signalInject
     self.rmpList = []
     self.titleMap = titleMap
@@ -39,16 +39,16 @@ class ShapePlotter:
     self.fitFileName = fitDir+"/"+os.path.split(self.textFileName)[1]+".root"
     self.processNameMap, self.params, self.normErrMap = getattr(self,"readCard")(self.textFileName)
 
-    self.lumi = -1
-    self.lumiStr = ""
     self.energyStr = ""
-    tmpMatch = re.search(r"([\w]*)_(.+)_([.0-9]+)\.root",filename)
-    if tmpMatch:
-      self.energyStr = tmpMatch.group(2)
-      self.lumi = float(lumiDict[self.energyStr])
-        
-      #self.lumi = float(tmpMatch.group(3))
-      self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(self.lumi)
+    if energyStr:
+      self.energyStr = energyStr
+    else:
+      tmpMatch = re.search(r"([\w]*)_(.+)_([.0-9]+)\.root",filename)
+      if tmpMatch:
+        self.energyStr = tmpMatch.group(2)
+          
+    self.lumi = float(lumiDict[self.energyStr])
+    self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(self.lumi)
       
     self.data = {}
     self.f = root.TFile(filename)
@@ -56,6 +56,8 @@ class ShapePlotter:
       if channelKey.GetClassName() != "RooWorkspace":
         continue
       channelNameOrig = channelKey.GetName()
+      if not energyStr in channelNameOrig:
+        continue
       channelName = re.sub("[\d]+TeV","",channelNameOrig)
       channelTitle = channelName
       if titleMap.has_key(channelName):
@@ -96,6 +98,7 @@ class ShapePlotter:
       mMuMu.SetTitle("M(#mu#mu) [GeV/c^{2}]")
 
       saveName = outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName
+      saveName = re.sub(r"_[0-9P]+TeV_","_"+self.energyStr+"_",saveName)
       saveName = re.sub(r"([\d]+)\.[\d]+",r"\1",saveName)
 
       # Get Fit Result
@@ -130,13 +133,11 @@ class ShapePlotter:
                             legEntrySignal=legEntrySignal,
                             caption1="Analysis A"
                             )
-      #rmp.draw(saveName)
+      rmp.draw(saveName)
       rmp.drawWithParams(saveName+"_params",["mixParam","bwWidth","bwmZ","expParam"])
 
       #Pull Distribution Time
-      saveNameSplit = os.path.split(saveName)
-      saveNamePulls = saveNameSplit[0]+"/"+"pulls_"+saveNameSplit[1]
-      rmp.drawPulls(saveNamePulls)
+      rmp.drawPulls(saveName+"_pulls")
 
       self.rmpList.append(rmp)
 
@@ -193,33 +194,34 @@ if __name__ == "__main__":
   rebin=1
 
   shapePlotterList = []
-  for fn in glob.glob(dataDir+"*.root"):
-    if re.search("P[\d.]+TeV",fn):
-        continue
+  for energyStr in ["7TeV","8TeV"]:
+    for fn in glob.glob(dataDir+"*.root"):
+      #if re.search("P[\d.]+TeV",fn):
+      #    continue
 
-    if ("125" not in fn):
-    #if ("148" not in fn):
-    #if ("145" not in fn):
-    #if ("147" not in fn):
-        continue
+      if ("125" not in fn):
+      #if ("148" not in fn):
+      #if ("145" not in fn):
+      #if ("147" not in fn):
+          continue
 
-    skip = False
-    #if ("Jets01FailPtG10BB" in fn):
-    #  skip = False
-    #if ("Jets01PassPtG10BB" in fn):
-    #  skip = False
-    #if ("Jets01PassPtG10BO" in fn):
-    #  skip = False
-    #if ("Jet2CutsVBFPass"in fn):
-    #  skip = False
-    #if ("Jet2CutsGFPass" in fn):
-    #  skip = False
-    if ("CombSplitAll" in fn):
       skip = False
+      #if ("Jets01FailPtG10BB" in fn):
+      #  skip = False
+      #if ("Jets01PassPtG10BB" in fn):
+      #  skip = False
+      #if ("Jets01PassPtG10BO" in fn):
+      #  skip = False
+      #if ("Jet2CutsVBFPass"in fn):
+      #  skip = False
+      #if ("Jet2CutsGFPass" in fn):
+      #  skip = False
+      if ("CombSplitAll" in fn):
+        skip = False
 
-    if (skip):
-      continue
-    
-    print fn
-    s = ShapePlotter(fn,outDir,fitDir,TITLEMAP,signalInject=args.signalInject,binWidthOverride=args.binWidthOverride)
-    shapePlotterList.append(s)
+      if (skip):
+        continue
+      
+      print fn
+      s = ShapePlotter(fn,outDir,fitDir,TITLEMAP,signalInject=args.signalInject,binWidthOverride=args.binWidthOverride,energyStr=energyStr)
+      shapePlotterList.append(s)

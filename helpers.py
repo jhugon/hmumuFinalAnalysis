@@ -2888,6 +2888,7 @@ class RooModelPlotter:
                                       root.RooArgList(xVar),bkgSubHist)    
 
     # add the signal PDF if it is there
+    self.signalPdf = signalPdf
     if signalPDFName != None and signalPdf == None:
         pdfList = pdf.pdfList()
         for i in range(pdfList.getSize()):
@@ -2901,14 +2902,6 @@ class RooModelPlotter:
                 signalPdf = srvr
                 break
         self.signalPdf = signalPdf
-    if signalPdf != None:
-        sigPdfToDraw, componentToDraw = self.getProperSigPdfAndComponent(
-                            xVar,data,signalPdf,self.nSignal
-                            )
-
-        sigPdfToDraw.plotOn(frame,      lineDrawOptArg,sigLineColorArg,lineWidthArg,componentToDraw),
-        sigPdfToDraw.plotOn(frameBkgSub,lineDrawOptArg,sigLineColorArg,lineWidthArg,componentToDraw)
-      
         
     # Legend
     self.phonyFitLegHist = root.TH1F("phonyFit"+nowStr,"",1,0,1)
@@ -2949,9 +2942,9 @@ class RooModelPlotter:
     self.legBkgSub.AddEntry(self.bkgSubHist,"Data - Background Model","lf")
 
     if signalPdf != None:
-      if signalLegEntry != None:
-        self.leg.AddEntry(self.phonySigLegHist,signalLegEntry,"l")
-        self.legBkgSub.AddEntry(self.phonySigLegHist,signalLegEntry,"l")
+      if legEntrySignal != None:
+        self.leg.AddEntry(self.phonySigLegHist,legEntrySignal,"l")
+        self.legBkgSub.AddEntry(self.phonySigLegHist,legEntrySignal,"l")
       else:
         self.leg.AddEntry(self.phonySigLegHist,"Signal","l")
         self.legBkgSub.AddEntry(self.phonySigLegHist,"Signal","l")
@@ -2990,6 +2983,9 @@ class RooModelPlotter:
     self.frame.Draw()
     self.addPDFNormError(pad1)
     self.leg.Draw()
+    if self.signalPdf:
+      self.signalGraphManual = self.drawSignalPdfManually(self.signalPdf,self.nSignal)
+    pad1.RedrawAxis()
 
     # Pulls Pad
     pad2.cd();
@@ -3238,6 +3234,10 @@ class RooModelPlotter:
 
 
   def getProperSigPdfAndComponent(self,var,data,pdf,n):
+    var.Print()
+    data.Print()
+    pdf.Print()
+    print n
     nData = data.sumEntries()
     nDummy = nData-n
     nowStr = self.nowStr
@@ -3360,6 +3360,25 @@ class RooModelPlotter:
         errDown = sqrt(errDown2)
       bakErrCurve.SetPoint(i,xDown,y+errDown)
       bakErrCurve.SetPoint(iUp,xUp,y+errUp)
+
+  def drawSignalPdfManually(self,sigPdf,nSignal):
+    binning = self.xVar.getBinning()
+    binWidth = binning.averageBinWidth()
+    xMax = binning.highBound()
+    xMin = binning.lowBound()
+    nPoints = 1000
+    pointWidth = (xMax-xMin)/(nPoints-1)
+    observables = root.RooArgSet(self.xVar)
+    result = root.TGraph()
+    result.SetLineColor(root.kRed)
+    for iPoint in range(nPoints):
+      rangeName = "manualSignalRange{0}".format(iPoint)
+      pointCenter = xMin + iPoint*pointWidth
+      self.xVar.setRange(rangeName,pointCenter-binWidth*0.5,pointCenter+binWidth*0.5)
+      pdfVal = sigPdf.createIntegral(observables,observables,rangeName).getVal()
+      result.SetPoint(iPoint,pointCenter,pdfVal*nSignal)
+    result.Draw("L")
+    return result
 
 def treeCut(category,cutString,eventWeights=True,muonRequirements=True,KDString="KD"):
   global MENormDict
