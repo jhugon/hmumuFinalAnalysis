@@ -2851,7 +2851,6 @@ class RooModelPlotter:
       dataHist = self.data
     else:
       dataHist = self.data.binnedClone()
-    self.chi2 = rooCalcChi2(self.pdf,dataHist)
 
     # Pulls Frame
     pullsHist = self.makePullPlotHist(frame,tmpDataHistName,tmpBakPDFName)
@@ -3276,6 +3275,7 @@ class RooModelPlotter:
     curve.GetPoint(curve.GetN()-1,x,y) # Get Curve End X
     xCurveMax = float(x)
 
+    sumOfPulls2 = 0.
     iBin = 1
     for i in range(1,self.binning.numBins()+1):
       hist.GetPoint(i-1,x,y)
@@ -3298,11 +3298,19 @@ class RooModelPlotter:
         #print(" Warning: x outside of curve range: [ %10.2f %10.2f ]" % (xCurveMin,xCurveMax))
       #print(" pull: %10.2f" % (pull))
       pullsHist.SetBinContent(iBin,pull)
+      sumOfPulls2 += pull**2
       iBin += 1
 
     self.myCurveHist = myCurveHist
     self.myDataHist = myDataHist
-      
+
+    pdfParams = rooArgSet2List(self.pdf.getParameters(self.data))
+    ndf = self.xVar.getBinning().numBins()
+    for p in pdfParams:
+      if not p.isConstant():
+        ndf -= 1
+    self.chi2 = (sumOfPulls2,ndf,scipy.stats.chi2.sf(sumOfPulls2,ndf))
+
     return pullsHist
 
   def addPDFNormError(self,pad):
