@@ -2336,6 +2336,8 @@ class RooCompareModels:
     self.title = title
     self.energyStr = energyStr
     self.lumi = lumi
+    nowStr = str(int(time.time()*1e6))
+    self.nowStr = nowStr
 
     self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(lumi)
 
@@ -2357,7 +2359,7 @@ class RooCompareModels:
     self.canvas = canvas
 
     self.colors = [root.kBlue,root.kRed,root.kGreen,root.kCyan,root.kMagenta,root.kOrange-3,root.kViolet-6]
-    
+
   def draw(self,saveName):
     canvas = self.canvas
     data = self.data
@@ -2374,7 +2376,9 @@ class RooCompareModels:
     frame       = xVar.frame(root.RooFit.Title(""))
     data.plotOn(frame,      graphDrawOptArg,binningArg)
 
-    leg = root.TLegend(0.55,0.60,0.9,0.9)
+    
+    legPos = [0.50,0.55,0.9,0.9]
+    leg = root.TLegend(*legPos)
     leg.SetFillColor(0)
     leg.SetLineColor(0)
 
@@ -2397,19 +2401,123 @@ class RooCompareModels:
       fakeGraphs.append(fakeG)
 
     frame.SetTitle("")
-    frame.Draw()
+    self.frame = frame
+    self.leg = leg
 
-    unitMatch =  re.search(r"GeV([\s]*/[\s]*c\^\{2\}|[\s]*/[\s]*c)?",xtitle)
+    #unitMatch =  re.search(r"GeV([\s]*/[\s]*c\^\{2\}|[\s]*/[\s]*c)?",xtitle)
+    #units = ""
+    #if unitMatch:
+    #  units = " "+unitMatch.group(0)
+    #frame.SetXTitle(xtitle)
+    #frame.SetYTitle("Events/"+str(self.binWidth)+units)
+    #leg.Draw()
+    #energyLumiStr = "#sqrt{{s}} = {0}, L = {1:.1f} fb^{{-1}}".format(self.energyStr.replace("TeV"," TeV"),self.lumi)
+    #drawStandardCaptions(canvas,self.title,energyLumiStr,preliminaryString="CMS Internal")
+
+
+
+
+    frame.SetTitle("")
+    frame.GetXaxis().SetLabelSize(0)
+    frame.GetYaxis().SetLabelSize(0.050)
+    frame.GetYaxis().SetTitleSize(0.055*1.2)
+    frame.GetYaxis().SetTitleOffset(
+        0.85*frame.GetYaxis().GetTitleOffset()
+        )
+
+    unitMatch =  re.search(r"GeV([\s]*/[\s]*c\^\{2\}|[\s]*/[\s]*c)?",self.xVar.GetTitle())
     units = ""
     if unitMatch:
       units = " "+unitMatch.group(0)
-    frame.SetXTitle(xtitle)
-    frame.SetYTitle("Events/"+str(self.binWidth)+units)
-    leg.Draw()
-    energyLumiStr = "#sqrt{{s}} = {0}, L = {1:.1f} fb^{{-1}}".format(self.energyStr.replace("TeV"," TeV"),self.lumi)
-    drawStandardCaptions(canvas,self.title,energyLumiStr,preliminaryString="CMS Internal")
+    binWidth = self.xVar.getBinning().averageBinWidth()
+    frame.SetYTitle("Events/"+str(binWidth)+units)
+
+
+
+    pullAxisHist = root.TH2F("pullAxisHist","",1,110,160,1,-3,3)
+    setHistTitles(pullAxisHist,xtitle,"#frac{Data-Fit}{#sqrt{Fit}}")
+    pullAxisHist.GetXaxis().CenterTitle(1)
+    pullAxisHist.GetXaxis().SetTitleSize(0.1334)
+    pullAxisHist.GetXaxis().SetLabelSize(0.1213)
+    pullAxisHist.GetXaxis().SetTitleOffset(
+      pullAxisHist.GetXaxis().GetTitleOffset()*0.85
+        )
+
+    pullAxisHist.GetYaxis().CenterTitle(1)
+    pullAxisHist.GetYaxis().SetTitleSize(0.097*1.2)
+    pullAxisHist.GetYaxis().SetLabelSize(0.097)
+    pullAxisHist.GetYaxis().SetTitleOffset(0.70*0.9)
+    zeroGraph = root.TGraph()
+    zeroGraph.SetLineStyle(3)
+    zeroGraph.SetPoint(0,110,0)
+    zeroGraph.SetPoint(1,160,0)
+    pullHists = []
+    for i,model in enumerate(self.pdfList):
+      hist = self.getPullHistFromModel(model)
+      color = self.colors[i]
+      hist.SetLineColor(color)
+      pullHists.append(hist)
+
+
+
+    motherPad = self.canvas
+    self.tlatex = root.TLatex()
+    self.tlatex.SetNDC()
+    self.tlatex.SetTextFont(root.gStyle.GetLabelFont())
+    self.tlatex.SetTextSize(root.gStyle.GetLabelSize())
+    self.tlatex.SetTextAlign(22)
+    pad1 = root.TPad("pad1","",0.02,0.30,0.98,0.98,0)
+    pad2 = root.TPad("pad2","",0.02,0.01,0.98,0.29,0)
+    self.pad1 = pad1
+    self.pad2 = pad2
+  
+    pad1.SetBottomMargin(0.005);
+    pad2.SetTopMargin   (0.005);
+    pad2.SetBottomMargin(0.33);
+  
+    pad1.Draw() # Projections pad
+    pad2.Draw() # Residuals   pad
+
+    pad1Width = pad1.XtoPixel(pad1.GetX2())
+    pad1Height = pad1.YtoPixel(pad1.GetY1())
+    pad2Height = pad2.YtoPixel(pad2.GetY1())
+    #pad1ToPad2FontScalingFactor = float(pad1Width)/pad2Height
+    pad1ToPad2FontScalingFactor = float(pad1Height)/pad2Height
+    motherPadToPad1FontScalingFactor = float(motherPad.YtoPixel(motherPad.GetY1()))/pad1.YtoPixel(pad1.GetY1())
+    motherPadToPad2FontScalingFactor = float(motherPad.YtoPixel(motherPad.GetY1()))/pad2.YtoPixel(pad2.GetY1())
+  
+    # Main Pad
+    pad1.cd();
+    self.frame.Draw()
+    self.leg.Draw()
+
+    # Pulls Pad
+    pad2.cd()
+    pullAxisHist.Draw()
+    zeroGraph.Draw("L")
+    for hist in reversed(pullHists):
+      hist.Draw("same")
+  
+    # Text
+    self.pad1.cd()
+    self.tlatex.SetTextSize(0.04*motherPadToPad1FontScalingFactor)
+    self.tlatex.SetTextAlign(12)
+    self.tlatex.DrawLatex(root.gStyle.GetPadLeftMargin(),0.96,"CMS Internal")
+    self.tlatex.SetTextAlign(32)
+    self.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
+
+    self.tlatex.SetTextAlign(32)
+    self.tlatex.DrawLatex(legPos[0]-0.01,0.820,self.lumiStr)
+            
+    energyStr = self.energyStr
+    if re.search(r"[\d]TeV",energyStr):
+      energyStr = energyStr.replace("TeV"," TeV")
+    if (self.energyStr != ""):
+      self.tlatex.DrawLatex(legPos[0]-0.01,0.875,"#sqrt{s} = "+self.energyStr)
 
     saveAs(canvas,saveName)
+
+
 
   def drawCurveHists(self,saveName):
     canvas = self.canvas
