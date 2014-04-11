@@ -118,7 +118,7 @@ class ShapePlotter:
       # Signal Stuff
       nSignal = 0.
       for key in self.processNameMap[channelNameOrig]:
-        if key != "bak":
+        if not "bak" in key:
           nSignal += self.processNameMap[channelNameOrig][key]
       nSignal *= signalInject
       legEntrySignal = "SM Higgs#times{0:.0f}".format(signalInject)

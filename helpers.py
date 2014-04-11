@@ -3233,22 +3233,6 @@ class RooModelPlotter:
     saveAs(self.canvas,filenameNoExt)
 
 
-  def getProperSigPdfAndComponent(self,var,data,pdf,n):
-    var.Print()
-    data.Print()
-    pdf.Print()
-    print n
-    nData = data.sumEntries()
-    nDummy = nData-n
-    nowStr = self.nowStr
-    self.dummyUnifPdf = root.RooUniform("dummyUnifPdf"+nowStr,"",root.RooArgSet(var))
-    self.nDumbUnif = root.RooRealVar("dummyUnifN"+nowStr,"dummyUnifN",nDummy)
-    self.nDumbSig = root.RooRealVar("dummySigN"+nowStr,"dummySigN",n)
-    self.dummyUnifPdfE = root.RooExtendPdf("dummyUnifPdfE"+nowStr,"",self.dummyUnifPdf,self.nDumbUnif)
-    self.dummySigPdfE = root.RooExtendPdf("dummySigPdfE"+nowStr,"",pdf,self.nDumbSig)
-    self.dummyPdf = root.RooAddPdf("dummyPdf"+nowStr,"dummyPdf",root.RooArgList(self.dummySigPdfE,self.dummyUnifPdfE))
-    return self.dummyPdf, root.RooFit.Components(pdf.GetName())
-
   def makePullPlotHist(self,frame,histPlotName,pdfPlotName):
     """
     Makes pulls that are (data-fit)/sqrt(fit) where fit is the average value of the
