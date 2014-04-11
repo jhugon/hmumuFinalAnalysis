@@ -186,6 +186,49 @@ class PlotBgkFits:
     self.rcm.printGOFTable(logFile)
     self.rcm.printDiffTable(0,logFile)
     logFile.close()
+    self.gofData = self.rcm.getGOFData()
+
+  def getGOFData(self):
+    return self.gofData
+
+def makeGOFDataTable(gofData,pdfList,energyStr):
+  categories = sortCatNames(gofData.keys())
+  result = "%% GOF Table for "+energyStr+"\n"
+  result += r"\begin{tabular}{|l|"+"c|"*len(pdfList)+r"} \hline"+"\n"
+  line = "Category"
+  for pdfName in pdfList:
+    pdfTitle = PDFTITLEMAP[pdfName]
+    if "#" in pdfTitle or "_" in pdfTitle or "^" in pdfTitle:
+      pdfTitle = pdfTitle.replace("#","\\")
+      pdfTitle = "$\mathrm{"+pdfTitle+"}$"
+    line += " & "+pdfTitle
+  result += line + r" \\ \hline \hline"+"\n"
+  for cat in categories:
+    line = "{0:18}".format(TITLEMAP[cat])
+    for pdfName in pdfList:
+      #line += " & {0:6.1f}/{1}, $\mathrm{{p_{{\chi^2}}}}={2:.3g}$".format(*gofData[cat][pdfName])
+      line += " & {0:6.1f}/{1}".format(*gofData[cat][pdfName])
+    result += line + r" \\ \hline"+"\n"
+  result += r"\end{tabular}"+"\n\n"
+
+  result += "%% GOF Prob Table for "+energyStr+"\n"
+  result += r"\begin{tabular}{|l|"+"c|"*len(pdfList)+r"} \hline"+"\n"
+  line = "Category"
+  for pdfName in pdfList:
+    pdfTitle = PDFTITLEMAP[pdfName]
+    if "#" in pdfTitle or "_" in pdfTitle or "^" in pdfTitle:
+      pdfTitle = pdfTitle.replace("#","\\")
+      pdfTitle = "$\mathrm{"+pdfTitle+"}$"
+    line += " & "+pdfTitle
+  result += line + r" \\ \hline \hline"+"\n"
+  for cat in categories:
+    line = "{0:18}".format(TITLEMAP[cat])
+    for pdfName in pdfList:
+      line += " & {2:7.3g}".format(*gofData[cat][pdfName])
+    result += line + r" \\ \hline"+"\n"
+  result += r"\end{tabular}"+"\n\n"
+
+  return result
         
 if __name__ == "__main__":
   canvas = root.TCanvas()
@@ -229,6 +272,9 @@ if __name__ == "__main__":
 
   bkgFitList = []
   for energy,dataFns in zip(["7TeV","8TeV"],[dataFns7TeV,dataFns8TeV]):
+    gofDataCats = {}
     for category in categories:
       bkgFits = PlotBgkFits(category,energy,dataFns,outDir+"bkgFits",pdfsToTry)
       bkgFitList.append(bkgFits)
+      gofDataCats[category[0]] = bkgFits.getGOFData()
+    print makeGOFDataTable(gofDataCats,pdfsToTry,energy)

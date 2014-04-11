@@ -2457,6 +2457,7 @@ class RooCompareModels:
       color = self.colors[i]
       hist.SetLineColor(color)
       pullHists.append(hist)
+    self.pullHists = pullHists
 
 
 
@@ -2718,6 +2719,23 @@ class RooCompareModels:
       iBin += 1
 
     return myPullHist
+
+  def getGOFData(self):
+    result = {}
+    dataHist = self.data.binnedClone()
+    for i,model in enumerate(self.pdfList):
+      pullHist = self.pullHists[i]
+      chi2FromPulls = 0.
+      for iBin in range(1,pullHist.GetNbinsX()+1):
+        chi2FromPulls += (pullHist.GetBinContent(iBin))**2
+
+      pdfParams = rooArgSet2List(self.pdfList[i].getParameters(dataHist))
+      ndf = pullHist.GetNbinsX()
+      for p in pdfParams:
+        if not p.isConstant():
+          ndf -= 1
+      result[model.GetName()] = (chi2FromPulls,ndf,scipy.stats.chi2.sf(chi2FromPulls,ndf))
+    return result
 
   def printGOFTable(self,log=sys.stdout):
     log.write("% GOF Comparison: "+self.title+" "+self.energyStr+"\n")
