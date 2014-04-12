@@ -52,6 +52,8 @@ H->mumu Datacards
 :PAS:  /data/uftrig01b/digiovan/baselinePP/m110to160_pixelLumi/hmumuFinalAnalysis/ 
 :PAS-Era Fine Mass Scan:   /afs/cern.ch/user/j/jhugon/public/hmumu/datacards/fineMassScanMmumu110160PixlLumi/ 
 
+:2014/04/11: Datacards including bias due to background parameterization and using MSSM function as nominal background function /raid/raid7/jhugon/higgsDataCards/20140411/ & /afs/cern.ch/work/j/jhugon/public/datacards/20140411/
+
 H->mumu All Categories Bias Data
 --------------------------------
 
