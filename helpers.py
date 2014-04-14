@@ -3609,68 +3609,85 @@ def copyTreeBranchToNewNameTree(tree,oldBranchName,newBranchName):
   newBranch.SetAddress(0)
   return result
   
-def rooDebugFR(fr,printCorrelation=True):
+def rooDebugFR(fr,printCorrelation=True,resultDict=False):
   result = ""
-  result += "{0:20}: {1:10.3g}\n".format("Status",fr.status())
-  result += "{0:20}: {1:10.3g}\n".format("EDM",fr.edm())
-  result += "{0:20}: {1:10.3g}\n".format("NLL",fr.minNll())
-  result += "{0:20}: {1:10.3g}\n".format("Cov. Matrix Qual",fr.edm())
-  result += "{0:20}: {1:10}\n".format("N Invalid NLL",fr.numInvalidNLL())
-  result += "Status History:\n"
-  for i in range(fr.numStatusHistory()):
-    result += "  {1} ({0})\n".format(fr.statusCodeHistory(i),fr.statusLabelHistory(i))
+  if resultDict:
+    result = {}
+    fpf_s = fr.floatParsFinal()
+    for i in range(fpf_s.getSize()):
+      nuis_s = fpf_s.at(i)
+      name   = nuis_s.GetName();
+      name = re.sub(r".*TeV_","",name)
+      result[name] = [nuis_s.getVal(),nuis_s.getError(),nuis_s.getErrorLo(),nuis_s.getErrorHi(),nuis_s.getMin(),nuis_s.getMax()]
 
-  rowString = ""
-  rowString += "{0:30}".format("Variable Name")
-  rowString += "{0:10} +/- {1:<10}  ".format("Fit Value","HESSE Err")
-  rowString += " {0:<10} {1:<10}  ".format("High Err","Low Err")
-
-  rowString += "{0:20}".format("[{0}]".format("Variable Limits"))
-  result += rowString + "\n"
-
-  fpf_s = fr.floatParsFinal()
-  for i in range(fpf_s.getSize()):
-    nuis_s = fpf_s.at(i)
-    name   = nuis_s.GetName();
-    # .getVal() .getError() .getMin() .getMax()
-
-    rowString = ""
-    rowString += "{0:30}".format(re.sub(r".*TeV_","",name))
-    rowString += "{0:10.3g} +/- {1:<10.3g}  ".format(nuis_s.getVal(),nuis_s.getError())
-    rowString += "+{0:<10.3g} {1:<10.3g}  ".format(nuis_s.getErrorHi(),nuis_s.getErrorLo())
-
-    rowString += "{0:20}".format("[{0:.1g},{1:.1g}]".format(nuis_s.getMin(),nuis_s.getMax()))
-    result += rowString + "\n"
-  constPars = fr.constPars()
-  for i in range(constPars.getSize()):
-    nuis_s = constPars.at(i)
-    name   = nuis_s.GetName();
-    # .getVal() .getError() .getMin() .getMax()
+    constPars = fr.constPars()
+    for i in range(constPars.getSize()):
+      nuis_s = constPars.at(i)
+      name   = nuis_s.GetName();
+      name   = nuis_s.GetName();
+      name = re.sub(r".*TeV_","",name)
+      result[name] = nuis_s.getVal()
+  else:
+    result += "{0:20}: {1:10.3g}\n".format("Status",fr.status())
+    result += "{0:20}: {1:10.3g}\n".format("EDM",fr.edm())
+    result += "{0:20}: {1:10.3g}\n".format("NLL",fr.minNll())
+    result += "{0:20}: {1:10.3g}\n".format("Cov. Matrix Qual",fr.edm())
+    result += "{0:20}: {1:10}\n".format("N Invalid NLL",fr.numInvalidNLL())
+    result += "Status History:\n"
+    for i in range(fr.numStatusHistory()):
+      result += "  {1} ({0})\n".format(fr.statusCodeHistory(i),fr.statusLabelHistory(i))
 
     rowString = ""
-    rowString += "{0:30}".format(re.sub(r".*TeV_","",name))
-    rowString += "{0:10.3g}  FIXED  ".format(nuis_s.getVal())
-    result += rowString + "\n"
-    #print name, nuis_s.getVal()
-  if printCorrelation:
-    result += "Correlations:\n"
+    rowString += "{0:30}".format("Variable Name")
+    rowString += "{0:10} +/- {1:<10}  ".format("Fit Value","HESSE Err")
+    rowString += " {0:<10} {1:<10}  ".format("High Err","Low Err")
 
-    rowString = " "*12
-    for j in range(fpf_s.getSize()): # Columns
-      name = fpf_s.at(j).GetName()
-      if '_' in name:
-        name = name[-[i for i in reversed(name)].index("_"):]
-      rowString += "{0:10}  ".format(name)
+    rowString += "{0:20}".format("[{0}]".format("Variable Limits"))
     result += rowString + "\n"
-    for i in range(fpf_s.getSize()): # Rows
-      name = fpf_s.at(i).GetName()
-      if '_' in name:
-        name = name[-[k for k in reversed(name)].index("_"):]
-      rowString = "{0:10}  ".format(name)
-      for j in range(fpf_s.getSize()): # Columns
-        corr = fr.correlation(fpf_s.at(i),fpf_s.at(j))
-        rowString += "{0:10.3g}  ".format(corr)
+
+    fpf_s = fr.floatParsFinal()
+    for i in range(fpf_s.getSize()):
+      nuis_s = fpf_s.at(i)
+      name   = nuis_s.GetName();
+      # .getVal() .getError() .getMin() .getMax()
+
+      rowString = ""
+      rowString += "{0:30}".format(re.sub(r".*TeV_","",name))
+      rowString += "{0:10.3g} +/- {1:<10.3g}  ".format(nuis_s.getVal(),nuis_s.getError())
+      rowString += "+{0:<10.3g} {1:<10.3g}  ".format(nuis_s.getErrorHi(),nuis_s.getErrorLo())
+
+      rowString += "{0:20}".format("[{0:.1g},{1:.1g}]".format(nuis_s.getMin(),nuis_s.getMax()))
       result += rowString + "\n"
+    constPars = fr.constPars()
+    for i in range(constPars.getSize()):
+      nuis_s = constPars.at(i)
+      name   = nuis_s.GetName();
+      # .getVal() .getError() .getMin() .getMax()
+
+      rowString = ""
+      rowString += "{0:30}".format(re.sub(r".*TeV_","",name))
+      rowString += "{0:10.3g}  FIXED  ".format(nuis_s.getVal())
+      result += rowString + "\n"
+      #print name, nuis_s.getVal()
+    if printCorrelation:
+      result += "Correlations:\n"
+
+      rowString = " "*12
+      for j in range(fpf_s.getSize()): # Columns
+        name = fpf_s.at(j).GetName()
+        if '_' in name:
+          name = name[-[i for i in reversed(name)].index("_"):]
+        rowString += "{0:10}  ".format(name)
+      result += rowString + "\n"
+      for i in range(fpf_s.getSize()): # Rows
+        name = fpf_s.at(i).GetName()
+        if '_' in name:
+          name = name[-[k for k in reversed(name)].index("_"):]
+        rowString = "{0:10}  ".format(name)
+        for j in range(fpf_s.getSize()): # Columns
+          corr = fr.correlation(fpf_s.at(i),fpf_s.at(j))
+          rowString += "{0:10.3g}  ".format(corr)
+        result += rowString + "\n"
   return result 
 
 def rooCalcChi2(pdf,dataHist):

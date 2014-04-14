@@ -84,6 +84,7 @@ class PlotBgkFits:
     self.pdfList = []
     self.frList = []
     self.wList = []
+    self.frDebugDict = {}
 
     self.outStr = "################################################################"
     self.outStr += "\n\n"
@@ -111,6 +112,7 @@ class PlotBgkFits:
                          root.RooFit.Save(True),
                          PRINTLEVEL
                        )
+      self.frDebugDict[pdfName] = rooDebugFR(fr,resultDict=True)
 
       #rmp = RooModelPlotter(dimuonMass,pdf,realData,fr,
       #                  TITLEMAP[catName],energyStr,lumiDict[energyStr],
@@ -190,6 +192,8 @@ class PlotBgkFits:
 
   def getGOFData(self):
     return self.gofData
+  def getFRData(self):
+    return self.frDebugDict
 
 def makeGOFDataTable(gofData,pdfList,energyStr):
   categories = sortCatNames(gofData.keys())
@@ -229,6 +233,38 @@ def makeGOFDataTable(gofData,pdfList,energyStr):
   result += r"\end{tabular}"+"\n\n"
 
   return result
+
+def makeFRDataTable(frData,pdfList,energyStr):
+  #result[name] = [nuis_s.getVal(),nuis_s.getError(),nuis_s.getErrorLo(),nuis_s.getErrorHi(),nuis_s.getMin(),nuis_s.getMax()]
+  #result[name] = const_par.getVal()
+  categories = sortCatNames(frData.keys())
+  result = ""
+  for cat in categories:
+    catTitle = TITLEMAP[cat]
+    for  pdfName in pdfList:
+      pdfTitle = PDFTITLEMAP[pdfName]
+      if "#" in pdfTitle or "_" in pdfTitle or "^" in pdfTitle:
+        pdfTitle = r"$\mathrm{\mathbf{"+pdfTitle.replace("#","\\")+"}}$"
+      result += "%% Fit Parameter Table for "+energyStr+" "+cat+" "+pdfName+"\n"
+      result += r"\begin{tabular}{|l|"+"c|"*4+r"} \hline"+"\n"
+      result += r"\multicolumn{5}{|c|}{\textbf{"+energyStr.replace("TeV"," TeV ")+catTitle+" "+pdfTitle+r"}} \\ \hline"+"\n"
+      result += r"%\multicolumn{5}{|c|}{\textbf{"+energyStr.replace("TeV"," TeV ")+catTitle+" "+pdfName+r"}} \\ \hline"+"\n"
+      line = r"& & Symmetric & Asymmetric & "
+      result += line + r" \\"+"\n"
+      line = r"Parameter & Best Fit & Error & Error & Limits"
+      result += line + r" \\ \hline \hline"+"\n"
+      varNames = frData[cat][pdfName].keys()
+      for varName in varNames:
+        line = "{0:18}".format(varName)
+        if type(frData[cat][pdfName][varName]) == list:
+          line += " & {0:10.3g} & {1:10.3g} & $^{{+{3:.3g}}}_{{{2:.3g}}}$ & [{4},{5}] ".format(*frData[cat][pdfName][varName])
+        else:
+          line += " & {0:10.3g} & const. & & ".format(frData[cat][pdfName][varName])
+        result += line + r" \\ \hline"+"\n"
+      result += r"\end{tabular}"+"\n\n"
+
+  return result
+        
         
 if __name__ == "__main__":
   canvas = root.TCanvas()
@@ -270,11 +306,19 @@ if __name__ == "__main__":
   dataFns7TeV = [dataDir+i+".root" for i in dataFns7TeV]
   dataFns8TeV = [dataDir+i+".root" for i in dataFns8TeV]
 
+  gofLog = open(outDir+"bkgGOF.tex",'w')
+  paramLog = open(outDir+"bkgParams.tex",'w')
+
   bkgFitList = []
   for energy,dataFns in zip(["7TeV","8TeV"],[dataFns7TeV,dataFns8TeV]):
     gofDataCats = {}
+    frDataCats = {}
     for category in categories:
       bkgFits = PlotBgkFits(category,energy,dataFns,outDir+"bkgFits",pdfsToTry)
       bkgFitList.append(bkgFits)
       gofDataCats[category[0]] = bkgFits.getGOFData()
-    print makeGOFDataTable(gofDataCats,pdfsToTry,energy)
+      frDataCats[category[0]] = bkgFits.getFRData()
+    gofLog.write(makeGOFDataTable(gofDataCats,pdfsToTry,energy))
+    paramLog.write(makeFRDataTable(frDataCats,pdfsToTry,energy))
+  gofLog.close()
+  paramLog.close()
