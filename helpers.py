@@ -2358,7 +2358,7 @@ class RooCompareModels:
       canvas = root.TCanvas("canvas"+nowStr)
     self.canvas = canvas
 
-    self.colors = [root.kBlue,root.kRed,root.kGreen,root.kCyan,root.kMagenta,root.kOrange-3,root.kViolet-6]
+    self.colors = [root.kBlue,root.kRed,root.kGreen,root.kCyan,root.kMagenta,root.kOrange-3,root.kViolet-6,root.kAzure+7,root.kSpring-7]
 
   def draw(self,saveName):
     canvas = self.canvas
