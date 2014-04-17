@@ -20,6 +20,8 @@ from xsec import *
 
 #######################################
 
+PRELIMINARYSTRING="CMS"
+
 #~48 Charactars Max
 
 titleMap = {

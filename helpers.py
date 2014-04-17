@@ -19,8 +19,8 @@ import time
 import datetime
 #import matplotlib.pyplot as mpl
 
-#PRELIMINARYSTRING="CMS Internal"
-PRELIMINARYSTRING="CMS Preliminary"
+PRELIMINARYSTRING="CMS Internal"
+#PRELIMINARYSTRING="CMS Preliminary"
 #PRELIMINARYSTRING="CMS"
 
 def getDataStage2Directory():

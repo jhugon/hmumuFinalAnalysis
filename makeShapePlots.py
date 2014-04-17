@@ -29,6 +29,8 @@ root.gStyle.SetOptStat(0)
 root.RooMsgService.instance().setGlobalKillBelow(root.RooFit.ERROR)
 PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 
+PRELIMINARYSTRING="CMS"
+
 class ShapePlotter:
   def __init__(self,filename,outDir,fitDir,titleMap,signalInject=20.,binWidthOverride=0,energyStr=None):
     self.signalInject=signalInject

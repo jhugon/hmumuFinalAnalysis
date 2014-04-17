@@ -38,6 +38,7 @@ if mplGood:
   from etc.evilMatPlotlibFunctions import *
 ##############################################
 
+PRELIMINARYSTRING="CMS"
 
 #######################################
 
