@@ -117,6 +117,24 @@ class PlotBgkFits:
       self.pdfTitles.append(pdfTitle)
       self.wList.append(w)
 
+    self.pdfGenList = []
+    for pdfName in pdfsToTry:
+      pdfOrder = None
+      pdfBaseName = pdfName
+      orderMatch = re.match(r"([\d]+)(.+)",pdfBaseName)
+      if orderMatch:
+        pdfBaseName = orderMatch.group(2)
+        pdfOrder = int(orderMatch.group(1))
+
+      w = root.RooWorkspace("wGen"+pdfBaseName)
+      wImport = getattr(w,"import")
+      pdfFunc = globals()["makePDFBak"+pdfBaseName]
+      tmpParamList,tmpNormTup,tmpDebug,tmpOrder = pdfFunc(pdfName+catName+energyStr,realData,dimuonMass,110,160,wImport,dimuonMassZ,realDataZ,order=pdfOrder)
+      pdf = w.pdf("bak")
+      pdf.SetName(pdfName+"Gen")
+      self.pdfGenList.append(pdf)
+      self.wList.append(w)
+
     binWidth = 1
     if "Jet2" in catName or "VBF" in catName:
         binWidth *= 2.5
@@ -142,14 +160,36 @@ class PlotBgkFits:
     xhigh = binning.highBound()
     dimuonMass.setBins(int((xhigh-xlow)/binWidth))
 
+    ## sigPdfList
+    self.nBakVar = root.RooRealVar("nBak","",nData/2.,nData*2.)
+    self.hmasses = [120,125,130,135,140,145,150]
+    nSigVarBounds = nData/4
+    nSigVar = root.RooRealVar("nSig","N_{S}",-nSigVarBounds,nSigVarBounds)
+    self.nSigVar = nSigVar
+    self.sigPdfList = []
+    self.wSigs = []
+    for hmass in self.hmasses:
+      wSig = root.RooWorkspace("signal"+catName+energyStr+str(hmass))
+      makePDFSigNew(catName+energyStr,"sig_ggH",dimuonMass,float(hmass),
+                              getattr(wSig,"import")
+                             )
+      sigPdf = wSig.pdf("ggH")
+      sigPdf.SetName("sigPDF_"+str(hmass)+"_"+catName+energyStr)
+      self.sigPdfList.append(sigPdf)
+      self.wSigs.append(wSig)
+
     ## Generate Data time
     pdfToGenFrom = self.pdfList[0]
     nEvents = realData.sumEntries()
     nEventsVar = root.RooFit.RooConst(nEvents)
     pdfEToGenFrom = root.RooExtendPdf(pdfToGenFrom.GetName()+"Extended","",pdfToGenFrom,nEventsVar)
+    toyDataList = []
     for iToy in range(nToys):
       toyData = pdfEToGenFrom.generate(root.RooArgSet(dimuonMass),root.RooFit.Extended())
+      toyDataList.append(toyData)
+    for iToy,toyData in enumerate(toyDataList):
       self.toyFitCompare(toyData,iToy)
+      biases = self.biasStudy(toyData,0,iToy)
     
   def toyFitCompare(self,toyData,iToy):
     dimuonMass = self.dimuonMass
@@ -170,11 +210,76 @@ class PlotBgkFits:
                               )
     rcm.draw(self.outPrefix+"_Comb_"+self.energyStr+"_"+self.catName+"_Toy{0}".format(iToy))
 
+  def biasStudy(self,data,iNominalPdf,iBiasStudy):
+    print "Performing Bias Study"
+    nData = int(data.sumEntries())
+    nominalPdf = self.pdfList[iNominalPdf]
+    dimuonMass = self.dimuonMass
+    nSigVar = self.nSigVar
+    nBakVar = self.nBakVar
+    frTrueList = []
+    biasData = {}
+    for iPdf, pdf in enumerate(self.pdfGenList):
+      fr = pdf.fitTo(data, 
+                         #root.RooFit.Hesse(True), 
+                         #root.RooFit.Minos(True), # Doesn't Help, just makes it run longer
+                         root.RooFit.Save(True),
+                         PRINTLEVEL
+                       )
+
+      frTrueList.append(fr)
+    for iPdf, pdf in enumerate(self.pdfList):
+      if iPdf != iNominalPdf:
+        biasData[pdf.GetName()] = {}
+        for hmass in self.hmasses:
+          biasData[pdf.GetName()][hmass] = []
+    print "biasData",biasData
+    debugStr = ""
+    for iToy in range(10):
+      for iRef, refPdf in enumerate(self.pdfList):
+        if iRef == iNominalPdf:
+          continue
+        refGen = self.pdfGenList[iRef]
+        setPDFfromFR(frTrueList[iRef],refGen,data)
+        toyData = refGen.generate(root.RooArgSet(dimuonMass),nData)
+        for hmass,sigPdf in zip(self.hmasses,self.sigPdfList):
+          nominalSBPdf = root.RooAddPdf("nominalSB"+nominalPdf.GetName(),"",
+                            root.RooArgList(nominalPdf,sigPdf),
+                            root.RooArgList(nBakVar,nSigVar)
+                        )
+          refSBPdf = root.RooAddPdf("refSB"+nominalPdf.GetName(),"",
+                            root.RooArgList(refPdf,sigPdf),
+                            root.RooArgList(nBakVar,nSigVar)
+                        )
+          nomFR = nominalSBPdf.fitTo(toyData,
+                         root.RooFit.Save(True),
+                         PRINTLEVEL
+                        )
+          refFR = refSBPdf.fitTo(toyData,
+                         root.RooFit.Save(True),
+                         PRINTLEVEL
+                        )
+          nSigRef = rooArgSet2Dict(refFR.floatParsFinal())["nSig"].getVal()
+          nSigNom = rooArgSet2Dict(nomFR.floatParsFinal())["nSig"].getVal()
+          nBias = nSigNom - nSigRef
+          biasData[refPdf.GetName()].append(nBias)
+          #debugStr += rooDebugFR(nomFR)
+    #print biasData
+    #print debugStr
+    result = []
+    for iPdf, pdf in enumerate(self.pdfList):
+      if iPdf == iNominalPdf:
+        result.append(float('NaN'))
+      else:
+        tmpBias = median(biasData[pdf.GetName()][hmass])
+    return result
+    
+
 if __name__ == "__main__":
   canvas = root.TCanvas()
   outDir = "output/"
 
-  nToys = 10
+  nToys = 1
 
   pdfsToTry = ["MSSM","Bernstein","ExpMOverSq","VoigtPMm2","VoigtPExpMm2","Old","SumExp"]
   #pdfsToTry = ["MSSM","1Bernstein","2Bernstein","3Bernstein","4Bernstein","5Bernstein","1SumExp","2SumExp","3SumExp"]
@@ -214,7 +319,8 @@ if __name__ == "__main__":
   dataFns8TeV = [dataDir+i+".root" for i in dataFns8TeV]
 
   bkgFitList = []
-  for energy,dataFns in zip(["7TeV","8TeV"],[dataFns7TeV,dataFns8TeV]):
+  #for energy,dataFns in zip(["7TeV","8TeV"],[dataFns7TeV,dataFns8TeV]):
+  for energy,dataFns in zip(["7TeV"],[dataFns7TeV]):
     for category in categories:
       bkgFits = PlotBgkFits(category,energy,dataFns,outDir+"bkgToyFits",pdfsToTry,nToys)
       bkgFitList.append(bkgFits)
