@@ -9,6 +9,7 @@ parser.add_option("--signalInject", help="Sets a caption saying that signal was 
 parser.add_option("--signalInjectMass", help="Mass For Injected Signal",type=float,default=125.0)
 parser.add_option("-p","--printLimits", help="Just Print The Limits",action="store_true",default=False)
 parser.add_option("--xs", help="Limit on XS*BR",action="store_true",default=False)
+parser.add_option("--blind",help="Don't Show Observed Limit",action="store_true",default=False)
 args, fakeargs = parser.parse_args()
 
 from helpers import *
@@ -791,7 +792,8 @@ if __name__ == "__main__":
       #title = "VBF Only "+title
       #ylabel="95% CL Limit on #sigma/#sigma_{SM} (VBF H#rightarrow#mu#mu)"
       #caption4 = "#sigma_{GF}= #sigma_{WH}= #sigma_{ZH}= 0"
-      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStrWrite,xlabel=xlabel,caption3=caption3,showObs=args.higgsMass,xlimits=xlimits,vertLines = vertLines,ylabel=ylabel,caption4=caption4)
+      showObs = args.higgsMass and not args.blind
+      incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStrWrite,xlabel=xlabel,caption3=caption3,showObs=showObs,xlimits=xlimits,vertLines = vertLines,ylabel=ylabel,caption4=caption4)
       saveAs(canvas,outDir+plotName+"_"+energyStr)
       #saveAs(canvas,outDir+"gfOnly_"+plotName+"_"+energyStr)
       #saveAs(canvas,outDir+"vbfOnly_"+plotName+"_"+energyStr)

@@ -114,7 +114,7 @@ def curses_main(w):
             w2.refresh()
             displayInWindowLeft(w3,"As of: "+datetime.datetime.now().replace(microsecond=0).isoformat(' '),0)
             w3.refresh()
-            time.sleep(180)
+            time.sleep(300)
     finally:
         curses.nocbreak(); w.keypad(0); curses.echo()
         curses.curs_set(1)
