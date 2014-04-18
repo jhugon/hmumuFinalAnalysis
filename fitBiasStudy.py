@@ -182,7 +182,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
       if debug:
         rmpReal = RooModelPlotter(dimuonMass,truePdf,realData,trueFR,TITLEMAP[catName],energyStr,lumiDict[energyStr],canvas=canvas,caption2="Reference Fit to Real Data")
         rmpReal.draw("output/debug_RealData_"+truePdfName+"_"+catName+"_"+energyStr+tmpJobStr)
-        rmpReal.drawWithParams("output/debug_RealData_"+truePdfName+"_"+catName+"_"+energyStr+tmpJobStr+"_params",["mixParam","bwWidth","bwmZ","expParam"])
+        #rmpReal.drawWithParams("output/debug_RealData_"+truePdfName+"_"+catName+"_"+energyStr+tmpJobStr+"_params",["mixParam","bwWidth","bwmZ","expParam"])
         rmpList.append(rmpReal)
         canvas.Clear()
 
@@ -223,10 +223,10 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
         if debug:
           debugImport(altPdf)
 
-      nBakVar = root.RooRealVar("nBak","N_{B}",nData/2.,nData*2)
+      nBakVar = root.RooRealVar("nBak","N_{B}",nData/4.,nData*2.)
 
       ### Now load Signal PDFs
-      nSigVarBounds = nData/4
+      nSigVarBounds = nData
       nSigVar = root.RooRealVar("nSig","N_{S}",-nSigVarBounds,nSigVarBounds)
       sigPdfs = []
       sigPdfEs = []
@@ -327,15 +327,15 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
           ndfTrue -= rooPdfNFreeParams(trueToySBPdf,toyDataHist)
           nTrueToy = nSigVar.getVal() - nSig1Sigma*sigInject
           errTrueToy = nSigVar.getError()
-          if errTrueToy == 0.:
-            continue
-          if chi2TrueToyVar.getVal()==0.0:
-            continue
           data[truePdfName][hmass]['nTrue'].append(nTrueToy)
           data[truePdfName][hmass]['errTrue'].append(errTrueToy)
           data[truePdfName][hmass]['chi2True'].append(chi2TrueToyVar.getVal())
           data[truePdfName][hmass]['ndfTrue'].append(ndfTrue)
-          data[truePdfName][hmass]['zTrue'].append(nTrueToy/errTrueToy)
+          #data[truePdfName][hmass]['zTrue'].append(nTrueToy/errTrueToy)
+          if errTrueToy != 0.:
+            data[truePdfName][hmass]['zTrue'].append(nTrueToy/errTrueToy)
+          else:
+            data[truePdfName][hmass]['zTrue'].append(float("NaN"))
           data[truePdfName][hmass]['chi2BOnly'].append(chi2BOnlyVal)
           data[truePdfName][hmass]['ndfBOnly'].append(ndfBOnlyVal)
           data[truePdfName][hmass]['nBakTrue'].append(nBakTrue)
@@ -370,14 +370,16 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
               ndfAlt -= rooPdfNFreeParams(altSBPdf,toyDataHist)
               nAlt = nSigVar.getVal() - nSig1Sigma*sigInject
               errAlt = nSigVar.getError()
-              if errAlt == 0.:
-                continue
-              pull = (nAlt-nTrueToy)/errAlt
+              pull = float("NaN")
+              if errAlt != 0.:
+                pull = (nAlt-nTrueToy)/errAlt
+                data[truePdfName][hmass][pdfAltName]['z'].append(nAlt/errAlt)
+              else:
+                data[truePdfName][hmass][pdfAltName]['z'].append(float("NaN"))
               data[truePdfName][hmass][pdfAltName]['n'].append(nAlt)
               data[truePdfName][hmass][pdfAltName]['err'].append(errAlt)
               data[truePdfName][hmass][pdfAltName]['chi2'].append(altChi2Var.getVal())
               data[truePdfName][hmass][pdfAltName]['ndf'].append(ndfAlt)
-              data[truePdfName][hmass][pdfAltName]['z'].append(nAlt/errAlt)
               data[truePdfName][hmass][pdfAltName]['pull'].append(pull)
               data[truePdfName][hmass]['pullAll'].append(pull)
               data[truePdfName][hmass][pdfAltName]['chi2BOnly'].append(chi2BOnlyVal)
@@ -398,7 +400,7 @@ def runStudy(iJob,iJobGroup,catName,energyStr,truePdfName,pdfAltNameList,dataFil
                                       pullsYLabel="#frac{Data-Alt. Fit}{#sqrt{Alt. Fit}}"
                                       )
                 rmp.draw("output/debug_Ref"+truePdfName+"_Alt"+pdfAltName+"_"+catName+"_"+energyStr+"_"+str(hmass)+tmpJobStr+"_Toy"+str(iToy))
-                rmp.drawWithParams("output/debug_Ref"+truePdfName+"_Alt"+pdfAltName+"_"+catName+"_"+energyStr+"_"+str(hmass)+tmpJobStr+"_Toy"+str(iToy)+"_params",["mixParam","bwWidth","bwmZ","expParam"])
+                #rmp.drawWithParams("output/debug_Ref"+truePdfName+"_Alt"+pdfAltName+"_"+catName+"_"+energyStr+"_"+str(hmass)+tmpJobStr+"_Toy"+str(iToy)+"_params",["mixParam","bwWidth","bwmZ","expParam"])
                 rmpList.append(rmp)
                 canvas.Clear()
           #if truePdfName == "Old":
@@ -607,15 +609,14 @@ class BiasStudy:
       for hmass in self.sigMasses:
         for pdfAltName in self.pdfAltNamesDict[refPdfName]:
           nBiasArr = scipy.array(self.data[refPdfName][hmass][pdfAltName]['n'])-scipy.array(self.data[refPdfName][hmass]['nTrue'])
-          nBiasLimit = max((max(nBiasArr),abs(min(nBiasArr))))
-          nBiasLimit = scipy.ceil(nBiasLimit)
+          nBiasLimit = max(max(nBiasArr),abs(min(nBiasArr)))+0.001
           hist = root.TH1F("hist"+str(iHist),"",50,-nBiasLimit,nBiasLimit)
           setHistTitles(hist,"N_{sig}(Nominal)-N_{sig}(Reference)","N_{Toys}")
           iHist += 1
           for pull in nBiasArr:
               hist.Fill(pull)
           medianPull = median(nBiasArr)
-          fitFn = root.TF1("gausPull"+str(hmass),"gaus",-3,3)
+          fitFn = root.TF1("gausPull"+str(hmass),"gaus",-nBiasLimit,nBiasLimit)
           fitResult = hist.Fit(fitFn,"LSMEQ") 
           hist.Draw()
           tlatex.SetTextAlign(12)
@@ -628,6 +629,7 @@ class BiasStudy:
           tlatex.SetTextAlign(32)
           tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.68,"Mean: {0:.2f} #pm {1:.2f}".format(fitFn.GetParameter(1),fitFn.GetParError(1)))
           tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.58,"#sigma: {0:.2f} #pm {1:.2f}".format(fitFn.GetParameter(2),fitFn.GetParError(2)))
+          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.48,"N_{{Toys}}: {0} {1}".format(nBiasArr.size,hist.GetEntries()))
           tlatex.SetTextAlign(32)
           tlatex.DrawLatex(0.99-gStyle.GetPadRightMargin(),0.96,caption)
           tlatex.SetTextColor(1)
@@ -807,14 +809,13 @@ class BiasStudy:
 
       ##### Nsig Plots
       for hmass in self.sigMasses:
-        nSigLimit = max(max(self.data[refPdfName][hmass]['nTrue']),abs(min(self.data[refPdfName][hmass]['nTrue'])))
-        nSigLimit = scipy.ceil(nSigLimit)
-        hist = root.TH1F("hist"+str(iHist),"",100,-nSigLimit,nSigLimit)
+        histLimit = max(max(self.data[refPdfName][hmass][pdfAltName]['n']),abs(min(self.data[refPdfName][hmass][pdfAltName]['n'])))+0.001
+        hist = root.TH1F("hist"+str(iHist),"",100,-histLimit,histLimit)
         setHistTitles(hist,"N_{sig}(Reference)","N_{Toys}")
         iHist += 1
         for nsigref in self.data[refPdfName][hmass]['nTrue']:
             hist.Fill(nsigref)
-        fitFn = root.TF1("gaus"+str(hmass),"gaus",-nSigLimit,nSigLimit)
+        fitFn = root.TF1("gaus"+str(hmass),"gaus",min(self.data[refPdfName][hmass]['nTrue']),max(self.data[refPdfName][hmass]['nTrue'])+0.0001)
         fitResult = hist.Fit(fitFn,"LSMEQ") 
         hist.Draw()
         tlatex.SetTextAlign(12)
@@ -830,6 +831,7 @@ class BiasStudy:
         tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.68,"Mean: {0:.2f} #pm {1:.2f}".format(fitFn.GetParameter(1),fitFn.GetParError(1)))
         tlatex.SetTextColor(root.kRed+1)
         tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.58,"#sigma: {0:.2f} #pm {1:.2f}".format(fitFn.GetParameter(2),fitFn.GetParError(2)))
+        tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.48,"N_{{Toys}}: {0} {1}".format(len(self.data[refPdfName][hmass]['nTrue']),hist.GetEntries()))
         tlatex.SetTextColor(1)
         #tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.65,"Median: {0:.2f}".format(median(tmpDat)))
         #tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.55,"MAD #sigma: {0:.2f}".format(madStddev(tmpDat)))
@@ -842,13 +844,13 @@ class BiasStudy:
         canvas.Clear()
 
         for pdfAltName in self.pdfAltNamesDict[refPdfName]:
-          nSigLimit = max(max(self.data[refPdfName][hmass][pdfAltName]['n']),abs(min(self.data[refPdfName][hmass][pdfAltName]['n'])))
-          hist = root.TH1F("hist"+str(iHist),"",100,-nSigLimit,nSigLimit)
+          histLimit = max(max(self.data[refPdfName][hmass][pdfAltName]['n']),abs(min(self.data[refPdfName][hmass][pdfAltName]['n'])))+0.001
+          hist = root.TH1F("hist"+str(iHist),"",100,-histLimit,histLimit)
           setHistTitles(hist,"N_{sig}(Nominal)","N_{Toys}")
           iHist += 1
           for nsigalt in self.data[refPdfName][hmass][pdfAltName]['n']:
             hist.Fill(nsigalt)
-          fitFn = root.TF1("gaus"+str(hmass)+pdfAltName,"gaus",-nSigLimit,nSigLimit)
+          fitFn = root.TF1("gaus"+str(hmass)+pdfAltName,"gaus",min(self.data[refPdfName][hmass][pdfAltName]['n']),max(self.data[refPdfName][hmass][pdfAltName]['n'])+0.0001)
           fitResult = hist.Fit(fitFn,"LSMEQ") 
           hist.Draw()
           tlatex.SetTextAlign(12)
@@ -865,6 +867,7 @@ class BiasStudy:
           tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.68,"Mean: {0:.2f} #pm {1:.2f}".format(fitFn.GetParameter(1),fitFn.GetParError(1)))
           tlatex.SetTextColor(root.kRed+1)
           tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.58,"#sigma: {0:.2f} #pm {1:.2f}".format(fitFn.GetParameter(2),fitFn.GetParError(2)))
+          tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.48,"N_{{Toys}}: {0} {1}".format(len(self.data[refPdfName][hmass][pdfAltName]['n']),hist.GetEntries()))
           tlatex.SetTextColor(1)
           #tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.65,"Median: {0:.2f}".format(median(tmpDat)))
           #tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.55,"MAD #sigma: {0:.2f}".format(madStddev(tmpDat)))
@@ -1336,7 +1339,7 @@ if __name__ == "__main__":
   ############################################
   ### Define number of toys to run over
 
-  nToys = 1
+  nToys = 200
 
   ############################################
   ### Define which reference functions to use
@@ -1380,10 +1383,10 @@ if __name__ == "__main__":
   ### Define which masses to run over
 
   #sigMasses = range(115,156,5)
-  sigMasses = [115,120,125,130,135,140,145,150,155]
+  sigMasses = [120,125,130,135,140,145,150]
 
   # Number of sigmas signal to inject per category
-  sigInject = 0.
+  sigInject = 3.
 
   ########################################
 
@@ -1503,8 +1506,8 @@ if __name__ == "__main__":
     if NPROCS > 1:
       processPool = Pool(processes=NPROCS)
     for category in categories:
-      bs = BiasStudy(category,dataFns8TeV,"8TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool,iJobGroup=iJobGroup,sigInject=sigInject)
-      #bs = BiasStudy(category,dataFns7TeV,"7TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool,iJobGroup=iJobGroup,sigInject=sigInject)
+      #bs = BiasStudy(category,dataFns8TeV,"8TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool,iJobGroup=iJobGroup,sigInject=sigInject)
+      bs = BiasStudy(category,dataFns7TeV,"7TeV",sigMasses,refPdfNameList,pdfAltNamesDict,nToys,processPool=processPool,iJobGroup=iJobGroup,sigInject=sigInject)
 #      logFile.write(bs.outStr)
       if iJobGroup == None:
         bs.plot(outDir+"bias_")
