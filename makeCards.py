@@ -2302,7 +2302,7 @@ if __name__ == "__main__":
   #directory = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  periods = ["8TeV"]
+  #periods = ["8TeV"]
   #periods = ["7TeV"]
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
   categoriesFF = ["BB","BO","BE","OO","FF"]

@@ -16,30 +16,30 @@ lumiDict["7TeV"] = 5.05 #2011AB
 #LUMI=2.311 #2011A
 #LUMI=2.739 #2011B
 
-brDict = helpers.readCSVXS("etc/br.csv")
-ggHDict8 = helpers.readCSVXS("etc/ggH_8TeV.csv")
-vbfHDict8 = helpers.readCSVXS("etc/vbfH_8TeV.csv")
-wHDict8 = helpers.readCSVXS("etc/wH_8TeV.csv")
-zHDict8 = helpers.readCSVXS("etc/zH_8TeV.csv")
+brDict = helpers.readCSVXS("etc/brHmm.txt")
+ggHDict8 = helpers.readCSVXS("etc/8TeV-ggH.txt")
+vbfHDict8 = helpers.readCSVXS("etc/8TeV-vbfH.txt")
+wHDict8 = helpers.readCSVXS("etc/8TeV-WH.txt")
+zHDict8 = helpers.readCSVXS("etc/8TeV-ZH.txt")
 
-ggHDict7 = helpers.readCSVXS("etc/ggH_7TeV.csv")
-vbfHDict7 = helpers.readCSVXS("etc/vbfH_7TeV.csv")
-wHDict7 = helpers.readCSVXS("etc/wH_7TeV.csv")
-zHDict7 = helpers.readCSVXS("etc/zH_7TeV.csv")
+ggHDict7 = helpers.readCSVXS("etc/7TeV-ggH.txt")
+vbfHDict7 = helpers.readCSVXS("etc/7TeV-vbfH.txt")
+wHDict7 = helpers.readCSVXS("etc/7TeV-WH.txt")
+zHDict7 = helpers.readCSVXS("etc/7TeV-ZH.txt")
 
 class CrossSections:
   def __init__(self):
     self.data = {}
-    self.br = helpers.readCSVXS("etc/br.csv")
+    self.br = helpers.readCSVXS("etc/brHmm.txt")
     self.vbf = {}
     self.gg = {}
     self.wh = {}
     self.zh = {}
     for e in ["8TeV","7TeV"]:
-      self.vbf[e] = helpers.readCSVXS("etc/vbfH_"+e+".csv")
-      self.gg[e] = helpers.readCSVXS("etc/ggH_"+e+".csv")
-      self.wh[e] = helpers.readCSVXS("etc/wH_"+e+".csv")
-      self.zh[e] = helpers.readCSVXS("etc/zH_"+e+".csv")
+      self.vbf[e] = helpers.readCSVXS("etc/"+e+"-vbfH.txt")
+      self.gg[e] = helpers.readCSVXS("etc/"+e+"-ggH.txt")
+      self.wh[e] = helpers.readCSVXS("etc/"+e+"-WH.txt")
+      self.zh[e] = helpers.readCSVXS("etc/"+e+"-ZH.txt")
   def keys(self):
     return self.data.keys()
   def __setitem__(self,key,value):
@@ -304,16 +304,16 @@ BakParameterizationUncDict['8TeV']['Jet2CutsFailVBFGF'] = 25.27
 class NuisanceMap:
   def __init__(self):
     self.data = {}
-    self.br = helpers.readCSVXS("etc/br.csv")
+    self.br = helpers.readCSVXS("etc/brHmm.txt")
     self.vbf = {}
     self.gg = {}
     self.wh = {}
     self.zh = {}
     for e in ["8TeV","7TeV"]:
-      self.vbf[e] = helpers.readCSVXS("etc/vbfH_"+e+".csv")
-      self.gg[e] = helpers.readCSVXS("etc/ggH_"+e+".csv")
-      self.wh[e] = helpers.readCSVXS("etc/wH_"+e+".csv")
-      self.zh[e] = helpers.readCSVXS("etc/zH_"+e+".csv")
+      self.vbf[e] = helpers.readCSVXS("etc/"+e+"-vbfH.txt")
+      self.gg[e] = helpers.readCSVXS("etc/"+e+"-ggH.txt")
+      self.wh[e] = helpers.readCSVXS("etc/"+e+"-WH.txt")
+      self.zh[e] = helpers.readCSVXS("etc/"+e+"-ZH.txt")
     self.lumi = {
         #"14TeV" : 1.044,    # 2012 HF-Lumi
         #"8TeV" : 1.044,    # 2012 HF-Lumi

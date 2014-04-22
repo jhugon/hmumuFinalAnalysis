@@ -2037,7 +2037,6 @@ class CrossSecsErrs:
 
     self.isBR = False
     for key in self.data:
-      print len(self.data[key])
       if len(self.data[key]) < 7:
         self.isBR = True
       break
@@ -2103,12 +2102,16 @@ class CrossSecsErrs:
 
 def readCSVXS(filename):
   f = open(filename)
-  rd = csv.reader(f)
+  dialect = csv.Sniffer().sniff(f.read(4096))
+  f.seek(0)
+  rd = csv.reader(f,dialect)
   result = {}
   for row in rd:
     if len(row) == 0:
         continue
     if len(row[0]) == 0:
+        continue
+    if row[0][0] == '#':
         continue
     if re.search(r"[^\d.\s]",row[0]):
         continue
