@@ -168,7 +168,7 @@ def makePDFBakBernsteinProd(name,rooDataset,dimuonMass,minMass,maxMass,workspace
     rooParamList = []
     rooArgList = root.RooArgList()
     for i in range(order+1):
-      tmpArg = root.RooRealVar("CMS_hmm_"+channelName+"_B"+str(i),"Bernstein Coefficient "+str(i), 0.0, 0., 1.)
+      tmpArg = root.RooRealVar(channelName+"_B"+str(i),"Bernstein Coefficient "+str(i), 0.0, 0., 1.)
       rooArgList.add(tmpArg)
       rooParamList.append(tmpArg)
 
@@ -184,10 +184,10 @@ def makePDFBakBernsteinProd(name,rooDataset,dimuonMass,minMass,maxMass,workspace
     #    i.Print()
     #print
   
-    pdfMmumu = root.RooBernstein("CMS_hmm_bak","Bernstein Order: "+str(order),dimuonMass,rooArgList)
+    pdfMmumu = root.RooBernstein("bak","Bernstein Order: "+str(order),dimuonMass,rooArgList)
 
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
-    fr.SetName("CMS_hmm_bak"+"_fitResult")
+    fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
     paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
@@ -237,10 +237,10 @@ def makePDFBakExpLog(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportF
     p1 = root.RooRealVar(channelName+"_p1","p1", 0.0, -1., 1.)
     p2 = root.RooRealVar(channelName+"_p2","p2", 0.0, -1., 1.)
     p3 = root.RooRealVar(channelName+"_p3","p3", 0.0, -1., 1.)
-    pdfMmumu = root.RooGenericPdf("CMS_hmm_"+"bak","TMath::Exp(@0*@0*@1 + @0*@2 + @3*TMath::Log(@0) )",root.RooArgList(dimuonMass,p1,p2,p3))
+    pdfMmumu = root.RooGenericPdf("bak","TMath::Exp(@0*@0*@1 + @0*@2 + @3*TMath::Log(@0) )",root.RooArgList(dimuonMass,p1,p2,p3))
 
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
-    fr.SetName("CMS_hmm_"+"bak"+"_fitResult")
+    fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
     rooParamList = [p1,p2,p3]
@@ -310,10 +310,10 @@ def makePDFBakExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
       debug += "###  fixing InvPolMass to Z pdg value\n"
       InvPolMass.setConstant(True)
 
-    pdfMmumu = root.RooGenericPdf("CMS_hmm_"+"bak","TMath::Exp(@0*@2)/(@0-@1)/(@0-@1)",root.RooArgList(dimuonMass,InvPolMass,ExpMass))
+    pdfMmumu = root.RooGenericPdf("bak","TMath::Exp(@0*@2)/(@0-@1)/(@0-@1)",root.RooArgList(dimuonMass,InvPolMass,ExpMass))
 
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
-    fr.SetName("CMS_hmm_"+"bak"+"_fitResult")
+    fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
     rooParamList = [InvPolMass,ExpMass]
@@ -375,18 +375,18 @@ def makePDFBakExpMOverSqP0(name,rooDataset,dimuonMass,minMass,maxMass,workspaceI
 
 
     # new values from Anna 13 Jun 2013
-    EXPPOLP0_1 = root.RooRealVar("CMS_hmm_"+channelName+"_EXPPOLP0_1","EXPPOLP0_1", 92, 30., 105.)
-    EXPPOLP0_2 = root.RooRealVar("CMS_hmm_"+channelName+"_EXPPOLP0_2","EXPPOLP0_2", -0.5, -2.5, 2.5)
-    EXPPOLP0_3 = root.RooRealVar("CMS_hmm_"+channelName+"_EXPPOLP0_3","EXPPOLP0_3", 1., -5., 5.)
+    EXPPOLP0_1 = root.RooRealVar(channelName+"_EXPPOLP0_1","EXPPOLP0_1", 92, 30., 105.)
+    EXPPOLP0_2 = root.RooRealVar(channelName+"_EXPPOLP0_2","EXPPOLP0_2", -0.5, -2.5, 2.5)
+    EXPPOLP0_3 = root.RooRealVar(channelName+"_EXPPOLP0_3","EXPPOLP0_3", 1., -5., 5.)
   
     #if ('Jet2CutsVBFPass' in name ):
     #  debug += "###  fixing InvPolMass to Z pdg value\n"
     #  InvPolMass.setConstant(True)
 
-    pdfMmumu = root.RooGenericPdf("CMS_hmm_"+"bak","TMath::Exp(-@0*@2*@2)/(@0-@1)*(1./(@0-@1)+@3*@3*@0)",root.RooArgList(dimuonMass,EXPPOLP0_1,EXPPOLP0_2,EXPPOLP0_3))
+    pdfMmumu = root.RooGenericPdf("bak","TMath::Exp(-@0*@2*@2)/(@0-@1)*(1./(@0-@1)+@3*@3*@0)",root.RooArgList(dimuonMass,EXPPOLP0_1,EXPPOLP0_2,EXPPOLP0_3))
 
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
-    fr.SetName("CMS_hmm_"+"bak"+"_fitResult")
+    fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
     rooParamList = [EXPPOLP0_1,EXPPOLP0_2,EXPPOLP0_3]
@@ -448,29 +448,29 @@ def makePDFBakExpMOverSqP0New(name,rooDataset,dimuonMass,minMass,maxMass,workspa
 
 
     # new values from Anna 13 Jun 2013
-    EXPPOLP0_1 = root.RooRealVar("CMS_hmm_"+channelName+"_EXPPOLP0New_1","EXPPOLP0New_1", 91, 30., 109.)
-    EXPPOLP0_2 = root.RooRealVar("CMS_hmm_"+channelName+"_EXPPOLP0New_2","EXPPOLP0New_2", 0.2, -2.5, 2.5)
-    EXPPOLP0_3 = root.RooRealVar("CMS_hmm_"+channelName+"_EXPPOLP0New_3","EXPPOLP0New_3", 1., -20., 20.)
-    #EXPPOLP0_4 = root.RooRealVar("CMS_hmm_"+channelName+"_EXPPOLP0_4","EXPPOLP0_4", 0.15, -2.5, 2.5)
+    EXPPOLP0_1 = root.RooRealVar(channelName+"_EXPPOLP0New_1","EXPPOLP0New_1", 91, 30., 109.)
+    EXPPOLP0_2 = root.RooRealVar(channelName+"_EXPPOLP0New_2","EXPPOLP0New_2", 0.2, -2.5, 2.5)
+    EXPPOLP0_3 = root.RooRealVar(channelName+"_EXPPOLP0New_3","EXPPOLP0New_3", 1., -20., 20.)
+    #EXPPOLP0_4 = root.RooRealVar(channelName+"_EXPPOLP0_4","EXPPOLP0_4", 0.15, -2.5, 2.5)
   
 
     #v0, p3 is very undefined 
-    #pdfMmumu = root.RooGenericPdf("CMS_hmm_"+"bak","TMath::Exp(-@0*@2*@2)/(@0-@1)*(1./(@0-@1)+@3*@3*@0)",root.RooArgList(dimuonMass,EXPPOLP0_1,EXPPOLP0_2,EXPPOLP0_3))
+    #pdfMmumu = root.RooGenericPdf("bak","TMath::Exp(-@0*@2*@2)/(@0-@1)*(1./(@0-@1)+@3*@3*@0)",root.RooArgList(dimuonMass,EXPPOLP0_1,EXPPOLP0_2,EXPPOLP0_3))
 
     #v1 interesting, may be the best one, good to fix p1 only for VBFtight, for other bad 
-    pdfMmumu = root.RooGenericPdf("CMS_hmm_"+"bak","TMath::Exp(-@0*@2*@2)/(@0-@1)/(@0-@1)+@3*@3*TMath::Exp(-@0*@2*@2)",root.RooArgList(dimuonMass,EXPPOLP0_1,EXPPOLP0_2,EXPPOLP0_3))
+    pdfMmumu = root.RooGenericPdf("bak","TMath::Exp(-@0*@2*@2)/(@0-@1)/(@0-@1)+@3*@3*TMath::Exp(-@0*@2*@2)",root.RooArgList(dimuonMass,EXPPOLP0_1,EXPPOLP0_2,EXPPOLP0_3))
     if ('Jet2CutsVBFPass' in name ):
       EXPPOLP0_1.setConstant(True)
 
     #v2 <-bad results
-    #pdfMmumu = root.RooGenericPdf("CMS_hmm_"+"bak","TMath::Exp(-@0*@2*@2)/(@0-@1)*(1./(@0-@1)+@3*@3)",root.RooArgList(dimuonMass,EXPPOLP0_1,EXPPOLP0_2,EXPPOLP0_3))
+    #pdfMmumu = root.RooGenericPdf("bak","TMath::Exp(-@0*@2*@2)/(@0-@1)*(1./(@0-@1)+@3*@3)",root.RooArgList(dimuonMass,EXPPOLP0_1,EXPPOLP0_2,EXPPOLP0_3))
 
     #v3 interesting, may be the best one, not good to fix p1 for BO at least
-    #pdfMmumu = root.RooGenericPdf("CMS_hmm_"+"bak","TMath::Exp(-@0*@2*@2)/(@0-@1)/(@0-@1)+@3*@3*TMath::Exp(-@0*@4*@4)",root.RooArgList(dimuonMass,EXPPOLP0_1,EXPPOLP0_2,EXPPOLP0_3,EXPPOLP0_4))
+    #pdfMmumu = root.RooGenericPdf("bak","TMath::Exp(-@0*@2*@2)/(@0-@1)/(@0-@1)+@3*@3*TMath::Exp(-@0*@4*@4)",root.RooArgList(dimuonMass,EXPPOLP0_1,EXPPOLP0_2,EXPPOLP0_3,EXPPOLP0_4))
     #EXPPOLP0_1.setConstant(True)
 
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
-    fr.SetName("CMS_hmm_"+"bak"+"_fitResult")
+    fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
     rooParamList = [EXPPOLP0_1,EXPPOLP0_2,EXPPOLP0_3]
@@ -533,11 +533,11 @@ def makePDFBakMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImport
 
     channelName = name
 
-    InvPolMass = root.RooRealVar("CMS_hmm_"+channelName+"_InvPolMass","InvPolMass", 91., 70., 95.)
-    pdfMmumu = root.RooGenericPdf("CMS_hmm_"+"bak","@0/(@0-@1)/(@0-@1)",root.RooArgList(dimuonMass,InvPolMass))
+    InvPolMass = root.RooRealVar(channelName+"_InvPolMass","InvPolMass", 91., 70., 95.)
+    pdfMmumu = root.RooGenericPdf("bak","@0/(@0-@1)/(@0-@1)",root.RooArgList(dimuonMass,InvPolMass))
 
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
-    fr.SetName("CMS_hmm_"+"bak"+"_fitResult")
+    fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
     rooParamList = [InvPolMass]
@@ -595,21 +595,21 @@ def makePDFBakMSSM(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,
 
     channelName = name
 
-    bwWidth = root.RooRealVar("CMS_hmm_"+channelName+"_bwWidth","bwWidth",5,0,30)
-    bwmZ = root.RooRealVar("CMS_hmm_"+channelName+"_bwmZ","bwmZ",91,85,95)
-    expParam = root.RooRealVar("CMS_hmm_"+channelName+"_expParam","expParam",-1e-03,-1e-01,1e-01)
-    mixParam = root.RooRealVar("CMS_hmm_"+channelName+"_mixParam","mixParam",0.5,0,1)
+    bwWidth = root.RooRealVar(channelName+"_bwWidth","bwWidth",5,0,30)
+    bwmZ = root.RooRealVar(channelName+"_bwmZ","bwmZ",91,85,95)
+    expParam = root.RooRealVar(channelName+"_expParam","expParam",-1e-03,-1e-01,1e-01)
+    mixParam = root.RooRealVar(channelName+"_mixParam","mixParam",0.5,0,1)
 
-    phoExpMmumu = root.RooGenericPdf("CMS_hmm_"+"phoExpMmumu","exp(@0*@1)*pow(@0,-2)",root.RooArgList(dimuonMass,expParam))
-    bwExpMmumu  = root.RooGenericPdf("CMS_hmm_"+"bwExpMmumu","exp(@0*@3)*(@2)/(pow(@0-@1,2)+0.25*pow(@2,2))",root.RooArgList(dimuonMass,bwmZ,bwWidth,expParam))
-    pdfMmumu = root.RooAddPdf("CMS_hmm_"+"bak","bak",root.RooArgList(bwExpMmumu,phoExpMmumu),root.RooArgList(mixParam))
+    phoExpMmumu = root.RooGenericPdf("phoExpMmumu","exp(@0*@1)*pow(@0,-2)",root.RooArgList(dimuonMass,expParam))
+    bwExpMmumu  = root.RooGenericPdf("bwExpMmumu","exp(@0*@3)*(@2)/(pow(@0-@1,2)+0.25*pow(@2,2))",root.RooArgList(dimuonMass,bwmZ,bwWidth,expParam))
+    pdfMmumu = root.RooAddPdf("bak","bak",root.RooArgList(bwExpMmumu,phoExpMmumu),root.RooArgList(mixParam))
     
 
     # Just For Z-Peak Part
     assert(dimuonMassZ != None)
     assert(rooDatasetZ != None)
 
-    bwMmumuZ  = root.RooGenericPdf("CMS_hmm_"+"bwMmumuZ","(@2)/(pow(@0-@1,2)+0.25*pow(@2,2))",root.RooArgList(dimuonMassZ,bwmZ,bwWidth))
+    bwMmumuZ  = root.RooGenericPdf("bwMmumuZ","(@2)/(pow(@0-@1,2)+0.25*pow(@2,2))",root.RooArgList(dimuonMassZ,bwmZ,bwWidth))
     bwMmumuZ.fitTo(rooDatasetZ,root.RooFit.SumW2Error(False),PRINTLEVEL)
     bwmZ.setConstant(True)
     bwWidth.setConstant(True)
@@ -626,7 +626,7 @@ def makePDFBakMSSM(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,
     # Back to everywhere else
    
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
-    fr.SetName("CMS_hmm_"+"bak"+"_fitResult")
+    fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
     fr.Print()
 
@@ -690,23 +690,23 @@ def makePDFBakMSSMPrime(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     channelName = name
 
-    bwWidth = root.RooRealVar("CMS_hmm_"+channelName+"_bwWidth","bwWidth",5,0,30)
-    bwmZ = root.RooRealVar("CMS_hmm_"+channelName+"_bwmZ","bwmZ",91,85,95)
-    expParam = root.RooRealVar("CMS_hmm_"+channelName+"_expParam","expParam",-1e-03,-1e-01,1e-01)
-    phoCoef = root.RooRealVar("CMS_hmm_"+channelName+"_phoCoef","Photon Term Coef",0.5,0,1)
-    bwCoef = root.RooRealVar("CMS_hmm_"+channelName+"_bwCoef","Breit-Wigner Term Coef",0.5,0,1)
+    bwWidth = root.RooRealVar(channelName+"_bwWidth","bwWidth",5,0,30)
+    bwmZ = root.RooRealVar(channelName+"_bwmZ","bwmZ",91,85,95)
+    expParam = root.RooRealVar(channelName+"_expParam","expParam",-1e-03,-1e-01,1e-01)
+    phoCoef = root.RooRealVar(channelName+"_phoCoef","Photon Term Coef",0.5,0,1)
+    bwCoef = root.RooRealVar(channelName+"_bwCoef","Breit-Wigner Term Coef",0.5,0,1)
 
-    phoExpMmumu = root.RooGenericPdf("CMS_hmm_"+"phoExpMmumu","exp(@0*@1)*pow(@0,-2)",root.RooArgList(dimuonMass,expParam))
-    bwExpMmumu  = root.RooGenericPdf("CMS_hmm_"+"bwExpMmumu","exp(@0*@3)*(@2)/(pow(@0-@1,2)+0.25*pow(@2,2))",root.RooArgList(dimuonMass,bwmZ,bwWidth,expParam))
-    phoExpMmumuE = root.RooExtendPdf("CMS_hmm_"+"phoExpMmumuE",phoExpMmumu,phoCoef)
-    bwExpMmumuE = root.RooExtendPdf("CMS_hmm_"+"bwExpMmumuE",bwExpMmumu,bwCoef)
-    pdfMmumu = root.RooAddPdf("CMS_hmm_"+"bak","bak",root.RooArgList(bwExpMmumuE,phoExpMmumuE))
+    phoExpMmumu = root.RooGenericPdf("phoExpMmumu","exp(@0*@1)*pow(@0,-2)",root.RooArgList(dimuonMass,expParam))
+    bwExpMmumu  = root.RooGenericPdf("bwExpMmumu","exp(@0*@3)*(@2)/(pow(@0-@1,2)+0.25*pow(@2,2))",root.RooArgList(dimuonMass,bwmZ,bwWidth,expParam))
+    phoExpMmumuE = root.RooExtendPdf("phoExpMmumuE",phoExpMmumu,phoCoef)
+    bwExpMmumuE = root.RooExtendPdf("bwExpMmumuE",bwExpMmumu,bwCoef)
+    pdfMmumu = root.RooAddPdf("bak","bak",root.RooArgList(bwExpMmumuE,phoExpMmumuE))
 
     # Just For Z-Peak Part
     assert(dimuonMassZ != None)
     assert(rooDatasetZ != None)
 
-    bwMmumuZ  = root.RooGenericPdf("CMS_hmm_"+"bwMmumuZ","(@2)/(pow(@0-@1,2)+0.25*pow(@2,2))",root.RooArgList(dimuonMassZ,bwmZ,bwWidth))
+    bwMmumuZ  = root.RooGenericPdf("bwMmumuZ","(@2)/(pow(@0-@1,2)+0.25*pow(@2,2))",root.RooArgList(dimuonMassZ,bwmZ,bwWidth))
     bwMmumuZ.fitTo(rooDatasetZ,root.RooFit.SumW2Error(False),PRINTLEVEL)
     bwmZ.setConstant(True)
     bwWidth.setConstant(True)
@@ -723,7 +723,7 @@ def makePDFBakMSSMPrime(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
     # Back to everywhere else
    
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
-    fr.SetName("CMS_hmm_"+"bak"+"_fitResult")
+    fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
     fr.Print()
 
@@ -788,19 +788,19 @@ def makePDFBakVoigtPMm2(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
 
     channelName = name
 
-    voitWidth = root.RooRealVar("CMS_hmm_"+channelName+"_voitWidth","voitWidth",2.4952)
+    voitWidth = root.RooRealVar(channelName+"_voitWidth","voitWidth",2.4952)
     voitWidth.setConstant(True)
-    voitmZ = root.RooRealVar("CMS_hmm_"+channelName+"_voitmZ","voitmZ",91,85,95)
-    voitSig = root.RooRealVar("CMS_hmm_"+channelName+"_voitSig","voitSig",1.5,0.0,30.0)
-    voitMmumu = root.RooVoigtian("CMS_hmm_"+channelName+"bak_voitMmumu","voitMmumu",dimuonMass,voitmZ,voitWidth,voitSig)
-    mm2Mmumu = root.RooGenericPdf("CMS_hmm_"+channelName+"bak_Mm2","pow(@0,-2)",root.RooArgList(dimuonMass))
-    mixParam = root.RooRealVar("CMS_hmm_"+channelName+"_mixParam","mixParam",0.5,0,1)
-    pdfMmumu = root.RooAddPdf("CMS_hmm_"+"bak","bak",root.RooArgList(voitMmumu,mm2Mmumu),root.RooArgList(mixParam))
+    voitmZ = root.RooRealVar(channelName+"_voitmZ","voitmZ",91,85,95)
+    voitSig = root.RooRealVar(channelName+"_voitSig","voitSig",1.5,0.0,30.0)
+    voitMmumu = root.RooVoigtian(channelName+"bak_voitMmumu","voitMmumu",dimuonMass,voitmZ,voitWidth,voitSig)
+    mm2Mmumu = root.RooGenericPdf(channelName+"bak_Mm2","pow(@0,-2)",root.RooArgList(dimuonMass))
+    mixParam = root.RooRealVar(channelName+"_mixParam","mixParam",0.5,0,1)
+    pdfMmumu = root.RooAddPdf("bak","bak",root.RooArgList(voitMmumu,mm2Mmumu),root.RooArgList(mixParam))
 
     # Just For Z-Peak Part
     assert(dimuonMassZ != None)
     assert(rooDatasetZ != None)
-    voitMmumuZ = root.RooVoigtian("CMS_hmm_"+"bak_voitMmumuZ","voitMmumuZ",dimuonMassZ,voitmZ,voitWidth,voitSig)
+    voitMmumuZ = root.RooVoigtian("bak_voitMmumuZ","voitMmumuZ",dimuonMassZ,voitmZ,voitWidth,voitSig)
 
     voitMmumuZ.fitTo(rooDatasetZ,root.RooFit.SumW2Error(False),PRINTLEVEL)
     voitmZ.setConstant(True)
@@ -818,7 +818,7 @@ def makePDFBakVoigtPMm2(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
     # Back to everywhere else
    
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
-    fr.SetName("CMS_hmm_"+"bak"+"_fitResult")
+    fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
     fr.Print()
 
@@ -882,20 +882,20 @@ def makePDFBakVoigtPExpMm2(name,rooDataset,dimuonMass,minMass,maxMass,workspaceI
 
     channelName = name
 
-    voitWidth = root.RooRealVar("CMS_hmm_"+channelName+"_voitWidth","voitWidth",2.4952)
+    voitWidth = root.RooRealVar(channelName+"_voitWidth","voitWidth",2.4952)
     voitWidth.setConstant(True)
-    voitmZ = root.RooRealVar("CMS_hmm_"+channelName+"_voitmZ","voitmZ",91,85,95)
-    voitSig = root.RooRealVar("CMS_hmm_"+channelName+"_voitSig","voitSig",1.5,0.0,30.0)
-    voitMmumu = root.RooVoigtian("CMS_hmm_"+channelName+"bak_voitMmumu","voitMmumu",dimuonMass,voitmZ,voitWidth,voitSig)
-    expParam = root.RooRealVar("CMS_hmm_"+channelName+"_expParam","expParam",0.01,-1,1)
-    expMm2Mmumu = root.RooGenericPdf("CMS_hmm_"+channelName+"bak_expMm2","exp(-1*@0*@1*@1)*pow(@0,-2)",root.RooArgList(dimuonMass,expParam))
-    mixParam = root.RooRealVar("CMS_hmm_"+channelName+"_mixParam","mixParam",0.5,0,1)
-    pdfMmumu = root.RooAddPdf("CMS_hmm_"+"bak","bak",root.RooArgList(voitMmumu,expMm2Mmumu),root.RooArgList(mixParam))
+    voitmZ = root.RooRealVar(channelName+"_voitmZ","voitmZ",91,85,95)
+    voitSig = root.RooRealVar(channelName+"_voitSig","voitSig",1.5,0.0,30.0)
+    voitMmumu = root.RooVoigtian(channelName+"bak_voitMmumu","voitMmumu",dimuonMass,voitmZ,voitWidth,voitSig)
+    expParam = root.RooRealVar(channelName+"_expParam","expParam",0.01,-1,1)
+    expMm2Mmumu = root.RooGenericPdf(channelName+"bak_expMm2","exp(-1*@0*@1*@1)*pow(@0,-2)",root.RooArgList(dimuonMass,expParam))
+    mixParam = root.RooRealVar(channelName+"_mixParam","mixParam",0.5,0,1)
+    pdfMmumu = root.RooAddPdf("bak","bak",root.RooArgList(voitMmumu,expMm2Mmumu),root.RooArgList(mixParam))
 
     # Just For Z-Peak Part
     assert(dimuonMassZ != None)
     assert(rooDatasetZ != None)
-    voitMmumuZ = root.RooVoigtian("CMS_hmm_"+"bak_voitMmumuZ","voitMmumuZ",dimuonMassZ,voitmZ,voitWidth,voitSig)
+    voitMmumuZ = root.RooVoigtian("bak_voitMmumuZ","voitMmumuZ",dimuonMassZ,voitmZ,voitWidth,voitSig)
 
     voitMmumuZ.fitTo(rooDatasetZ,root.RooFit.SumW2Error(False),PRINTLEVEL)
     voitmZ.setConstant(True)
@@ -913,7 +913,7 @@ def makePDFBakVoigtPExpMm2(name,rooDataset,dimuonMass,minMass,maxMass,workspaceI
     # Back to everywhere else
    
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
-    fr.SetName("CMS_hmm_"+"bak"+"_fitResult")
+    fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
     fr.Print()
 
@@ -979,25 +979,25 @@ def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,d
 
     channelName = name
 
-    voitWidth = root.RooRealVar("CMS_hmm_"+channelName+"_voitWidth","voitWidth",2.4952)
+    voitWidth = root.RooRealVar(channelName+"_voitWidth","voitWidth",2.4952)
     voitWidth.setConstant(True)
-    voitmZ = root.RooRealVar("CMS_hmm_"+channelName+"_voitmZ","voitmZ",91,85,95)
-    voitSig = root.RooRealVar("CMS_hmm_"+channelName+"_voitSig","voitSig",1.5,0.0,30.0)
-    voitMmumu = root.RooVoigtian("CMS_hmm_"+"bak_voitMmumu","voitMmumu",dimuonMass,voitmZ,voitWidth,voitSig)
+    voitmZ = root.RooRealVar(channelName+"_voitmZ","voitmZ",91,85,95)
+    voitSig = root.RooRealVar(channelName+"_voitSig","voitSig",1.5,0.0,30.0)
+    voitMmumu = root.RooVoigtian("bak_voitMmumu","voitMmumu",dimuonMass,voitmZ,voitWidth,voitSig)
 
-    expParam = root.RooRealVar("CMS_hmm_"+channelName+"_expParam","expParam",0.1,-5,5)
-    #expMmumu = root.RooExponential("CMS_hmm_"+"bak_expMmumu","expMmumu",dimuonMass,expParam*expParam)
+    expParam = root.RooRealVar(channelName+"_expParam","expParam",0.1,-5,5)
+    #expMmumu = root.RooExponential("bak_expMmumu","expMmumu",dimuonMass,expParam*expParam)
     # Generic PDF
-    expMmumu = root.RooGenericPdf("CMS_hmm_"+"bak_expMmumu","expMmumu","TMath::Exp(-1*@0*@1*@1)",root.RooArgList(dimuonMass,expParam))
+    expMmumu = root.RooGenericPdf("bak_expMmumu","expMmumu","TMath::Exp(-1*@0*@1*@1)",root.RooArgList(dimuonMass,expParam))
 
-    mixParam = root.RooRealVar("CMS_hmm_"+channelName+"_mixParam","mixParam",0.5,0,1)
+    mixParam = root.RooRealVar(channelName+"_mixParam","mixParam",0.5,0,1)
 
-    pdfMmumu = root.RooAddPdf("CMS_hmm_"+"bak","bak",root.RooArgList(voitMmumu,expMmumu),root.RooArgList(mixParam))
+    pdfMmumu = root.RooAddPdf("bak","bak",root.RooArgList(voitMmumu,expMmumu),root.RooArgList(mixParam))
 
     # Just For Z-Peak Part
     assert(dimuonMassZ != None)
     assert(rooDatasetZ != None)
-    voitMmumuZ = root.RooVoigtian("CMS_hmm_"+"bak_voitMmumuZ","voitMmumuZ",dimuonMassZ,voitmZ,voitWidth,voitSig)
+    voitMmumuZ = root.RooVoigtian("bak_voitMmumuZ","voitMmumuZ",dimuonMassZ,voitmZ,voitWidth,voitSig)
 
     voitMmumuZ.fitTo(rooDatasetZ,root.RooFit.SumW2Error(False),PRINTLEVEL)
     voitmZ.setConstant(True)
@@ -1020,7 +1020,7 @@ def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,d
    
     #fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("whole"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
-    fr.SetName("CMS_hmm_"+"bak"+"_fitResult")
+    fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
     rooParamList = [voitmZ,voitSig,expParam,mixParam]
@@ -1083,18 +1083,18 @@ def makePDFSigCBPlusGaus(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
     debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
     debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
 
-    mean = root.RooRealVar("CMS_hmm_"+channelName+"_"+name+"_Mean",channelName+"_"+name+"_Mean",125.,100.,150.)
-    width = root.RooRealVar("CMS_hmm_"+channelName+"_"+name+"_Width",channelName+"_"+name+"_Width",5.0,0.5,20.0)
-    width2 = root.RooRealVar("CMS_hmm_"+channelName+"_"+name+"_Width2",channelName+"_"+name+"_Width2",5.0,0.1,20.0)
-    alpha = root.RooRealVar("CMS_hmm_"+channelName+"_"+name+"_Alpha",channelName+"_"+name+"_Alpha",1.0,0.1,10.0)
-    n = root.RooRealVar("CMS_hmm_"+channelName+"_"+name+"_n",channelName+"_"+name+"_n",1.0,0.1,10.0)
-    mix = root.RooRealVar("CMS_hmm_"+channelName+"_"+name+"_mix",channelName+"_"+name+"_mix",0.5,0.0,1.0)
-    cb = root.RooCBShape("CMS_hmm_"+name+"_CB",name+"_CB",dimuonMass,mean,width,alpha,n)
-    gaus = root.RooGaussian("CMS_hmm_"+name+"_Gaus",name+"_Gaus",dimuonMass,mean,width2)
+    mean = root.RooRealVar(channelName+"_"+name+"_Mean",channelName+"_"+name+"_Mean",125.,100.,150.)
+    width = root.RooRealVar(channelName+"_"+name+"_Width",channelName+"_"+name+"_Width",5.0,0.5,20.0)
+    width2 = root.RooRealVar(channelName+"_"+name+"_Width2",channelName+"_"+name+"_Width2",5.0,0.1,20.0)
+    alpha = root.RooRealVar(channelName+"_"+name+"_Alpha",channelName+"_"+name+"_Alpha",1.0,0.1,10.0)
+    n = root.RooRealVar(channelName+"_"+name+"_n",channelName+"_"+name+"_n",1.0,0.1,10.0)
+    mix = root.RooRealVar(channelName+"_"+name+"_mix",channelName+"_"+name+"_mix",0.5,0.0,1.0)
+    cb = root.RooCBShape(name+"_CB",name+"_CB",dimuonMass,mean,width,alpha,n)
+    gaus = root.RooGaussian(name+"_Gaus",name+"_Gaus",dimuonMass,mean,width2)
     pdfMmumu = root.RooAddPdf(convertSigName(name,energyStr),convertSigName(name,energyStr),cb,gaus,mix)
     
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True),root.RooFit.Range("signalfit"))
-    fr.SetName("CMS_hmm_"+name+"_fitResult")
+    fr.SetName(name+"_fitResult")
 
     #mean.setVal(125.)
     #width.setVal(2.)
@@ -1144,27 +1144,27 @@ def makePDFSigDG(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,ch
 
     rooParamList = []
 
-    meanG1 = root.RooRealVar("CMS_hmm_"+channelName+"_"+name+"_MeanG1",
+    meanG1 = root.RooRealVar(channelName+"_"+name+"_MeanG1",
                              channelName+"_"+name+"_MeanG1", 
                              123.,100.,150.)
-    meanG2 = root.RooRealVar("CMS_hmm_"+channelName+"_"+name+"_MeanG2",
+    meanG2 = root.RooRealVar(channelName+"_"+name+"_MeanG2",
                              channelName+"_"+name+"_MeanG2", 
                              125.,100.,150.)
     
-    widthG1 = root.RooRealVar("CMS_hmm_"+channelName+"_"+name+"_WidthG1",
+    widthG1 = root.RooRealVar(channelName+"_"+name+"_WidthG1",
                              channelName+"_"+name+"_WidthG1", 
                              5.,2.,10.)
-    widthG2 = root.RooRealVar("CMS_hmm_"+channelName+"_"+name+"_WidthG2",
+    widthG2 = root.RooRealVar(channelName+"_"+name+"_WidthG2",
                               channelName+"_"+name+"_WidthG2", 
                               1.,0.5,5.)
     
-    mixGG = root.RooRealVar("CMS_hmm_"+channelName+"_"+name+"_mixGG",
+    mixGG = root.RooRealVar(channelName+"_"+name+"_mixGG",
                             channelName+"_"+name+"_mixGG", 
                             0.5,0.,1.)
-    gaus1 = root.RooGaussian("CMS_hmm_"+channelName+"_"+name+"_gaus1",
+    gaus1 = root.RooGaussian(channelName+"_"+name+"_gaus1",
                              channelName+"_"+name+"_gaus1",
                              dimuonMass,meanG1,widthG1)
-    gaus2 = root.RooGaussian("CMS_hmm_"+channelName+"_"+name+"_gaus2",
+    gaus2 = root.RooGaussian(channelName+"_"+name+"_gaus2",
                              channelName+"_"+name+"_gaus2",
                              dimuonMass,meanG2,widthG2)
     pdfMmumu = root.RooAddPdf(convertSigName(name,energyStr),
@@ -1173,7 +1173,7 @@ def makePDFSigDG(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,ch
     rooParamList += [meanG1,meanG2,widthG1,widthG2,mixGG]
     
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True),root.RooFit.Range("signalfit"))
-    fr.SetName("CMS_hmm_"+name+"_fitResult")
+    fr.SetName(name+"_fitResult")
 
     #mean.setVal(125.)
     #width.setVal(2.)
@@ -1274,33 +1274,33 @@ def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=True)
     if useDG:
       #if len(params.keys())>4:
       # define the Double Gaussian
-      meanG1 = root.RooRealVar("CMS_hmm_"+channelName+"_"+name+"_MeanG1",
+      meanG1 = root.RooRealVar(channelName+"_"+name+"_MeanG1",
                                channelName+"_"+name+"_MeanG1", 
                                par_meanG1[massStr])
       #params['meanG1'])
-      meanG2 = root.RooRealVar("CMS_hmm_"+channelName+"_"+name+"_MeanG2",
+      meanG2 = root.RooRealVar(channelName+"_"+name+"_MeanG2",
                                channelName+"_"+name+"_MeanG2", 
                                par_meanG2[massStr])
                                ##par_meanG1[massStr])
       #params['meanG2'])
       
-      widthG1 = root.RooRealVar("CMS_hmm_"+channelName+"_"+name+"_WidthG1",
+      widthG1 = root.RooRealVar(channelName+"_"+name+"_WidthG1",
                                 channelName+"_"+name+"_WidthG1", 
                                 par_widthG1[massStr])
       #params['widthG1'])
-      widthG2 = root.RooRealVar("CMS_hmm_"+channelName+"_"+name+"_WidthG2",
+      widthG2 = root.RooRealVar(channelName+"_"+name+"_WidthG2",
                                 channelName+"_"+name+"_WidthG2", 
                                 par_widthG2[massStr])
       #params['widthG2'])
         
-      mixGG = root.RooRealVar("CMS_hmm_"+channelName+"_"+name+"_mixGG",
+      mixGG = root.RooRealVar(channelName+"_"+name+"_mixGG",
                               channelName+"_"+name+"_mixGG", 
                               par_mixGG[massStr])
       #params['mixGG'])
-      gaus1 = root.RooGaussian("CMS_hmm_"+channelName+"_"+name+"_gaus1",
+      gaus1 = root.RooGaussian(channelName+"_"+name+"_gaus1",
                                channelName+"_"+name+"_gaus1",
                                dimuonMass,meanG1,widthG1)
-      gaus2 = root.RooGaussian("CMS_hmm_"+channelName+"_"+name+"_gaus2",
+      gaus2 = root.RooGaussian(channelName+"_"+name+"_gaus2",
                                channelName+"_"+name+"_gaus2",
                                dimuonMass,meanG2,widthG2)
       pdfMmumu = root.RooAddPdf(convertSigName(name,energy),
@@ -1316,22 +1316,22 @@ def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=True)
       paramList.append(Param(widthG2.GetName(),widthG2.getVal(),widthG2.getVal()*muonres[energy],widthG2.getVal()*muonres[energy]))
 
     else:
-      mean = root.RooRealVar("CMS_hmm_"+channelName+"_"+name+"_Mean",
+      mean = root.RooRealVar(channelName+"_"+name+"_Mean",
                              channelName+"_"+name+"_Mean",
                              par_mean[massStr])
                              #params['mean'])
-      width = root.RooRealVar("CMS_hmm_"+channelName+"_"+name+"_Width",
+      width = root.RooRealVar(channelName+"_"+name+"_Width",
                               channelName+"_"+name+"_Width",
                               par_width[massStr])
                               #params['width1'])
-      #width2 = root.RooRealVar("CMS_hmm_"+channelName+"_"+name+"_Width2",
+      #width2 = root.RooRealVar(channelName+"_"+name+"_Width2",
       #                         channelName+"_"+name+"_Width2",
       #                         params['width2'])
-      alpha = root.RooRealVar("CMS_hmm_"+channelName+"_"+name+"_Alpha",
+      alpha = root.RooRealVar(channelName+"_"+name+"_Alpha",
                               channelName+"_"+name+"_Alpha",
                               par_alpha[massStr])
                               #params['Alpha'])
-      n = root.RooRealVar("CMS_hmm_"+channelName+"_"+name+"_n",
+      n = root.RooRealVar(channelName+"_"+name+"_n",
                           channelName+"_"+name+"_n",
                           par_n[massStr])
                           #params['n'])
@@ -1432,6 +1432,7 @@ class Analysis:
     minMass = controlRegionLow[0]
     self.minMass = minMass
     self.maxMass = maxMass
+    #dimuonMass = root.RooRealVar("dimuonMass","dimuonMass",minMass,maxMass)
     dimuonMass = root.RooRealVar("dimuonMass","dimuonMass",minMass,maxMass)
     dimuonMass.setRange("exprange",120.,controlRegionHigh[1])
     dimuonMass.setRange("whole",controlRegionLow[0],controlRegionHigh[1])
@@ -2026,7 +2027,7 @@ class DataCardMaker:
         binFormatList.append(channelName)
   
         proc1FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-        proc1FormatList.append("CMS_hmm_bak")
+        proc1FormatList.append("bak")
   
         proc2FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
         proc2FormatList.append(iProc)
