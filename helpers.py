@@ -2053,9 +2053,9 @@ class CrossSecsErrs:
         self.qcdScaleErr[key] = max(abs(self.data[key][3]),abs(self.data[key][4]))/100.
         self.qcdScaleLnN[key] = self.qcdScaleErr[key] + 1.0
 
-        self.pdfUncErrUp[key] = self.data[key][3]/100.
-        self.pdfUncErrDown[key] = self.data[key][4]/100.
-        self.pdfUncErr[key] = max(abs(self.data[key][3]),abs(self.data[key][4]))/100.
+        self.pdfUncErrUp[key] = self.data[key][5]/100.
+        self.pdfUncErrDown[key] = self.data[key][6]/100.
+        self.pdfUncErr[key] = max(abs(self.data[key][5]),abs(self.data[key][6]))/100.
         self.pdfUncLnN[key] = self.pdfUncErr[key] + 1.0
 
   def __getitem__(self,key):
