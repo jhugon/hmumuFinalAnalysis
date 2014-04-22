@@ -1425,7 +1425,16 @@ class Analysis:
 
     self.workspace = root.RooWorkspace(analysis+energyStr)
     self.workspaceName = analysis+energyStr
-    wImport = getattr(self.workspace,"import")
+
+    #wImport = getattr(self.workspace,"import")
+    def wImport(var):
+      if type(var) == root.RooFitResult:
+        return
+      if type(var) == root.RooDataSet or type(var) == root.RooDataHist:
+        getattr(self.workspace,"import")(var,root.RooFit.RenameVariable("dimuonMass","dimuonMass_CMShmm"))
+      else:
+        getattr(self.workspace,"import")(var,root.RooFit.RenameAllNodes("CMShmm"),root.RooFit.RenameAllVariables("CMShmm"))
+
     self.sigInjectWorkspaces = []
 
     maxMass = controlRegionHigh[1]
