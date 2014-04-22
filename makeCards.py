@@ -75,15 +75,32 @@ def vetoOutOfBoundsEvents(hist,boundaries=[]):
     hist.SetBinContent(i,0.0)
     hist.SetBinError(i,0.0)
 
-def convertSigName(name):
+def convertSigName(name,energyStr):
   if "ggH" in name:
-    return "ggH"
-  if "vbfH" in name:
-    return "qqH"
-  if "whH" in name:
-    return "WH"
-  if "zhH" in name:
-    return "ZH"
+    name="ggH"
+  elif "vbfH" in name:
+    name="qqH"
+  elif "whH" in name:
+    name="WH"
+  elif "zhH" in name:
+    name="ZH"
+  name += "_hmm"+energyStr
+  return name
+
+def convertUncName(name):
+  if "lumi" in name:
+    return name
+  if "QCDscale" in name:
+    return name
+  if "CMS_scale" in name:
+    return name
+  if "CMS_res" in name:
+    return name
+  if "pdf_gg" == name:
+    return name
+  if "pdf_qqbar" == name:
+    return name
+  name = "CMS_hmm_"+name
   return name
 
 class Param:
@@ -1059,7 +1076,7 @@ def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,d
     return paramList, bakNormTup, debug, None
 
 
-def makePDFSigCBPlusGaus(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,channelName,forceMean=-1.,sigInject=0):
+def makePDFSigCBPlusGaus(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,channelName,energyStr,forceMean=-1.,sigInject=0):
 
     debug = ""
     debug += "### makePDFSigCBPlusGaus: "+channelName+": "+name+"\n"
@@ -1074,7 +1091,7 @@ def makePDFSigCBPlusGaus(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
     mix = root.RooRealVar(channelName+"_"+name+"_mix",channelName+"_"+name+"_mix",0.5,0.0,1.0)
     cb = root.RooCBShape(name+"_CB",name+"_CB",dimuonMass,mean,width,alpha,n)
     gaus = root.RooGaussian(name+"_Gaus",name+"_Gaus",dimuonMass,mean,width2)
-    pdfMmumu = root.RooAddPdf(convertSigName(name),convertSigName(name),cb,gaus,mix)
+    pdfMmumu = root.RooAddPdf(convertSigName(name,energyStr),convertSigName(name,energyStr),cb,gaus,mix)
     
     fr = pdfMmumu.fitTo(rooDataset,root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True),root.RooFit.Range("signalfit"))
     fr.SetName(name+"_fitResult")
@@ -1118,7 +1135,7 @@ def makePDFSigCBPlusGaus(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
 
     return paramList, debug, sigInjectDataset
 
-def makePDFSigDG(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,channelName,forceMean=-1.,sigInject=0):
+def makePDFSigDG(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,channelName,energyStr,forceMean=-1.,sigInject=0):
 
     debug = ""
     debug += "### makePDFSigDG: "+channelName+": "+name+"\n"
@@ -1150,7 +1167,7 @@ def makePDFSigDG(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,ch
     gaus2 = root.RooGaussian(channelName+"_"+name+"_gaus2",
                              channelName+"_"+name+"_gaus2",
                              dimuonMass,meanG2,widthG2)
-    pdfMmumu = root.RooAddPdf(convertSigName(name),
+    pdfMmumu = root.RooAddPdf(convertSigName(name,energyStr),
                               name,
                               gaus1,gaus2,mixGG)
     rooParamList += [meanG1,meanG2,widthG1,widthG2,mixGG]
@@ -1286,7 +1303,7 @@ def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=True)
       gaus2 = root.RooGaussian(channelName+"_"+name+"_gaus2",
                                channelName+"_"+name+"_gaus2",
                                dimuonMass,meanG2,widthG2)
-      pdfMmumu = root.RooAddPdf(convertSigName(name),
+      pdfMmumu = root.RooAddPdf(convertSigName(name,energy),
                                 name,
                                 gaus1,gaus2,mixGG)
 
@@ -1323,8 +1340,8 @@ def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=True)
       #                         params['mix'])
       #cb = root.RooCBShape(name+"_CB",name+"_CB",dimuonMass,mean,width,alpha,n)
       #gaus = root.RooGaussian(name+"_Gaus",name+"_Gaus",dimuonMass,mean,width2)
-      #pdfMmumu = root.RooAddPdf(convertSigName(name),name,cb,gaus,mix)
-      pdfMmumu = root.RooCBShape(convertSigName(name),name,dimuonMass,mean,width,alpha,n)
+      #pdfMmumu = root.RooAddPdf(convertSigName(name,energy),name,cb,gaus,mix)
+      pdfMmumu = root.RooCBShape(convertSigName(name,energy),name,dimuonMass,mean,width,alpha,n)
       #pdfMmumu = root.RooAddPdf(convertSigName(name),name,cb,gaus,mix)
       workspaceImportFn(pdfMmumu)
       rooParamList += [mean,width,alpha,n]
@@ -1570,12 +1587,12 @@ class Analysis:
       self.debug += "# Signal Histogram for Shape: {0} Counts: {1:.1f}\n".format(signalNames[maxIndex],maxCounts)
       sigHistRawToUse = self.sigHistsRaw[maxIndex]
       for name in signalNames:
-          sigParams, sigDebug, tmpDS = makePDFSig(name,sigHistRawToUse,dimuonMass,minMass,maxMass,wImport,analysis+energyStr)
+          sigParams, sigDebug, tmpDS = makePDFSig(name,sigHistRawToUse,dimuonMass,minMass,maxMass,wImport,analysis+energyStr,energyStr)
           self.sigParamList.append(sigParams)
           self.debug += sigDebug
     else:
       for name, hist in zip(signalNames,self.sigHistsRaw):
-          sigParams, sigDebug, tmpDS = makePDFSig(name,hist,dimuonMass,minMass,maxMass,wImport,analysis+energyStr,forceMean=higgsPeakMean)
+          sigParams, sigDebug, tmpDS = makePDFSig(name,hist,dimuonMass,minMass,maxMass,wImport,analysis+energyStr,energyStr,forceMean=higgsPeakMean)
           self.sigParamList.append(sigParams)
           self.debug += sigDebug
           
@@ -1737,7 +1754,7 @@ class Analysis:
       if counts == 0:
         continue
       tmpName = name+"TmpSigInject"+str(random.randint(0,10000))
-      sigParams, sigDebug, rooData = makePDFSig(tmpName,hist,dimuonMass,sigMass-20,sigMass+20,wImport,tmpName,forceMean=sigMass-0.3,sigInject=counts)
+      sigParams, sigDebug, rooData = makePDFSig(tmpName,hist,dimuonMass,sigMass-20,sigMass+20,wImport,tmpName,energyStr,forceMean=sigMass-0.3,sigInject=counts)
       if dataHist.InheritsFrom("RooAbsData"):
         dataHist.append(rooData)
       else:
@@ -1842,6 +1859,8 @@ class Analysis:
     return self.countsSigTotal
   def getBakCountsTotal(self):
     return self.countsBakTotal
+  def getEnergy(self):
+    return self.energyStr
 
 ###################################################################################
 
@@ -1987,7 +2006,7 @@ class DataCardMaker:
           binFormatList.append(channelName)
   
           proc1FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-          proc1FormatList.append(convertSigName(sigName))
+          proc1FormatList.append(convertSigName(sigName,channel.getEnergy()))
   
           proc2FormatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
           proc2FormatList.append(iProc)
@@ -2055,7 +2074,7 @@ class DataCardMaker:
     # Correlated between everything:
     for nu in nuisance.keysEnergyCorr:
       formatString = "{0:<8} {1:^4} "
-      formatList = [nu,"lnN"]
+      formatList = [convertUncName(nu),"lnN"]
       iParam = 2
       for channel,channelName in zip(self.channels,self.channelNames):
           channelNameNoEnergy = re.sub(r"[\d]TeV$","",channelName)
@@ -2090,7 +2109,7 @@ class DataCardMaker:
         energyList = [energyStr]
       for energy in energyList:
         formatString = "{0:<8} {1:^4} "
-        formatList = [nu+"_"+energy,"lnN"]
+        formatList = [convertUncName(nu+"_"+energy),"lnN"]
         iParam = 2
         for channel,channelName in zip(self.channels,self.channelNames):
             channelEnergyMatch = re.search(r"[\d]TeV$",channelName)
@@ -2129,7 +2148,7 @@ class DataCardMaker:
       for channel,channelName in zip(self.channels,self.channelNames):
         for sigName in channel.sigNames:
           formatString = "{0:<8} {1:^4} "
-          formatList = [nu+"_"+channelName,"lnN"]
+          formatList = [convertUncName(nu+"_"+channelName),"lnN"]
           iParam = 2
           for channel2,channelName2 in zip(self.channels,self.channelNames):
             channelNameNoEnergy = re.sub(r"[\d]TeV$","",channelName)
@@ -2165,11 +2184,11 @@ class DataCardMaker:
     for channel1,channel1Name in zip(self.channels,self.channelNames):
       tmpTup = channel1.bakNormTup
       formatString = "{0:<8} {1:^3} {2:.0f}"
-      formatList = ["bkN"+channel1Name,"gmN",tmpTup[0]]
+      formatList = [convertUncName("bkN"+channel1Name),"gmN",tmpTup[0]]
       iParam = 3
       if FREEBAKPARAMS:
         formatString = "{0:<8} {1:^3}"
-        formatList = ["bkN"+channel1Name,"lnU"]
+        formatList = [convertUncName("bkN"+channel1Name),"lnU"]
         iParam = 2
       for channel in self.channels:
           for sigName in channel.sigNames:
@@ -2283,7 +2302,7 @@ if __name__ == "__main__":
   #directory = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  #periods = ["8TeV"]
+  periods = ["8TeV"]
   #periods = ["7TeV"]
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
   categoriesFF = ["BB","BO","BE","OO","FF"]
@@ -2340,7 +2359,7 @@ if __name__ == "__main__":
 #  analyses += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
 #  analyses += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   analyses += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  analyses += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+#  analyses += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 #  analyses += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 #
 #

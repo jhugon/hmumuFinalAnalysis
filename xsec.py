@@ -321,7 +321,7 @@ class NuisanceMap:
         "8TeV" : 1.026,    # 2012 Pixel-Lumi
         "7TeV" : 1.022,
         }
-    self.JES = {
+    self.CMS_scale_j = {
       'gg' : {
         '7TeV' : {
           'Jet2CutsFailVBFGF' : 1.0832,
@@ -387,7 +387,7 @@ class NuisanceMap:
           },
         },
       }
-    self.JER = {
+    self.CMS_res_j = {
       'gg' : {
         '7TeV' : {
           'Jet2CutsFailVBFGF' : -1.0166,
@@ -851,9 +851,9 @@ class NuisanceMap:
       }
 
     # The list of systematics to be applied
-    self._keys = ["xs_ggH","xs_vbfH","xs_whH","xs_zhH","br_Hmm","lumi","PDF","JES","JER","PUID","MCStat","PU","UE","QCDScale"]
+    self._keys = ["xs_ggH","xs_vbfH","xs_whH","xs_zhH","br_Hmm","lumi","pdf_gg_ACCEPT","pdf_qqbar_ACCEPT","CMS_scale_j","CMS_res_j","PUID","MCStat","PU","UE","QCDscale_ggH_ACCEPT","QCDscale_qqH_ACCEPT"]
     # The list of systematics which are correlated between energies
-    self.keysEnergyCorr = ["xs_ggH","xs_vbfH","xs_whH","xs_zhH","br_Hmm","PDF","JER","UE","QCDScale"]
+    self.keysEnergyCorr = ["xs_ggH","xs_vbfH","xs_whH","xs_zhH","br_Hmm","pdf_gg_ACCEPT","pdf_qqbar_ACCEPT","CMS_scale_j","CMS_res_j","UE","QCDscale_ggH_ACCEPT","QCDscale_qqH_ACCEPT"]
     # The list of systematics which are not correlated between energies or categories
     self.keysNotCatCorr = ["MCStat"]
     # The list of systematics which are not correlated between energies, but correlated w/ categories 
@@ -895,15 +895,22 @@ class NuisanceMap:
       return self.br.getLnN(mass)
     if nu == "lumi" and match:
       return self.lumi[energy]
-    if nu == "PDF" and match:
+    if nu == "pdf_gg_ACCEPT" and match:
       category = self.getBaseCat(category)
+      if prodMode != "gg":
+        return None
       return goodCorr(self.PDF[prodMode][energy][category])
-    if nu == "JES" and match:
+    if nu == "pdf_qqbar_ACCEPT" and match:
       category = self.getBaseCat(category)
-      return goodCorr(self.JES[prodMode][energy][category])
-    if nu == "JER" and match:
+      if prodMode != "vbf":
+        return None
+      return goodCorr(self.PDF[prodMode][energy][category])
+    if nu == "CMS_scale_j" and match:
       category = self.getBaseCat(category)
-      return goodCorr(self.JER[prodMode][energy][category])
+      return goodCorr(self.CMS_scale_j[prodMode][energy][category])
+    if nu == "CMS_res_j" and match:
+      category = self.getBaseCat(category)
+      return goodCorr(self.CMS_res_j[prodMode][energy][category])
     if nu == "MCStat" and match:
       category = self.getBaseCat(category)
       return goodCorr(self.MCStat[prodMode][energy][category])
@@ -913,7 +920,14 @@ class NuisanceMap:
     if nu == "PUID" and match:
       category = self.getBaseCat(category)
       return goodCorr(self.PUID[prodMode][energy][category])
-    if nu == "QCDScale" and match:
+    if nu == "QCDscale_ggH_ACCEPT" and match:
+      if prodMode != "gg":
+        return None
+      category = self.getBaseCat(category)
+      return goodCorr(self.QCDScale[prodMode][energy][category])
+    if nu == "QCDscale_qqH_ACCEPT" and match:
+      if prodMode != "vbf":
+        return None
       category = self.getBaseCat(category)
       return goodCorr(self.QCDScale[prodMode][energy][category])
     if nu == "UE" and match:
