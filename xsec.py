@@ -851,9 +851,9 @@ class NuisanceMap:
       }
 
     # The list of systematics to be applied
-    self._keys = ["xs_ggH","xs_vbfH","xs_whH","xs_zhH","br_Hmm","lumi","pdf_gg_ACCEPT","pdf_qqbar_ACCEPT","CMS_scale_j","CMS_res_j","PUID","MCStat","PU","UE","QCDscale_ggH_ACCEPT","QCDscale_qqH_ACCEPT"]
+    self._keys = ["QCDscale_ggH","QCDscale_qqH","QCDscale_VH","pdf_gg","pdf_qqbar","br_Hmm","lumi","pdf_gg_ACCEPT","pdf_qqbar_ACCEPT","CMS_scale_j","CMS_res_j","PUID","MCStat","PU","UE","QCDscale_ggH_ACCEPT","QCDscale_qqH_ACCEPT"]
     # The list of systematics which are correlated between energies
-    self.keysEnergyCorr = ["xs_ggH","xs_vbfH","xs_whH","xs_zhH","br_Hmm","pdf_gg_ACCEPT","pdf_qqbar_ACCEPT","CMS_scale_j","CMS_res_j","UE","QCDscale_ggH_ACCEPT","QCDscale_qqH_ACCEPT"]
+    self.keysEnergyCorr = ["QCDscale_ggH","QCDscale_qqH","QCDscale_VH","pdf_gg","pdf_qqbar","br_Hmm","pdf_gg_ACCEPT","pdf_qqbar_ACCEPT","CMS_scale_j","CMS_res_j","UE","QCDscale_ggH_ACCEPT","QCDscale_qqH_ACCEPT"]
     # The list of systematics which are not correlated between energies or categories
     self.keysNotCatCorr = ["MCStat"]
     # The list of systematics which are not correlated between energies, but correlated w/ categories 
@@ -876,20 +876,31 @@ class NuisanceMap:
     prodMode = match.group(1)
     energy = match.group(3)
     goodCorr =  self.goodCorr
-    if re.match(r"^xs_.*",nu) and match:
+    matchQCDScale =  re.match(r"^QCDscale_([gqHV]+)$",nu)
+    if matchQCDScale and match:
       result = None
-      if prodMode not in nu:
-        return None
-      if prodMode == "vbf":
-        result = self.vbf[energy].getLnN(mass)
-      elif prodMode == "gg":
-        result = self.gg[energy].getLnN(mass)
-      elif prodMode == "wh":
-        result = self.wh[energy].getLnN(mass)
-      elif prodMode == "zh":
-        result = self.zh[energy].getLnN(mass)
-      else:
-        raise Exception("Higgs Production mode not recognized for: "+ds)
+      if prodMode == "vbf" and matchQCDScale.group(1)=="qqH":
+        result = self.vbf[energy].getQCDScaleLnN(mass)
+      elif prodMode == "gg" and matchQCDScale.group(1)=="ggH":
+        result = self.gg[energy].getQCDScaleLnN(mass)
+      elif prodMode == "wh" and matchQCDScale.group(1)=="VH":
+        result = self.wh[energy].getQCDScaleLnN(mass)
+      elif prodMode == "zh" and matchQCDScale.group(1)=="VH":
+        result = self.zh[energy].getQCDScaleLnN(mass)
+      #print ("Info: finding QCDscale Unc for nuisance: {0} process: {1} prodMode: {2}, Unc: {3}".format(nu,ds,prodMode,result))
+      return result
+    matchPDFUnc = re.match(r"^pdf_([gqbar]+)$",nu)
+    if matchPDFUnc and match:
+      result = None
+      if prodMode == "vbf" and matchPDFUnc.group(1)=="qqbar":
+        result = self.vbf[energy].getPDFUncLnN(mass)
+      elif prodMode == "gg" and matchPDFUnc.group(1)=="gg":
+        result = self.gg[energy].getPDFUncLnN(mass)
+      elif prodMode == "wh" and matchPDFUnc.group(1)=="qqbar":
+        result = self.wh[energy].getPDFUncLnN(mass)
+      elif prodMode == "zh" and matchPDFUnc.group(1)=="qqbar":
+        result = self.zh[energy].getPDFUncLnN(mass)
+      #print ("Info: finding pdf Unc for nuisance: {0} process: {1} prodMode: {2}, Unc: {3}, group1: {4}".format(nu,ds,prodMode,result,matchPDFUnc.group(1)))
       return result
     if nu == "br_Hmm" and match:
       return self.br.getLnN(mass)

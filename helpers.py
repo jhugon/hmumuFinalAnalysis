@@ -2025,12 +2025,39 @@ class CrossSecsErrs:
     self.errUp = {}
     self.errDown = {}
     self.lnN = {}
+
+    self.qcdScaleErrUp = {}
+    self.pdfUncErrUp = {}
+    self.qcdScaleErrDown = {}
+    self.pdfUncErrDown = {}
+    self.qcdScaleErr = {}
+    self.pdfUncErr = {}
+    self.qcdScaleLnN = {}
+    self.pdfUncLnN = {}
+
+    self.isBR = False
+    for key in self.data:
+      print len(self.data[key])
+      if len(self.data[key]) < 7:
+        self.isBR = True
+      break
     for key in self.data:
       self.nominal[key] = self.data[key][0]
       self.errUp[key] = self.data[key][1]/100.
       self.errDown[key] = self.data[key][2]/100.
       self.err[key] = max(abs(self.data[key][1]),abs(self.data[key][2]))/100.
       self.lnN[key] = self.err[key] + 1.0
+      if not self.isBR:
+        self.qcdScaleErrUp[key] = self.data[key][3]/100.
+        self.qcdScaleErrDown[key] = self.data[key][4]/100.
+        self.qcdScaleErr[key] = max(abs(self.data[key][3]),abs(self.data[key][4]))/100.
+        self.qcdScaleLnN[key] = self.qcdScaleErr[key] + 1.0
+
+        self.pdfUncErrUp[key] = self.data[key][3]/100.
+        self.pdfUncErrDown[key] = self.data[key][4]/100.
+        self.pdfUncErr[key] = max(abs(self.data[key][3]),abs(self.data[key][4]))/100.
+        self.pdfUncLnN[key] = self.pdfUncErr[key] + 1.0
+
   def __getitem__(self,key):
     return self.extrap(self.nominal,key)
   def getLnN(self,key):
@@ -2039,6 +2066,14 @@ class CrossSecsErrs:
     return self.data.has_key(key)
   def keys(self):
     return self.data.keys()
+  def getPDFUncLnN(self,mass):
+    if self.isBR:
+      return None
+    return self.extrap(self.pdfUncLnN,mass)
+  def getQCDScaleLnN(self,mass):
+    if self.isBR:
+      return None
+    return self.extrap(self.qcdScaleLnN,mass)
   def extrap(self,dict,mass):
     if dict.has_key(mass):
       return dict[mass]
