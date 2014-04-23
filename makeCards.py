@@ -2231,7 +2231,7 @@ class DataCardMaker:
       for channel,channelName in zip(self.channels,self.channelNames):
         for nu in channel.params:
           if "voit" in nu.name: # only constrain voigtian parameters
-            nuisanceName = nu.name
+            nuisanceName = nu.name + "_CMShmm"
             formatString = "{0:<25} {1:<6} {2:<10.5g} {3:<10}"
             formatList = [nuisanceName,"param",nu.nominal,nu.getErrString()]
             formatString += "\n"
@@ -2244,7 +2244,7 @@ class DataCardMaker:
         for siglist in channel.sigParamList:
           for nu in siglist:
             #print nu
-            nuisanceName = nu.name
+            nuisanceName = nu.name +"_CMShmm"
             formatString = "{0:<25} {1:<6} {2:<10.5g} {3:<10}"
             formatList = [nuisanceName,"param",nu.nominal,nu.getErrString()]
             formatString += "\n"
