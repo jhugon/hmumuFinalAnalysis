@@ -1529,7 +1529,7 @@ class Analysis:
         self.bakHistTotal.Add(h)
 
     #self.bakHistTotal.Scale(lumi)
-    #self.bakHistTotalReal = self.bakHistTotal.Clone("data_obs")
+    #self.bakHistTotalReal = self.bakHistTotal.Clone("data_obs_CMShmm")
 
     self.dataCountsTotal = None
     self.datHistTotal = None
@@ -1540,7 +1540,7 @@ class Analysis:
       else:
         self.dataCountsTotal += counts
       if self.datHistTotal == None:
-        self.datHistTotal = h.Clone("data_obs")
+        self.datHistTotal = h.Clone("data_obs_CMShmm")
       else:
         #self.datHistTotal.add(h)
         self.datHistTotal.append(h)
@@ -1555,7 +1555,7 @@ class Analysis:
       else:
         self.dataCountsTotalZ += counts
       if self.datHistTotalZ == None:
-        self.datHistTotalZ = h.Clone("data_obs_Z")
+        self.datHistTotalZ = h.Clone("data_obs_Z_CMShmm")
       else:
         #self.datHistTotalZ.add(h)
         self.datHistTotalZ.append(h)
@@ -1665,10 +1665,10 @@ class Analysis:
         for j in range(contentInt):
           bakDataTH1.Fill(binCenter)
       self.dataCountsTotal = int(bakDataTH1.Integral())
-      obsData = root.RooDataHist("data_obs","MC Full-Sim Data",root.RooArgList(dimuonMass),bakDataTH1)
+      obsData = root.RooDataHist("data_obs_CMShmm","MC Full-Sim Data",root.RooArgList(dimuonMass),bakDataTH1)
       print "counts: {} obsData: {}".format(self.dataCountsTotal,obsData.sumEntries())
       wImport(obsData)
-      self.bakHistTotal.SetName("data_obs_"+analysis)
+      self.bakHistTotal.SetName("data_obs_CMShmm_"+analysis)
       #degubf = root.TFile("debug.root","recreate")
       #self.bakHistTotal.Write()
       #degubf.Close()
@@ -1677,11 +1677,11 @@ class Analysis:
       sigPDFList = [self.workspace.pdf(i) for i in signalNames]
       toyDataset = bakPDF.generate(root.RooArgSet(dimuonMass),int(self.dataCountsTotal))
       doSigInject(toyDataset,sigInject,sigInjectMass)
-      #toyDataHist = toyDataset.binnedClone("data_obs","Toy Data")
+      #toyDataHist = toyDataset.binnedClone("data_obs_CMShmm","Toy Data")
       self.dataCountsTotal = int(toyDataset.sumEntries())
       wImport(toyDataset)
     else:
-      #realDataHist = root.RooDataHist("data_obs","Real Observed Data",root.RooArgList(dimuonMass),self.datHistTotal)
+      #realDataHist = root.RooDataHist("data_obs_CMShmm","Real Observed Data",root.RooArgList(dimuonMass),self.datHistTotal)
       #wImport(realDataHist)
       #realDataHistNotVeryLow = realDataHist.reduce(root.RooFit.CutRange("low,signal,high"))
       #wImport(realDataHistNotVeryLow)
@@ -1696,6 +1696,7 @@ class Analysis:
     if BAKPARAMUNC:
       self.bakParamUncPdfName = "bakParamUnc"
       sigParams, sigDebug =  makePDFSigNew(analysis+energyStr,self.bakParamUncPdfName,dimuonMass,self.higgsMass,wImport)
+      self.bakParamUncPdfName = "bakParamUnc"+"_hmm"+energyStr
       self.sigParamList.append(sigParams)
       self.debug += sigDebug
       self.bakParamUncCounts = BakParameterizationUncDict[energyStr][analysis]
@@ -1952,8 +1953,8 @@ class DataCardMaker:
     rootDebugString = ""
 
     for channel in self.channels:
-        print(channel.workspace.data("data_obs").GetTitle())
-        rootDebugString += "# "+channel.workspace.data("data_obs").GetTitle()+"\n"
+        print(channel.workspace.data("data_obs_CMShmm").GetTitle())
+        rootDebugString += "# "+channel.workspace.data("data_obs_CMShmm").GetTitle()+"\n"
         channel.workspace.Write()
 
     outRootFile.Close()
@@ -1973,7 +1974,7 @@ class DataCardMaker:
     outfile.write("jmax {0}\n".format("*"))
     outfile.write("kmax {0}\n".format("*"))
     outfile.write("------------\n")
-    outfile.write("shapes * * {0} $CHANNEL:$PROCESS\n".format( os.path.basename(outRootFilename)))
+    outfile.write("shapes * * {0} $CHANNEL:$PROCESS_CMShmm\n".format( os.path.basename(outRootFilename)))
     outfile.write("------------\n")
     outfile.write("# Channels, observed N events:\n")
     # Make Channels String
