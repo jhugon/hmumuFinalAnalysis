@@ -269,6 +269,7 @@ MENormDict['8TeV']['bakMEPdf'] = 0.009364
 # in terms of number of signal events for eac category
 # For group 3 reference functions (including Bernstein)
 # Using H->gamma gamma bias measure: N(alt)-N(ref)
+# 7TeV 2-Jet VBF Tight corrected number
 BakParameterizationUncDict = {'7TeV':{},'8TeV':{}}
 BakParameterizationUncDict['7TeV']['Jets01PassPtG10BB'] = 22.50
 BakParameterizationUncDict['7TeV']['Jets01PassPtG10BO'] = 42.42
@@ -282,7 +283,7 @@ BakParameterizationUncDict['7TeV']['Jets01FailPtG10BE'] = 19.05
 BakParameterizationUncDict['7TeV']['Jets01FailPtG10OO'] = 19.12
 BakParameterizationUncDict['7TeV']['Jets01FailPtG10OE'] = 16.13
 BakParameterizationUncDict['7TeV']['Jets01FailPtG10EE'] = 5.64
-BakParameterizationUncDict['7TeV']['Jet2CutsVBFPass'] = 0.07
+BakParameterizationUncDict['7TeV']['Jet2CutsVBFPass'] = 0.52
 BakParameterizationUncDict['7TeV']['Jet2CutsGFPass'] = 1.74
 BakParameterizationUncDict['7TeV']['Jet2CutsFailVBFGF'] = 8.36
 BakParameterizationUncDict['8TeV']['Jets01PassPtG10BB'] = 40.82
