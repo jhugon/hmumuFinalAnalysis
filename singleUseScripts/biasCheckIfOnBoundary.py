@@ -146,7 +146,7 @@ if __name__ == "__main__":
         assert(not (boundaryNomArr < -1.0).any())
         fracBoundaryNom = sum(boundaryNomArr) / float(nSigNomArr.size)
 
-        print "    {0}: {1:15.0%} {2:15.0%}".format(mass,fracBoundaryRef,fracBoundaryNom)
+        print "    {0}: {1:15.0%} {2:15.0%} {3:15}".format(mass,fracBoundaryRef,fracBoundaryNom,nSigRefArr.size)
 
         nSigRefArr = numpy.array(dataCat[refFunc][mass]['nTrue'])
         nSigNomArr = numpy.array(dataCat[refFunc][mass]['MSSM']['n']) 
