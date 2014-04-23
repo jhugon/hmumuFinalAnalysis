@@ -9,6 +9,7 @@ parser.add_option("--cutOpt", help="Creates Cards with Different Cut Values",act
 parser.add_option("--gaussian", help="Use A Gaussian Signal Template with floating width",type=float,default=-1.0)
 parser.add_option("-m","--higgsMass", help="Use This Higgs Mass",type=float,default=-1.0)
 parser.add_option("--combinationsOnly", help="Run Only Combinations of Channels",action="store_true",default=False)
+parser.add_option("--forCombGroup",help="Removes Debug text to send to combination group",action="store_true",default=False)
 args, fakeargs = parser.parse_args()
 
 import math
@@ -2263,20 +2264,21 @@ class DataCardMaker:
           outfile.write(formatString.format(*formatList))
 
     #Debugging
-    outfile.write("#################################\n")
-    for channel,channelName in zip(self.channels,self.channelNames):
-        outfile.write("#\n")
-        outfile.write("#info: channel {0}: \n".format(channelName))
-        outfile.write(channel.debug)
-    outfile.write("#\n#\n")
-    outfile.write(rootDebugString)
-    outfile.write("# Signal Injected: {0:.1f} X SM, mH = {1:.1f}\n".format(sigInject,sigInjectMass))
+    if not args.forCombGroup:
+      outfile.write("#################################\n")
+      for channel,channelName in zip(self.channels,self.channelNames):
+          outfile.write("#\n")
+          outfile.write("#info: channel {0}: \n".format(channelName))
+          outfile.write(channel.debug)
+      outfile.write("#\n#\n")
+      outfile.write(rootDebugString)
+      outfile.write("# Signal Injected: {0:.1f} X SM, mH = {1:.1f}\n".format(sigInject,sigInjectMass))
 
-#    for channel,channelName in zip(self.channels,self.channelNames):
-#        outfile.write("#\n")
-#        outfile.write("#Efficiency: channel {0}: \n".format(channelName))
-#        for sigName in channel.sigNames:
-#          outfile.write("#  {0:>20}: {1:4f}\n".format(sigName,channel.getSigEff(sigName)))
+#      for channel,channelName in zip(self.channels,self.channelNames):
+#          outfile.write("#\n")
+#          outfile.write("#Efficiency: channel {0}: \n".format(channelName))
+#          for sigName in channel.sigNames:
+#            outfile.write("#  {0:>20}: {1:4f}\n".format(sigName,channel.getSigEff(sigName)))
     outfile.close()
 
 class ThreadedCardMaker(myThread):
@@ -2392,14 +2394,14 @@ if __name__ == "__main__":
 #    ,"Jets01SplitCatAll"
 #  ))
 # 
-#  # Jets >=2 Pass + Fail
-#  combinations.append((
-#    [  
-#     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
-#     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-#     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-#    ],"Jet2SplitCutsGFSplit"
-#  ))
+  # Jets >=2 Pass + Fail
+  combinations.append((
+    [  
+     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+    ],"Jet2SplitCutsGFSplit"
+  ))
 # 
 #  # Jets 0,1,>=2 Pass + Fail All
 #  combinations.append((
