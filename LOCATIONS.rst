@@ -61,6 +61,16 @@ H->mumu All Categories Bias Data
 
 Backup in /afs/cern.ch/user/j/jhugon/work/public/hmumuBkgBias/
 
+2014/04/21
+++++++++++++++
+
+New Bias Pkls for 7 TeV 2-Jet Tight VBF.  Biases from previous ones were too small
+b/c Nsignal was running into fit boundary.  Enlarged fit boundaries and sig injection 
+fixed problem.
+
+3 Sigma injected and branch "biasStudySpecialFor7TeV2JetVBFTight"
+ccce15ea3a8b71cacdbbfacb279b52bcb43e12d2
+
 2014/04/09
 +++++++++++++++
 
