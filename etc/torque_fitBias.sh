@@ -14,7 +14,9 @@
 # This controls what job group numbers are used
 
 ##PBS -t 0-140
-#PBS -t 0-1400
+##PBS -t 0-1400
+##PBS -t 2500-2520
+#PBS -t 2521-2530
 
 ##Job Resources
 #PBS -l walltime=1:00:00
@@ -57,7 +59,8 @@ categoriesImportant="Jets01PassPtG10BB Jets01PassPtG10BO Jets01PassPtG10BE Jet2C
 categoriesImportant01="Jets01PassPtG10BB Jets01PassPtG10BO Jets01PassPtG10BE"
 
 #categoriesToRun=$categoriesImportant
-categoriesToRun=$categoriesAll
+#categoriesToRun=$categoriesAll
+categoriesToRun="Jet2CutsVBFPass"
 
 nCats=$(echo $categoriesToRun | wc -w)
 #echo $nCats" "$categoriesToRun

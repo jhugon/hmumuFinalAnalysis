@@ -1339,7 +1339,7 @@ if __name__ == "__main__":
   ############################################
   ### Define number of toys to run over
 
-  nToys = 200
+  nToys = 50
 
   ############################################
   ### Define which reference functions to use
