@@ -16,30 +16,30 @@ lumiDict["7TeV"] = 5.05 #2011AB
 #LUMI=2.311 #2011A
 #LUMI=2.739 #2011B
 
-brDict = helpers.readCSVXS("etc/br.csv")
-ggHDict8 = helpers.readCSVXS("etc/ggH_8TeV.csv")
-vbfHDict8 = helpers.readCSVXS("etc/vbfH_8TeV.csv")
-wHDict8 = helpers.readCSVXS("etc/wH_8TeV.csv")
-zHDict8 = helpers.readCSVXS("etc/zH_8TeV.csv")
+brDict = helpers.readCSVXS("etc/brHmm.txt")
+ggHDict8 = helpers.readCSVXS("etc/8TeV-ggH.txt")
+vbfHDict8 = helpers.readCSVXS("etc/8TeV-vbfH.txt")
+wHDict8 = helpers.readCSVXS("etc/8TeV-WH.txt")
+zHDict8 = helpers.readCSVXS("etc/8TeV-ZH.txt")
 
-ggHDict7 = helpers.readCSVXS("etc/ggH_7TeV.csv")
-vbfHDict7 = helpers.readCSVXS("etc/vbfH_7TeV.csv")
-wHDict7 = helpers.readCSVXS("etc/wH_7TeV.csv")
-zHDict7 = helpers.readCSVXS("etc/zH_7TeV.csv")
+ggHDict7 = helpers.readCSVXS("etc/7TeV-ggH.txt")
+vbfHDict7 = helpers.readCSVXS("etc/7TeV-vbfH.txt")
+wHDict7 = helpers.readCSVXS("etc/7TeV-WH.txt")
+zHDict7 = helpers.readCSVXS("etc/7TeV-ZH.txt")
 
 class CrossSections:
   def __init__(self):
     self.data = {}
-    self.br = helpers.readCSVXS("etc/br.csv")
+    self.br = helpers.readCSVXS("etc/brHmm.txt")
     self.vbf = {}
     self.gg = {}
     self.wh = {}
     self.zh = {}
     for e in ["8TeV","7TeV"]:
-      self.vbf[e] = helpers.readCSVXS("etc/vbfH_"+e+".csv")
-      self.gg[e] = helpers.readCSVXS("etc/ggH_"+e+".csv")
-      self.wh[e] = helpers.readCSVXS("etc/wH_"+e+".csv")
-      self.zh[e] = helpers.readCSVXS("etc/zH_"+e+".csv")
+      self.vbf[e] = helpers.readCSVXS("etc/"+e+"-vbfH.txt")
+      self.gg[e] = helpers.readCSVXS("etc/"+e+"-ggH.txt")
+      self.wh[e] = helpers.readCSVXS("etc/"+e+"-WH.txt")
+      self.zh[e] = helpers.readCSVXS("etc/"+e+"-ZH.txt")
   def keys(self):
     return self.data.keys()
   def __setitem__(self,key,value):
@@ -305,16 +305,16 @@ BakParameterizationUncDict['8TeV']['Jet2CutsFailVBFGF'] = 25.27
 class NuisanceMap:
   def __init__(self):
     self.data = {}
-    self.br = helpers.readCSVXS("etc/br.csv")
+    self.br = helpers.readCSVXS("etc/brHmm.txt")
     self.vbf = {}
     self.gg = {}
     self.wh = {}
     self.zh = {}
     for e in ["8TeV","7TeV"]:
-      self.vbf[e] = helpers.readCSVXS("etc/vbfH_"+e+".csv")
-      self.gg[e] = helpers.readCSVXS("etc/ggH_"+e+".csv")
-      self.wh[e] = helpers.readCSVXS("etc/wH_"+e+".csv")
-      self.zh[e] = helpers.readCSVXS("etc/zH_"+e+".csv")
+      self.vbf[e] = helpers.readCSVXS("etc/"+e+"-vbfH.txt")
+      self.gg[e] = helpers.readCSVXS("etc/"+e+"-ggH.txt")
+      self.wh[e] = helpers.readCSVXS("etc/"+e+"-WH.txt")
+      self.zh[e] = helpers.readCSVXS("etc/"+e+"-ZH.txt")
     self.lumi = {
         #"14TeV" : 1.044,    # 2012 HF-Lumi
         #"8TeV" : 1.044,    # 2012 HF-Lumi
@@ -322,7 +322,7 @@ class NuisanceMap:
         "8TeV" : 1.026,    # 2012 Pixel-Lumi
         "7TeV" : 1.022,
         }
-    self.JES = {
+    self.CMS_scale_j = {
       'gg' : {
         '7TeV' : {
           'Jet2CutsFailVBFGF' : 1.0832,
@@ -388,7 +388,7 @@ class NuisanceMap:
           },
         },
       }
-    self.JER = {
+    self.CMS_res_j = {
       'gg' : {
         '7TeV' : {
           'Jet2CutsFailVBFGF' : -1.0166,
@@ -852,9 +852,9 @@ class NuisanceMap:
       }
 
     # The list of systematics to be applied
-    self._keys = ["xs_ggH","xs_vbfH","xs_whH","xs_zhH","br_Hmm","lumi","PDF","JES","JER","PUID","MCStat","PU","UE","QCDScale"]
+    self._keys = ["QCDscale_ggH","QCDscale_qqH","QCDscale_VH","pdf_gg","pdf_qqbar","br_Hmm","lumi","pdf_gg_ACCEPT","pdf_qqbar_ACCEPT","CMS_scale_j","CMS_res_j","PUID","MCStat","PU","UE","QCDscale_ggH_ACCEPT","QCDscale_qqH_ACCEPT"]
     # The list of systematics which are correlated between energies
-    self.keysEnergyCorr = ["xs_ggH","xs_vbfH","xs_whH","xs_zhH","br_Hmm","PDF","JER","UE","QCDScale"]
+    self.keysEnergyCorr = ["QCDscale_ggH","QCDscale_qqH","QCDscale_VH","pdf_gg","pdf_qqbar","br_Hmm","pdf_gg_ACCEPT","pdf_qqbar_ACCEPT","CMS_scale_j","CMS_res_j","UE","QCDscale_ggH_ACCEPT","QCDscale_qqH_ACCEPT"]
     # The list of systematics which are not correlated between energies or categories
     self.keysNotCatCorr = ["MCStat"]
     # The list of systematics which are not correlated between energies, but correlated w/ categories 
@@ -877,34 +877,52 @@ class NuisanceMap:
     prodMode = match.group(1)
     energy = match.group(3)
     goodCorr =  self.goodCorr
-    if re.match(r"^xs_.*",nu) and match:
+    matchQCDScale =  re.match(r"^QCDscale_([gqHV]+)$",nu)
+    if matchQCDScale and match:
       result = None
-      if prodMode not in nu:
-        return None
-      if prodMode == "vbf":
-        result = self.vbf[energy].getLnN(mass)
-      elif prodMode == "gg":
-        result = self.gg[energy].getLnN(mass)
-      elif prodMode == "wh":
-        result = self.wh[energy].getLnN(mass)
-      elif prodMode == "zh":
-        result = self.zh[energy].getLnN(mass)
-      else:
-        raise Exception("Higgs Production mode not recognized for: "+ds)
+      if prodMode == "vbf" and matchQCDScale.group(1)=="qqH":
+        result = self.vbf[energy].getQCDScaleLnN(mass)
+      elif prodMode == "gg" and matchQCDScale.group(1)=="ggH":
+        result = self.gg[energy].getQCDScaleLnN(mass)
+      elif prodMode == "wh" and matchQCDScale.group(1)=="VH":
+        result = self.wh[energy].getQCDScaleLnN(mass)
+      elif prodMode == "zh" and matchQCDScale.group(1)=="VH":
+        result = self.zh[energy].getQCDScaleLnN(mass)
+      #print ("Info: finding QCDscale Unc for nuisance: {0} process: {1} prodMode: {2}, Unc: {3}".format(nu,ds,prodMode,result))
+      return result
+    matchPDFUnc = re.match(r"^pdf_([gqbar]+)$",nu)
+    if matchPDFUnc and match:
+      result = None
+      if prodMode == "vbf" and matchPDFUnc.group(1)=="qqbar":
+        result = self.vbf[energy].getPDFUncLnN(mass)
+      elif prodMode == "gg" and matchPDFUnc.group(1)=="gg":
+        result = self.gg[energy].getPDFUncLnN(mass)
+      elif prodMode == "wh" and matchPDFUnc.group(1)=="qqbar":
+        result = self.wh[energy].getPDFUncLnN(mass)
+      elif prodMode == "zh" and matchPDFUnc.group(1)=="qqbar":
+        result = self.zh[energy].getPDFUncLnN(mass)
+      #print ("Info: finding pdf Unc for nuisance: {0} process: {1} prodMode: {2}, Unc: {3}, group1: {4}".format(nu,ds,prodMode,result,matchPDFUnc.group(1)))
       return result
     if nu == "br_Hmm" and match:
       return self.br.getLnN(mass)
     if nu == "lumi" and match:
       return self.lumi[energy]
-    if nu == "PDF" and match:
+    if nu == "pdf_gg_ACCEPT" and match:
       category = self.getBaseCat(category)
+      if prodMode != "gg":
+        return None
       return goodCorr(self.PDF[prodMode][energy][category])
-    if nu == "JES" and match:
+    if nu == "pdf_qqbar_ACCEPT" and match:
       category = self.getBaseCat(category)
-      return goodCorr(self.JES[prodMode][energy][category])
-    if nu == "JER" and match:
+      if prodMode != "vbf":
+        return None
+      return goodCorr(self.PDF[prodMode][energy][category])
+    if nu == "CMS_scale_j" and match:
       category = self.getBaseCat(category)
-      return goodCorr(self.JER[prodMode][energy][category])
+      return goodCorr(self.CMS_scale_j[prodMode][energy][category])
+    if nu == "CMS_res_j" and match:
+      category = self.getBaseCat(category)
+      return goodCorr(self.CMS_res_j[prodMode][energy][category])
     if nu == "MCStat" and match:
       category = self.getBaseCat(category)
       return goodCorr(self.MCStat[prodMode][energy][category])
@@ -914,7 +932,14 @@ class NuisanceMap:
     if nu == "PUID" and match:
       category = self.getBaseCat(category)
       return goodCorr(self.PUID[prodMode][energy][category])
-    if nu == "QCDScale" and match:
+    if nu == "QCDscale_ggH_ACCEPT" and match:
+      if prodMode != "gg":
+        return None
+      category = self.getBaseCat(category)
+      return goodCorr(self.QCDScale[prodMode][energy][category])
+    if nu == "QCDscale_qqH_ACCEPT" and match:
+      if prodMode != "vbf":
+        return None
       category = self.getBaseCat(category)
       return goodCorr(self.QCDScale[prodMode][energy][category])
     if nu == "UE" and match:
