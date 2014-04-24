@@ -54,6 +54,8 @@ H->mumu Datacards
 
 :2014/04/11: Datacards including bias due to background parameterization and using MSSM function as nominal background function /raid/raid7/jhugon/higgsDataCards/20140411/ & /afs/cern.ch/work/j/jhugon/public/datacards/20140411/
 
+:2014/04/24: Fixed too small bias in 7TeV 2-Jet VBF tight and made datacards conform to HCG standards /raid/raid7/jhugon/higgsDataCards/20140424/ & /afs/cern.ch/work/j/jhugon/public/datacards/20140424/
+
 H->mumu All Categories Bias Data
 --------------------------------
 
