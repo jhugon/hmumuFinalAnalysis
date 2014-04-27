@@ -785,7 +785,7 @@ class NuisanceMap:
       },
     }
 
-    # Muon efficiency uncertainty on yield; same for everything
+    # Muon efficiency uncertainty on yield; same for everything (not known for VH)
     self.CMS_eff_m = 1.016
 
     # The list of systematics to be applied
@@ -876,8 +876,11 @@ class NuisanceMap:
     if nu == "UEPS" and match:
       category = self.getBaseCat(category)
       return goodCorr(self.UEPS[prodMode][energy][category])
-    if nu == "CMS_eff_m":
-      return goodCorr(self.CMS_eff_m)
+    if nu == "CMS_eff_m" and match:
+      if prodMode == "gg" or prodMode == "vbf":
+        return goodCorr(self.CMS_eff_m)
+      else:
+        return None
     if nu == "CMS_eff_j" and match:
       category = self.getBaseCat(category)
       return goodCorr(self.CMS_eff_j[prodMode][energy][category])
