@@ -784,7 +784,7 @@ class NuisanceMap:
           },
         },
       }
-    self.UE = {
+    self.UEPS = {
       'gg' : {
         '8TeV' : {
           'Jets01PassPtG10' : -1.0618,
@@ -851,10 +851,13 @@ class NuisanceMap:
         },
       }
 
+    # Muon efficiency uncertainty on yield; same for everything
+    self.CMS_eff_m = 1.016
+
     # The list of systematics to be applied
-    self._keys = ["QCDscale_ggH","QCDscale_qqH","QCDscale_VH","pdf_gg","pdf_qqbar","br_Hmm","lumi","pdf_gg_ACCEPT","pdf_qqbar_ACCEPT","CMS_scale_j","CMS_res_j","PUID","MCStat","PU","UE","QCDscale_ggH_ACCEPT","QCDscale_qqH_ACCEPT"]
+    self._keys = ["QCDscale_ggH","QCDscale_qqH","QCDscale_VH","pdf_gg","pdf_qqbar","lumi","pdf_gg_ACCEPT","pdf_qqbar_ACCEPT","CMS_scale_j","CMS_res_j","PUID","MCStat","PU","UEPS","QCDscale_ggH_ACCEPT","QCDscale_qqH_ACCEPT","CMS_eff_m"]
     # The list of systematics which are correlated between energies
-    self.keysEnergyCorr = ["QCDscale_ggH","QCDscale_qqH","QCDscale_VH","pdf_gg","pdf_qqbar","br_Hmm","pdf_gg_ACCEPT","pdf_qqbar_ACCEPT","CMS_scale_j","CMS_res_j","UE","QCDscale_ggH_ACCEPT","QCDscale_qqH_ACCEPT"]
+    self.keysEnergyCorr = ["QCDscale_ggH","QCDscale_qqH","QCDscale_VH","pdf_gg","pdf_qqbar","pdf_gg_ACCEPT","pdf_qqbar_ACCEPT","CMS_scale_j","CMS_res_j","UEPS","QCDscale_ggH_ACCEPT","QCDscale_qqH_ACCEPT","CMS_eff_m"]
     # The list of systematics which are not correlated between energies or categories
     self.keysNotCatCorr = ["MCStat"]
     # The list of systematics which are not correlated between energies, but correlated w/ categories 
@@ -942,9 +945,11 @@ class NuisanceMap:
         return None
       category = self.getBaseCat(category)
       return goodCorr(self.QCDScale[prodMode][energy][category])
-    if nu == "UE" and match:
+    if nu == "UEPS" and match:
       category = self.getBaseCat(category)
-      return goodCorr(self.UE[prodMode][energy][category])
+      return goodCorr(self.UEPS[prodMode][energy][category])
+    if nu == "CMS_eff_m":
+      return goodCorr(self.CMS_eff_m)
   def getBaseCat(self,cat):
     categoriesAllCCFF = ["BB","BO","BE","OO","OE","EE","CC","FF"]
     for i in categoriesAllCCFF:

@@ -97,9 +97,13 @@ def convertUncName(name):
     return name
   if "CMS_res" in name:
     return name
+  if "CMS_eff" in name:
+    return name
   if "pdf_gg" == name:
     return name
   if "pdf_qqbar" == name:
+    return name
+  if "UEPS" == name:
     return name
   name = "CMS_hmm_"+name
   return name
@@ -2366,8 +2370,8 @@ if __name__ == "__main__":
   jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
-#  #analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-#  #analyses += [["Jets01FailPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+##  #analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+##  #analyses += [["Jets01FailPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
 #  analyses += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
 #  analyses += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   analyses += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
@@ -2394,14 +2398,14 @@ if __name__ == "__main__":
 #    ,"Jets01SplitCatAll"
 #  ))
 # 
-  # Jets >=2 Pass + Fail
-  combinations.append((
-    [  
-     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
-     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-    ],"Jet2SplitCutsGFSplit"
-  ))
+#  # Jets >=2 Pass + Fail
+#  combinations.append((
+#    [  
+#     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+#     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#    ],"Jet2SplitCutsGFSplit"
+#  ))
 # 
 #  # Jets 0,1,>=2 Pass + Fail All
 #  combinations.append((
