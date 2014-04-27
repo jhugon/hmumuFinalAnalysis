@@ -114,8 +114,8 @@ if __name__ == "__main__":
   print r"\begin{tabular}{ | c | c | c | c | c |} \hline"
   print r"Mass $[\GeVcc{}]$ & expected & observed & 1 $\sigma$ band &  2 $\sigma$ band \\ \hline"
   for line in combData:
-    print r"{0:.0f} & {1:.1f} & X.X & $^{{+{3:0.1f}}}_{{-{4:0.1f}}}$ & $^{{+{5:0.1f}}}_{{-{6:0.1f}}}$ \\ \hline".format(*[float(i) for i in line])
-    #print r"{0:.0f} & {1:.1f} & {2:0.1f} & $^{{+{3:0.1f}}}_{{-{4:0.1f}}}$ & $^{{+{5:0.1f}}}_{{-{6:0.1f}}}$ \\ \hline".format(*[float(i) for i in line])
+    #print r"{0:.0f} & {1:.1f} & X.X & $^{{+{3:0.1f}}}_{{-{4:0.1f}}}$ & $^{{+{5:0.1f}}}_{{-{6:0.1f}}}$ \\ \hline".format(*[float(i) for i in line])
+    print r"{0:.0f} & {1:.1f} & {2:0.1f} & $^{{+{3:0.1f}}}_{{-{4:0.1f}}}$ & $^{{+{5:0.1f}}}_{{-{6:0.1f}}}$ \\ \hline".format(*[float(i) for i in line])
   print r"\end{tabular}"
 
   
@@ -128,8 +128,8 @@ if __name__ == "__main__":
   print r"\begin{tabular}{ | l | c | c | c | c |} \hline"
   print r"Category(s) & expected & observed & 1 $\sigma$ band &  2 $\sigma$ band \\ \hline"
   for line in catsData:
-    print r"{0} & {1:.1f} & X.X & $^{{+{3:0.1f}}}_{{-{4:0.1f}}}$ & $^{{+{5:0.1f}}}_{{-{6:0.1f}}}$ \\ \hline".format(*line)
-    #print r"{0} & {1:.1f} & {2:0.1f} & $^{{+{3:0.1f}}}_{{-{4:0.1f}}}$ & $^{{+{5:0.1f}}}_{{-{6:0.1f}}}$ \\ \hline".format(*[float(i) for i in line])
+    #print r"{0} & {1:.1f} & X.X & $^{{+{3:0.1f}}}_{{-{4:0.1f}}}$ & $^{{+{5:0.1f}}}_{{-{6:0.1f}}}$ \\ \hline".format(*line)
+    print r"{0} & {1:.1f} & {2:0.1f} & $^{{+{3:0.1f}}}_{{-{4:0.1f}}}$ & $^{{+{5:0.1f}}}_{{-{6:0.1f}}}$ \\ \hline".format(*line)
   print r"\end{tabular}"
 
   print

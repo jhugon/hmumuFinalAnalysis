@@ -210,7 +210,7 @@ comparisonMap = {
 #######################################
 
 # Do match and don't match w/o extensions.  \.expsig and \.sig are added automatically
-def getDataSig(fileString,matchString=r"_([-\d.]+)\.txt",dontMatchStrings=[],doSort=True,getPValue=False,xMax=1e20):
+def getDataSig(fileString,matchString=r"_([-\d.]+)\.txt",dontMatchStrings=[],doSort=True,getPValue=False,xMax=1e20,xMin=-1e20):
   def sortfun(s):
     match = re.search(matchString,s)
     result = 1e12
@@ -241,6 +241,8 @@ def getDataSig(fileString,matchString=r"_([-\d.]+)\.txt",dontMatchStrings=[],doS
     if match:
       xNum = match.group(1)
       if float(xNum) > xMax:
+        continue
+      if float(xNum) < xMin:
         continue
     for line in tmpF:
       obsMatch = None
@@ -276,7 +278,7 @@ def getDataSig(fileString,matchString=r"_([-\d.]+)\.txt",dontMatchStrings=[],doS
   #print result
   return result
 
-def getDataMu(fileString,matchString=r"_([-\d.]+)\.txt\.mu",dontMatchStrings=[],doSort=True,xMax=1e20):
+def getDataMu(fileString,matchString=r"_([-\d.]+)\.txt\.mu",dontMatchStrings=[],doSort=True,xMax=1e20,xMin=-1e20):
   def sortfun(s):
     match = re.search(matchString,s)
     result = 1e12
@@ -306,6 +308,8 @@ def getDataMu(fileString,matchString=r"_([-\d.]+)\.txt\.mu",dontMatchStrings=[],
     if match:
       xNum = match.group(1)
       if float(xNum) > xMax:
+        continue
+      if float(xNum) < xMin:
         continue
     for line in tmpF:
       #obsMatch = re.search(r"Best fit r:[\s]+([.\deE-]+)[\s]+([.\deE-]+)/+([.\deE-]+)",line)
@@ -607,10 +611,13 @@ if __name__ == "__main__":
   setStyle()
   canvas = root.TCanvas()
   xMax=1e20
+  xMin=-1e20
+  if args.higgsMass:
+    xMax=150.
+    xMin=120.
+  canvas.SetLogy(0)
   if not args.higgsMass:
     canvas.SetLogx(1)
-    xMax=155.
-  canvas.SetLogy(0)
   
   ylimits=[]
 
@@ -659,14 +666,14 @@ if __name__ == "__main__":
       data = None
       doMuExtraPlot=True
       showObs=False
-      data = getDataMu(dirName+plotName+"_"+period+"_*.txt*",xMax=xMax)
+      data = getDataMu(dirName+plotName+"_"+period+"_*.txt*",xMax=xMax,xMin=xMin)
       if len(data)<=1 or not args.higgsMass:
         continue
       title = "Standard Model H#rightarrow#mu#mu"
       xlabel="Integrated Luminosity [fb^{-1}]"
-      ytitle = "Best Fit #sigma/#sigma_{SM}"
+      ytitle = "Best Fit #sigma/#sigma_{SM} (H#rightarrow#mu#mu)"
       if args.higgsMass:
-        title = titleMap[plotName]
+        title = title+" "+titleMap[plotName]
         xlabel="m_{H} [GeV/c^{2}]"
       incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,caption3=caption3,ylabel=ytitle,energyStr=energyStr,doMuExtraPlot=doMuExtraPlot,showObs=showObs,xlabel=xlabel)
       saveAs(canvas,outDir+"mu"+plotName+"_"+period)
@@ -763,7 +770,7 @@ if __name__ == "__main__":
         if plotName in vetos:
             continue
 
-        data = getDataSig(dirName+plotName+"_"+period+"_*.txt*",getPValue=True,xMax=xMax)
+        data = getDataSig(dirName+plotName+"_"+period+"_*.txt*",getPValue=True,xMax=xMax,xMin=xMin)
         pValueDict[plotName] = data
         if plotName == "CombSplitAll" and period=="7P8TeV":
           pklFile = open("pValuesCombSplitAll7P8TeV.pkl","w")

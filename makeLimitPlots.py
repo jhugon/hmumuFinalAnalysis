@@ -195,7 +195,7 @@ comparisonMap = {
 
 #######################################
 
-def getData(fileString,matchString=r"_([-\d.]+)\.txt\.out",dontMatchStrings=[],doSort=True,xMax=1.0e20):
+def getData(fileString,matchString=r"_([-\d.]+)\.txt\.out",dontMatchStrings=[],doSort=True,xMax=1.0e20,xMin=-1.0e20):
   def sortfun(s):
     match = re.search(matchString,s)
     result = 1e12
@@ -203,6 +203,7 @@ def getData(fileString,matchString=r"_([-\d.]+)\.txt\.out",dontMatchStrings=[],d
       result = float(match.group(1))
     return result
 
+  print fileString
   result = []
   fNames =  glob.glob(fileString)
   if doSort:
@@ -228,6 +229,8 @@ def getData(fileString,matchString=r"_([-\d.]+)\.txt\.out",dontMatchStrings=[],d
     if match:
       xNum = match.group(1)
       if float(xNum) > xMax:
+        continue
+      if float(xNum) < xMin:
         continue
     for line in tmpF:
       obsMatch = re.search(r"Observed[\s]Limit:[^.\d]*< ([.\deE]+)",line)
@@ -711,9 +714,11 @@ if __name__ == "__main__":
     legend.SetLineColor(0)
     for plotName in plots:
       xMax = 1e20
+      xMin = -1e20
       if args.higgsMass:
-        xMax = 155.
-      data = getData(dirName+plotName+"_"+energyStr+"_*.txt.out",xMax=xMax)
+        xMax = 150.
+        xMin = 120.
+      data = getData(dirName+plotName+"_"+energyStr+"_*.txt.out",xMax=xMax,xMin=xMin)
       if plotName == "CombSplitAll" and period=="7P8TeV":
         pklFile = open("limitsCombSplitAll7P8TeV.pkl","w")
         cPickle.dump(data,pklFile)
