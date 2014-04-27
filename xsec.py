@@ -454,72 +454,6 @@ class NuisanceMap:
           },
         },
       }
-    self.PUID = {
-      'gg' : {
-        '7TeV' : {
-          'Jet2CutsFailVBFGF' : 1.0109,
-          'Jet2CutsGFPass' : 1.0158,
-          'Jet2CutsVBFPass' : 1.0368,
-          'Jets01FailPtG10' : None,
-          'Jets01PassPtG10' : None,
-          },
-        '8TeV' : {
-          'Jet2CutsFailVBFGF' : 1.0142,
-          'Jet2CutsGFPass' : 1.0174,
-          'Jet2CutsVBFPass' : 1.0386,
-          'Jets01FailPtG10' : None,
-          'Jets01PassPtG10' : None,
-          },
-        },
-      'vbf' : {
-        '7TeV' : {
-          'Jet2CutsFailVBFGF' : 1.0134,
-          'Jet2CutsGFPass' : 1.0160,
-          'Jet2CutsVBFPass' : 1.0324,
-          'Jets01FailPtG10' : 1.0115,
-          'Jets01PassPtG10' : 1.0108,
-          },
-        '8TeV' : {
-          'Jet2CutsFailVBFGF' : 1.0155,
-          'Jet2CutsGFPass' : 1.0168,
-          'Jet2CutsVBFPass' : 1.0328,
-          'Jets01FailPtG10' : 1.0129,
-          'Jets01PassPtG10' : 1.0128,
-          },
-        },
-      'wh' : {
-        '7TeV' : {
-          'Jet2CutsFailVBFGF' : None,
-          'Jet2CutsGFPass' : None,
-          'Jet2CutsVBFPass' : None,
-          'Jets01FailPtG10' : None,
-          'Jets01PassPtG10' : None,
-          },
-        '8TeV' : {
-          'Jet2CutsFailVBFGF' : None,
-          'Jet2CutsGFPass' : None,
-          'Jet2CutsVBFPass' : None,
-          'Jets01FailPtG10' : None,
-          'Jets01PassPtG10' : None,
-          },
-        },
-      'zh' : {
-        '7TeV' : {
-          'Jet2CutsFailVBFGF' : None,
-          'Jet2CutsGFPass' : None,
-          'Jet2CutsVBFPass' : None,
-          'Jets01FailPtG10' : None,
-          'Jets01PassPtG10' : None,
-          },
-        '8TeV' : {
-          'Jet2CutsFailVBFGF' : None,
-          'Jet2CutsGFPass' : None,
-          'Jet2CutsVBFPass' : None,
-          'Jets01FailPtG10' : None,
-          'Jets01PassPtG10' : None,
-          },
-        },
-      }
     self.MCStat = {
       'gg' : {
         '7TeV' : {
@@ -617,72 +551,6 @@ class NuisanceMap:
           'Jet2CutsVBFPass' : 1.0448,
           'Jet2CutsGFPass' : 1.0299,
           'Jet2CutsFailVBFGF' : 1.0204,
-          },
-        },
-      'wh' : {
-        '8TeV' : {
-          'Jets01PassPtG10' : None,
-          'Jets01FailPtG10' : None,
-          'Jet2CutsVBFPass' : None,
-          'Jet2CutsGFPass' : None,
-          'Jet2CutsFailVBFGF' : None,
-          },
-        '7TeV' : {
-          'Jets01PassPtG10' : None,
-          'Jets01FailPtG10' : None,
-          'Jet2CutsVBFPass' : None,
-          'Jet2CutsGFPass' : None,
-          'Jet2CutsFailVBFGF' : None,
-          },
-        },
-      'zh' : {
-        '8TeV' : {
-          'Jets01PassPtG10' : None,
-          'Jets01FailPtG10' : None,
-          'Jet2CutsVBFPass' : None,
-          'Jet2CutsGFPass' : None,
-          'Jet2CutsFailVBFGF' : None,
-          },
-        '7TeV' : {
-          'Jets01PassPtG10' : None,
-          'Jets01FailPtG10' : None,
-          'Jet2CutsVBFPass' : None,
-          'Jet2CutsGFPass' : None,
-          'Jet2CutsFailVBFGF' : None,
-          },
-        },
-      }
-    self.PU = {
-      'gg' : {
-        '8TeV' : {
-          'Jets01PassPtG10' : None,
-          'Jets01FailPtG10' : None,
-          'Jet2CutsVBFPass' : 1.0222,
-          'Jet2CutsGFPass' : 1.0103,
-          'Jet2CutsFailVBFGF' : 1.0112,
-          },
-        '7TeV' : {
-          'Jets01PassPtG10' : None,
-          'Jets01FailPtG10' : None,
-          'Jet2CutsVBFPass' : 1.0222,
-          'Jet2CutsGFPass' : 1.0103,
-          'Jet2CutsFailVBFGF' : 1.0112,
-          },
-        },
-      'vbf' : {
-        '8TeV' : {
-          'Jets01PassPtG10' : None,
-          'Jets01FailPtG10' : 1.0207,
-          'Jet2CutsVBFPass' : None,
-          'Jet2CutsGFPass' : None,
-          'Jet2CutsFailVBFGF' : None,
-          },
-        '7TeV' : {
-          'Jets01PassPtG10' : None,
-          'Jets01FailPtG10' : 1.0207,
-          'Jet2CutsVBFPass' : None,
-          'Jet2CutsGFPass' : None,
-          'Jet2CutsFailVBFGF' : None,
           },
         },
       'wh' : {
@@ -850,14 +718,80 @@ class NuisanceMap:
           },
         },
       }
+    self.CMS_eff_j = {
+      'gg' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsFailVBFGF' : 1.0181,
+          'Jet2CutsGFPass' : 1.0202,
+          'Jet2CutsVBFPass' : 1.0445,
+        },
+        '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsFailVBFGF' : 1.0156,
+          'Jet2CutsGFPass' : 1.0189,
+          'Jet2CutsVBFPass' : 1.0430,
+        },
+      },
+      'vbf' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : 1.0128,
+          'Jets01FailPtG10' : 1.0244,
+          'Jet2CutsFailVBFGF' : 1.0155,
+          'Jet2CutsGFPass' : 1.0168,
+          'Jet2CutsVBFPass' : 1.0328,
+        },
+        '7TeV' : {
+          'Jets01PassPtG10' : 1.0108,
+          'Jets01FailPtG10' : 1.0237,
+          'Jet2CutsFailVBFGF' : 1.0134,
+          'Jet2CutsGFPass' : 1.0160,
+          'Jet2CutsVBFPass' : 1.0324,
+        },
+      },
+      'wh' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
+        },
+        '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
+        },
+      },
+      'zh' : {
+        '8TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
+        },
+        '7TeV' : {
+          'Jets01PassPtG10' : None,
+          'Jets01FailPtG10' : None,
+          'Jet2CutsFailVBFGF' : None,
+          'Jet2CutsGFPass' : None,
+          'Jet2CutsVBFPass' : None,
+        },
+      },
+    }
 
     # Muon efficiency uncertainty on yield; same for everything
     self.CMS_eff_m = 1.016
 
     # The list of systematics to be applied
-    self._keys = ["QCDscale_ggH","QCDscale_qqH","QCDscale_VH","pdf_gg","pdf_qqbar","lumi","pdf_gg_ACCEPT","pdf_qqbar_ACCEPT","CMS_scale_j","CMS_res_j","PUID","MCStat","PU","UEPS","QCDscale_ggH_ACCEPT","QCDscale_qqH_ACCEPT","CMS_eff_m"]
+    self._keys = ["QCDscale_ggH","QCDscale_qqH","QCDscale_VH","pdf_gg","pdf_qqbar","lumi","pdf_gg_ACCEPT","pdf_qqbar_ACCEPT","CMS_scale_j","CMS_res_j","MCStat","UEPS","QCDscale_ggH_ACCEPT","QCDscale_qqH_ACCEPT","CMS_eff_m","CMS_eff_j"]
     # The list of systematics which are correlated between energies
-    self.keysEnergyCorr = ["QCDscale_ggH","QCDscale_qqH","QCDscale_VH","pdf_gg","pdf_qqbar","pdf_gg_ACCEPT","pdf_qqbar_ACCEPT","CMS_scale_j","CMS_res_j","UEPS","QCDscale_ggH_ACCEPT","QCDscale_qqH_ACCEPT","CMS_eff_m"]
+    self.keysEnergyCorr = ["QCDscale_ggH","QCDscale_qqH","QCDscale_VH","pdf_gg","pdf_qqbar","pdf_gg_ACCEPT","pdf_qqbar_ACCEPT","CMS_scale_j","CMS_res_j","UEPS","QCDscale_ggH_ACCEPT","QCDscale_qqH_ACCEPT","CMS_eff_m","CMS_eff_j"]
     # The list of systematics which are not correlated between energies or categories
     self.keysNotCatCorr = ["MCStat"]
     # The list of systematics which are not correlated between energies, but correlated w/ categories 
@@ -929,12 +863,6 @@ class NuisanceMap:
     if nu == "MCStat" and match:
       category = self.getBaseCat(category)
       return goodCorr(self.MCStat[prodMode][energy][category])
-    if nu == "PU" and match:
-      category = self.getBaseCat(category)
-      return goodCorr(self.PU[prodMode][energy][category])
-    if nu == "PUID" and match:
-      category = self.getBaseCat(category)
-      return goodCorr(self.PUID[prodMode][energy][category])
     if nu == "QCDscale_ggH_ACCEPT" and match:
       if prodMode != "gg":
         return None
@@ -950,6 +878,9 @@ class NuisanceMap:
       return goodCorr(self.UEPS[prodMode][energy][category])
     if nu == "CMS_eff_m":
       return goodCorr(self.CMS_eff_m)
+    if nu == "CMS_eff_j" and match:
+      category = self.getBaseCat(category)
+      return goodCorr(self.CMS_eff_j[prodMode][energy][category])
   def getBaseCat(self,cat):
     categoriesAllCCFF = ["BB","BO","BE","OO","OE","EE","CC","FF"]
     for i in categoriesAllCCFF:
