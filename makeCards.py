@@ -49,7 +49,6 @@ RUNSIMPLELIMITS = False
 USEGPANNA = True
 
 SIGNALFIT = [110.,140.]
-FREEBAKPARAMS = True
 
 USETREES=False
 HISTNAME="mDiMu"
@@ -195,7 +194,9 @@ def makePDFBakBernsteinProd(name,rooDataset,dimuonMass,minMass,maxMass,workspace
     fr.SetName("bak"+"_fitResult")
     #chi2 = pdfMmumu.createChi2(rooDataset)
 
-    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+    paramList = [i.GetName() for i in rooParamList]
+    for param in paramList:
+        param.setConstant(True)
 
     if workspaceImportFn != None:
       workspaceImportFn(pdfMmumu)
@@ -231,71 +232,6 @@ def makePDFBakBernsteinProd(name,rooDataset,dimuonMass,minMass,maxMass,workspace
 
     return paramList, bakNormTup, debug, order
 
-def makePDFBakExpLog(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
-    debug = ""
-    debug += "### makePDFBakExpLog: "+name+"\n"
-    debug += "#    {0:.2f} < {1} < {2:.2f}\n".format(minMass,dimuonMass.GetName(),maxMass)
-    debug += "#    {0:.2f} Events in RooDataSet\n".format(rooDataset.sumEntries())
-
-    channelName = name
-
-    p1 = root.RooRealVar(channelName+"_p1","p1", 0.0, -1., 1.)
-    p2 = root.RooRealVar(channelName+"_p2","p2", 0.0, -1., 1.)
-    p3 = root.RooRealVar(channelName+"_p3","p3", 0.0, -1., 1.)
-    pdfMmumu = root.RooGenericPdf("bak","TMath::Exp(@0*@0*@1 + @0*@2 + @3*TMath::Log(@0) )",root.RooArgList(dimuonMass,p1,p2,p3))
-
-    fr = pdfMmumu.fitTo(rooDataset,root.RooFit.Range("low,high"),root.RooFit.SumW2Error(False),PRINTLEVEL,root.RooFit.Save(True))
-    fr.SetName("bak"+"_fitResult")
-    #chi2 = pdfMmumu.createChi2(rooDataset)
-
-    rooParamList = [p1,p2,p3]
-    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
-
-    for param in rooParamList:
-        param.setConstant(not FREEBAKPARAMS)
-
-    if workspaceImportFn != None:
-      workspaceImportFn(pdfMmumu)
-      workspaceImportFn(fr)
-
-    #Norm Time
-    bakNormTup = None
-    if True:
-      wholeIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal,low,high"))
-      signalIntegral = pdfMmumu.createIntegral(root.RooArgSet(dimuonMass),root.RooFit.Range("signal"))
-      signalRangeList = getRooVarRange(dimuonMass,"signal")
-      getSidebandString = "dimuonMass < {0} || dimuonMass > {1}".format(*signalRangeList)
-      nSideband =  rooDataset.sumEntries(getSidebandString)
-      nData =  rooDataset.sumEntries()
-      bakNormTup = (nSideband,1.0/(1.0-signalIntegral.getVal()/wholeIntegral.getVal()))
-      if nData > 0:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, predicted error: {1:.2%} true error: {2:.2%}".format(getSidebandString,1.0/sqrt(bakNormTup[0]),(bakNormTup[0]*bakNormTup[1] - nData)/nData))
-      else:
-        print("Gets Bak Norm Assuming Signal region is: {0} GeV, nData=0.0".format(getSidebandString))
-    #print("nData: {0}, nPredict: {1}, nSideBand: {2}, alpha: {3}".format(
-    #        nData, bakNormTup[0]*bakNormTup[1], bakNormTup[0], bakNormTup[1]))
-
-    #rooDataset2 = rooDataset.reduce(root.RooFit.CutRange("low,signal,high"))
-    #rooDataset2.SetName("bak_TemplateNoVeryLow")
-    #if workspaceImportFn != None:
-    #  workspaceImportFn(rooDataset2)
-
-#    ## Debug Time
-#    frame = dimuonMass.frame()
-#    frame.SetName("bak_Plot")
-#    rooDataset.plotOn(frame)
-#    pdfMmumu.plotOn(frame)
-#    canvas = root.TCanvas()
-#    frame.Draw()
-#    canvas.SaveAs("debug_"+name+channelName+".png")
-
-    for i in rooParamList:
-      debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
-    debug += "#    Bak Norm Tuple: {0:.2f} {1:.2f}\n".format(*bakNormTup)
-
-    return paramList, bakNormTup, debug, None
-
-
 def makePDFBakExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,dimuonMassZ=None,rooDatasetZ=None,order=None):
     debug = ""
     debug += "### makePDFBakExpMOverSq: "+name+"\n"
@@ -325,7 +261,7 @@ def makePDFBakExpMOverSq(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImp
     paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
 
     for param in rooParamList:
-        param.setConstant(not FREEBAKPARAMS)
+        param.setConstant(True)
         if ('Jet2CutsVBFPass' in name ):
           InvPolMass.setConstant(True)
 
@@ -397,10 +333,10 @@ def makePDFBakExpMOverSqP0(name,rooDataset,dimuonMass,minMass,maxMass,workspaceI
     rooParamList = [EXPPOLP0_1,EXPPOLP0_2,EXPPOLP0_3]
     paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
 
-    #for param in rooParamList:
-    #    param.setConstant(not FREEBAKPARAMS)
-    #    if ('Jet2CutsVBFPass' in name ):
-    #      InvPolMass.setConstant(True)
+    for param in rooParamList:
+        param.setConstant(True)
+        if ('Jet2CutsVBFPass' in name ):
+          InvPolMass.setConstant(True)
 
     if workspaceImportFn != None:
       workspaceImportFn(pdfMmumu)
@@ -483,10 +419,10 @@ def makePDFBakExpMOverSqP0New(name,rooDataset,dimuonMass,minMass,maxMass,workspa
 
     paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
 
-    #for param in rooParamList:
-    #    param.setConstant(not FREEBAKPARAMS)
-    #    if ('Jet2CutsVBFPass' in name ):
-    #      InvPolMass.setConstant(True)
+    for param in rooParamList:
+        param.setConstant(True)
+        if ('Jet2CutsVBFPass' in name ):
+          InvPolMass.setConstant(True)
 
     if workspaceImportFn != None:
       workspaceImportFn(pdfMmumu)
@@ -636,11 +572,10 @@ def makePDFBakMSSM(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,
     fr.Print()
 
     rooParamList = [bwmZ,bwWidth,expParam,mixParam]
-    paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
+    paramList = [expParam.GetName(),mixParam.GetName()]
 
-    if FREEBAKPARAMS:
-      for param in rooParamList:
-        param.setConstant(False)
+    for param in rooParamList:
+      param.setConstant(True)
 
     bwWidth.setConstant(True)
     bwmZ.setConstant(True)
@@ -735,9 +670,8 @@ def makePDFBakMSSMPrime(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
     rooParamList = [bwmZ,bwWidth,expParam,bwCoef,phoCoef]
     paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
 
-    if FREEBAKPARAMS:
-      for param in rooParamList:
-        param.setConstant(False)
+    for param in rooParamList:
+      param.setConstant(True)
 
     bwWidth.setConstant(True)
     bwmZ.setConstant(True)
@@ -830,9 +764,8 @@ def makePDFBakVoigtPMm2(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImpo
     rooParamList = [voitmZ,voitWidth,mixParam]
     paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
 
-    if FREEBAKPARAMS:
-      for param in rooParamList:
-        param.setConstant(False)
+    for param in rooParamList:
+      param.setConstant(True)
 
     voitWidth.setConstant(True)
     voitmZ.setConstant(True)
@@ -925,9 +858,8 @@ def makePDFBakVoigtPExpMm2(name,rooDataset,dimuonMass,minMass,maxMass,workspaceI
     rooParamList = [voitmZ,voitWidth,expParam,mixParam]
     paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
 
-    if FREEBAKPARAMS:
-      for param in rooParamList:
-        param.setConstant(False)
+    for param in rooParamList:
+      param.setConstant(True)
 
     voitWidth.setConstant(True)
     voitmZ.setConstant(True)
@@ -1031,9 +963,8 @@ def makePDFBakOld(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,d
     rooParamList = [voitmZ,voitSig,expParam,mixParam]
     paramList = [Param(i.GetName(),i.getVal(),i.getError(),i.getError()) for i in rooParamList]
 
-    if FREEBAKPARAMS:
-      for param in rooParamList:
-        param.setConstant(False)
+    for param in rooParamList:
+      param.setConstant(True)
 
     voitWidth.setConstant(True)
     voitmZ.setConstant(True)
@@ -1353,6 +1284,7 @@ def makePDFSigNew(channelName,name,dimuonMass,mass,workspaceImportFn,useDG=True)
 
     for i in rooParamList:
       debug += "#    {0:<35}: {1:<8.3f} +/- {2:<8.3f}\n".format(i.GetName(),i.getVal(),i.getError())
+      i.setConstant(True)
       
     
     #print "##########################"
@@ -1424,7 +1356,6 @@ class Analysis:
     self.debug += "########################\n"
     self.debug += "# USEGPANNA: "+str(USEGPANNA)+"\n"
     self.debug += "# SIGNALFIT: "+str(SIGNALFIT)+"\n"
-    self.debug += "# FREEBAKPARAMS: "+str(FREEBAKPARAMS)+"\n"
     self.debug += "# USETREES: "+str(USETREES)+"\n"
     self.debug += "########################\n"
 
@@ -1709,6 +1640,7 @@ class Analysis:
       self.bakParamUncCounts = BakParameterizationUncDict[energyStr][analysis]
 
       self.bakParamUncNormVar = root.RooRealVar("bakParamUnc_hmm"+energyStr+"_"+self.workspaceName+"_CMShmm_norm","bakParamUnc_hmm"+energyStr+"_"+self.workspaceName+"_CMShmm_norm",0.,-3.*self.bakParamUncCounts,3.*self.bakParamUncCounts)
+      self.bakParamUncNormVar.setConstant(True)
       getattr(self.workspace,"import")(self.bakParamUncNormVar)
 
 
@@ -2217,14 +2149,9 @@ class DataCardMaker:
 
     # Bak norm uncertainty
     for channel1,channel1Name in zip(self.channels,self.channelNames):
-      tmpTup = channel1.bakNormTup
-      formatString = "{0:<8} {1:^3} {2:.0f}"
-      formatList = [convertUncName("bkN"+channel1Name),"gmN",tmpTup[0]]
-      iParam = 3
-      if FREEBAKPARAMS:
-        formatString = "{0:<8} {1:^3}"
-        formatList = [convertUncName("bkN"+channel1Name),"lnU"]
-        iParam = 2
+      formatString = "{0:<8} {1:^3}"
+      formatList = [convertUncName("bkN"+channel1Name),"lnU"]
+      iParam = 2
       for channel in self.channels:
           for sigName in channel.sigNames:
             formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
@@ -2234,9 +2161,7 @@ class DataCardMaker:
           value = '-'
           tmpString = "{"+str(iParam)+":^"+str(self.largestChannelName)+"}"
           if channel == channel1:
-            value = tmpTup[1]
-            if FREEBAKPARAMS:
-              value = 2.
+            value = 2.
             tmpString = "{"+str(iParam)+":^"+str(self.largestChannelName)+".2f}"
           formatString += tmpString
           formatList.append(value)
@@ -2254,10 +2179,10 @@ class DataCardMaker:
       # Parameter (Shape) Uncertainties For Background
       for channel,channelName in zip(self.channels,self.channelNames):
         for nu in channel.params:
-          if "voit" in nu.name: # only constrain voigtian parameters
-            nuisanceName = nu.name + "_CMShmm"
-            formatString = "{0:<25} {1:<6} {2:<10.5g} {3:<10}"
-            formatList = [nuisanceName,"param",nu.nominal,nu.getErrString()]
+          if type(nu) == str: # Make named parameters flatParam
+            nuisanceName = nu + "_CMShmm"
+            formatString = "{0:<25} {1:<9}"
+            formatList = [nuisanceName,"flatParam"]
             formatString += "\n"
             #print formatString
             #print formatList
