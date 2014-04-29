@@ -1499,12 +1499,18 @@ class Analysis:
     self.datHists = []
     self.datHistsZ = []
     for name in dataNames:
-      #tmpH = self.getRooDataSample(name,self.observablesForRooDataset)
-      tmpH = self.getRooDataSet(name,self.observablesForRooDataset)
+      tmpH = None
+      if "Jet2CutsVBFPass" in self.analysis:
+        tmpH = self.getRooDataSet(name,self.observablesForRooDataset)
+      else:
+        tmpH = self.getRooDataSample(name,self.observablesForRooDataset)
       self.debug += "#  N Events in {0}: {1}\n".format(name,tmpH.sumEntries())
       self.datHists.append(tmpH)
-      #tmpH = self.getRooDataSample(name,self.observablesForRooDatasetZ,True)
-      tmpH = self.getRooDataSet(name,self.observablesForRooDatasetZ,True)
+      tmpH = None
+      if "Jet2CutsVBFPass" in self.analysis:
+        tmpH = self.getRooDataSet(name,self.observablesForRooDatasetZ,True)
+      else:
+        tmpH = self.getRooDataSample(name,self.observablesForRooDatasetZ,True)
       self.datHistsZ.append(tmpH)
 
     effMap = {}
@@ -1547,8 +1553,11 @@ class Analysis:
       if self.datHistTotal == None:
         self.datHistTotal = h.Clone("data_obs_CMShmm")
       else:
-        #self.datHistTotal.add(h)
-        self.datHistTotal.append(h)
+        assert(type(self.datHistTotal)==type(h))
+        if type(h) == root.RooDataHist:
+          self.datHistTotal.add(h)
+        else:
+          self.datHistTotal.append(h)
     assert(self.dataCountsTotal == self.datHistTotal.sumEntries())
 
     self.dataCountsTotalZ = None
@@ -1562,8 +1571,11 @@ class Analysis:
       if self.datHistTotalZ == None:
         self.datHistTotalZ = h.Clone("data_obs_Z_CMShmm")
       else:
-        #self.datHistTotalZ.add(h)
-        self.datHistTotalZ.append(h)
+        assert(type(self.datHistTotalZ)==type(h))
+        if type(h)==root.RooDataHist:
+          self.datHistTotalZ.add(h)
+        else:
+          self.datHistTotalZ.append(h)
     assert(self.dataCountsTotalZ == self.datHistTotalZ.sumEntries())
 
     histToUseForBak = self.datHistTotal
@@ -2163,7 +2175,7 @@ class DataCardMaker:
       for channel,channelName in zip(self.channels,self.channelNames):
         for sigName in channel.sigNames:
           formatString = "{0:<8} {1:^4} "
-          formatList = [convertUncName(nu+"_"+channelName),"lnN"]
+          formatList = [convertUncName(nu+"_"+channelName+"_"+sigName),"lnN"]
           iParam = 2
           for channel2,channelName2 in zip(self.channels,self.channelNames):
             channelNameNoEnergy = re.sub(r"[\d]TeV$","",channelName)
@@ -2193,6 +2205,13 @@ class DataCardMaker:
           formatString += "\n"
           #print formatString
           #print formatList
+          isEmpty = True
+          for el in formatList[2:]:
+            if el != "-":
+              isEmpty = False
+              break
+          if isEmpty:
+            continue
           outfile.write(formatString.format(*formatList))
 
     # Bak norm uncertainty
@@ -2370,53 +2389,53 @@ if __name__ == "__main__":
   jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
-#  #analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-#  #analyses += [["Jets01FailPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+##  #analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+##  #analyses += [["Jets01FailPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   analyses += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   analyses += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   analyses += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   analyses += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   analyses += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-
-
-  # Jet 0+1 Pass All Cats
-  combinations.append((
-    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]
-    ,"Jets01PassCatAll"
-  ))
- 
-  # Jet 0+1 Fail All Cats
-  combinations.append((
-    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-    ,"Jets01FailCatAll"
-  ))
- 
-  # Jet 0+1 Pass All Cats
-  combinations.append((
-    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
-    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-    ,"Jets01SplitCatAll"
-  ))
- 
-  # Jets >=2 Pass + Fail
-  combinations.append((
-    [  
-     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
-     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-    ],"Jet2SplitCutsGFSplit"
-  ))
- 
-  # Jets 0,1,>=2 Pass + Fail All
-  combinations.append((
-    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
-    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]+
-    [
-     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
-     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
-    ],"CombSplitAll"
-  ))
+#
+#
+#  # Jet 0+1 Pass All Cats
+#  combinations.append((
+#    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]
+#    ,"Jets01PassCatAll"
+#  ))
+# 
+#  # Jet 0+1 Fail All Cats
+#  combinations.append((
+#    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+#    ,"Jets01FailCatAll"
+#  ))
+# 
+#  # Jet 0+1 Pass All Cats
+#  combinations.append((
+#    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
+#    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+#    ,"Jets01SplitCatAll"
+#  ))
+# 
+#  # Jets >=2 Pass + Fail
+#  combinations.append((
+#    [  
+#     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+#     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#    ],"Jet2SplitCutsGFSplit"
+#  ))
+# 
+#  # Jets 0,1,>=2 Pass + Fail All
+#  combinations.append((
+#    [["Jets01PassPtG10"+x,"dimuonPt>10."+jet01PtCuts] for x in categoriesAll]+
+#    [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]+
+#    [
+#     ["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts],
+#     ["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#     ["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts],
+#    ],"CombSplitAll"
+#  ))
 
 
 ##### New combinations
@@ -2588,49 +2607,49 @@ if __name__ == "__main__":
           break
 
     # 2011 + 2012 combination
-    if len(periods)>1:
-        filenameLumi = str(sum([float(lumiDict[p]) for p in periods]))
-        if args.higgsMass > 0.0:
-          filenameLumi = str(args.higgsMass)
-        filenamePeriod = ""
-        for p in periods:
-          filenamePeriod += re.sub("TeV","P",p)
-        filenamePeriod = filenamePeriod.rstrip("P")
-        filenamePeriod += "TeV"
-        for ana in analyses:
-          cutsToDo = ""
-          if len(ana) == 2:
-            cutsToDo = ana[1]
-          anaName = ana[0]
-          tmp = ThreadedCardMaker(
-            #__init__ args:
-            directory,[anaName],
-            [appendPeriod(signalNames,p) for p in periods],
-            [appendPeriod(backgroundNames,p) for p in periods],
-            [dataDict[p] for p in periods],
-            controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
-            controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,sigInjectMass=args.signalInjectMass,
-            energyStr=periods,cutString=cutsToDo,
-            #write args:
-            outfilename=outDir+anaName+"_"+filenamePeriod+"_"+filenameLumi+".txt",lumi=[float(lumiDict[p]) for p in periods]
-            )
-          threads.append(tmp)
-        for comb in combinations:
-         threads.append(
-          ThreadedCardMaker(
-            #__init__ args:
-            directory,
-            comb[0],
-            [appendPeriod(signalNames,p) for p in periods],
-            [appendPeriod(backgroundNames,p) for p in periods],
-            [dataDict[p] for p in periods],
-            controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
-            controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,sigInjectMass=args.signalInjectMass,
-            energyStr=periods,
-            #write args:
-            outfilename=outDir+comb[1]+"_"+filenamePeriod+"_"+filenameLumi+".txt",lumi=[float(lumiDict[p]) for p in periods]
-          )
-         )
+    #if len(periods)>1:
+    #    filenameLumi = str(sum([float(lumiDict[p]) for p in periods]))
+    #    if args.higgsMass > 0.0:
+    #      filenameLumi = str(args.higgsMass)
+    #    filenamePeriod = ""
+    #    for p in periods:
+    #      filenamePeriod += re.sub("TeV","P",p)
+    #    filenamePeriod = filenamePeriod.rstrip("P")
+    #    filenamePeriod += "TeV"
+    #    for ana in analyses:
+    #      cutsToDo = ""
+    #      if len(ana) == 2:
+    #        cutsToDo = ana[1]
+    #      anaName = ana[0]
+    #      tmp = ThreadedCardMaker(
+    #        #__init__ args:
+    #        directory,[anaName],
+    #        [appendPeriod(signalNames,p) for p in periods],
+    #        [appendPeriod(backgroundNames,p) for p in periods],
+    #        [dataDict[p] for p in periods],
+    #        controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
+    #        controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,sigInjectMass=args.signalInjectMass,
+    #        energyStr=periods,cutString=cutsToDo,
+    #        #write args:
+    #        outfilename=outDir+anaName+"_"+filenamePeriod+"_"+filenameLumi+".txt",lumi=[float(lumiDict[p]) for p in periods]
+    #        )
+    #      threads.append(tmp)
+    #    for comb in combinations:
+    #     threads.append(
+    #      ThreadedCardMaker(
+    #        #__init__ args:
+    #        directory,
+    #        comb[0],
+    #        [appendPeriod(signalNames,p) for p in periods],
+    #        [appendPeriod(backgroundNames,p) for p in periods],
+    #        [dataDict[p] for p in periods],
+    #        controlRegionLow=controlRegionLow,controlRegionHigh=controlRegionHigh,
+    #        controlRegionVeryLow=controlRegionVeryLow,toyData=toyData,nuisanceMap=nuisanceMap,sigInject=args.signalInject,sigInjectMass=args.signalInjectMass,
+    #        energyStr=periods,
+    #        #write args:
+    #        outfilename=outDir+comb[1]+"_"+filenamePeriod+"_"+filenameLumi+".txt",lumi=[float(lumiDict[p]) for p in periods]
+    #      )
+    #     )
   
   else: #Do cutOpt Stuff
     print "combinationsCutOpt: {0}".format(combinationsCutOpt)
@@ -2776,6 +2795,7 @@ if __name__ == "__main__":
   shutil.copy("etc/compatHPC_Template.sh",outDir+"compatHPC_Template.sh")
   shutil.copy("etc/lxbatch_LEE.sh",outDir+"lxbatch_LEE.sh")
   shutil.copy("etc/runLEE.sh",outDir+"runLEE.sh")
+  shutil.copy("etc/combAllText.py",outDir+"combAllText.py")
 
   for iexef in glob.glob(outDir+"*.sh")+glob.glob(outDir+"*.py"):
     os.chmod(iexef, os.stat(iexef).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
