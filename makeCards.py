@@ -1995,7 +1995,14 @@ class DataCardMaker:
     outfile.write("jmax {0}\n".format("*"))
     outfile.write("kmax {0}\n".format("*"))
     outfile.write("------------\n")
-    outfile.write("shapes * * {0} $CHANNEL:$PROCESS_$CHANNEL_CMShmm\n".format( os.path.basename(outRootFilename)))
+    ## read in shapes
+    for channel,channelName in zip(self.channels,self.channelNames):
+      for sigName in channel.sigNames:
+        outfile.write("shapes {0} {1} {2} {1}:{0}_{1}_CMShmm\n".format(convertSigName(sigName,channel.getEnergy()),channelName, os.path.basename(outRootFilename)))
+      outfile.write("shapes {0} {1} {2} {1}:{0}_{1}_CMShmm\n".format("bak", channelName,os.path.basename(outRootFilename)))
+      if BAKPARAMUNC:
+        outfile.write("shapes {0} {1} {2} {1}:{0}_{1}_CMShmm\n".format(channel.getBakParamUncName(), channelName, os.path.basename(outRootFilename)))
+      outfile.write("shapes {0} {1} {2} {1}:{0}_{1}_CMShmm\n".format("data_obs", channelName, os.path.basename(outRootFilename)))
     outfile.write("------------\n")
     outfile.write("# Channels, observed N events:\n")
     # Make Channels String
