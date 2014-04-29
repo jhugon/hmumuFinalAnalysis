@@ -1599,11 +1599,10 @@ class Analysis:
     
     self.sigParamList = []
     if USEGPANNA:
-      for name in signalNames:
-        sigParams, sigDebug =  makePDFSigNew(analysis+energyStr,name,dimuonMass,self.higgsMass,wImport)
-        self.sigParamList.append(sigParams)
-        self.debug += sigDebug
-    elif True: # Use ggH for non-VBF channels, and VBF shape for VBF
+      sigParams, sigDebug =  makePDFSigNew(analysis+energyStr,"sigPdf",dimuonMass,self.higgsMass,wImport)
+      self.sigParamList.append(sigParams)
+      self.debug += sigDebug
+    else: # Use ggH for non-VBF channels, and VBF shape for VBF
       sigNameToUse = None
       sigHistCounts = []
       for name, hist in zip(signalNames,self.sigHistsRaw):
@@ -1612,15 +1611,9 @@ class Analysis:
       maxIndex = sigHistCounts.index(maxCounts)
       self.debug += "# Signal Histogram for Shape: {0} Counts: {1:.1f}\n".format(signalNames[maxIndex],maxCounts)
       sigHistRawToUse = self.sigHistsRaw[maxIndex]
-      for name in signalNames:
-          sigParams, sigDebug, tmpDS = makePDFSig(name,sigHistRawToUse,dimuonMass,minMass,maxMass,wImport,analysis+energyStr,energyStr)
-          self.sigParamList.append(sigParams)
-          self.debug += sigDebug
-    else:
-      for name, hist in zip(signalNames,self.sigHistsRaw):
-          sigParams, sigDebug, tmpDS = makePDFSig(name,hist,dimuonMass,minMass,maxMass,wImport,analysis+energyStr,energyStr,forceMean=higgsPeakMean)
-          self.sigParamList.append(sigParams)
-          self.debug += sigDebug
+      sigParams, sigDebug, tmpDS = makePDFSig("sigPdf",sigHistRawToUse,dimuonMass,minMass,maxMass,wImport,analysis+energyStr,energyStr)
+      self.sigParamList.append(sigParams)
+      self.debug += sigDebug
           
     self.xsecSigTotal = 0.0
     self.xsecSigList = []
@@ -1712,10 +1705,7 @@ class Analysis:
     ### Background Parameterization Uncertainty Part
     if BAKPARAMUNC:
       self.bakParamUncPdfName = "bakParamUnc"
-      sigParams, sigDebug =  makePDFSigNew(analysis+energyStr,self.bakParamUncPdfName,dimuonMass,self.higgsMass,wImport)
       self.bakParamUncPdfName = "bakParamUnc"+"_hmm"+energyStr
-      self.sigParamList.append(sigParams)
-      self.debug += sigDebug
       self.bakParamUncCounts = BakParameterizationUncDict[energyStr][analysis]
 
       self.bakParamUncNormVar = root.RooRealVar("bakParamUnc_hmm"+energyStr+"_"+self.workspaceName+"_CMShmm_norm","bakParamUnc_hmm"+energyStr+"_"+self.workspaceName+"_CMShmm_norm",0.,-3.*self.bakParamUncCounts,3.*self.bakParamUncCounts)
@@ -1998,10 +1988,10 @@ class DataCardMaker:
     ## read in shapes
     for channel,channelName in zip(self.channels,self.channelNames):
       for sigName in channel.sigNames:
-        outfile.write("shapes {0} {1} {2} {1}:{0}_{1}_CMShmm\n".format(convertSigName(sigName,channel.getEnergy()),channelName, os.path.basename(outRootFilename)))
+        outfile.write("shapes {0} {1} {2} {1}:{3}_{1}_CMShmm\n".format(convertSigName(sigName,channel.getEnergy()),channelName, os.path.basename(outRootFilename),"sigPdf_hmm"+channel.energyStr))
       outfile.write("shapes {0} {1} {2} {1}:{0}_{1}_CMShmm\n".format("bak", channelName,os.path.basename(outRootFilename)))
       if BAKPARAMUNC:
-        outfile.write("shapes {0} {1} {2} {1}:{0}_{1}_CMShmm\n".format(channel.getBakParamUncName(), channelName, os.path.basename(outRootFilename)))
+        outfile.write("shapes {0} {1} {2} {1}:{3}_{1}_CMShmm\n".format(channel.getBakParamUncName(), channelName, os.path.basename(outRootFilename),"sigPdf_hmm"+channel.energyStr))
       outfile.write("shapes {0} {1} {2} {1}:{0}_{1}_CMShmm\n".format("data_obs", channelName, os.path.basename(outRootFilename)))
     outfile.write("------------\n")
     outfile.write("# Channels, observed N events:\n")
