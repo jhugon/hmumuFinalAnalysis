@@ -2722,6 +2722,7 @@ if __name__ == "__main__":
   shutil.copy("etc/lxbatch_LEE.sh",outDir+"lxbatch_LEE.sh")
   shutil.copy("etc/runLEE.sh",outDir+"runLEE.sh")
   shutil.copy("etc/combAllText.py",outDir+"combAllText.py")
+  shutil.copy("etc/checkWS.py",outDir+"checkWS.py")
 
   for iexef in glob.glob(outDir+"*.sh")+glob.glob(outDir+"*.py"):
     os.chmod(iexef, os.stat(iexef).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
