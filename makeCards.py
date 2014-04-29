@@ -1438,7 +1438,7 @@ class Analysis:
       if type(var) == root.RooDataSet or type(var) == root.RooDataHist:
         getattr(self.workspace,"import")(var,root.RooFit.RenameVariable("dimuonMass","dimuonMass_CMShmm"))
       else:
-        getattr(self.workspace,"import")(var,root.RooFit.RenameAllNodes("CMShmm"),root.RooFit.RenameAllVariables("CMShmm"))
+        getattr(self.workspace,"import")(var,root.RooFit.RenameAllNodes(self.workspaceName+"_CMShmm"),root.RooFit.RenameAllVariables("CMShmm"))
 
     self.sigInjectWorkspaces = []
 
@@ -1540,7 +1540,7 @@ class Analysis:
         self.bakHistTotal.Add(h)
 
     #self.bakHistTotal.Scale(lumi)
-    #self.bakHistTotalReal = self.bakHistTotal.Clone("data_obs_CMShmm")
+    #self.bakHistTotalReal = self.bakHistTotal.Clone("data_obs_"+self.workspaceName+"_CMShmm")
 
     self.dataCountsTotal = None
     self.datHistTotal = None
@@ -1551,7 +1551,7 @@ class Analysis:
       else:
         self.dataCountsTotal += counts
       if self.datHistTotal == None:
-        self.datHistTotal = h.Clone("data_obs_CMShmm")
+        self.datHistTotal = h.Clone("data_obs_"+self.workspaceName+"_CMShmm")
       else:
         assert(type(self.datHistTotal)==type(h))
         if type(h) == root.RooDataHist:
@@ -1569,7 +1569,7 @@ class Analysis:
       else:
         self.dataCountsTotalZ += counts
       if self.datHistTotalZ == None:
-        self.datHistTotalZ = h.Clone("data_obs_Z_CMShmm")
+        self.datHistTotalZ = h.Clone("data_obs_"+self.workspaceName+"_Z_CMShmm")
       else:
         assert(type(self.datHistTotalZ)==type(h))
         if type(h)==root.RooDataHist:
@@ -1682,10 +1682,10 @@ class Analysis:
         for j in range(contentInt):
           bakDataTH1.Fill(binCenter)
       self.dataCountsTotal = int(bakDataTH1.Integral())
-      obsData = root.RooDataHist("data_obs_CMShmm","MC Full-Sim Data",root.RooArgList(dimuonMass),bakDataTH1)
+      obsData = root.RooDataHist("data_obs_"+self.workspaceName+"_CMShmm","MC Full-Sim Data",root.RooArgList(dimuonMass),bakDataTH1)
       print "counts: {} obsData: {}".format(self.dataCountsTotal,obsData.sumEntries())
       wImport(obsData)
-      self.bakHistTotal.SetName("data_obs_CMShmm_"+analysis)
+      self.bakHistTotal.SetName("data_obs_"+self.workspaceName+"_CMShmm_"+analysis)
       #degubf = root.TFile("debug.root","recreate")
       #self.bakHistTotal.Write()
       #degubf.Close()
@@ -1694,11 +1694,11 @@ class Analysis:
       sigPDFList = [self.workspace.pdf(i) for i in signalNames]
       toyDataset = bakPDF.generate(root.RooArgSet(dimuonMass),int(self.dataCountsTotal))
       doSigInject(toyDataset,sigInject,sigInjectMass)
-      #toyDataHist = toyDataset.binnedClone("data_obs_CMShmm","Toy Data")
+      #toyDataHist = toyDataset.binnedClone("data_obs_"+self.workspaceName+"_CMShmm","Toy Data")
       self.dataCountsTotal = int(toyDataset.sumEntries())
       wImport(toyDataset)
     else:
-      #realDataHist = root.RooDataHist("data_obs_CMShmm","Real Observed Data",root.RooArgList(dimuonMass),self.datHistTotal)
+      #realDataHist = root.RooDataHist("data_obs_"+self.workspaceName+"_CMShmm","Real Observed Data",root.RooArgList(dimuonMass),self.datHistTotal)
       #wImport(realDataHist)
       #realDataHistNotVeryLow = realDataHist.reduce(root.RooFit.CutRange("low,signal,high"))
       #wImport(realDataHistNotVeryLow)
@@ -1723,8 +1723,10 @@ class Analysis:
 
   def getBakParamUncName(self,full=False):
     if full:
-      # example: n_exp_binJets01FailPtG10BO8TeV_proc_bakParamUnc param 0.0 50.0
-      return "n_exp_bin"+self.analysis+self.energyStr+"_proc_"+self.bakParamUncPdfName
+      # old style example: n_exp_binJets01FailPtG10BO8TeV_proc_bakParamUnc param 0.0 50.0
+      #return "n_exp_bin"+self.analysis+self.energyStr+"_proc_"+self.bakParamUncPdfName
+      # Mingshui says that just the rooPDF name + "_norm" should do it
+      return self.bakParamUncPdfName+"_"+self.workspaceName+"_CMShmm_norm"
     else:
       return self.bakParamUncPdfName
   def getBakParamUncCounts(self):
@@ -1970,8 +1972,8 @@ class DataCardMaker:
     rootDebugString = ""
 
     for channel in self.channels:
-        print(channel.workspace.data("data_obs_CMShmm").GetTitle())
-        rootDebugString += "# "+channel.workspace.data("data_obs_CMShmm").GetTitle()+"\n"
+        print(channel.workspace.data("data_obs_"+channel.workspaceName+"_CMShmm").GetTitle())
+        rootDebugString += "# "+channel.workspace.data("data_obs_"+channel.workspaceName+"_CMShmm").GetTitle()+"\n"
         channel.workspace.Write()
 
     outRootFile.Close()
@@ -1991,7 +1993,7 @@ class DataCardMaker:
     outfile.write("jmax {0}\n".format("*"))
     outfile.write("kmax {0}\n".format("*"))
     outfile.write("------------\n")
-    outfile.write("shapes * * {0} $CHANNEL:$PROCESS_CMShmm\n".format( os.path.basename(outRootFilename)))
+    outfile.write("shapes * * {0} $CHANNEL:$PROCESS_$CHANNEL_CMShmm\n".format( os.path.basename(outRootFilename)))
     outfile.write("------------\n")
     outfile.write("# Channels, observed N events:\n")
     # Make Channels String
