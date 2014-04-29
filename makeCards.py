@@ -1717,16 +1717,18 @@ class Analysis:
       self.sigParamList.append(sigParams)
       self.debug += sigDebug
       self.bakParamUncCounts = BakParameterizationUncDict[energyStr][analysis]
-      # Giovanni Recommended this next part, but I think it adds a free parameter we don't want
-      #self.bakParamUncVar = root.RooRealVar(self.bakParamUncPdfName+'_norm','',0.,-3.*self.bakParamUncCounts,3.*self.bakParamUncCounts)
-      #wImport(self.bakParamUncVar)
+
+      self.bakParamUncNormVar = root.RooRealVar("bakParamUnc_hmm"+energyStr+"_"+self.workspaceName+"_CMShmm_norm","bakParamUnc_hmm"+energyStr+"_"+self.workspaceName+"_CMShmm_norm",0.,-3.*self.bakParamUncCounts,3.*self.bakParamUncCounts)
+      getattr(self.workspace,"import")(self.bakParamUncNormVar)
+
 
   def getBakParamUncName(self,full=False):
     if full:
       # old style example: n_exp_binJets01FailPtG10BO8TeV_proc_bakParamUnc param 0.0 50.0
       #return "n_exp_bin"+self.analysis+self.energyStr+"_proc_"+self.bakParamUncPdfName
       # Mingshui says that just the rooPDF name + "_norm" should do it
-      return self.bakParamUncPdfName+"_"+self.workspaceName+"_CMShmm_norm"
+      # new style example: shapeBkg_bakParamUnc_hmm8TeV_Jet2CutsVBFPass8TeV__norm
+      return "shapeBkg_"+self.bakParamUncPdfName+"_"+self.workspaceName+"__norm"
     else:
       return self.bakParamUncPdfName
   def getBakParamUncCounts(self):
@@ -2391,8 +2393,8 @@ if __name__ == "__main__":
   jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
   jet01PtCuts = " && !(jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40.)"
 
-##  #analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
-##  #analyses += [["Jets01FailPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
+###  #analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+###  #analyses += [["Jets01FailPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   analyses += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
   analyses += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   analyses += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
