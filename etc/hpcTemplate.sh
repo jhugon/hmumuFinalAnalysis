@@ -61,44 +61,38 @@ fi
 
 TXTSUFFIX=".txt"
 DIRNAME="Dir"$FILENAME"Dir"
-ROOTFILENAME=${FILENAME%$TXTSUFFIX}.root
+#ROOTFILENAME=${FILENAME%$TXTSUFFIX}.root
+WSFILENAME=${FILENAME%$TXTSUFFIX}_ws.root
+
+text2workspace.py -m 125 -D data_obs $FILENAME -o $WSFILENAME
 
 mkdir $DIRNAME
-cp $FILENAME $DIRNAME/
-cp $ROOTFILENAME $DIRNAME/
+cp $WSFILENAME $DIRNAME/
 cd $DIRNAME
 
-RMAX=150
-RMIN=-150
+MUMAX=150
+RMAX=$MUMAX
+RMIN=-$MUMAX
 
-echo "executing combine -M Asymptotic --rMax $RMAX $FILENAME >& $FILENAME.out"
+echo "executing combine -M Asymptotic --rMax $RMAX $WSFILENAME >& $FILENAME.out"
+combine -M Asymptotic --rMax $RMAX $WSFILENAME >& $FILENAME.out
 
-combine -M Asymptotic --rMax $RMAX $FILENAME >& $FILENAME.out
+echo "executing combine -M ProfileLikelihood --rMax $RMAX -d $WSFILENAME --signif >& $FILENAME.sig"
+combine -M ProfileLikelihood --rMax $RMAX -d $WSFILENAME --signif >& $FILENAME.sig
 
-echo "executing combine -M ProfileLikelihood --rMax $RMAX -d $FILENAME --signif >& $FILENAME.sig"
-
-combine -M ProfileLikelihood --rMax $RMAX -d $FILENAME --signif >& $FILENAME.sig
-rm -f roostats*
-rm -f higgsCombineTest*.root
-
-#echo "executing combine -M ProfileLikelihood --rMax $RMAX -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig"
+#echo "executing combine -M ProfileLikelihood --rMax $RMAX -d $WSFILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig"
 #
-#combine -M ProfileLikelihood --rMax $RMAX -d $FILENAME --signif --expectSignal=1 -t -1 >& $FILENAME.expsig
-##combine -M ProfileLikelihood -d $FILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig
-#rm -f roostats*
-#rm -f higgsCombineTest*.root
+#combine -M ProfileLikelihood --rMax $RMAX -d $WSFILENAME --signif --expectSignal=1 -t -1 >& $FILENAME.expsig
+##combine -M ProfileLikelihood -d $WSFILENAME --signif --expectSignal=1 -t -1 --toysFreq >& $FILENAME.expsig
 
-#echo "executing combine -M MaxLikelihoodFit --rMin $RMIN --rMax $RMAX --plots --saveNormalizations $FILENAME >& $FILENAME.mu"
-#
-#combine -M MaxLikelihoodFit --rMin $RMIN --rMax $RMAX --plots --saveNormalizations $FILENAME >& $FILENAME.mu
-#rm -f roostats*
-#rm -f higgsCombineTest*.root
+echo "executing combine -M MaxLikelihoodFit --rMin $RMIN --rMax $RMAX --plots --saveNormalizations $WSFILENAME >& $FILENAME.mu"
+combine -M MaxLikelihoodFit --rMin $RMIN --rMax $RMAX --plots --saveNormalizations $WSFILENAME >& $FILENAME.mu
 
-#combine -M ChannelCompatibilityCheck --saveFitResult --rMin $RMIN --rMax $RMAX $FILENAME >> logCCC2
+echo "executing combine -M MultiDimFit --rMin $RMIN --rMax $RMAX --algo=singles $WSFILENAME>& $FILENAME.mu2"
+combine -M MultiDimFit --rMin $RMIN --rMax $RMAX --algo=singles $WSFILENAME >& $FILENAME.mu2
+
+#combine -M ChannelCompatibilityCheck --saveFitResult --rMin $RMIN --rMax $RMAX $WSFILENAME >> logCCC2
 #mv higgsCombineTest.ChannelCompatibilityCheck.*.root ../$FILENAME.CCC2.root
-#
-#rm -f roostats*
-#rm -f higgsCombineTest*.root
 
 cp $FILENAME.* ..
 cp mlfit.root ../$FILENAME.root
