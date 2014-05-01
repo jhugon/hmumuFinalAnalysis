@@ -21,6 +21,16 @@ if len(argv) < 2:
 
 f = root.TFile(argv[1])
 w = f.Get("w")
+wName = "w"
+if not w:
+  for k in f.GetListOfKeys():
+    if k.GetClassName() == "RooWorkspace":
+      w = k.ReadObj()
+      wName = k.GetName()
+      break
 
+w.Print()
+print "Variables:"
 for var in rooArgSet2List(w.allVars()):
   var.Print()
+print "#"*40

@@ -1534,6 +1534,7 @@ class Analysis:
       sigParams, sigDebug =  makePDFSigNew(analysis+energyStr,"sigPdf",dimuonMass,self.higgsMass,wImport)
       self.sigParamList.append(sigParams)
       self.debug += sigDebug
+      self.sigPdf = self.workspace.pdf("sigPdf_hmm"+energyStr+"_"+analysis+energyStr+"_CMShmm")
     else: # Use ggH for non-VBF channels, and VBF shape for VBF
       sigNameToUse = None
       sigHistCounts = []
@@ -1544,6 +1545,7 @@ class Analysis:
       self.debug += "# Signal Histogram for Shape: {0} Counts: {1:.1f}\n".format(signalNames[maxIndex],maxCounts)
       sigHistRawToUse = self.sigHistsRaw[maxIndex]
       sigParams, sigDebug, tmpDS = makePDFSig("sigPdf",sigHistRawToUse,dimuonMass,minMass,maxMass,wImport,analysis+energyStr,energyStr)
+      self.sigPdf = self.workspace.pdf("sigPdf_hmm"+energyStr+"_"+analysis+energyStr+"_CMShmm")
       self.sigParamList.append(sigParams)
       self.debug += sigDebug
           
@@ -1639,13 +1641,17 @@ class Analysis:
       self.bakParamUncPdfName = "bakParamUnc"
       self.bakParamUncPdfName = "bakParamUnc"+"_hmm"+energyStr
       self.bakParamUncCounts = BakParameterizationUncDict[energyStr][analysis]
+      self.bakParamUncPdf = self.sigPdf.Clone(self.bakParamUncPdfName+"_"+self.workspaceName+"_CMShmm")
+      getattr(self.workspace,"import")(self.bakParamUncPdf)
 
-      self.bakParamUncNormVar = root.RooRealVar("bakParamUnc_hmm"+energyStr+"_"+self.workspaceName+"_CMShmm_norm","bakParamUnc_hmm"+energyStr+"_"+self.workspaceName+"_CMShmm_norm",0.,-3.*self.bakParamUncCounts,3.*self.bakParamUncCounts)
+      self.bakParamUncNormVar = root.RooRealVar(self.bakParamUncPdfName+"_"+self.workspaceName+"_CMShmm_norm","bakParamUnc_hmm"+energyStr+"_"+self.workspaceName+"_CMShmm_norm",0.,-3.*self.bakParamUncCounts,3.*self.bakParamUncCounts)
       self.bakParamUncNormVar.setConstant(True)
       getattr(self.workspace,"import")(self.bakParamUncNormVar)
 
 
-  def getBakParamUncName(self,full=False):
+  def getBakParamUncName(self,full=False,pdfName=False):
+    if pdfName:
+      return self.bakParamUncPdfName+"_"+self.workspaceName+"_CMShmm"
     if full:
       # old style example: n_exp_binJets01FailPtG10BO8TeV_proc_bakParamUnc param 0.0 50.0
       #return "n_exp_bin"+self.analysis+self.energyStr+"_proc_"+self.bakParamUncPdfName
@@ -1924,7 +1930,7 @@ class DataCardMaker:
         outfile.write("shapes {0} {1} {2} {1}:{3}_{1}_CMShmm\n".format(convertSigName(sigName,channel.getEnergy()),channelName, os.path.basename(outRootFilename),"sigPdf_hmm"+channel.energyStr))
       outfile.write("shapes {0} {1} {2} {1}:{0}_{1}_CMShmm\n".format("bak", channelName,os.path.basename(outRootFilename)))
       if BAKPARAMUNC:
-        outfile.write("shapes {0} {1} {2} {1}:{3}_{1}_CMShmm\n".format(channel.getBakParamUncName(), channelName, os.path.basename(outRootFilename),"sigPdf_hmm"+channel.energyStr))
+        outfile.write("shapes {0} {1} {2} {1}:{3}\n".format(channel.getBakParamUncName(), channelName, os.path.basename(outRootFilename),channel.getBakParamUncName(pdfName=True)))
       outfile.write("shapes {0} {1} {2} {1}:{0}_{1}_CMShmm\n".format("data_obs", channelName, os.path.basename(outRootFilename)))
     outfile.write("------------\n")
     outfile.write("# Channels, observed N events:\n")
