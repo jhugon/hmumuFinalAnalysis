@@ -789,9 +789,9 @@ class NuisanceMap:
     self.CMS_eff_m = 1.016
 
     # The list of systematics to be applied
-    self._keys = ["QCDscale_ggH","QCDscale_qqH","QCDscale_VH","pdf_gg","pdf_qqbar","lumi","pdf_gg_ACCEPT","pdf_qqbar_ACCEPT","CMS_scale_j","CMS_res_j","MCStat","UEPS","QCDscale_ggH_ACCEPT","QCDscale_qqH_ACCEPT","CMS_eff_m","CMS_eff_j"]
+    self._keys = ["QCDscale_ggH","QCDscale_qqH","QCDscale_VH","pdf_gg","pdf_qqbar","lumi","pdf_gg_ACCEPT","pdf_qqbar_ACCEPT","CMS_scale_j","CMS_res_j","MCStat","UEPS","QCDscale_ggH_ACCEPT","QCDscale_qqH_ACCEPT","CMS_eff_m","CMS_eff_j","br_Hmm"]
     # The list of systematics which are correlated between energies
-    self.keysEnergyCorr = ["QCDscale_ggH","QCDscale_qqH","QCDscale_VH","pdf_gg","pdf_qqbar","pdf_gg_ACCEPT","pdf_qqbar_ACCEPT","CMS_scale_j","CMS_res_j","UEPS","QCDscale_ggH_ACCEPT","QCDscale_qqH_ACCEPT","CMS_eff_m","CMS_eff_j"]
+    self.keysEnergyCorr = ["QCDscale_ggH","QCDscale_qqH","QCDscale_VH","pdf_gg","pdf_qqbar","pdf_gg_ACCEPT","pdf_qqbar_ACCEPT","CMS_scale_j","CMS_res_j","UEPS","QCDscale_ggH_ACCEPT","QCDscale_qqH_ACCEPT","CMS_eff_m","CMS_eff_j","br_Hmm"]
     # The list of systematics which are not correlated between energies or categories
     self.keysNotCatCorr = ["MCStat"]
     # The list of systematics which are not correlated between energies, but correlated w/ categories 
