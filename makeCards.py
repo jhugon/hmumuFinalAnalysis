@@ -577,8 +577,9 @@ def makePDFBakMSSM(name,rooDataset,dimuonMass,minMass,maxMass,workspaceImportFn,
     for param in rooParamList:
       param.setConstant(True)
 
-    bwWidth.setConstant(True)
-    bwmZ.setConstant(True)
+    ## Let them float!
+    expParam.setConstant(False)
+    mixParam.setConstant(False)
 
     if workspaceImportFn != None:
       workspaceImportFn(pdfMmumu)

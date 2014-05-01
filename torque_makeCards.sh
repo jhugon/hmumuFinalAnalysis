@@ -13,11 +13,11 @@
 
 # This controls what higgs masses are used
 
-##PBS -t 120-150
-#PBS -t 125
+#PBS -t 120-150
+##PBS -t 125
 
 ##Job Resources
-#PBS -l walltime=1:30:00
+#PBS -l walltime=0:30:00
 #PBS -l nodes=1:ppn=1
 #PBS -l pmem=3000mb
 
