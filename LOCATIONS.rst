@@ -58,6 +58,8 @@ H->mumu Datacards
 
 :2014/04/27: HCG corrections, including add missing muon eff unc and remove BR unc /raid/raid7/jhugon/higgsDataCards/20140427/ & /afs/cern.ch/work/j/jhugon/public/datacards/20140427/
 
+:2014/05/01: HCG corrections: don't make my own combinations anymore, fixed bug in MCStat naming, use binned datasets for non 2-Jet VBF, properly use "_norm" variable to control bakParamUnc, use only one signal PDF per category, and share params with bakParamUnc, add back BR unc for just our use /raid/raid7/jhugon/higgsDataCards/20140501/ & /afs/cern.ch/work/j/jhugon/public/datacards/20140501/
+
 H->mumu All Categories Bias Data
 --------------------------------
 
