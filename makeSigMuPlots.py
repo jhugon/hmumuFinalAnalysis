@@ -466,7 +466,7 @@ class RelativePlot:
     canvas.RedrawAxis()
 
 class PValuePlotTogether:
-  def __init__(self,dataDict, canvas, caption="Standard Model H#rightarrow#mu#mu", ylabel="p-Value", xlabel="m_{H} [GeV/c^{2}]",caption2="",caption3="",ylimits=[],xlimits=[],energyStr="8TeV"):
+  def __init__(self,dataDict, canvas, caption="Standard Model H #rightarrow #mu^{+}#mu^{-}", ylabel="p-Value", xlabel="m_{H} [GeV/c^{2}]",caption2="",caption3="",ylimits=[],xlimits=[],energyStr="8TeV"):
     graphs = []
     ymax = 1.0
     ymin = 1e20
@@ -669,9 +669,9 @@ if __name__ == "__main__":
       data = getDataMu(dirName+plotName+"_"+period+"_*.txt*",xMax=xMax,xMin=xMin)
       if len(data)<=1 or not args.higgsMass:
         continue
-      title = "Standard Model H#rightarrow#mu#mu"
+      title = "Standard Model H#rightarrow#mu^{+}#mu^{-}"
       xlabel="Integrated Luminosity [fb^{-1}]"
-      ytitle = "Best Fit #sigma/#sigma_{SM} (H#rightarrow#mu#mu)"
+      ytitle = "Best Fit #sigma/#sigma_{SM} (H#rightarrow#mu^{+}#mu^{-})"
       if args.higgsMass:
         title = title+" "+titleMap[plotName]
         xlabel="m_{H} [GeV/c^{2}]"

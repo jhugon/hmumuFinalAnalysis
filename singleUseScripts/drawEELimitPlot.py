@@ -5,6 +5,7 @@ parser = optparse.OptionParser(description="Makes Limit Plots from output text f
 parser.add_option("--xs", help="Limit on XS*BR",action="store_true",default=True)
 args, fakeargs = parser.parse_args()
 
+import singleHelpers
 from helpers import *
 import ROOT as root
 import glob
@@ -259,16 +260,18 @@ def getData():
    return result
 
 class RelativePlot:
-  def __init__(self,dataPoints, canvas, legend, caption, ylabel="95% CL Limit on #sigma/#sigma_{SM} (H#rightarrow#mu#mu)", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV",caption4=""):
+  def __init__(self,dataPoints, canvas, legend, caption, ylabel="95% CL Limit on #sigma/#sigma_{SM} (H #rightarrow #mu#mu)", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV",caption4=""):
     expGraph = root.TGraph()
     expGraph.SetLineStyle(2)
     expGraph.SetMarkerStyle(20)
     expGraph.SetMarkerSize(0.9)
     oneSigGraph = root.TGraphAsymmErrors()
     oneSigGraph.SetFillColor(root.kGreen)
+    oneSigGraph.SetLineColor(root.kGreen)
     oneSigGraph.SetLineStyle(0)
     twoSigGraph = root.TGraphAsymmErrors()
     twoSigGraph.SetFillColor(root.kYellow)
+    twoSigGraph.SetLineColor(root.kYellow)
     twoSigGraph.SetLineStyle(0)
     oneGraph = root.TGraph()
     oneGraph.SetLineColor(root.kRed)
@@ -326,11 +329,15 @@ class RelativePlot:
     twoSigGraph.Draw("a3")
     twoSigGraph.GetXaxis().SetTitle(xlabel)
     twoSigGraph.GetYaxis().SetTitle(ylabel)
-    twoSigGraph.GetYaxis().SetNdivisions(6,4,0)
+    if args.xs:
+      twoSigGraph.GetYaxis().SetTitleSize(0.9*twoSigGraph.GetYaxis().GetTitleSize())
+      twoSigGraph.GetYaxis().SetTitleOffset(1.15*twoSigGraph.GetYaxis().GetTitleOffset())
     if len(ylimits)==2:
         twoSigGraph.GetYaxis().SetRangeUser(*ylimits)
     else:
         twoSigGraph.GetYaxis().SetRangeUser(0.0,ymax*1.1)
+        if args.xs:
+          twoSigGraph.GetYaxis().SetRangeUser(0.0,ymax*2.)
     if len(xlimits)==2:
         twoSigGraph.GetXaxis().SetRangeUser(*xlimits)
     oneSigGraph.Draw("3")
@@ -339,6 +346,20 @@ class RelativePlot:
     if showObs:
       obsGraph.Draw("l")
       obsGraph.Draw("p")
+
+    legPos = [gStyle.GetPadLeftMargin()+0.03,0.55,0.68,0.93-gStyle.GetPadTopMargin()]
+    if args.xs:
+      legPos = [0.45,0.55,0.97-gStyle.GetPadRightMargin(),0.93-gStyle.GetPadTopMargin()]
+    leg = root.TLegend(*legPos)
+    leg.SetFillColor(0)
+    leg.SetLineColor(0)
+    leg.AddEntry(obsGraph,"Observed Limit","lp")
+    leg.AddEntry(expGraph,"Median Expected Limit","lp")
+    leg.AddEntry(oneSigGraph,"#pm1 #sigma Expected Limit","f")
+    leg.AddEntry(twoSigGraph,"#pm2 #sigma Expected Limit","f")
+    self.legPos = legPos
+    self.leg = leg
+    leg.Draw()
 
     tlatex = root.TLatex()
     tlatex.SetNDC()
@@ -408,10 +429,10 @@ if __name__ == "__main__":
       if len(data)<=1:
         continue
       xlabel="m_{H} [GeV/c^{2}]"
-      ylabel="95% CL Limit on #sigma #times BR (H#rightarrow e^{+}e^{-}) [pb]"
+      ylabel="95% CL_{s} Upper Limit on #sigma #times BR (H #rightarrow e^{+}e^{-}) [pb]"
       caption2 = "#sqrt{{s}} = 8 TeV L = {0:.1f} fb^{{-1}}".format(19.6)
       caption3 = ""
       caption4 = ""
-      title = "Combination"
+      title = "Standard Model H #rightarrow e^{+}e^{-}"
       incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStrWrite,xlabel=xlabel,caption3=caption3,showObs=True,xlimits=xlimits,vertLines = vertLines,ylabel=ylabel,caption4=caption4)
       saveAs(canvas,outDir+"xsbr_EE_"+energyStr)

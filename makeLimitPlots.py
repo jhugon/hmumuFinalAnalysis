@@ -130,7 +130,7 @@ titleMap = {
   #"Jet2SplitCutsGFSplit" : "H#rightarrow#mu#mu 2-Jet Combination",
   #"CombSplitAll" : "H#rightarrow#mu#mu Combination",
   "Jet2SplitCutsGFSplit" : "2-Jet Combination",
-  "CombSplitAll" : "Standard Model H#rightarrow#mu#mu",
+  "CombSplitAll" : "Standard Model H #rightarrow #mu^{+}#mu^{-}",
 }
 
 comparisonMap = {
@@ -286,7 +286,7 @@ def getData(fileString,matchString=r"_([-\d.]+)\.txt\.out",dontMatchStrings=[],d
   return result
 
 class RelativePlot:
-  def __init__(self,dataPoints, canvas, legend, caption, ylabel="95% CL Limit on #sigma/#sigma_{SM} (H#rightarrow#mu#mu)", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV",caption4=""):
+  def __init__(self,dataPoints, canvas, legend, caption, ylabel="95% CL Limit on #sigma/#sigma_{SM} (H #rightarrow #mu^{+}#mu^{-})", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV",caption4=""):
     expGraph = root.TGraph()
     expGraph.SetLineStyle(2)
     expGraph.SetMarkerStyle(20)
@@ -355,6 +355,9 @@ class RelativePlot:
     twoSigGraph.Draw("a3")
     twoSigGraph.GetXaxis().SetTitle(xlabel)
     twoSigGraph.GetYaxis().SetTitle(ylabel)
+    if args.xs:
+      twoSigGraph.GetYaxis().SetTitleSize(0.9*twoSigGraph.GetYaxis().GetTitleSize())
+      twoSigGraph.GetYaxis().SetTitleOffset(1.15*twoSigGraph.GetYaxis().GetTitleOffset())
     if len(ylimits)==2:
         twoSigGraph.GetYaxis().SetRangeUser(*ylimits)
     else:
@@ -748,11 +751,11 @@ if __name__ == "__main__":
       if len(data)<=1:
         continue
       xlabel="Integrated Luminosity [fb^{-1}]"
-      ylabel="95% CL_{s} Upper Limit on #sigma/#sigma_{SM} (H#rightarrow#mu#mu)"
+      ylabel="95% CL_{s} Upper Limit on #sigma/#sigma_{SM} (H #rightarrow #mu^{+}#mu^{-})"
       if args.xs:
-        ylabel="95% CL_{s} Upper Limit on #sigma #times BR (H#rightarrow#mu#mu) [pb]"
+        ylabel="95% CL_{s} Upper Limit on #sigma #times BR (H #rightarrow #mu^{+}#mu^{-}) [pb]"
         if energyStr == "7P8TeV":
-          ylabel="95% CL_{s} Limit on #sigma(8 TeV) #times BR (H#rightarrow#mu#mu) [pb]"
+          ylabel="95% CL_{s} Limit on #sigma(8 TeV) #times BR (H #rightarrow #mu^{+}#mu^{-}) [pb]"
       caption3 = ""
       caption4 = ""
       if args.bdtCut:
