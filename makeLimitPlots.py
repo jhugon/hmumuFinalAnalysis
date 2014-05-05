@@ -130,7 +130,7 @@ titleMap = {
   #"Jet2SplitCutsGFSplit" : "H#rightarrow#mu#mu 2-Jet Combination",
   #"CombSplitAll" : "H#rightarrow#mu#mu Combination",
   "Jet2SplitCutsGFSplit" : "2-Jet Combination",
-  "CombSplitAll" : "Combination",
+  "CombSplitAll" : "Standard Model H#rightarrow#mu#mu",
 }
 
 comparisonMap = {
@@ -293,9 +293,11 @@ class RelativePlot:
     expGraph.SetMarkerSize(0.9)
     oneSigGraph = root.TGraphAsymmErrors()
     oneSigGraph.SetFillColor(root.kGreen)
+    oneSigGraph.SetLineColor(root.kGreen)
     oneSigGraph.SetLineStyle(0)
     twoSigGraph = root.TGraphAsymmErrors()
     twoSigGraph.SetFillColor(root.kYellow)
+    twoSigGraph.SetLineColor(root.kYellow)
     twoSigGraph.SetLineStyle(0)
     oneGraph = root.TGraph()
     oneGraph.SetLineColor(root.kRed)
@@ -357,6 +359,8 @@ class RelativePlot:
         twoSigGraph.GetYaxis().SetRangeUser(*ylimits)
     else:
         twoSigGraph.GetYaxis().SetRangeUser(0.0,ymax*1.1)
+        if args.xs:
+          twoSigGraph.GetYaxis().SetRangeUser(0.0,ymax*1.65)
     if len(xlimits)==2:
         twoSigGraph.GetXaxis().SetRangeUser(*xlimits)
     oneSigGraph.Draw("3")
@@ -365,6 +369,20 @@ class RelativePlot:
     if showObs:
       obsGraph.Draw("l")
       obsGraph.Draw("p")
+
+    legPos = [gStyle.GetPadLeftMargin()+0.03,0.55,0.68,0.93-gStyle.GetPadTopMargin()]
+    if args.xs:
+      legPos = [0.45,0.55,0.97-gStyle.GetPadRightMargin(),0.93-gStyle.GetPadTopMargin()]
+    leg = root.TLegend(*legPos)
+    leg.SetFillColor(0)
+    leg.SetLineColor(0)
+    leg.AddEntry(obsGraph,"Observed Limit","lp")
+    leg.AddEntry(expGraph,"Median Expected Limit","lp")
+    leg.AddEntry(oneSigGraph,"#pm1 #sigma Expected Limit","f")
+    leg.AddEntry(twoSigGraph,"#pm2 #sigma Expected Limit","f")
+    self.legPos = legPos
+    self.leg = leg
+    leg.Draw()
 
     tlatex = root.TLatex()
     tlatex.SetNDC()
@@ -687,6 +705,8 @@ if __name__ == "__main__":
   
   for period in ["7TeV","8TeV","14TeV","7P8TeV"]:
     fnToGlob = dirName+"*_"+period+"_*.txt.out"
+    if args.xs:
+      fnToGlob = dirName+"CombSplitAll_"+period+"_*.txt.out"
     allfiles = glob.glob(fnToGlob)
 
     ## Limit v. Lumi
@@ -728,11 +748,11 @@ if __name__ == "__main__":
       if len(data)<=1:
         continue
       xlabel="Integrated Luminosity [fb^{-1}]"
-      ylabel="95% CL Limit on #sigma/#sigma_{SM} (H#rightarrow#mu#mu)"
+      ylabel="95% CL_{s} Upper Limit on #sigma/#sigma_{SM} (H#rightarrow#mu#mu)"
       if args.xs:
-        ylabel="95% CL Limit on #sigma #times BR (H#rightarrow#mu#mu) [pb]"
+        ylabel="95% CL_{s} Upper Limit on #sigma #times BR (H#rightarrow#mu#mu) [pb]"
         if energyStr == "7P8TeV":
-          ylabel="95% CL Limit on #sigma(8 TeV) #times BR (H#rightarrow#mu#mu) [pb]"
+          ylabel="95% CL_{s} Limit on #sigma(8 TeV) #times BR (H#rightarrow#mu#mu) [pb]"
       caption3 = ""
       caption4 = ""
       if args.bdtCut:
@@ -776,16 +796,14 @@ if __name__ == "__main__":
             vertLines += [0.0]
       elif args.higgsMass:
         if energyStr == "8TeV":
-            ylimits = [0.,40.]
             caption2 = "#sqrt{{s}} = 8 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict[energyStr]))
             caption3 = ""
         elif energyStr == "7TeV":
-            ylimits = [0.,70.]
             caption2 = "#sqrt{{s}} = 7 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict[energyStr]))
             caption3 = ""
         elif energyStr == "7P8TeV":
-            caption2 = "#sqrt{{s}} = 7 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict["7TeV"]))
-            caption3 = "#sqrt{{s}} = 8 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict["8TeV"]))
+            caption2 = "#sqrt{{s}} = 7 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict["7TeV"]))+", "+ "#sqrt{{s}} = 8 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict["8TeV"]))
+            caption3 = ""
         ylimits = []
         xlabel="m_{H} [GeV/c^{2}]"
       #elif period == "14TeV":
