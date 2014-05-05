@@ -66,9 +66,9 @@ class ShapePlotter:
         channelTitle = titleMap[channelName]
       channelWS = channelKey.ReadObj()
       mMuMu = channelWS.var("dimuonMass_CMShmm")
-      bakPDF = channelWS.pdf("bak_CMShmm")
-      sigPDF = channelWS.pdf("ggH_hmm"+energyStr+"_CMShmm")
-      data_obs = channelWS.data("data_obs_CMShmm")
+      bakPDF = channelWS.pdf("bak_"+channelNameOrig+"_CMShmm")
+      sigPDF = channelWS.pdf("sigPdf_hmm"+energyStr+"_"+channelNameOrig+"_CMShmm")
+      data_obs = channelWS.data("data_obs_"+channelNameOrig+"_CMShmm")
       
       rooDataTitle = data_obs.GetTitle()
       binWidth = 1
@@ -199,28 +199,25 @@ if __name__ == "__main__":
   shapePlotterList = []
   for energyStr in ["7TeV","8TeV"]:
     for fn in glob.glob(dataDir+"*.root"):
-      #if re.search("P[\d.]+TeV",fn):
-      #    continue
+      if re.search("P[\d.]+TeV",fn):
+          continue
 
       if ("125" not in fn):
-      #if ("148" not in fn):
-      #if ("145" not in fn):
-      #if ("147" not in fn):
           continue
 
       skip = True
-      #if ("Jets01FailPtG10BB" in fn):
-      #  skip = False
-      #if ("Jets01PassPtG10BB" in fn):
-      #  skip = False
-      #if ("Jets01PassPtG10BO" in fn):
-      #  skip = False
-      #if ("Jet2CutsVBFPass"in fn):
-      #  skip = False
-      #if ("Jet2CutsGFPass" in fn):
-      #  skip = False
-      if ("CombSplitAll" in fn):
+      if ("Jets01FailPtG10" in fn):
         skip = False
+      if ("Jets01PassPtG10" in fn):
+        skip = False
+      if ("Jet2CutsFailVBFGF"in fn):
+        skip = False
+      if ("Jet2CutsVBFPass"in fn):
+        skip = False
+      if ("Jet2CutsGFPass" in fn):
+        skip = False
+      if ("All" in fn):
+        skip = True
 
       #if "7P8TeV" in fn:
       #  skip = True
