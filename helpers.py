@@ -2834,6 +2834,7 @@ class RooModelPlotter:
                 caption1="",caption2="",caption3="",caption4="",
                 legEntryData="Data",legEntryModel="Background Model",legEntrySignal="Signal",
                 pullsYLabel="#frac{Data-Fit}{#sqrt{Fit}}",
+                preliminaryString=PRELIMINARYSTRING,
                 extraPDFs=[],
                 extraLegEntries=[],
                 extraPDFDotLineNames=[],
@@ -2868,6 +2869,7 @@ class RooModelPlotter:
     self.extraLegEntries = extraLegEntries
     self.extraPDFDotLineNames = extraPDFDotLineNames
     self.doLinearErrs = doLinearErrs
+    self.preliminaryString = preliminaryString
 
     self.legEntryData = legEntryData
     self.legEntryModel = legEntryModel
@@ -3087,8 +3089,8 @@ class RooModelPlotter:
         tmpHist.SetLineWidth(2)
         self.phonyExtraPDFLegHists.append(tmpHist)
     
-    legPos = [0.65,0.65,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
-    #legPos = [0.73,0.65,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
+    legPos = [0.55,0.55,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
+    #legPos = [0.65,0.65,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
     self.legPos = legPos
     self.leg = root.TLegend(*legPos)
     self.leg.SetFillColor(0)
@@ -3159,7 +3161,7 @@ class RooModelPlotter:
     #self.tlatex.SetTextSize(root.gStyle.GetLabelSize())
     self.tlatex.SetTextSize(0.04*motherPadToPad1FontScalingFactor)
     self.tlatex.SetTextAlign(12)
-    self.tlatex.DrawLatex(root.gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+    self.tlatex.DrawLatex(root.gStyle.GetPadLeftMargin(),0.96,self.preliminaryString)
     self.tlatex.SetTextAlign(32)
     #self.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
     caption1 = self.caption1
@@ -3272,7 +3274,7 @@ class RooModelPlotter:
     tlatex.SetTextFont(root.gStyle.GetLabelFont())
     tlatex.SetTextSize(root.gStyle.GetLabelSize())
     tlatex.SetTextAlign(12)
-    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,self.preliminaryString)
     tlatex.SetTextAlign(32)
     #tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
     caption1 = self.caption1
@@ -3375,7 +3377,7 @@ class RooModelPlotter:
     # Text
     self.tlatex.SetTextSize(0.04)
     self.tlatex.SetTextAlign(12)
-    self.tlatex.DrawLatex(root.gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
+    self.tlatex.DrawLatex(root.gStyle.GetPadLeftMargin(),0.96,self.preliminaryString)
     self.tlatex.SetTextAlign(32)
     self.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
 

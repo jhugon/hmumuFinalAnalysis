@@ -65,10 +65,11 @@ class ShapePlotter:
       if titleMap.has_key(channelName):
         channelTitle = titleMap[channelName]
       channelWS = channelKey.ReadObj()
-      mMuMu = channelWS.var("dimuonMass")
-      bakPDF = channelWS.pdf("bak")
-      sigPDF = channelWS.pdf("ggH")
-      data_obs = channelWS.data("data_obs")
+      mMuMu = channelWS.var("dimuonMass_CMShmm")
+      bakPDF = channelWS.pdf("bak_CMShmm")
+      sigPDF = channelWS.pdf("ggH_hmm"+energyStr+"_CMShmm")
+      data_obs = channelWS.data("data_obs_CMShmm")
+      
       rooDataTitle = data_obs.GetTitle()
       binWidth = 1
       if "Jet2" in channelName or "VBF" in channelName:
@@ -97,7 +98,7 @@ class ShapePlotter:
       xhigh = binning.highBound()
       #mMuMu.setRange("shapePlot",xlow,xhigh)
       mMuMu.setBins(int((xhigh-xlow)/binWidth))
-      mMuMu.SetTitle("M(#mu#mu) [GeV/c^{2}]")
+      mMuMu.SetTitle("m_{#mu#mu} [GeV/c^{2}]")
 
       saveName = outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName
       saveName = re.sub(r"_[0-9P]+TeV_","_"+self.energyStr+"_",saveName)
@@ -133,10 +134,10 @@ class ShapePlotter:
                             channelTitle,self.energyStr,self.lumi,
                             nSignal=nSignal,signalPdf=sigPDF,
                             legEntrySignal=legEntrySignal,
-                            caption1="Analysis A"
+                            preliminaryString=PRELIMINARYSTRING
                             )
       rmp.draw(saveName)
-      rmp.drawWithParams(saveName+"_params",["mixParam","bwWidth","bwmZ","expParam"])
+      #rmp.drawWithParams(saveName+"_params",["mixParam","bwWidth","bwmZ","expParam"])
 
       #Pull Distribution Time
       rmp.drawPulls(saveName+"_pulls")
@@ -207,7 +208,7 @@ if __name__ == "__main__":
       #if ("147" not in fn):
           continue
 
-      skip = False
+      skip = True
       #if ("Jets01FailPtG10BB" in fn):
       #  skip = False
       #if ("Jets01PassPtG10BB" in fn):
@@ -220,6 +221,9 @@ if __name__ == "__main__":
       #  skip = False
       if ("CombSplitAll" in fn):
         skip = False
+
+      #if "7P8TeV" in fn:
+      #  skip = True
 
       if (skip):
         continue
