@@ -809,6 +809,8 @@ if __name__ == "__main__":
             caption3 = ""
         ylimits = []
         xlabel="m_{H} [GeV/c^{2}]"
+        if args.xs:
+          ylimits = [0,0.16]
       #elif period == "14TeV":
       #  title = "Standard Model H#rightarrow#mu#mu"
       title = titleMap[plotName]
