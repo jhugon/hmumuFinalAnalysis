@@ -35,23 +35,21 @@ if mplGood:
 
 
 def getData():
-  #  [xNum,obs,low2sig,low1sig,median,high1sig,high2sig]
 
    heeF = open("etc/limits_xsbr_hee.csv")
    data = csv.reader(heeF)
    result = []
-   x = 120.
    for line in data:
      if re.match(r"[0-9.-]+",line[0]):
        line = [float(i) for i in line]
-       obs = line[5]
-       exp = line[4]
-       p1sig = exp+line[2]
-       m1sig = exp-line[3]
-       p2sig = exp+line[0]
-       m2sig = exp-line[1]
+       x = line[0]
+       obs = line[6]
+       exp = line[5]
+       p1sig = exp+line[3]
+       m1sig = exp-line[4]
+       p2sig = exp+line[1]
+       m2sig = exp-line[2]
        result.append([x,obs,m2sig,m1sig,exp,p1sig,p2sig])
-       x += 1.
    for i in result:
     print i
    return result
