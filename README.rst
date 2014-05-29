@@ -26,9 +26,12 @@ directory, along with scripts to help you do statistics studies.
 Each category will have both a .txt and .root datacard file.  Both are 
 required for the statistics software to work. 
 
-The main scripts you need to worry about is ``notlxbatch.sh``.  
-It will write the 95% upper limit for each datacard to <category>.txt.out,
-and the significance for each datacard to <category>.txt.sig
+The main scripts you need to worry about is ``findExpected.sh``.  
+It will write the expected 95% upper limit for each datacard to <category>.txt.explimit,
+and the expected significance for a 1*SM signal for each datacard to <category>.txt.expsig.
+The expected significance output is straightforward, but the expected 95% upper limit output
+shows the quantiles.  The 50% quantile is the median, so the number next to 50% is the *median
+95% CLs upper limit*.
 
 If you want to do combinations of categories, the ``combAllText.py`` script
 makes the default combinations as .txt datacards.
@@ -36,3 +39,7 @@ makes the default combinations as .txt datacards.
 is the combination of the 2-jet categories,and *Jets01SplitCatAll* is the 
 combination of the 0,1-jet categories.
 
+For the limits, the results are all in terms of (sigma)/(sigma\_SM).  I usually ony report
+down to the tenths place, e.g. the baseline limit for the 8 TeV 2-Jet combination for a Higgs
+mass of 125 GeV is 10.2*SM.  With your new cuts, getting an 8 TeV 2-Jet combination
+better than that is your goal.

@@ -2270,7 +2270,7 @@ if __name__ == "__main__":
   #directory = "/afs/cern.ch/work/j/jhugon/public/hmumuNtuplesLevel2/unzipped/"
   outDir = "statsCards/"
   periods = ["7TeV","8TeV"]
-  #periods = ["8TeV"]
+  periods = ["8TeV"]
   #periods = ["7TeV"]
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
   categoriesFF = ["BB","BO","BE","OO","FF"]
@@ -2324,8 +2324,8 @@ if __name__ == "__main__":
 
 ###  #analyses += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
 ###  #analyses += [["Jets01FailPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
-  analyses += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
-  analyses += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+#  analyses += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
+#  analyses += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
   analyses += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
   analyses += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   analyses += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
@@ -2730,6 +2730,7 @@ if __name__ == "__main__":
   shutil.copy("etc/runLEE.sh",outDir+"runLEE.sh")
   shutil.copy("etc/combAllText.py",outDir+"combAllText.py")
   shutil.copy("etc/checkWS.py",outDir+"checkWS.py")
+  shutil.copy("etc/findExpected.sh",outDir+"findExpected.sh")
 
   for iexef in glob.glob(outDir+"*.sh")+glob.glob(outDir+"*.py"):
     os.chmod(iexef, os.stat(iexef).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
