@@ -46,14 +46,14 @@ PRINTLEVEL = root.RooFit.PrintLevel(-1) #For MINUIT
 
 NPROCS = 4
 RUNSIMPLELIMITS = False
-USEGPANNA = True
+USEGPANNA = False
 
 SIGNALFIT = [110.,140.]
 
-USETREES=False
+USETREES=True
 HISTNAME="mDiMu"
 
-BAKPARAMUNC=True
+BAKPARAMUNC=False
 
 if args.cutOpt:
   USEGPANNA = False
@@ -1746,6 +1746,8 @@ class Analysis:
     return tmpDataSet
 
   def getRooDataSample(self,name,observables,aroundZ=False):
+    name = name.replace("whH","wH")
+    name = name.replace("zhH","zH")
     tmpFLoc = self.directory+name+".root"
     tmpF = root.TFile(tmpFLoc)
     minMass = self.minMass
