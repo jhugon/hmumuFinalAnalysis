@@ -2039,122 +2039,122 @@ class DataCardMaker:
     outfile.write("------------\n")
     outfile.write("# Uncertainties:\n")
 
-    # lnN Uncertainties:
-    # Correlated between everything:
-    for nu in nuisance.keysEnergyCorr:
-      formatString = "{0:<8} {1:^4} "
-      formatList = [convertUncName(nu),"lnN"]
-      iParam = 2
-      for channel,channelName in zip(self.channels,self.channelNames):
-          channelNameNoEnergy = re.sub(r"[\d]TeV$","",channelName)
-          for sigName in channel.sigNames:
-            formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-            value = nuisance(nu,sigName,channelNameNoEnergy,channel.higgsMassStr)
-            if value == None:
-              value = "-"
-            else:
-              value = abs(value)
-            formatList.append(value)
-            iParam += 1
-          # For background
-          formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-          value = "-"
-          formatList.append(value)
-          iParam += 1
-          ## Bkg Parameterization Uncertainty Time
-          if BAKPARAMUNC:
-            formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-            value = "-"
-            formatList.append(value)
-            iParam += 1
-      formatString += "\n"
-      #print formatString
-      #print formatList
-      outfile.write(formatString.format(*formatList))
-    # Not Correlated between Energies:
-    for nu in nuisance.keysNotEnergyCorr:
-      energyList = energyStr
-      if type(energyStr) != list:
-        energyList = [energyStr]
-      for energy in energyList:
-        formatString = "{0:<8} {1:^4} "
-        formatList = [convertUncName(nu+"_"+energy),"lnN"]
-        iParam = 2
-        for channel,channelName in zip(self.channels,self.channelNames):
-            channelEnergyMatch = re.search(r"[\d]TeV$",channelName)
-            assert(channelEnergyMatch)
-            channelEnergy = channelEnergyMatch.group(0)
-            #print("channelEnergy: %s" % channelEnergy)
-            channelNameNoEnergy = re.sub(r"[\d]TeV$","",channelName)
-            for sigName in channel.sigNames:
-              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-              value = nuisance(nu,sigName,channelNameNoEnergy,channel.higgsMassStr)
-              if value == None:
-                value = "-"
-              else:
-                value = abs(value)
-              if channelEnergy != energy:
-                value = "-"
-              formatList.append(value)
-              iParam += 1
-            # For background
-            formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-            value = "-"
-            formatList.append(value)
-            iParam += 1
-            ## Bkg Parameterization Uncertainty Time
-            if BAKPARAMUNC:
-              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-              value = "-"
-              formatList.append(value)
-              iParam += 1
-        formatString += "\n"
-        #print formatString
-        #print formatList
-        outfile.write(formatString.format(*formatList))
-    # Not Correlated between Energies or categories:
-    for nu in nuisance.keysNotCatCorr:
-      for channel,channelName in zip(self.channels,self.channelNames):
-        for sigName in channel.sigNames:
-          formatString = "{0:<8} {1:^4} "
-          formatList = [convertUncName(nu+"_"+channelName+"_"+sigName),"lnN"]
-          iParam = 2
-          for channel2,channelName2 in zip(self.channels,self.channelNames):
-            channelNameNoEnergy = re.sub(r"[\d]TeV$","",channelName)
-            value = "-"
-            for sigName2 in channel.sigNames:
-              value = "-"
-              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-              if channelName == channelName2 and sigName == sigName2:
-                value = nuisance(nu,sigName,channelNameNoEnergy,channel.higgsMassStr)
-                if value == None:
-                  value = "-"
-                else:
-                  value = abs(value)
-              formatList.append(value)
-              iParam += 1
-            # For background
-            formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-            value = "-"
-            formatList.append(value)
-            iParam += 1
-            ## Bkg Parameterization Uncertainty Time
-            if BAKPARAMUNC:
-              formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
-              value = "-"
-              formatList.append(value)
-              iParam += 1
-          formatString += "\n"
-          #print formatString
-          #print formatList
-          isEmpty = True
-          for el in formatList[2:]:
-            if el != "-":
-              isEmpty = False
-              break
-          if isEmpty:
-            continue
-          outfile.write(formatString.format(*formatList))
+    ## lnN Uncertainties:
+    ## Correlated between everything:
+    #for nu in nuisance.keysEnergyCorr:
+    #  formatString = "{0:<8} {1:^4} "
+    #  formatList = [convertUncName(nu),"lnN"]
+    #  iParam = 2
+    #  for channel,channelName in zip(self.channels,self.channelNames):
+    #      channelNameNoEnergy = re.sub(r"[\d]TeV$","",channelName)
+    #      for sigName in channel.sigNames:
+    #        formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+    #        value = nuisance(nu,sigName,channelNameNoEnergy,channel.higgsMassStr)
+    #        if value == None:
+    #          value = "-"
+    #        else:
+    #          value = abs(value)
+    #        formatList.append(value)
+    #        iParam += 1
+    #      # For background
+    #      formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+    #      value = "-"
+    #      formatList.append(value)
+    #      iParam += 1
+    #      ## Bkg Parameterization Uncertainty Time
+    #      if BAKPARAMUNC:
+    #        formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+    #        value = "-"
+    #        formatList.append(value)
+    #        iParam += 1
+    #  formatString += "\n"
+    #  #print formatString
+    #  #print formatList
+    #  outfile.write(formatString.format(*formatList))
+    ## Not Correlated between Energies:
+    #for nu in nuisance.keysNotEnergyCorr:
+    #  energyList = energyStr
+    #  if type(energyStr) != list:
+    #    energyList = [energyStr]
+    #  for energy in energyList:
+    #    formatString = "{0:<8} {1:^4} "
+    #    formatList = [convertUncName(nu+"_"+energy),"lnN"]
+    #    iParam = 2
+    #    for channel,channelName in zip(self.channels,self.channelNames):
+    #        channelEnergyMatch = re.search(r"[\d]TeV$",channelName)
+    #        assert(channelEnergyMatch)
+    #        channelEnergy = channelEnergyMatch.group(0)
+    #        #print("channelEnergy: %s" % channelEnergy)
+    #        channelNameNoEnergy = re.sub(r"[\d]TeV$","",channelName)
+    #        for sigName in channel.sigNames:
+    #          formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+    #          value = nuisance(nu,sigName,channelNameNoEnergy,channel.higgsMassStr)
+    #          if value == None:
+    #            value = "-"
+    #          else:
+    #            value = abs(value)
+    #          if channelEnergy != energy:
+    #            value = "-"
+    #          formatList.append(value)
+    #          iParam += 1
+    #        # For background
+    #        formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+    #        value = "-"
+    #        formatList.append(value)
+    #        iParam += 1
+    #        ## Bkg Parameterization Uncertainty Time
+    #        if BAKPARAMUNC:
+    #          formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+    #          value = "-"
+    #          formatList.append(value)
+    #          iParam += 1
+    #    formatString += "\n"
+    #    #print formatString
+    #    #print formatList
+    #    outfile.write(formatString.format(*formatList))
+    ## Not Correlated between Energies or categories:
+    #for nu in nuisance.keysNotCatCorr:
+    #  for channel,channelName in zip(self.channels,self.channelNames):
+    #    for sigName in channel.sigNames:
+    #      formatString = "{0:<8} {1:^4} "
+    #      formatList = [convertUncName(nu+"_"+channelName+"_"+sigName),"lnN"]
+    #      iParam = 2
+    #      for channel2,channelName2 in zip(self.channels,self.channelNames):
+    #        channelNameNoEnergy = re.sub(r"[\d]TeV$","",channelName)
+    #        value = "-"
+    #        for sigName2 in channel.sigNames:
+    #          value = "-"
+    #          formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+    #          if channelName == channelName2 and sigName == sigName2:
+    #            value = nuisance(nu,sigName,channelNameNoEnergy,channel.higgsMassStr)
+    #            if value == None:
+    #              value = "-"
+    #            else:
+    #              value = abs(value)
+    #          formatList.append(value)
+    #          iParam += 1
+    #        # For background
+    #        formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+    #        value = "-"
+    #        formatList.append(value)
+    #        iParam += 1
+    #        ## Bkg Parameterization Uncertainty Time
+    #        if BAKPARAMUNC:
+    #          formatString += "{"+str(iParam)+":^"+str(self.largestChannelName)+"} "
+    #          value = "-"
+    #          formatList.append(value)
+    #          iParam += 1
+    #      formatString += "\n"
+    #      #print formatString
+    #      #print formatList
+    #      isEmpty = True
+    #      for el in formatList[2:]:
+    #        if el != "-":
+    #          isEmpty = False
+    #          break
+    #      if isEmpty:
+    #        continue
+    #      outfile.write(formatString.format(*formatList))
 
     # Bak norm uncertainty
     for channel1,channel1Name in zip(self.channels,self.channelNames):
@@ -2197,29 +2197,29 @@ class DataCardMaker:
             #print formatList
             outfile.write(formatString.format(*formatList))
 
-      # Parameter (Shape) Uncertainties For Signal 
-      for channel,channelName in zip(self.channels,self.channelNames):
-        for siglist in channel.sigParamList:
-          for nu in siglist:
-            #print nu
-            nuisanceName = nu.name +"_CMShmm"
-            formatString = "{0:<25} {1:<6} {2:<10.5g} {3:<10}"
-            formatList = [nuisanceName,"param",nu.nominal,nu.getErrString()]
-            formatString += "\n"
-            #print formatString
-            #print formatList
-            outfile.write(formatString.format(*formatList))
+      ## Parameter (Shape) Uncertainties For Signal 
+      #for channel,channelName in zip(self.channels,self.channelNames):
+      #  for siglist in channel.sigParamList:
+      #    for nu in siglist:
+      #      #print nu
+      #      nuisanceName = nu.name +"_CMShmm"
+      #      formatString = "{0:<25} {1:<6} {2:<10.5g} {3:<10}"
+      #      formatList = [nuisanceName,"param",nu.nominal,nu.getErrString()]
+      #      formatString += "\n"
+      #      #print formatString
+      #      #print formatList
+      #      outfile.write(formatString.format(*formatList))
 
-      # Parameter Uncertainty for background parameterization uncertainty
-      if BAKPARAMUNC:
-        for channel,channelName in zip(self.channels,self.channelNames):
-          nuisanceName = channel.getBakParamUncName(True)
-          formatString = "{0:<25} {1:<6} {2:<10.1f} {3:<10.5g}"
-          formatList = [nuisanceName,"param",0.0,channel.getBakParamUncCounts()]
-          formatString += "\n"
-          #print formatString
-          #print formatList
-          outfile.write(formatString.format(*formatList))
+      ## Parameter Uncertainty for background parameterization uncertainty
+      #if BAKPARAMUNC:
+      #  for channel,channelName in zip(self.channels,self.channelNames):
+      #    nuisanceName = channel.getBakParamUncName(True)
+      #    formatString = "{0:<25} {1:<6} {2:<10.1f} {3:<10.5g}"
+      #    formatList = [nuisanceName,"param",0.0,channel.getBakParamUncCounts()]
+      #    formatString += "\n"
+      #    #print formatString
+      #    #print formatList
+      #    outfile.write(formatString.format(*formatList))
 
     #Debugging
     if not args.forCombGroup:
