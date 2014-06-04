@@ -661,7 +661,7 @@ if __name__ == "__main__":
       holdConstDict = {}
       rootHistParamList = [dataName,'',8,300.,700.,4,3.,5.]
       optPlots.plot2D(dataName,xName,yName,holdConstDict,rootHistParamList)
-      optPlots.annotatePlot("VBF Cut Based, p_{T}^{Miss}<40 GeV/c")
+      optPlots.annotatePlot("VBF Cut Based, p_{T}^{Miss}<40 GeV")
       optPlots.save(outDir+dataName+"_"+period)
 
     sys.exit(0)
@@ -730,7 +730,7 @@ if __name__ == "__main__":
       energyStrWrite = energyStr.replace("TeV"," TeV")
     if args.signalInject > 0.0:
       energyStrWrite += "   Signal Injected: {0:.1f}#times SM".format(args.signalInject)
-      energyStrWrite += " m_{H} = "+"{0:.1f}".format(args.signalInjectMass)+" GeV/c^{2}"
+      energyStrWrite += " m_{H} = "+"{0:.1f}".format(args.signalInjectMass)+" GeV"
     caption2 = "#sqrt{s} = "+energyStrWrite
     legend = root.TLegend(0.58,0.70,0.9,0.9)
     legend.SetFillColor(0)
@@ -766,7 +766,7 @@ if __name__ == "__main__":
         caption3 = "L = {0:.1f} fb^{{-1}}".format(float(match.group(2)))
         plotName = match.group(1)
         if plotName == "IncPtCut":
-          xlabel="p_{T}(#mu#mu) Cut [GeV/c]"
+          xlabel="p_{T}(#mu#mu) Cut [GeV]"
           xlimits = []
           vertLines += [10.0]
           if energyStr == "8TeV":
@@ -774,7 +774,7 @@ if __name__ == "__main__":
           elif energyStr == "7TeV":
             ylimits = [0.,32.]
         elif plotName == "VBFmDiJetCut":
-          xlabel="m_{jj} Cut [GeV/c]"
+          xlabel="m_{jj} Cut [GeV]"
           xlimits = []
           vertLines += [550.0]
           if energyStr == "8TeV":
@@ -808,7 +808,7 @@ if __name__ == "__main__":
             caption2 = "#sqrt{{s}} = 7 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict["7TeV"]))+", "+ "#sqrt{{s}} = 8 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict["8TeV"]))
             caption3 = ""
         ylimits = []
-        xlabel="m_{H} [GeV/c^{2}]"
+        xlabel="m_{H} [GeV]"
         if args.xs:
           ylimits = [0,0.16]
       #elif period == "14TeV":
@@ -878,7 +878,7 @@ if __name__ == "__main__":
       anotation1 += "$\sqrt{s}$ = 8 TeV, $\mathcal{L}$ = "
       anotation1 += "{0:.1f}".format(lumiDict["8TeV"])
       anotation1 += " fb$^{-1}$"
-    anotation2 = '$m_H=125$ GeV/$c^2$'
+    anotation2 = '$m_H=125$ GeV'
 
     ## Inclusive Categories
     

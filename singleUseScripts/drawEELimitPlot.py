@@ -205,6 +205,8 @@ if __name__ == "__main__":
 
   canvas = root.TCanvas()
 
+  PRELIMINARYSTRING="CMS"
+
   for period in ["8TeV"]:
     energyStr = "8TeV"
     energyStrWrite = energyStr
@@ -223,7 +225,7 @@ if __name__ == "__main__":
       vertLines = []
       if len(data)<=1:
         continue
-      xlabel="m_{H} [GeV/c^{2}]"
+      xlabel="m_{H} [GeV]"
       ylabel="95% CL_{s} Upper Limit on #sigma #times BR (H #rightarrow e^{+}e^{-}) [pb]"
       caption2 = "#sqrt{{s}} = 8 TeV L = {0:.1f} fb^{{-1}}".format(19.6)
       caption3 = ""

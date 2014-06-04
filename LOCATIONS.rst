@@ -1,7 +1,7 @@
 Locations of Files and Resources
 ================================
 
-H->mumu Final Analysis Dirs
+Justin's H->mumu Final Analysis Dirs
 ---------------------------
 
 :archer: /raid/raid9/jhugon/CMSSW_6_1_1/finalAnalysis
@@ -14,6 +14,8 @@ H->mumu Final Analysis Dirs
 
 UF Cluser RAIDs
 ---------------
+
+The local RAID filesystem for each note is /raid/raid<X>/
 
 :raid5: gainesville
 

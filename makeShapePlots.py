@@ -98,7 +98,7 @@ class ShapePlotter:
       xhigh = binning.highBound()
       #mMuMu.setRange("shapePlot",xlow,xhigh)
       mMuMu.setBins(int((xhigh-xlow)/binWidth))
-      mMuMu.SetTitle("m_{#mu#mu} [GeV/c^{2}]")
+      mMuMu.SetTitle("m_{#mu#mu} [GeV]")
 
       saveName = outDir+os.path.splitext(os.path.split(self.filename)[1])[0]+'_'+channelName
       saveName = re.sub(r"_[0-9P]+TeV_","_"+self.energyStr+"_",saveName)
@@ -131,7 +131,7 @@ class ShapePlotter:
 
       #Plot Time
       rmp = RooModelPlotter(mMuMu,bakPDF,data_obs,fr,
-                            channelTitle,self.energyStr,self.lumi,
+                            channelTitle,self.energyStr.replace("TeV"," TeV"),self.lumi,
                             nSignal=nSignal,signalPdf=sigPDF,
                             legEntrySignal=legEntrySignal,
                             preliminaryString=PRELIMINARYSTRING
