@@ -2874,7 +2874,14 @@ class RooModelPlotter:
     self.legEntryData = legEntryData
     self.legEntryModel = legEntryModel
 
-    self.lumiStr = "L = {0:.1f} fb^{{-1}}".format(lumi)
+    self.lumiStr = ""
+    if self.energyStr != "":
+      if re.search(r"[\d]TeV",self.energyStr):
+        self.energyStr = self.energyStr.replace("TeV"," TeV")
+      if self.lumi != "":
+        self.lumiStr = "{0:.1f} fb^{{-1}} ({1})".format(self.lumi,self.energyStr)
+      else:
+        self.lumiStr = "{0}".format(self.energyStr)
 
     xtitle = xVar.GetTitle()
 
@@ -3158,39 +3165,18 @@ class RooModelPlotter:
   
     # Text
     self.pad1.cd()
-    #self.tlatex.SetTextSize(root.gStyle.GetLabelSize())
-    self.tlatex.SetTextSize(0.04*motherPadToPad1FontScalingFactor)
-    self.tlatex.SetTextAlign(12)
-    self.tlatex.DrawLatex(root.gStyle.GetPadLeftMargin(),0.96,self.preliminaryString)
+    self.tlatex.SetTextAlign(11)
+    self.tlatex.SetTextFont(62)
+    tmpSize = self.tlatex.GetTextSize()
+    self.tlatex.SetTextSize(0.07)
+    self.tlatex.DrawLatex(0.15,0.94,self.preliminaryString)
+    self.tlatex.SetTextFont(42)
+    self.tlatex.SetTextSize(0.06)
+    self.tlatex.DrawLatex(0.27,0.94,"H #rightarrow #mu^{+}#mu^{-}")
+    self.tlatex.SetTextAlign(31)
+    self.tlatex.DrawLatex(0.95,0.94,self.lumiStr)
     self.tlatex.SetTextAlign(32)
-    #self.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,self.title)
-    caption1 = self.caption1
-    if caption1 != "":
-        caption1 += ": "
-    self.tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption1+self.title)
-
-    self.tlatex.SetTextAlign(32)
-    if (self.lumi != 0):
-      self.tlatex.DrawLatex(self.legPos[0]-0.01,0.820,self.lumiStr)
-    if (self.lumi == 0):
-      self.tlatex.SetTextSize(0.04)
-      self.tlatex.DrawLatex(self.legPos[0]-0.03,0.850,"#sqrt{s}=7 TeV L =  5.0 fb^{-1} ")
-      self.tlatex.DrawLatex(self.legPos[0]-0.03,0.770,"#sqrt{s}=8 TeV L = 19.8 fb^{-1}")
-            
-    energyStr = self.energyStr
-    if re.search(r"[\d]TeV",energyStr):
-      energyStr = energyStr.replace("TeV"," TeV")
-    if (self.energyStr != ""):
-      self.tlatex.DrawLatex(self.legPos[0]-0.01,0.875,"#sqrt{s} = "+self.energyStr)
-
-    if self.caption2 != "":
-      self.tlatex.DrawLatex(self.legPos[0]-0.01,0.76,self.caption2)
-
-    if self.caption3 != "":
-      self.tlatex.DrawLatex(self.legPos[0]-0.01,0.70,self.caption3)
-
-    if self.caption4 != "":
-      self.tlatex.DrawLatex(self.legPos[0]-0.01,0.64,self.caption4)
+    self.tlatex.DrawLatex(0.54,0.85,self.title)
 
     pad2.cd()
     self.tlatex.SetTextSize(self.pullsHist.GetYaxis().GetLabelSize())

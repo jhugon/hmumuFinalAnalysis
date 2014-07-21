@@ -190,6 +190,9 @@ if __name__ == "__main__":
   outDir = "shapes/"
   fitDir = "statsInput/"
 
+  #dataDir = "/raid/raid7/jhugon/higgsDataCards/20140501/statsCards/"
+  #fitDir = "/raid/raid7/jhugon/higgsDataCards/20140501/statsInput/"
+
   plotRange= [110.,160]
   #plotRange= []
   normRange = [110.,120.,130.,160]
