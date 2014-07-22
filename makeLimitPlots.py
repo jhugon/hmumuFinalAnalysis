@@ -389,19 +389,19 @@ class RelativePlot:
 
     tlatex = root.TLatex()
     tlatex.SetNDC()
-    tlatex.SetTextFont(root.gStyle.GetLabelFont())
-    #tlatex.SetTextSize(0.05)
+    tlatex.SetTextFont(62)
+    tlatex.SetTextSize(0.05)
+    tlatex.SetTextAlign(11)
+    tlatex.DrawLatex(0.15,0.94,PRELIMINARYSTRING)
+    tlatex.SetTextFont(42)
     tlatex.SetTextSize(0.04)
-    tlatex.SetTextAlign(12)
-    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
-    tlatex.SetTextAlign(12)
-    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.88,caption2)
-    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.82,caption3)
-    tlatex.SetTextAlign(32)
-    tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.88,caption4)
-
-    tlatex.SetTextAlign(32)
-    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption)
+    tlatex.DrawLatex(0.27,0.94,"H #rightarrow #mu^{+}#mu^{-}")
+    tlatex.SetTextAlign(31)
+    tlatex.SetTextSize(0.035)
+    tlatex.DrawLatex(0.95,0.94,caption2)
+    tlatex.SetTextSize(0.04)
+    tlatex.SetTextAlign(11)
+    tlatex.DrawLatex(0.19,0.86,caption)
 
     self.vertLine = root.TLine()
     self.vertLine.SetLineColor(root.kRed)
@@ -626,6 +626,7 @@ if __name__ == "__main__":
   #dirName = "/data/uftrig01b/digiovan/baselinePP/exppluspolin_fixEff_DiffMeans_unbinned_loosePUID_fixBkgVBFFit_syst_22Jan2013ReReco_assProd/statsInputUltimate/"
   #dirName = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_6_1_1/Results/hmumuFinalAnalysis/statsInput/"
   #dirName = "/data/uftrig01b/digiovan/baselinePP/m110to160_pixelLumi/hmumuFinalAnalysis/statsInput/"
+  #dirName = "/raid/raid7/jhugon/higgsDataCards/20140501/statsInput/"
   
   outDir = "statsOutput/"
   
@@ -732,7 +733,7 @@ if __name__ == "__main__":
       energyStrWrite += "   Signal Injected: {0:.1f}#times SM".format(args.signalInject)
       energyStrWrite += " m_{H} = "+"{0:.1f}".format(args.signalInjectMass)+" GeV"
     caption2 = "#sqrt{s} = "+energyStrWrite
-    legend = root.TLegend(0.58,0.70,0.9,0.9)
+    legend = root.TLegend(0.179598,0.592262,0.679598,0.892857)
     legend.SetFillColor(0)
     legend.SetLineColor(0)
     for plotName in plots:
@@ -799,13 +800,13 @@ if __name__ == "__main__":
             vertLines += [0.0]
       elif args.higgsMass:
         if energyStr == "8TeV":
-            caption2 = "#sqrt{{s}} = 8 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict[energyStr]))
+            caption2 = "{0:.1f} fb^{{-1}} (8 TeV)".format(float(lumiDict["8TeV"]))
             caption3 = ""
         elif energyStr == "7TeV":
-            caption2 = "#sqrt{{s}} = 7 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict[energyStr]))
+            caption2 = "{0:.1f} fb^{{-1}} (7 TeV)".format(float(lumiDict["7TeV"]))
             caption3 = ""
         elif energyStr == "7P8TeV":
-            caption2 = "#sqrt{{s}} = 7 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict["7TeV"]))+", "+ "#sqrt{{s}} = 8 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict["8TeV"]))
+            caption2 = "{0:.1f} fb^{{-1}} (8 TeV)".format(float(lumiDict["8TeV"])) + " + " + "{0:.1f} fb^{{-1}} (7 TeV)".format(float(lumiDict["7TeV"]))
             caption3 = ""
         ylimits = []
         xlabel="m_{H} [GeV]"

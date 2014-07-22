@@ -448,16 +448,20 @@ class RelativePlot:
 
     tlatex = root.TLatex()
     tlatex.SetNDC()
-    tlatex.SetTextFont(root.gStyle.GetLabelFont())
-    #tlatex.SetTextSize(0.05)
+    tlatex.SetTextFont(62)
+    tlatex.SetTextSize(0.05)
+    tlatex.SetTextAlign(11)
+    tlatex.DrawLatex(0.15,0.94,PRELIMINARYSTRING)
+    tlatex.SetTextFont(42)
+    tlatex.SetTextSize(0.04)
+    tlatex.DrawLatex(0.27,0.94,"H #rightarrow #mu^{+}#mu^{-}")
+    tlatex.SetTextAlign(31)
+    tlatex.SetTextSize(0.035)
+    tlatex.DrawLatex(0.95,0.94,caption2)
+
     tlatex.SetTextSize(0.04)
     tlatex.SetTextAlign(12)
-    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
-    tlatex.SetTextAlign(32)
-    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption)
-
-    tlatex.SetTextAlign(12)
-    tlatex.DrawLatex(gStyle.GetPadLeftMargin()+0.03,0.88,caption2)
+    tlatex.DrawLatex(gStyle.GetPadLeftMargin()+0.03,0.87,caption)
     tlatex.DrawLatex(gStyle.GetPadLeftMargin()+0.03,0.82,caption3)
 
     for g in self.vertLines:
@@ -549,14 +553,19 @@ class PValuePlotTogether:
 
     tlatex = root.TLatex()
     tlatex.SetNDC()
-    tlatex.SetTextFont(root.gStyle.GetLabelFont())
-    #tlatex.SetTextSize(0.05)
+    tlatex.SetTextFont(62)
+    tlatex.SetTextSize(0.05)
+    tlatex.SetTextAlign(11)
+    tlatex.DrawLatex(0.15,0.94,PRELIMINARYSTRING)
+    tlatex.SetTextFont(42)
     tlatex.SetTextSize(0.04)
-    tlatex.SetTextAlign(12)
-    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
-    tlatex.SetTextAlign(32)
-    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption)
+    tlatex.DrawLatex(0.27,0.94,"H #rightarrow #mu^{+}#mu^{-}")
+    tlatex.SetTextFont(root.gStyle.GetLabelFont())
+    tlatex.SetTextSize(0.035)
+    tlatex.SetTextAlign(31)
+    tlatex.DrawLatex(0.95,0.94,caption)
 
+    tlatex.SetTextSize(0.04)
     tlatex.SetTextAlign(12)
     caption23 = caption2
     if caption3 != "":
@@ -603,6 +612,7 @@ if __name__ == "__main__":
   #dirName = "/data/uftrig01b/digiovan/baselinePP/exppluspolin_fixEff_DiffMeans_unbinned_loosePUID_fixBkgVBFFit_syst_22Jan2013ReReco_assProd/statsInputUltimate/"
   #dirName = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_6_1_1/Results/hmumuFinalAnalysis/statsInput/"
   #dirName = "/data/uftrig01b/digiovan/baselinePP/m110to160_pixelLumi/hmumuFinalAnalysis/statsInput/"
+  #dirName = "/raid/raid7/jhugon/higgsDataCards/20140501/statsInput/"
   
   outDir = "statsOutput/"
   
@@ -640,14 +650,16 @@ if __name__ == "__main__":
 
     caption2 = ""
     caption3 = ""
-    if energyStr == '':
-      pass
+    if energyStr == "8TeV":
+        caption2 = "{0:.1f} fb^{{-1}} (8 TeV)".format(float(lumiDict["8TeV"]))
+        caption3 = ""
+    elif energyStr == "7TeV":
+        caption2 = "{0:.1f} fb^{{-1}} (7 TeV)".format(float(lumiDict["7TeV"]))
+        caption3 = ""
     elif energyStr == "7P8TeV":
-      caption2 = "#sqrt{{s}} = 7 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict["7TeV"]))
-      caption3 = "#sqrt{{s}} = 8 TeV L = {0:.1f} fb^{{-1}}".format(float(lumiDict["8TeV"]))
+        caption2 = "{0:.1f} fb^{{-1}} (8 TeV)".format(float(lumiDict["8TeV"])) + " + " + "{0:.1f} fb^{{-1}} (7 TeV)".format(float(lumiDict["7TeV"]))
     else:
-      caption2 = "#sqrt{{s}} = {0} L = {1:.1f} fb^{{-1}}".format(energyStr,float(lumiDict[energyStr]))
-      caption3 = ""
+      pass
 
     if energyStr == "7P8TeV":
       energyStr = "7 & 8 TeV"
@@ -655,8 +667,8 @@ if __name__ == "__main__":
       energyStr.replace("TeV"," TeV")
   
     if args.signalInject>0.0:
-      caption2 += "Signal Injected {0:.1f}#timesSM".format(args.signalInject)
-      caption2 += " m_{H} = "+"{0:.1f}".format(args.signalInjectMass)+" GeV/c^{2}"
+      caption3 += "Signal Injected {0:.1f}#timesSM".format(args.signalInject)
+      caption3 += " m_{H} = "+"{0:.1f}".format(args.signalInjectMass)+" GeV/c^{2}"
     legend = root.TLegend(0.58,0.70,0.9,0.9)
     legend.SetFillColor(0)
     legend.SetLineColor(0)
@@ -669,7 +681,7 @@ if __name__ == "__main__":
       data = getDataMu(dirName+plotName+"_"+period+"_*.txt*",xMax=xMax,xMin=xMin)
       if len(data)<=1 or not args.higgsMass:
         continue
-      title = "Standard Model H#rightarrow#mu^{+}#mu^{-}"
+      title = ""
       xlabel="Integrated Luminosity [fb^{-1}]"
       ytitle = "Best Fit #sigma/#sigma_{SM} (H#rightarrow#mu^{+}#mu^{-})"
       if args.higgsMass:
@@ -776,7 +788,7 @@ if __name__ == "__main__":
           pklFile = open("pValuesCombSplitAll7P8TeV.pkl","w")
           cPickle.dump(data,pklFile)
           pklFile.close()
-      pValueAllPlot = PValuePlotTogether(pValueDict,canvas,caption2=caption2,caption3=caption3,energyStr=energyStr)
+      pValueAllPlot = PValuePlotTogether(pValueDict,canvas,caption=caption2,caption3=caption3,energyStr=energyStr)
       saveAs(canvas,outDir+"pValues_"+saveName+period)
       if args.latex and saveName=="Final" and period=="7P8TeV":
         from scipy.stats import norm
