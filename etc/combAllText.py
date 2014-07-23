@@ -49,8 +49,8 @@ allSingleCats = [
 
 nullFile = open(os.devnull,'r')
 
-for mass in range(120,151):
-  if len(glob.glob("*{0}.0.txt".format(mass)))==0:
+for mass in [float(i) for i in range(120,151)]+[float(i)/10. for i in range(1245,1250)+range(1251,1260)+range(1261,1266)]:
+  if len(glob.glob("*{0:.1f}.txt".format(mass)))==0:
       continue
   for combination in combinations:
     files7TeV = []
@@ -59,12 +59,12 @@ for mass in range(120,151):
     labels8TeV = []
     for cat in allSingleCats:
       if re.match("^"+searchFor[combination],cat):
-        files7TeV.append("{0}_7TeV_{1}.0.txt".format(cat,mass))
-        files8TeV.append("{0}_8TeV_{1}.0.txt".format(cat,mass))
+        files7TeV.append("{0}_7TeV_{1:.1f}.txt".format(cat,mass))
+        files8TeV.append("{0}_8TeV_{1:.1f}.txt".format(cat,mass))
         labels7TeV.append("{0}7TeV".format(cat))
         labels8TeV.append("{0}8TeV".format(cat))
 
-    outName = combination+"_7P8TeV_{0:.1f}.txt".format(float(mass))
+    outName = combination+"_7P8TeV_{0:.1f}.txt".format(mass)
     outFile = open(outName,'w')
     callArgs = ["combineCards.py"]
     for infile,label in zip(files7TeV,labels7TeV):
@@ -80,7 +80,7 @@ for mass in range(120,151):
       outFile.close()
       os.remove(outName)
     
-    outName = combination+"_7TeV_{0:.1f}.txt".format(float(mass))
+    outName = combination+"_7TeV_{0:.1f}.txt".format(mass)
     outFile = open(outName,'w')
     callArgs = ["combineCards.py"]
     for infile,label in zip(files7TeV,labels7TeV):
@@ -94,7 +94,7 @@ for mass in range(120,151):
       outFile.close()
       os.remove(outName)
     
-    outName = combination+"_8TeV_{0:.1f}.txt".format(float(mass))
+    outName = combination+"_8TeV_{0:.1f}.txt".format(mass)
     outFile = open(outName,'w')
     callArgs = ["combineCards.py"]
     for infile,label in zip(files8TeV,labels8TeV):
@@ -110,9 +110,9 @@ for mass in range(120,151):
 
   # combined energy single channels
   for cat in allSingleCats:
-    outName = cat+"_7P8TeV_{0:.1f}.txt".format(float(mass))
+    outName = cat+"_7P8TeV_{0:.1f}.txt".format(mass)
 
-    callArgs = ["combineCards.py","{0}7TeV={0}_7TeV_{1}.0.txt".format(cat,mass),"{0}8TeV={0}_8TeV_{1}.0.txt".format(cat,mass)]
+    callArgs = ["combineCards.py","{0}7TeV={0}_7TeV_{1:.1f}.txt".format(cat,mass),"{0}8TeV={0}_8TeV_{1:.1f}.txt".format(cat,mass)]
     outFile = open(outName,'w')
     try:
       subprocess.check_call(callArgs,stdout=outFile,stderr=nullFile)
