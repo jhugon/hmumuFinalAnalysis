@@ -2995,7 +2995,7 @@ class RooModelPlotter:
     frame.GetYaxis().SetLabelSize(0.050)
     frame.GetYaxis().SetTitleSize(0.055*1.2)
     frame.GetYaxis().SetTitleOffset(
-        0.85*frame.GetYaxis().GetTitleOffset()
+        0.80*frame.GetYaxis().GetTitleOffset()
         )
 
     frameBkgSub.SetTitle("")
@@ -3045,7 +3045,7 @@ class RooModelPlotter:
     self.pullsHist.GetYaxis().CenterTitle(1)
     self.pullsHist.GetYaxis().SetTitleSize(0.097*1.2)
     self.pullsHist.GetYaxis().SetLabelSize(0.097)
-    self.pullsHist.GetYaxis().SetTitleOffset(0.70*0.9)
+    self.pullsHist.GetYaxis().SetTitleOffset(0.55)
 
     # Bkg Sub Hist
     bkgSubHist = self.makeBkgSubHist(frame,tmpDataHistName,tmpBakPDFName)
@@ -3130,13 +3130,13 @@ class RooModelPlotter:
     nowStr = self.nowStr
     motherPad.SetLogy(0)
     motherPad.cd()
-    pad1 = root.TPad("pad1"+nowStr,"",0.02,0.30,0.98,0.98,0)
-    pad2 = root.TPad("pad2"+nowStr,"",0.02,0.01,0.98,0.29,0)
+    pad1 = root.TPad("pad1"+nowStr,"",0.0,0.3,1.,1.,0)
+    pad2 = root.TPad("pad2"+nowStr,"",0.0,0.0,1.,0.3,0)
     self.pad1 = pad1
     self.pad2 = pad2
   
-    pad1.SetBottomMargin(0.005);
-    pad2.SetTopMargin   (0.005);
+    pad1.SetBottomMargin(0.02);
+    pad2.SetTopMargin   (0.03);
     pad2.SetBottomMargin(0.33);
   
     pad1.Draw() # Projections pad
