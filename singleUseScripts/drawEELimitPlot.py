@@ -227,7 +227,7 @@ if __name__ == "__main__":
         continue
       xlabel="m_{H} [GeV]"
       ylabel="95% CL_{s} Upper Limit on #sigma #times BR (H #rightarrow e^{+}e^{-}) [pb]"
-      caption2 = "#sqrt{{s}} = 8 TeV L = {0:.1f} fb^{{-1}}".format(19.6)
+      caption2 = "#sqrt{{s}} = 8 TeV L = {0:.1f} fb^{{-1}}".format(19.7)
       caption3 = ""
       caption4 = ""
       title = "Standard Model H #rightarrow e^{+}e^{-}"
