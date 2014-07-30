@@ -124,7 +124,7 @@ class ShapePlotter:
         if not "bak" in key:
           nSignal += self.processNameMap[channelNameOrig][key]
       nSignal *= signalInject
-      legEntrySignal = "SM Higgs#times{0:.0f}".format(signalInject)
+      legEntrySignal = "SM Higgs #times {0:.0f}".format(signalInject)
 
       #Set the PDF pars value from the FitResults
       setPDFfromFR(fr,bakPDF,data_obs)
