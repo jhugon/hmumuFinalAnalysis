@@ -3157,6 +3157,7 @@ class RooModelPlotter:
     self.leg.Draw()
     if self.signalPdf:
       self.signalGraphManual = self.drawSignalPdfManually(self.signalPdf,self.nSignal)
+    
     pad1.RedrawAxis()
 
     # Pulls Pad
@@ -3414,6 +3415,7 @@ class RooModelPlotter:
                           int(nBins), lowB, highB
                           )
     myCurveHist.SetBinErrorOption(root.TH1.kPoisson)
+    myCurveGraph = root.TGraphAsymmErrors()
     myDataHist =  root.TH1F("myDataHist_"+histPlotName+"_"+pdfPlotName,"",
                           int(nBins), lowB, highB
                           )
@@ -3441,7 +3443,11 @@ class RooModelPlotter:
       if x > xCurveMin and x < xCurveMax:
         curvePoint = curve.interpolate(x)
         myCurveHist.SetBinContent(iBin,curvePoint)
+        myCurveGraph.SetPoint(iBin-1,x,curvePoint)
         alphao2 = scipy.stats.norm.cdf(-1)
+
+        myCurveGraph.SetPointEYhigh(iBin-1,root.Math.gamma_quantile_c(alphao2,curvePoint+1,1.)-curvePoint)
+        myCurveGraph.SetPointEYlow(iBin-1,curvePoint-root.Math.gamma_quantile(alphao2,curvePoint,1.))
 #        print "Curve: {0:<5.1f} + {1:<5.1f} - {2:<5.1f}".format(curvePoint,myCurveHist.GetBinErrorUp(iBin),myCurveHist.GetBinErrorLow(iBin))  ## ROOT applies floor() to bin content before finding interval
 #        print "       {2:5} + {0:<5.1f} - {1:<5.1f}".format(root.Math.gamma_quantile_c(alphao2,curvePoint+1,1.)-curvePoint,curvePoint-root.Math.gamma_quantile(alphao2,curvePoint,1.),"RGam:")
 #        print "       {2:5} + {0:<5.1f} - {1:<5.1f}".format(0.5*scipy.stats.chi2.isf(alphao2,2.*curvePoint+2.)-curvePoint,curvePoint-0.5*scipy.stats.chi2.ppf(alphao2,2.*curvePoint),"chi2:")
@@ -3451,9 +3457,9 @@ class RooModelPlotter:
           pull -= curvePoint
           #pull /= sqrt(curvePoint)  # approx unc as sqrt(n)
           if pull >=0.:
-            pull /= root.Math.gamma_quantile_c(alphao2,curvePoint+1,1.)-curvePoint
+            pull /= myCurveGraph.GetErrorYhigh(iBin-1)
           else:
-            pull /= curvePoint-root.Math.gamma_quantile(alphao2,curvePoint,1.)
+            pull /= myCurveGraph.GetErrorYlow(iBin-1)
         #print(" curve interpolation: %10.2f" % (curvePoint))
       else:
         pull = 0.
@@ -3465,6 +3471,7 @@ class RooModelPlotter:
 
     self.myCurveHist = myCurveHist
     self.myDataHist = myDataHist
+    self.myCurveGraph = myCurveGraph
 
     pdfParams = rooArgSet2List(self.pdf.getParameters(self.data))
     ndf = self.xVar.getBinning().numBins()
