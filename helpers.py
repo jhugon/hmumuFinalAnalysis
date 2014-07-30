@@ -2833,7 +2833,7 @@ class RooModelPlotter:
                 canvas=None,
                 caption1="",caption2="",caption3="",caption4="",
                 legEntryData="Data",legEntryModel="Background Model",legEntrySignal="Signal",
-                pullsYLabel="#frac{Data-Fit}{#sqrt{Fit}}",
+                pullsYLabel="#frac{Data-Fit}{#sigma_{Fit}}",
                 preliminaryString=PRELIMINARYSTRING,
                 extraPDFs=[],
                 extraLegEntries=[],
@@ -3386,8 +3386,8 @@ class RooModelPlotter:
 
   def makePullPlotHist(self,frame,histPlotName,pdfPlotName):
     """
-    Makes pulls that are (data-fit)/sqrt(fit) where fit is the average value of the
-    PDF within the data histogram bin.
+    Makes pulls that are (data-fit)/sigma(fit) where fit is the average value of the
+    PDF within the data histogram bin, and sigma is the size of the poisson confidence interval for fit value
     """
 
     #print "\n\n\nStarting makePullPlotHist\n==============================================\n"
@@ -3413,9 +3413,11 @@ class RooModelPlotter:
     myCurveHist =  root.TH1F("myCurveHist_"+histPlotName+"_"+pdfPlotName,"",
                           int(nBins), lowB, highB
                           )
+    myCurveHist.SetBinErrorOption(root.TH1.kPoisson)
     myDataHist =  root.TH1F("myDataHist_"+histPlotName+"_"+pdfPlotName,"",
                           int(nBins), lowB, highB
                           )
+    myDataHist.SetBinErrorOption(root.TH1.kPoisson)
 
     #print "pullsHist", pullsHist.GetNbinsX(), pullsHist.GetXaxis().GetXmin(), pullsHist.GetXaxis().GetXmax()
       
@@ -3439,11 +3441,19 @@ class RooModelPlotter:
       if x > xCurveMin and x < xCurveMax:
         curvePoint = curve.interpolate(x)
         myCurveHist.SetBinContent(iBin,curvePoint)
+        alphao2 = scipy.stats.norm.cdf(-1)
+#        print "Curve: {0:<5.1f} + {1:<5.1f} - {2:<5.1f}".format(curvePoint,myCurveHist.GetBinErrorUp(iBin),myCurveHist.GetBinErrorLow(iBin))  ## ROOT applies floor() to bin content before finding interval
+#        print "       {2:5} + {0:<5.1f} - {1:<5.1f}".format(root.Math.gamma_quantile_c(alphao2,curvePoint+1,1.)-curvePoint,curvePoint-root.Math.gamma_quantile(alphao2,curvePoint,1.),"RGam:")
+#        print "       {2:5} + {0:<5.1f} - {1:<5.1f}".format(0.5*scipy.stats.chi2.isf(alphao2,2.*curvePoint+2.)-curvePoint,curvePoint-0.5*scipy.stats.chi2.ppf(alphao2,2.*curvePoint),"chi2:")
         if curvePoint == 0.:
           pull = 0.
         else:
           pull -= curvePoint
-          pull /= sqrt(curvePoint)
+          #pull /= sqrt(curvePoint)  # approx unc as sqrt(n)
+          if pull >=0.:
+            pull /= root.Math.gamma_quantile_c(alphao2,curvePoint+1,1.)-curvePoint
+          else:
+            pull /= curvePoint-root.Math.gamma_quantile(alphao2,curvePoint,1.)
         #print(" curve interpolation: %10.2f" % (curvePoint))
       else:
         pull = 0.
