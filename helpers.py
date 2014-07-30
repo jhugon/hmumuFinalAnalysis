@@ -66,6 +66,20 @@ def sortCatNames(l):
   ]
   return sorted(l,key=lambda x: orderDef.index(x))
 
+def getHistMax(hist):
+  nBins = hist.GetNbinsX()
+  result = -1e20
+  for i in range(1,nBins+1):
+    result = max(result,hist.GetBinContent(i))
+  return result
+    
+def getHistMin(hist):
+  nBins = hist.GetNbinsX()
+  result = 1e20
+  for i in range(1,nBins+1):
+    result = min(result,hist.GetBinContent(i))
+  return result
+
 def getOrdinalStr(inInt):
   result = str(inInt)
   if result[-1] == "1":
@@ -3046,6 +3060,10 @@ class RooModelPlotter:
     self.pullsHist.GetYaxis().SetTitleSize(0.097*1.2)
     self.pullsHist.GetYaxis().SetLabelSize(0.097)
     self.pullsHist.GetYaxis().SetTitleOffset(0.55)
+    pullsAbsMax = max(getHistMax(self.pullsHist),abs(getHistMin(self.pullsHist)))
+    pullsRange = math.floor(pullsAbsMax*1.5)
+    pullsRange = max(pullsRange,3.5)
+    self.pullsHist.GetYaxis().SetRangeUser(-pullsRange,pullsRange)
 
     # Bkg Sub Hist
     bkgSubHist = self.makeBkgSubHist(frame,tmpDataHistName,tmpBakPDFName)
@@ -3181,9 +3199,10 @@ class RooModelPlotter:
 
     pad2.cd()
     self.tlatex.SetTextSize(self.pullsHist.GetYaxis().GetLabelSize())
-    self.tlatex.SetTextAlign(12)
-    #self.tlatex.DrawLatex(0.18,0.41,"#chi^{{2}}/NDF: {0:.3g}".format(self.chi2))
-    self.tlatex.DrawLatex(0.18,0.41,"#chi^{{2}}/NDF = {0:.1f}/{1} = {2:.3g}; Probability: {3:.3g}".format(self.chi2[0],self.chi2[1],self.chi2[0]/self.chi2[1],self.chi2[2]))
+    #self.tlatex.SetTextAlign(12)
+    #self.tlatex.DrawLatex(0.18,0.41,"#chi^{{2}}/NDF = {0:.1f}/{1} = {2:.3g}; Probability: {3:.3g}".format(self.chi2[0],self.chi2[1],self.chi2[0]/self.chi2[1],self.chi2[2]))
+    self.tlatex.SetTextAlign(13)
+    self.tlatex.DrawLatex(0.18,0.935,"#chi^{{2}}/NDF = {0:.1f}/{1} = {2:.3g}; Probability: {3:.3g}".format(self.chi2[0],self.chi2[1],self.chi2[0]/self.chi2[1],self.chi2[2]))
 
     if (filenameNoExt != ""):
       saveAs(canvas,filenameNoExt)
