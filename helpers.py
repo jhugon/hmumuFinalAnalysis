@@ -2845,14 +2845,15 @@ class RooModelPlotter:
                 nSignal=0,signalPdf=None,
                 RangeName="",
                 canvas=None,
-                caption1="",caption2="",caption3="",caption4="",
+                caption1="H #rightarrow #mu^{+}#mu^{-}",caption2="",caption3="",caption4="",
                 legEntryData="Data",legEntryModel="Background Model",legEntrySignal="Signal",
                 pullsYLabel="#frac{Data-Fit}{#sigma_{Fit}}",
                 preliminaryString=PRELIMINARYSTRING,
                 extraPDFs=[],
                 extraLegEntries=[],
                 extraPDFDotLineNames=[],
-                doLinearErrs=True
+                doLinearErrs=True,
+                yMax = None
               ):
     self.xVar = xVar
     self.pdf = pdf
@@ -2873,6 +2874,7 @@ class RooModelPlotter:
     self.caption2 = caption2
     self.caption3 = caption3
     self.caption4 = caption4
+    self.yMax = yMax
     self.myCurveHist = None
     self.myDataHist = None
     assert(len(extraPDFs) == len(extraLegEntries))
@@ -3011,6 +3013,8 @@ class RooModelPlotter:
     frame.GetYaxis().SetTitleOffset(
         0.80*frame.GetYaxis().GetTitleOffset()
         )
+    if self.yMax != None:
+      frame.GetYaxis().SetRangeUser(0,self.yMax)
 
     frameBkgSub.SetTitle("")
     frameBkgSub.GetYaxis().SetLabelSize(0.04)
@@ -3060,9 +3064,9 @@ class RooModelPlotter:
     self.pullsHist.GetYaxis().SetTitleSize(0.097*1.2)
     self.pullsHist.GetYaxis().SetLabelSize(0.097)
     self.pullsHist.GetYaxis().SetTitleOffset(0.55)
-    pullsAbsMax = max(getHistMax(self.pullsHist),abs(getHistMin(self.pullsHist)))
-    pullsRange = math.floor(pullsAbsMax*1.5)
-    pullsRange = max(pullsRange,3.5)
+    pullsMax = getHistMax(self.pullsHist)*1.7
+    pullsMin = abs(getHistMin(self.pullsHist))*1.2
+    pullsRange = max(pullsMax,pullsMin)
     self.pullsHist.GetYaxis().SetRangeUser(-pullsRange,pullsRange)
 
     # Bkg Sub Hist
@@ -3191,7 +3195,7 @@ class RooModelPlotter:
     self.tlatex.DrawLatex(0.15,0.94,self.preliminaryString)
     self.tlatex.SetTextFont(42)
     self.tlatex.SetTextSize(0.06)
-    self.tlatex.DrawLatex(0.27,0.94,"H #rightarrow #mu^{+}#mu^{-}")
+    self.tlatex.DrawLatex(0.27,0.94,self.caption1)
     self.tlatex.SetTextAlign(31)
     self.tlatex.DrawLatex(0.95,0.94,self.lumiStr)
     self.tlatex.SetTextAlign(32)
