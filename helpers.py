@@ -2853,6 +2853,7 @@ class RooModelPlotter:
                 extraLegEntries=[],
                 extraPDFDotLineNames=[],
                 doLinearErrs=True,
+                sigHist = None,
                 yMax = None
               ):
     self.xVar = xVar
@@ -2875,6 +2876,7 @@ class RooModelPlotter:
     self.caption3 = caption3
     self.caption4 = caption4
     self.yMax = yMax
+    self.sigHist = sigHist
     self.myCurveHist = None
     self.myDataHist = None
     assert(len(extraPDFs) == len(extraLegEntries))
@@ -3096,6 +3098,13 @@ class RooModelPlotter:
                 signalPdf = srvr
                 break
         self.signalPdf = signalPdf
+
+    # If we use the signal histogram
+    if self.sigHist:
+      self.sigHist.SetMarkerSize(0)
+      self.sigHist.SetMarkerStyle(0)
+      self.sigHist.SetFillStyle(0)
+      self.sigHist.SetLineColor(root.kRed)
         
     # Legend
     self.phonyFitLegHist = root.TH1F("phonyFit"+nowStr,"",1,0,1)
@@ -3118,8 +3127,8 @@ class RooModelPlotter:
         tmpHist.SetLineWidth(2)
         self.phonyExtraPDFLegHists.append(tmpHist)
     
-    legPos = [0.55,0.55,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
-    #legPos = [0.65,0.65,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
+    #legPos = [0.55,0.55,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
+    legPos = [0.55,0.55,1.0-gStyle.GetPadRightMargin()-0.04,1.0-gStyle.GetPadTopMargin()-0.01]
     self.legPos = legPos
     self.leg = root.TLegend(*legPos)
     self.leg.SetFillColor(0)
@@ -3142,6 +3151,13 @@ class RooModelPlotter:
       else:
         self.leg.AddEntry(self.phonySigLegHist,"Signal","l")
         self.legBkgSub.AddEntry(self.phonySigLegHist,"Signal","l")
+    elif self.sigHist:
+      if legEntrySignal != None:
+        self.leg.AddEntry(self.sigHist,legEntrySignal,"l")
+        self.legBkgSub.AddEntry(self.sigHist,legEntrySignal,"l")
+      else:
+        self.leg.AddEntry(self.sigHist,"Signal","l")
+        self.legBkgSub.AddEntry(self.sigHist,"Signal","l")
 
 
   def draw(self,filenameNoExt,canvas=None,motherPad=None):
@@ -3180,6 +3196,8 @@ class RooModelPlotter:
     if self.signalPdf:
       self.signalGraphManual = self.drawSignalPdfManually(self.signalPdf,self.nSignal)
     
+    elif self.sigHist:
+      self.sigHist.Draw("hist same")
     pad1.RedrawAxis()
 
     # Pulls Pad

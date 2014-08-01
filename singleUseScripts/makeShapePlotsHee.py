@@ -154,9 +154,11 @@ class ShapePlotter:
     elif channelName == "cat2":
         binWidth *= 2.
         yMax = 30.
+        sigHist.Rebin(2)
     elif channelName == "cat3":
         binWidth *= 2.
         yMax = 120.
+        sigHist.Rebin(2)
 
     if binWidthOverride > 0:
       binWidth = binWidthOverride
@@ -187,15 +189,18 @@ class ShapePlotter:
     #print stupidData.GetMaximum()
     #sys.exit(0)
 
+    legEntrySignal = "SM Higgs #times 10^{6}"
+
     #Plot Time
     rmp = RooModelPlotter(mMuMu,bakPDF,data_obs,fr,
                           channelTitle,self.energyStr.replace("TeV"," TeV"),self.lumi,
 #                          nSignal=nSignal,signalPdf=sigPDF,
-#                          legEntrySignal=legEntrySignal,
+                          legEntrySignal=legEntrySignal,
                           RangeName="plotRange",
                           preliminaryString=PRELIMINARYSTRING,
                           #yMax = stupidData.GetMaximum()*1.1,
                           yMax = yMax,
+                          sigHist = sigHist,
                           caption1="H #rightarrow e^{+}e^{-}"
                           )
     rmp.draw(saveName)
