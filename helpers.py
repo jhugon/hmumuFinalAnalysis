@@ -66,6 +66,20 @@ def sortCatNames(l):
   ]
   return sorted(l,key=lambda x: orderDef.index(x))
 
+def getHistMax(hist):
+  nBins = hist.GetNbinsX()
+  result = -1e20
+  for i in range(1,nBins+1):
+    result = max(result,hist.GetBinContent(i))
+  return result
+    
+def getHistMin(hist):
+  nBins = hist.GetNbinsX()
+  result = 1e20
+  for i in range(1,nBins+1):
+    result = min(result,hist.GetBinContent(i))
+  return result
+
 def getOrdinalStr(inInt):
   result = str(inInt)
   if result[-1] == "1":
@@ -2831,14 +2845,16 @@ class RooModelPlotter:
                 nSignal=0,signalPdf=None,
                 RangeName="",
                 canvas=None,
-                caption1="",caption2="",caption3="",caption4="",
+                caption1="H #rightarrow #mu^{+}#mu^{-}",caption2="",caption3="",caption4="",
                 legEntryData="Data",legEntryModel="Background Model",legEntrySignal="Signal",
-                pullsYLabel="#frac{Data-Fit}{#sqrt{Fit}}",
+                pullsYLabel="#frac{Data-Fit}{#sigma_{Fit}}",
                 preliminaryString=PRELIMINARYSTRING,
                 extraPDFs=[],
                 extraLegEntries=[],
                 extraPDFDotLineNames=[],
-                doLinearErrs=True
+                doLinearErrs=True,
+                sigHist = None,
+                yMax = None
               ):
     self.xVar = xVar
     self.pdf = pdf
@@ -2859,6 +2875,8 @@ class RooModelPlotter:
     self.caption2 = caption2
     self.caption3 = caption3
     self.caption4 = caption4
+    self.yMax = yMax
+    self.sigHist = sigHist
     self.myCurveHist = None
     self.myDataHist = None
     assert(len(extraPDFs) == len(extraLegEntries))
@@ -2995,8 +3013,10 @@ class RooModelPlotter:
     frame.GetYaxis().SetLabelSize(0.050)
     frame.GetYaxis().SetTitleSize(0.055*1.2)
     frame.GetYaxis().SetTitleOffset(
-        0.85*frame.GetYaxis().GetTitleOffset()
+        0.80*frame.GetYaxis().GetTitleOffset()
         )
+    if self.yMax != None:
+      frame.GetYaxis().SetRangeUser(0,self.yMax)
 
     frameBkgSub.SetTitle("")
     frameBkgSub.GetYaxis().SetLabelSize(0.04)
@@ -3045,7 +3065,11 @@ class RooModelPlotter:
     self.pullsHist.GetYaxis().CenterTitle(1)
     self.pullsHist.GetYaxis().SetTitleSize(0.097*1.2)
     self.pullsHist.GetYaxis().SetLabelSize(0.097)
-    self.pullsHist.GetYaxis().SetTitleOffset(0.70*0.9)
+    self.pullsHist.GetYaxis().SetTitleOffset(0.55)
+    pullsMax = getHistMax(self.pullsHist)*1.7
+    pullsMin = abs(getHistMin(self.pullsHist))*1.2
+    pullsRange = max(pullsMax,pullsMin)
+    self.pullsHist.GetYaxis().SetRangeUser(-pullsRange,pullsRange)
 
     # Bkg Sub Hist
     bkgSubHist = self.makeBkgSubHist(frame,tmpDataHistName,tmpBakPDFName)
@@ -3074,6 +3098,13 @@ class RooModelPlotter:
                 signalPdf = srvr
                 break
         self.signalPdf = signalPdf
+
+    # If we use the signal histogram
+    if self.sigHist:
+      self.sigHist.SetMarkerSize(0)
+      self.sigHist.SetMarkerStyle(0)
+      self.sigHist.SetFillStyle(0)
+      self.sigHist.SetLineColor(root.kRed)
         
     # Legend
     self.phonyFitLegHist = root.TH1F("phonyFit"+nowStr,"",1,0,1)
@@ -3096,8 +3127,8 @@ class RooModelPlotter:
         tmpHist.SetLineWidth(2)
         self.phonyExtraPDFLegHists.append(tmpHist)
     
-    legPos = [0.55,0.55,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
-    #legPos = [0.65,0.65,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
+    #legPos = [0.55,0.55,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
+    legPos = [0.55,0.55,1.0-gStyle.GetPadRightMargin()-0.04,1.0-gStyle.GetPadTopMargin()-0.01]
     self.legPos = legPos
     self.leg = root.TLegend(*legPos)
     self.leg.SetFillColor(0)
@@ -3120,6 +3151,13 @@ class RooModelPlotter:
       else:
         self.leg.AddEntry(self.phonySigLegHist,"Signal","l")
         self.legBkgSub.AddEntry(self.phonySigLegHist,"Signal","l")
+    elif self.sigHist:
+      if legEntrySignal != None:
+        self.leg.AddEntry(self.sigHist,legEntrySignal,"l")
+        self.legBkgSub.AddEntry(self.sigHist,legEntrySignal,"l")
+      else:
+        self.leg.AddEntry(self.sigHist,"Signal","l")
+        self.legBkgSub.AddEntry(self.sigHist,"Signal","l")
 
 
   def draw(self,filenameNoExt,canvas=None,motherPad=None):
@@ -3130,13 +3168,13 @@ class RooModelPlotter:
     nowStr = self.nowStr
     motherPad.SetLogy(0)
     motherPad.cd()
-    pad1 = root.TPad("pad1"+nowStr,"",0.02,0.30,0.98,0.98,0)
-    pad2 = root.TPad("pad2"+nowStr,"",0.02,0.01,0.98,0.29,0)
+    pad1 = root.TPad("pad1"+nowStr,"",0.0,0.3,1.,1.,0)
+    pad2 = root.TPad("pad2"+nowStr,"",0.0,0.0,1.,0.3,0)
     self.pad1 = pad1
     self.pad2 = pad2
   
-    pad1.SetBottomMargin(0.005);
-    pad2.SetTopMargin   (0.005);
+    pad1.SetBottomMargin(0.02);
+    pad2.SetTopMargin   (0.03);
     pad2.SetBottomMargin(0.33);
   
     pad1.Draw() # Projections pad
@@ -3157,6 +3195,9 @@ class RooModelPlotter:
     self.leg.Draw()
     if self.signalPdf:
       self.signalGraphManual = self.drawSignalPdfManually(self.signalPdf,self.nSignal)
+    
+    elif self.sigHist:
+      self.sigHist.Draw("hist same")
     pad1.RedrawAxis()
 
     # Pulls Pad
@@ -3172,7 +3213,7 @@ class RooModelPlotter:
     self.tlatex.DrawLatex(0.15,0.94,self.preliminaryString)
     self.tlatex.SetTextFont(42)
     self.tlatex.SetTextSize(0.06)
-    self.tlatex.DrawLatex(0.27,0.94,"H #rightarrow #mu^{+}#mu^{-}")
+    self.tlatex.DrawLatex(0.27,0.94,self.caption1)
     self.tlatex.SetTextAlign(31)
     self.tlatex.DrawLatex(0.95,0.94,self.lumiStr)
     self.tlatex.SetTextAlign(32)
@@ -3180,9 +3221,10 @@ class RooModelPlotter:
 
     pad2.cd()
     self.tlatex.SetTextSize(self.pullsHist.GetYaxis().GetLabelSize())
-    self.tlatex.SetTextAlign(12)
-    #self.tlatex.DrawLatex(0.18,0.41,"#chi^{{2}}/NDF: {0:.3g}".format(self.chi2))
-    self.tlatex.DrawLatex(0.18,0.41,"#chi^{{2}}/NDF = {0:.1f}/{1} = {2:.3g}; Probability: {3:.3g}".format(self.chi2[0],self.chi2[1],self.chi2[0]/self.chi2[1],self.chi2[2]))
+    #self.tlatex.SetTextAlign(12)
+    #self.tlatex.DrawLatex(0.18,0.41,"#chi^{{2}}/NDF = {0:.1f}/{1} = {2:.3g}; Probability: {3:.3g}".format(self.chi2[0],self.chi2[1],self.chi2[0]/self.chi2[1],self.chi2[2]))
+    self.tlatex.SetTextAlign(13)
+    self.tlatex.DrawLatex(0.18,0.935,"#chi^{{2}}/NDF = {0:.1f}/{1} = {2:.3g}; Probability: {3:.3g}".format(self.chi2[0],self.chi2[1],self.chi2[0]/self.chi2[1],self.chi2[2]))
 
     if (filenameNoExt != ""):
       saveAs(canvas,filenameNoExt)
@@ -3386,8 +3428,8 @@ class RooModelPlotter:
 
   def makePullPlotHist(self,frame,histPlotName,pdfPlotName):
     """
-    Makes pulls that are (data-fit)/sqrt(fit) where fit is the average value of the
-    PDF within the data histogram bin.
+    Makes pulls that are (data-fit)/sigma(fit) where fit is the average value of the
+    PDF within the data histogram bin, and sigma is the size of the poisson confidence interval for fit value
     """
 
     #print "\n\n\nStarting makePullPlotHist\n==============================================\n"
@@ -3413,9 +3455,12 @@ class RooModelPlotter:
     myCurveHist =  root.TH1F("myCurveHist_"+histPlotName+"_"+pdfPlotName,"",
                           int(nBins), lowB, highB
                           )
+    myCurveHist.SetBinErrorOption(root.TH1.kPoisson)
+    myCurveGraph = root.TGraphAsymmErrors()
     myDataHist =  root.TH1F("myDataHist_"+histPlotName+"_"+pdfPlotName,"",
                           int(nBins), lowB, highB
                           )
+    myDataHist.SetBinErrorOption(root.TH1.kPoisson)
 
     #print "pullsHist", pullsHist.GetNbinsX(), pullsHist.GetXaxis().GetXmin(), pullsHist.GetXaxis().GetXmax()
       
@@ -3439,11 +3484,23 @@ class RooModelPlotter:
       if x > xCurveMin and x < xCurveMax:
         curvePoint = curve.interpolate(x)
         myCurveHist.SetBinContent(iBin,curvePoint)
+        myCurveGraph.SetPoint(iBin-1,x,curvePoint)
+        alphao2 = scipy.stats.norm.cdf(-1)
+
+        myCurveGraph.SetPointEYhigh(iBin-1,root.Math.gamma_quantile_c(alphao2,curvePoint+1,1.)-curvePoint)
+        myCurveGraph.SetPointEYlow(iBin-1,curvePoint-root.Math.gamma_quantile(alphao2,curvePoint,1.))
+#        print "Curve: {0:<5.1f} + {1:<5.1f} - {2:<5.1f}".format(curvePoint,myCurveHist.GetBinErrorUp(iBin),myCurveHist.GetBinErrorLow(iBin))  ## ROOT applies floor() to bin content before finding interval
+#        print "       {2:5} + {0:<5.1f} - {1:<5.1f}".format(root.Math.gamma_quantile_c(alphao2,curvePoint+1,1.)-curvePoint,curvePoint-root.Math.gamma_quantile(alphao2,curvePoint,1.),"RGam:")
+#        print "       {2:5} + {0:<5.1f} - {1:<5.1f}".format(0.5*scipy.stats.chi2.isf(alphao2,2.*curvePoint+2.)-curvePoint,curvePoint-0.5*scipy.stats.chi2.ppf(alphao2,2.*curvePoint),"chi2:")
         if curvePoint == 0.:
           pull = 0.
         else:
           pull -= curvePoint
-          pull /= sqrt(curvePoint)
+          #pull /= sqrt(curvePoint)  # approx unc as sqrt(n)
+          if pull >=0.:
+            pull /= myCurveGraph.GetErrorYhigh(iBin-1)
+          else:
+            pull /= myCurveGraph.GetErrorYlow(iBin-1)
         #print(" curve interpolation: %10.2f" % (curvePoint))
       else:
         pull = 0.
@@ -3455,6 +3512,7 @@ class RooModelPlotter:
 
     self.myCurveHist = myCurveHist
     self.myDataHist = myDataHist
+    self.myCurveGraph = myCurveGraph
 
     pdfParams = rooArgSet2List(self.pdf.getParameters(self.data))
     ndf = self.xVar.getBinning().numBins()
