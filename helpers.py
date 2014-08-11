@@ -3105,6 +3105,7 @@ class RooModelPlotter:
       self.sigHist.SetMarkerStyle(0)
       self.sigHist.SetFillStyle(0)
       self.sigHist.SetLineColor(root.kRed)
+      self.sigHist.SetLineStyle(2)
         
     # Legend
     self.phonyFitLegHist = root.TH1F("phonyFit"+nowStr,"",1,0,1)
@@ -3573,6 +3574,7 @@ class RooModelPlotter:
     observables = root.RooArgSet(self.xVar)
     result = root.TGraph()
     result.SetLineColor(root.kRed)
+    result.SetLineStyle(2)
     for iPoint in range(nPoints):
       rangeName = "manualSignalRange{0}".format(iPoint)
       pointCenter = xMin + iPoint*pointWidth
