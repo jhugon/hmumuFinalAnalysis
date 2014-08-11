@@ -3120,6 +3120,7 @@ class RooModelPlotter:
 
     self.phonySigLegHist = root.TH1F("phonySigDat"+nowStr,"",1,0,1)
     self.phonySigLegHist.SetLineColor(root.kRed)
+    self.phonySigLegHist.SetLineStyle(2)
     self.phonySigLegHist.SetLineWidth(2)
     self.phonyExtraPDFLegHists = []
     for iColor in range(len(self.extraPDFs)):
@@ -3575,13 +3576,14 @@ class RooModelPlotter:
     result = root.TGraph()
     result.SetLineColor(root.kRed)
     result.SetLineStyle(2)
+    result.SetLineWidth(2)
     for iPoint in range(nPoints):
       rangeName = "manualSignalRange{0}".format(iPoint)
       pointCenter = xMin + iPoint*pointWidth
       self.xVar.setRange(rangeName,pointCenter-binWidth*0.5,pointCenter+binWidth*0.5)
       pdfVal = sigPdf.createIntegral(observables,observables,rangeName).getVal()
       result.SetPoint(iPoint,pointCenter,pdfVal*nSignal)
-    result.Draw("L")
+    result.Draw("C")
     return result
 
 def treeCut(category,cutString,eventWeights=True,muonRequirements=True,KDString="KD"):
