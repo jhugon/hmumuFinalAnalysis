@@ -3151,7 +3151,7 @@ class RooModelPlotter:
       else:
         self.leg.AddEntry(self.phonySigLegHist,"Signal","l")
         self.legBkgSub.AddEntry(self.phonySigLegHist,"Signal","l")
-    elif self.sigHist:
+    if self.sigHist:
       if legEntrySignal != None:
         self.leg.AddEntry(self.sigHist,legEntrySignal,"l")
         self.legBkgSub.AddEntry(self.sigHist,legEntrySignal,"l")
@@ -3196,7 +3196,7 @@ class RooModelPlotter:
     if self.signalPdf:
       self.signalGraphManual = self.drawSignalPdfManually(self.signalPdf,self.nSignal)
     
-    elif self.sigHist:
+    if self.sigHist:
       self.sigHist.Draw("hist same")
     pad1.RedrawAxis()
 

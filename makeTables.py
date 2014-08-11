@@ -92,6 +92,8 @@ class DataCardGetter(makeShapePlots.ShapePlotter):
         continue
       channelName = re.sub("[\d]+TeV","",channelNameOrig)
       channelTitle = channelName
+      self.channelName = channelName
+      self.channelNameOrig = channelNameOrig
       channelWS = channelKey.ReadObj()
       mMuMu = channelWS.var("dimuonMass_CMShmm")
       bakPDF = channelWS.pdf("bak_"+channelNameOrig+"_CMShmm")
@@ -171,6 +173,30 @@ def getnBkgInFWHM(catName,energyStr,fwhm):
   dcg = DataCardGetter(fn,fitDir,energyStr,fwhm)
   return dcg.nBkg, dcg.nSig
 
+def getSignalCompFractions(catName,energyStr):
+  fn = "/raid/raid7/jhugon/higgsDataCards/20140501/statsCards/" + catName + "_" + energyStr + "_125.0.root"
+  fitDir = "/raid/raid7/jhugon/higgsDataCards/20140501/statsInput/"
+  dcg = DataCardGetter(fn,fitDir,energyStr,2.5)
+  gfNum = 0.
+  vbfNum = 0.
+  whNum = 0.
+  zhNum = 0.
+  for key in dcg.processNameMap[dcg.channelNameOrig]:
+    if "ggH" in key:
+      gfNum = dcg.processNameMap[dcg.channelNameOrig][key]
+    elif "qqH" in key:
+      vbfNum = dcg.processNameMap[dcg.channelNameOrig][key]
+    elif "WH" in key:
+      whNum = dcg.processNameMap[dcg.channelNameOrig][key]
+    elif "ZH" in key:
+      zhNum = dcg.processNameMap[dcg.channelNameOrig][key]
+  totalNum = gfNum + vbfNum + whNum + zhNum
+  gfFrac = gfNum/totalNum
+  vbfFrac = vbfNum/totalNum
+  whFrac = whNum/totalNum
+  zhFrac = zhNum/totalNum
+  return gfFrac,vbfFrac,whFrac,zhFrac
+
 def getnDataInFWHM(catName,energyStr,fwhm):
   glbString = "/cms/data/store/user/jhugon/hmumu/stage2/SingleMuRun2011*.root"
   if energyStr == "8TeV":
@@ -184,6 +210,33 @@ def getnDataInFWHM(catName,energyStr,fwhm):
   result = entryList.GetN()
   return result
 
+def getEffs(catName,energyStr):
+  gf = -1.
+  vbf = -1.
+  wh = -1.
+  zh = -1. 
+  fn = "/raid/raid7/jhugon/higgsDataCards/20140501/statsCards/" + catName + "_" + energyStr + "_125.0.txt"
+  f = open(fn)
+  foundSigEffs = False
+  for l in f:
+    if foundSigEffs:
+      gfMatch = re.search(r"^#    ggHmumu125_[78]TeV: ([.0-9]+)",l)
+      vbfMatch = re.search(r"^#    vbfHmumu125_[78]TeV: ([.0-9]+)",l)
+      whMatch = re.search(r"^#    whHmumu125_[78]TeV: ([.0-9]+)",l)
+      zhMatch = re.search(r"^#    zhHmumu125_[78]TeV: ([.0-9]+)",l)
+      if gfMatch:
+        gf = float(gfMatch.group(1))
+      if vbfMatch:
+        vbf = float(vbfMatch.group(1))
+      if whMatch:
+        wh = float(whMatch.group(1))
+      if zhMatch:
+        zh = float(zhMatch.group(1))
+    elif re.search(r"^#  Signal Efficiencies:",l):
+      foundSigEffs = True
+  f.close()
+  return gf,vbf,wh,zh
+
 
 for energyStr in ["7TeV","8TeV"]:
   for cat in cats:
@@ -191,4 +244,20 @@ for energyStr in ["7TeV","8TeV"]:
     nBkgInFWHM, nSig = getnBkgInFWHM(cat,energyStr,fwhm)
     nDataInFWHM = getnDataInFWHM(cat,energyStr,fwhm)
     print "{0:25} {1:3.1f} & {2:5.2f} & {3:9.1f} & {4:9.0f}".format(cat+energyStr,fwhm,nSig,nBkgInFWHM,nDataInFWHM)
+
+print "\nNow gf, vbf, wh, zh efficiency * acceptance\n"
+    
+for energyStr in ["7TeV","8TeV"]:
+  for cat in cats:
+    gf,vbf,wh,zh     = getEffs(cat,energyStr)
+    #print "{0:25} {1:5.1f}\% & {2:5.1f}\% & {3:5.1f}\% & {4:5.1f}\%".format(cat+energyStr,gf*100.,vbf*100.,wh*100.,zh*100.)
+    print "{0:25} {1:5.1f}\% & {2:5.1f}\% & {3:5.1f}\%".format(cat+energyStr,gf*100.,vbf*100.,(wh+zh)/2.*100.)
+   
+print "\nNow fractional signal composition\n"
+    
+for energyStr in ["7TeV","8TeV"]:
+  for cat in cats:
+    gf,vbf,wh,zh     = getSignalCompFractions(cat,energyStr)
+    #print "{0:25} {1:5.1f}\% & {2:5.1f}\% & {3:5.1f}\% & {4:5.1f}\%".format(cat+energyStr,gf*100.,vbf*100.,wh*100.,zh*100.)
+    print "{0:25} {1:5.1f}\% & {2:5.1f}\% & {3:5.1f}\% & {4:5.1f}\%".format(cat+energyStr,gf*100.,vbf*100.,wh*100.,zh*100.)
     

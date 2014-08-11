@@ -136,12 +136,21 @@ class ShapePlotter:
       print "fn doesn't contain channel name!!"
       sys.exit(1)
     channelName = channelNameMatch.group(1)
+    self.channelName = channelName
     channelTitle = titleMap[channelName]
     data_obs = self.f.Get("data_mass_"+channelName)
     mMuMu = rooArgSet2List(data_obs.get())[0]
 
     sigHistName = "th1f_sig_ggh_mass_m125_"+channelName
     sigHist = self.f.Get(sigHistName)
+
+    w = root.RooWorkspace("w_"+channelName)
+    self.w = w
+    wImport = getattr(w,"import")
+
+    # Make a signal PDF
+    sigPDFName = self.makeSigPdf(mMuMu,sigHist)
+    sigPDF = w.pdf(sigPDFName)
 
     binWidth = 1
     yMax = None
@@ -170,8 +179,6 @@ class ShapePlotter:
     mMuMu.setBins(int((xhigh-xlow)/binWidth))
     mMuMu.SetTitle("m_{ee} [GeV]")
 
-    w = root.RooWorkspace("w_"+channelName)
-    wImport = getattr(w,"import")
     makePDFBakMSSM(channelName,data_obs,mMuMu,wImport)
 
     bakPDF = w.pdf("bak")
@@ -189,6 +196,7 @@ class ShapePlotter:
     #print stupidData.GetMaximum()
     #sys.exit(0)
 
+
     legEntrySignal = "SM Higgs #times 10^{6}"
 
     #Plot Time
@@ -200,13 +208,87 @@ class ShapePlotter:
                           preliminaryString=PRELIMINARYSTRING,
                           #yMax = stupidData.GetMaximum()*1.1,
                           yMax = yMax,
-                          sigHist = sigHist,
+                          #sigHist = sigHist,
+                          nSignal=2*sigHist.Integral(),  # The 2 is a hack to make it work!!
+                          signalPdf=sigPDF,
                           caption1="H #rightarrow e^{+}e^{-}"
                           )
     rmp.draw(saveName)
     #rmp.drawWithParams(saveName+"_params",["mixParam","bwWidth","bwmZ","expParam"])
 
     self.rmpList.append(rmp)
+
+    self.nSignal = sigHist.Integral()
+    self.fwhm = calcFWHM(sigPDF,mMuMu,110,160,0.02)
+    # Do table work
+    obsVarSet = root.RooArgSet(mMuMu)
+    fwhmRangeName = "myIntRangeforFWHM_{0}".format(channelName)
+    mMuMu.setRange(fwhmRangeName,125-0.5*self.fwhm,125.+0.5*self.fwhm) 
+    pdfFrac = bakPDF.createIntegral(obsVarSet,obsVarSet,fwhmRangeName)
+    pdfFracNorm = bakPDF.createIntegral(obsVarSet,obsVarSet,"plotRange")
+    self.nBkg = pdfFrac.getVal()/pdfFracNorm.getVal() * data_obs.sumEntries("{0} > {1} && {0} < {2}".format(mMuMu.GetName(),110,160))
+    self.nData = data_obs.sumEntries("{0} > {1} && {0} < {2}".format(mMuMu.GetName(),125-0.5*self.fwhm,125.+0.5*self.fwhm))
+
+  def makeSigPdf(self,dimuonMass,sigHist):
+    #self.wSig = root.RooWorkspace("wSig_"+self.channelName)
+    self.wSig = self.w
+    sigData = root.RooDataHist("datSig_"+self.channelName,"",root.RooArgList(dimuonMass),sigHist,1.)
+
+    channelName = self.channelName
+    name = ""
+    meanG1 = root.RooRealVar(channelName+"_"+name+"_MeanG1",
+                             channelName+"_"+name+"_MeanG1", 
+                             #124.5)
+                             124.5,115.,140.)
+    meanG2 = root.RooRealVar(channelName+"_"+name+"_MeanG2",
+                             channelName+"_"+name+"_MeanG2", 
+                             #123.0)
+                             123.,115.,140.)
+    
+    widthG1 = root.RooRealVar(channelName+"_"+name+"_WidthG1",
+                              channelName+"_"+name+"_WidthG1", 
+                             1.,0.1,15.)
+    widthG2 = root.RooRealVar(channelName+"_"+name+"_WidthG2",
+                              channelName+"_"+name+"_WidthG2", 
+                             2.,0.1,15.)
+      
+    mixGG = root.RooRealVar(channelName+"_"+name+"_mixGG",
+                            channelName+"_"+name+"_mixGG", 
+                            0.9,0.0,1.0)
+    gaus1 = root.RooGaussian(channelName+"_"+name+"_gaus1",
+                             channelName+"_"+name+"_gaus1",
+                             dimuonMass,meanG1,widthG1)
+    gaus2 = root.RooGaussian(channelName+"_"+name+"_gaus2",
+                             channelName+"_"+name+"_gaus2",
+                             dimuonMass,meanG2,widthG2)
+    sigPdfName = channelName+"__sig_Pdf"
+    result = root.RooAddPdf(sigPdfName,
+                                name,
+                                gaus1,gaus2,mixGG)
+    fitRange = root.RooFit.Range(120.,130.)
+    if "cat1" in channelName:
+      fitRange = root.RooFit.Range(117.,131.)
+    if "cat0" in channelName:
+      fitRange = root.RooFit.Range(118.,130.)
+      #fitRange = root.RooFit.Range(122.,128.)
+    if "cat2" in channelName:
+      fitRange = root.RooFit.Range(113.,132.)
+      #fitRange = root.RooFit.Range(115.,130.)
+    fr = result.fitTo(sigData,root.RooFit.Save(),root.RooFit.SumW2Error(True),PRINTLEVEL,fitRange)
+    fr.Print()
+
+    frame = dimuonMass.frame(root.RooFit.Range(110.,160.))
+    sigData.plotOn(frame)
+    result.plotOn(frame,root.RooFit.Range(110.,160.))
+    canvas = root.TCanvas()
+    frame.Draw()
+    canvas.SaveAs("sigHistTestFit_"+channelName+".png")
+
+    getattr(self.wSig,"import")(sigData)
+    getattr(self.wSig,"import")(result)
+    getattr(self.wSig,"import")(gaus1)
+    getattr(self.wSig,"import")(gaus2)
+    return sigPdfName
 
 if __name__ == "__main__":
   root.gROOT.SetBatch(True)
@@ -221,11 +303,16 @@ if __name__ == "__main__":
     "cat2":"2-jet Tight",
     "cat3":"2-jet Loose",
   }
-  
 
   shapePlotterList = []
   for fn in fns:
+    #if not "cat2" in fn:
+    #    continue
     energyStr = "8TeV"
     print fn
     s = ShapePlotter(fn,outDir,titleMap,signalInject=args.signalInject,binWidthOverride=args.binWidthOverride,energyStr=energyStr)
     shapePlotterList.append(s)
+
+  print "{0:20} & {1:>6} & {2:>6} & & & & {3:>6} & {4:>6}".format("cat","fwhm","nSig*10^5","nBkg","nData")
+  for s in shapePlotterList:
+    print r"{0:20} & {1:6.2f} & {2:6.2f} & & & & {3:6.1f} & {4:6.1f} &  \\".format(s.channelName,s.fwhm,s.nSignal/10.,s.nBkg,s.nData)
