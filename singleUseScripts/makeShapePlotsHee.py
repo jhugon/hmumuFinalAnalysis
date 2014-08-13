@@ -176,7 +176,7 @@ class ShapePlotter:
     binning = mMuMu.getBinning()
     xlow = binning.lowBound()
     xhigh = binning.highBound()
-    mMuMu.setBins(int((xhigh-xlow)/binWidth))
+    #mMuMu.setBins(int((xhigh-xlow)/binWidth))
     mMuMu.SetTitle("m_{ee} [GeV]")
 
     makePDFBakMSSM(channelName,data_obs,mMuMu,wImport)
@@ -219,7 +219,14 @@ class ShapePlotter:
     self.rmpList.append(rmp)
 
     self.nSignal = sigHist.Integral()
-    self.fwhm = calcFWHM(sigPDF,mMuMu,110,160,0.02)
+    fwhmDict = {
+        "cat0":3.95597006589,
+        "cat1":7.09778854727,
+        "cat2":3.76809619621,
+        "cat3":4.72309922204,
+    }
+    #self.fwhm = calcFWHM(sigPDF,mMuMu,110,160,0.02)
+    self.fwhm = fwhmDict[self.channelName]
     # Do table work
     obsVarSet = root.RooArgSet(mMuMu)
     fwhmRangeName = "myIntRangeforFWHM_{0}".format(channelName)
@@ -227,7 +234,7 @@ class ShapePlotter:
     pdfFrac = bakPDF.createIntegral(obsVarSet,obsVarSet,fwhmRangeName)
     pdfFracNorm = bakPDF.createIntegral(obsVarSet,obsVarSet,"plotRange")
     self.nBkg = pdfFrac.getVal()/pdfFracNorm.getVal() * data_obs.sumEntries("{0} > {1} && {0} < {2}".format(mMuMu.GetName(),110,160))
-    self.nData = data_obs.sumEntries("{0} > {1} && {0} < {2}".format(mMuMu.GetName(),125-0.5*self.fwhm,125.+0.5*self.fwhm))
+    self.nData = data_obs.sumEntries("1",fwhmRangeName)
 
   def makeSigPdf(self,dimuonMass,sigHist):
     #self.wSig = root.RooWorkspace("wSig_"+self.channelName)
@@ -314,5 +321,5 @@ if __name__ == "__main__":
     shapePlotterList.append(s)
 
   print "{0:20} & {1:>6} & {2:>6} & & & & {3:>6} & {4:>6}".format("cat","fwhm","nSig*10^5","nBkg","nData")
-  for s in shapePlotterList:
+  for s in sorted(shapePlotterList,key=lambda x: x.channelName):
     print r"{0:20} & {1:6.2f} & {2:6.2f} & & & & {3:6.1f} & {4:6.1f} &  \\".format(s.channelName,s.fwhm,s.nSignal/10.,s.nBkg,s.nData)
