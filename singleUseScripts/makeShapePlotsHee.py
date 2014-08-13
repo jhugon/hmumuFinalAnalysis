@@ -176,7 +176,7 @@ class ShapePlotter:
     binning = mMuMu.getBinning()
     xlow = binning.lowBound()
     xhigh = binning.highBound()
-    #mMuMu.setBins(int((xhigh-xlow)/binWidth))
+    mMuMu.setBins(int((xhigh-xlow)/binWidth))
     mMuMu.SetTitle("m_{ee} [GeV]")
 
     makePDFBakMSSM(channelName,data_obs,mMuMu,wImport)
@@ -197,7 +197,7 @@ class ShapePlotter:
     #sys.exit(0)
 
 
-    legEntrySignal = "SM Higgs #times 10^{6}"
+    legEntrySignal = "SM Higgs boson #times 10^{6}"
 
     #Plot Time
     rmp = RooModelPlotter(mMuMu,bakPDF,data_obs,fr,

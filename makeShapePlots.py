@@ -124,7 +124,7 @@ class ShapePlotter:
         if not "bak" in key:
           nSignal += self.processNameMap[channelNameOrig][key]
       nSignal *= signalInject
-      legEntrySignal = "SM Higgs #times {0:.0f}".format(signalInject)
+      legEntrySignal = "SM Higgs boson #times {0:.0f}".format(signalInject)
 
       #Set the PDF pars value from the FitResults
       setPDFfromFR(fr,bakPDF,data_obs)
@@ -190,8 +190,8 @@ if __name__ == "__main__":
   outDir = "shapes/"
   fitDir = "statsInput/"
 
-  #dataDir = "/raid/raid7/jhugon/higgsDataCards/20140501/statsCards/"
-  #fitDir = "/raid/raid7/jhugon/higgsDataCards/20140501/statsInput/"
+  dataDir = "/raid/raid7/jhugon/higgsDataCards/20140501/statsCards/"
+  fitDir = "/raid/raid7/jhugon/higgsDataCards/20140501/statsInput/"
 
   plotRange= [110.,160]
   #plotRange= []

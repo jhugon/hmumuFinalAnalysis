@@ -2846,7 +2846,7 @@ class RooModelPlotter:
                 RangeName="",
                 canvas=None,
                 caption1="H #rightarrow #mu^{+}#mu^{-}",caption2="",caption3="",caption4="",
-                legEntryData="Data",legEntryModel="Background Model",legEntrySignal="Signal",
+                legEntryData="Data",legEntryModel="Background model",legEntrySignal="Signal",
                 pullsYLabel="#frac{Data-Fit}{#sigma_{Fit}}",
                 preliminaryString=PRELIMINARYSTRING,
                 extraPDFs=[],
@@ -3129,8 +3129,7 @@ class RooModelPlotter:
         tmpHist.SetLineWidth(2)
         self.phonyExtraPDFLegHists.append(tmpHist)
     
-    #legPos = [0.55,0.55,1.0-gStyle.GetPadRightMargin()-0.01,1.0-gStyle.GetPadTopMargin()-0.01]
-    legPos = [0.55,0.55,1.0-gStyle.GetPadRightMargin()-0.04,1.0-gStyle.GetPadTopMargin()-0.01]
+    legPos = [0.48,0.55,1.0-gStyle.GetPadRightMargin()-0.04,1.0-gStyle.GetPadTopMargin()-0.01]
     self.legPos = legPos
     self.leg = root.TLegend(*legPos)
     self.leg.SetFillColor(0)
@@ -3219,7 +3218,7 @@ class RooModelPlotter:
     self.tlatex.SetTextAlign(31)
     self.tlatex.DrawLatex(0.95,0.94,self.lumiStr)
     self.tlatex.SetTextAlign(32)
-    self.tlatex.DrawLatex(0.54,0.85,self.title)
+    self.tlatex.DrawLatex(0.475,0.85,self.title)
 
     pad2.cd()
     self.tlatex.SetTextSize(self.pullsHist.GetYaxis().GetLabelSize())
