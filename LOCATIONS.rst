@@ -32,13 +32,17 @@ H->mumu Ntuples
 
 stage1 means Uf Analyzer, stage 2 means ready for hmumuFinalAnalysis:
 
-florida cluster and HPC:
+florida cluster:
+
+/raid/[raid7|raid9]/jhugon/hmmNtuples/[stage1|stage2]
+
+Amazon S3:
+
+s3://backups.hugonweb.com/hmmNtupleBackup/[stage1|stage2]
+
+florida cluster and HPC (Not all of stage1):
 
 /cms/data/store/user/jhugon/hmumu/[stage1|stage2]
-
-On Melrose:
-
-/raid/raid8/jhugon/higgsSamples/[stage1|stage2]
 
 On cern AFS (Stage2):
 
