@@ -1,9 +1,18 @@
 
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <vector>
+#include <map>
+#include <limits>
+
+#include <TString.h>
+#include <TPRegexp.h>
 #include <TSystem.h>
 #include <TROOT.h>
 #include <TClonesArray.h>
 #include <TParticle.h>
-#include <iostream>
 #include <TFile.h>
 #include <TTree.h>
 #include <TChain.h>
@@ -16,11 +25,6 @@
 #include <TF1.h>
 #include <TRandom3.h>
 
-#include <vector>
-#include <map>
-#include <limits>
-#include <sstream>
-#include <iomanip>
 
 using namespace std;
 typedef map<string,unsigned> CandCounterType;
@@ -249,6 +253,20 @@ void countMultiCandEvents(string infilename="/cms/data/store/user/jhugon/hmumu/s
   cout << "2JetGFTight:"<<endl;
   cout << "                unique events: "<<candCounts_2JetGFTight.size()<<endl;
   cout << "                multi-muon events: "<<nMulti_2JetGFTight<<endl;
-    
+
+  TPRegexp regexDir("^.+/");
+  TString outFileName = infilename.c_str();
+  regexDir.Substitute(outFileName,"");
+  outFileName = outFileName.ReplaceAll(".root",".txt");
+  cout << "Writing to: " << outFileName << endl;
+
+  ofstream outFile;
+  outFile.open(outFileName);
+  outFile << "MuonSelected:  " << candCounts.size()<<"  "<<nMulti<<endl;
+  outFile << "01JetTightBB:  " << candCounts_01JetTightBB.size()<<"  "<<nMulti_01JetTightBB<<endl;
+  outFile << "01JetTightBO:  " << candCounts_01JetTightBO.size()<<"  "<<nMulti_01JetTightBO<<endl;
+  outFile << "2JetVBFTight:  " << candCounts_2JetVBFTight.size()<<"  "<<nMulti_2JetVBFTight<<endl;
+  outFile << "2JetGFTight:   " << candCounts_2JetGFTight.size()<<"  "<<nMulti_2JetGFTight<<endl;
+  outFile.close();
   
 }

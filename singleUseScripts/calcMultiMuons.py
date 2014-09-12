@@ -74,15 +74,89 @@ muonSelCountsDict = {
   "ZZ":9247,
 }
 
+def readLogFile(sampleName):
+  result = None
+  if sampleName == "data":
+    runs = [
+                "SingleMuRun2012Av1",
+                "SingleMuRun2012Bv1",
+                "SingleMuRun2012Cv1",
+                "SingleMuRun2012Dv1",
+            ]
+    for run in runs:
+        runData = readLogFile(run)
+        if not result:
+          result = runData
+        else:
+          for cat in result.keys():
+            for i in [0,1]:
+              result[cat][i] += runData[cat][i]
+  else:
+    result = {}
+    if sampleName == "TT":
+      sampleName = "ttbar"
+    files = list(glob.glob(sampleName+"*.txt"))
+    assert(len(files)==1)
+    f = open(files[0])
+    for line in f:
+      #print line,
+      match = re.match(r"^(\w+)\:\s+(\d+)\s+(\d+)$",line)
+      assert(match)
+      result[match.group(1)] = [int(match.group(2)),int(match.group(3))]
+    f.close()
+  return result
+    
+
 if __name__ == "__main__":
-  totalEvents = 0.
-  for sampleName in multiMuonCountsDict:
-    toprint = "{0:10}".format(sampleName)
-    #count = multiMuonCountsDict[sampleName]
-    count = muonSelCountsDict[sampleName]
-    toprint += "{0:10}".format(count)
-    count *= luminosity*1000.*xsecDict[sampleName]/originalNEventsDict[sampleName]
-    toprint += "{0:20f}".format(count)
-    print toprint
-    totalEvents += count
-  print totalEvents
+  categories = [
+                    "MuonSelected",
+                    "01JetTightBB",
+                    "01JetTightBO",
+                    "2JetVBFTight",
+                    "2JetGFTight",
+               ]
+  samples = xsecDict.keys()+["data"]
+  samples.sort()
+  data = {}
+  for sample in samples:
+    data[sample] = readLogFile(sample)
+
+  samples.remove("data")
+  samples2 = ["SigTotal","BkgTotal","data"]
+  data["SigTotal"] = {}
+  data["BkgTotal"] = {}
+  for cat in categories:
+    data["SigTotal"][cat] = [0.,0.]
+    data["BkgTotal"][cat] = [0.,0.]
+
+  for i in [0,1]:
+    for sample in samples:
+      sf = luminosity*1000.*xsecDict[sample]/originalNEventsDict[sample]
+      for cat in categories:
+        if len(sample)==2:
+          data["BkgTotal"][cat][i] += data[sample][cat][i]*sf
+        else:
+          data["SigTotal"][cat][i] += data[sample][cat][i]*sf
+
+  for i,trial in zip([0,1],["Number of Independent Events","Number of >1 Higgs Candidate Events"]):
+    print "="*6*15
+    print trial+" for 19.7 fb^-1 at 8 TeV"
+    print "="*6*15
+    outStr = "{0:15}".format("")
+    for cat in categories:
+      outStr += "{0:>15}".format(cat)
+    print outStr
+    for sample in samples:
+      outStr = "{0:15}".format(sample)
+      sf = luminosity*1000.*xsecDict[sample]/originalNEventsDict[sample]
+      for cat in categories:
+        outStr += "{0:15.3g}".format(data[sample][cat][i]*sf)
+      print outStr
+    print "-"*6*15
+    for sample in samples2:
+      outStr = "{0:15}".format(sample)
+      for cat in categories:
+        outStr += "{0:15.3g}".format(data[sample][cat][i])
+      print outStr
+    print "="*6*15
+    print
