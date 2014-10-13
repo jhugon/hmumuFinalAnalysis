@@ -114,6 +114,7 @@ if __name__ == "__main__":
                     "01JetTightBO",
                     "2JetVBFTight",
                     "2JetGFTight",
+                    "2JetLoose",
                ]
   samples = xsecDict.keys()+["data"]
   samples.sort()

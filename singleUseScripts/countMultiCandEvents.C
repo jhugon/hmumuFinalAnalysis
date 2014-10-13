@@ -48,6 +48,7 @@ void countMultiCandEvents(string infilename="/cms/data/store/user/jhugon/hmumu/s
   CandCounterType candCounts_01JetTightBO;
   CandCounterType candCounts_2JetVBFTight;
   CandCounterType candCounts_2JetGFTight;
+  CandCounterType candCounts_2JetLoose;
   //cout << "unsigned max: " << numeric_limits<unsigned>::max() << endl;
   //cout << "unsigned long max: " << numeric_limits<unsigned long>::max() << endl;
   //cout << "unsigned long long max: " << numeric_limits<unsigned long long>::max() << endl;
@@ -170,6 +171,10 @@ void countMultiCandEvents(string infilename="/cms/data/store/user/jhugon/hmumu/s
       {
         addToCandCounter(candCounts_2JetGFTight,eventID);
       }
+      else
+      {
+        addToCandCounter(candCounts_2JetLoose,eventID);
+      }
     }
     else  //0,1-jet
     {
@@ -195,6 +200,7 @@ void countMultiCandEvents(string infilename="/cms/data/store/user/jhugon/hmumu/s
   unsigned nMulti_01JetTightBO = 0;
   unsigned nMulti_2JetVBFTight = 0;
   unsigned nMulti_2JetGFTight = 0;
+  unsigned nMulti_2JetLoose = 0;
 
   cout << "Filename: " << infilename << endl;
   //cout << "Number of cands per event" << endl;
@@ -238,6 +244,14 @@ void countMultiCandEvents(string infilename="/cms/data/store/user/jhugon/hmumu/s
       nMulti_2JetGFTight++;
     }
   }
+  for(candItr = candCounts_2JetLoose.begin(); candItr != candCounts_2JetLoose.end(); ++candItr)
+  {
+    if (candItr->second > 1)
+    {
+      //cout << candItr->first << "    "<< candItr->second << endl;
+      nMulti_2JetLoose++;
+    }
+  }
   cout << "Total number of entries: "<<selEntries<<endl;
   cout << "Total number of unique events: "<<candCounts.size()<<endl;
   cout << "Total number of multi-muon events: "<<nMulti<<endl;
@@ -253,6 +267,9 @@ void countMultiCandEvents(string infilename="/cms/data/store/user/jhugon/hmumu/s
   cout << "2JetGFTight:"<<endl;
   cout << "                unique events: "<<candCounts_2JetGFTight.size()<<endl;
   cout << "                multi-muon events: "<<nMulti_2JetGFTight<<endl;
+  cout << "2JetLoose:"<<endl;
+  cout << "                unique events: "<<candCounts_2JetLoose.size()<<endl;
+  cout << "                multi-muon events: "<<nMulti_2JetLoose<<endl;
 
   TPRegexp regexDir("^.+/");
   TString outFileName = infilename.c_str();
@@ -267,6 +284,7 @@ void countMultiCandEvents(string infilename="/cms/data/store/user/jhugon/hmumu/s
   outFile << "01JetTightBO:  " << candCounts_01JetTightBO.size()<<"  "<<nMulti_01JetTightBO<<endl;
   outFile << "2JetVBFTight:  " << candCounts_2JetVBFTight.size()<<"  "<<nMulti_2JetVBFTight<<endl;
   outFile << "2JetGFTight:   " << candCounts_2JetGFTight.size()<<"  "<<nMulti_2JetGFTight<<endl;
+  outFile << "2JetLoose:     " << candCounts_2JetLoose.size()<<"  "<<nMulti_2JetLoose<<endl;
   outFile.close();
   
 }
