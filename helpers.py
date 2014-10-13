@@ -3207,14 +3207,14 @@ class RooModelPlotter:
   
     # Text
     self.pad1.cd()
-    self.tlatex.SetTextAlign(11)
+    self.tlatex.SetTextAlign(33)
     self.tlatex.SetTextFont(62)
-    tmpSize = self.tlatex.GetTextSize()
-    self.tlatex.SetTextSize(0.07)
-    self.tlatex.DrawLatex(0.15,0.94,self.preliminaryString)
+    self.tlatex.SetTextSize(0.08)
+    self.tlatex.DrawLatex(0.91,0.88,self.preliminaryString)
+    self.tlatex.SetTextAlign(11)
     self.tlatex.SetTextFont(42)
     self.tlatex.SetTextSize(0.06)
-    self.tlatex.DrawLatex(0.27,0.94,self.caption1)
+    self.tlatex.DrawLatex(0.15,0.94,self.caption1)
     self.tlatex.SetTextAlign(31)
     self.tlatex.DrawLatex(0.95,0.94,self.lumiStr)
     self.tlatex.SetTextAlign(32)
@@ -3225,7 +3225,7 @@ class RooModelPlotter:
     #self.tlatex.SetTextAlign(12)
     #self.tlatex.DrawLatex(0.18,0.41,"#chi^{{2}}/NDF = {0:.1f}/{1} = {2:.3g}; Probability: {3:.3g}".format(self.chi2[0],self.chi2[1],self.chi2[0]/self.chi2[1],self.chi2[2]))
     self.tlatex.SetTextAlign(13)
-    self.tlatex.DrawLatex(0.18,0.935,"#chi^{{2}}/NDF = {0:.1f}/{1} = {2:.3g}; Probability: {3:.3g}".format(self.chi2[0],self.chi2[1],self.chi2[0]/self.chi2[1],self.chi2[2]))
+    self.tlatex.DrawLatex(0.18,0.935,"#chi^{{2}}/NDF = {0:.1f}/{1} = {2:.3g}; p-value: {3:.3g}".format(self.chi2[0],self.chi2[1],self.chi2[0]/self.chi2[1],self.chi2[2]))
 
     if (filenameNoExt != ""):
       saveAs(canvas,filenameNoExt)
