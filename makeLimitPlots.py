@@ -130,7 +130,7 @@ titleMap = {
   #"Jet2SplitCutsGFSplit" : "H#rightarrow#mu#mu 2-Jet Combination",
   #"CombSplitAll" : "H#rightarrow#mu#mu Combination",
   "Jet2SplitCutsGFSplit" : "2-Jet Combination",
-  "CombSplitAll" : "Standard Model H #rightarrow #mu^{+}#mu^{-}",
+  "CombSplitAll" : "",#"Standard Model H #rightarrow #mu^{+}#mu^{-}",
 }
 
 comparisonMap = {
@@ -376,13 +376,17 @@ class RelativePlot:
     legPos = [gStyle.GetPadLeftMargin()+0.03,0.55,0.68,0.93-gStyle.GetPadTopMargin()]
     if args.xs:
       legPos = [0.45,0.55,0.97-gStyle.GetPadRightMargin(),0.93-gStyle.GetPadTopMargin()]
+    if caption=="" or not caption:
+      legPos = [0.179598,0.592262,0.679598,0.892857]
+    if args.xs and (caption=="" or not caption):
+      legPos = [0.451149,0.592262,0.920977,0.892857]
     leg = root.TLegend(*legPos)
     leg.SetFillColor(0)
     leg.SetLineColor(0)
-    leg.AddEntry(obsGraph,"Observed Limit","lp")
-    leg.AddEntry(expGraph,"Median Expected Limit","lp")
-    leg.AddEntry(oneSigGraph,"#pm1 #sigma Expected Limit","f")
-    leg.AddEntry(twoSigGraph,"#pm2 #sigma Expected Limit","f")
+    leg.AddEntry(obsGraph,"Observed limit","lp")
+    leg.AddEntry(expGraph,"Median expected limit","lp")
+    leg.AddEntry(oneSigGraph,"68% CL expected limit","f")
+    leg.AddEntry(twoSigGraph,"95% CL expected limit","f")
     self.legPos = legPos
     self.leg = leg
     leg.Draw()
@@ -390,14 +394,17 @@ class RelativePlot:
     tlatex = root.TLatex()
     tlatex.SetNDC()
     tlatex.SetTextFont(62)
-    tlatex.SetTextSize(0.05)
+    tlatex.SetTextSize(0.06)
     tlatex.SetTextAlign(11)
-    tlatex.DrawLatex(0.15,0.94,PRELIMINARYSTRING)
+    if args.xs:
+      tlatex.DrawLatex(0.18,0.84,PRELIMINARYSTRING)
+    else:
+      tlatex.DrawLatex(0.8,0.84,PRELIMINARYSTRING)
     tlatex.SetTextFont(42)
     tlatex.SetTextSize(0.04)
-    tlatex.DrawLatex(0.27,0.94,"H #rightarrow #mu^{+}#mu^{-}")
+    tlatex.DrawLatex(0.15,0.94,"H #rightarrow #mu^{+}#mu^{-}")
     tlatex.SetTextAlign(31)
-    tlatex.SetTextSize(0.035)
+    tlatex.SetTextSize(0.04)
     tlatex.DrawLatex(0.95,0.94,caption2)
     tlatex.SetTextSize(0.04)
     tlatex.SetTextAlign(11)
@@ -626,7 +633,7 @@ if __name__ == "__main__":
   #dirName = "/data/uftrig01b/digiovan/baselinePP/exppluspolin_fixEff_DiffMeans_unbinned_loosePUID_fixBkgVBFFit_syst_22Jan2013ReReco_assProd/statsInputUltimate/"
   #dirName = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_6_1_1/Results/hmumuFinalAnalysis/statsInput/"
   #dirName = "/data/uftrig01b/digiovan/baselinePP/m110to160_pixelLumi/hmumuFinalAnalysis/statsInput/"
-  #dirName = "/raid/raid7/jhugon/higgsDataCards/20140501/statsInput/"
+  dirName = "/raid/raid7/jhugon/higgsDataCards/20140501/statsInput/"
   
   outDir = "statsOutput/"
   
@@ -752,11 +759,11 @@ if __name__ == "__main__":
       if len(data)<=1:
         continue
       xlabel="Integrated Luminosity [fb^{-1}]"
-      ylabel="95% CL_{s} Upper Limit on #sigma/#sigma_{SM} (H #rightarrow #mu^{+}#mu^{-})"
+      ylabel="95% CL upper limit on #sigma/#sigma_{SM} (H #rightarrow #mu^{+}#mu^{-})"
       if args.xs:
-        ylabel="95% CL_{s} Upper Limit on #sigma #times BR (H #rightarrow #mu^{+}#mu^{-}) [pb]"
+        ylabel="95% CL upper limit on #sigma #times B(H #rightarrow #mu^{+}#mu^{-}) [pb]"
         if energyStr == "7P8TeV":
-          ylabel="95% CL_{s} Limit on #sigma(8 TeV) #times BR (H #rightarrow #mu^{+}#mu^{-}) [pb]"
+          ylabel="95% CL limit on #sigma(8 TeV) #times B(H #rightarrow #mu^{+}#mu^{-}) [pb]"
       caption3 = ""
       caption4 = ""
       if args.bdtCut:
@@ -811,7 +818,7 @@ if __name__ == "__main__":
         ylimits = []
         xlabel="m_{H} [GeV]"
         if args.xs:
-          ylimits = [0,0.16]
+          ylimits = [0,0.14]
       #elif period == "14TeV":
       #  title = "Standard Model H#rightarrow#mu#mu"
       title = titleMap[plotName]

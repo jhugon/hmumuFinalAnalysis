@@ -55,7 +55,7 @@ def getData():
    return result
 
 class RelativePlot:
-  def __init__(self,dataPoints, canvas, legend, caption, ylabel="95% CL Limit on #sigma/#sigma_{SM} (H #rightarrow #mu#mu)", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV",caption4=""):
+  def __init__(self,dataPoints, canvas, legend, caption, ylabel="95% CL limit on #sigma/#sigma_{SM} (H #rightarrow #mu#mu)", xlabel="Integrated Luminosity [fb^{-1}]",caption2="",caption3="",ylimits=[],xlimits=[],vertLines=[],showObs=False,energyStr="8TeV",caption4=""):
     expGraph = root.TGraph()
     expGraph.SetLineStyle(2)
     expGraph.SetMarkerStyle(20)
@@ -145,32 +145,41 @@ class RelativePlot:
     legPos = [gStyle.GetPadLeftMargin()+0.03,0.55,0.68,0.93-gStyle.GetPadTopMargin()]
     if args.xs:
       legPos = [0.45,0.55,0.97-gStyle.GetPadRightMargin(),0.93-gStyle.GetPadTopMargin()]
+    if caption=="" or not caption:
+      legPos = [0.179598,0.592262,0.679598,0.892857]
+    if args.xs and (caption=="" or not caption):
+      legPos = [0.451149,0.592262,0.920977,0.892857]
     leg = root.TLegend(*legPos)
     leg.SetFillColor(0)
     leg.SetLineColor(0)
-    leg.AddEntry(obsGraph,"Observed Limit","lp")
-    leg.AddEntry(expGraph,"Median Expected Limit","lp")
-    leg.AddEntry(oneSigGraph,"#pm1 #sigma Expected Limit","f")
-    leg.AddEntry(twoSigGraph,"#pm2 #sigma Expected Limit","f")
+    leg.AddEntry(obsGraph,"Observed limit","lp")
+    leg.AddEntry(expGraph,"Median expected limit","lp")
+    leg.AddEntry(oneSigGraph,"68% CL expected limit","f")
+    leg.AddEntry(twoSigGraph,"95% CL expected limit","f")
     self.legPos = legPos
     self.leg = leg
     leg.Draw()
 
     tlatex = root.TLatex()
     tlatex.SetNDC()
-    tlatex.SetTextFont(root.gStyle.GetLabelFont())
-    #tlatex.SetTextSize(0.05)
+    tlatex = root.TLatex()
+    tlatex.SetNDC()
+    tlatex.SetTextFont(62)
+    tlatex.SetTextSize(0.06)
+    tlatex.SetTextAlign(11)
+    if args.xs:
+      tlatex.DrawLatex(0.18,0.84,PRELIMINARYSTRING)
+    else:
+      tlatex.DrawLatex(0.8,0.84,PRELIMINARYSTRING)
+    tlatex.SetTextFont(42)
     tlatex.SetTextSize(0.04)
-    tlatex.SetTextAlign(12)
-    tlatex.DrawLatex(gStyle.GetPadLeftMargin(),0.96,PRELIMINARYSTRING)
-    tlatex.SetTextAlign(12)
-    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.88,caption2)
-    tlatex.DrawLatex(0.02+gStyle.GetPadLeftMargin(),0.82,caption3)
-    tlatex.SetTextAlign(32)
-    tlatex.DrawLatex(0.97-gStyle.GetPadRightMargin(),0.88,caption4)
-
-    tlatex.SetTextAlign(32)
-    tlatex.DrawLatex(1.0-gStyle.GetPadRightMargin(),0.96,caption)
+    tlatex.DrawLatex(0.15,0.94,"H #rightarrow e^{+}e^{-}")
+    tlatex.SetTextAlign(31)
+    tlatex.SetTextSize(0.04)
+    tlatex.DrawLatex(0.95,0.94,caption2)
+    tlatex.SetTextSize(0.04)
+    tlatex.SetTextAlign(11)
+    tlatex.DrawLatex(0.19,0.86,caption)
 
     self.vertLine = root.TLine()
     self.vertLine.SetLineColor(root.kRed)
@@ -221,15 +230,15 @@ if __name__ == "__main__":
     for plotName in [""]:
       data = getData()
       xlimits = []
-      ylimits = [0.,0.16]
+      ylimits = [0.,0.14]
       vertLines = []
       if len(data)<=1:
         continue
       xlabel="m_{H} [GeV]"
-      ylabel="95% CL_{s} Upper Limit on #sigma #times BR (H #rightarrow e^{+}e^{-}) [pb]"
-      caption2 = "#sqrt{{s}} = 8 TeV L = {0:.1f} fb^{{-1}}".format(19.6)
+      ylabel="95% CL upper limit on #sigma #times B(H #rightarrow e^{+}e^{-}) [pb]"
+      caption2 = "{0:.1f} fb^{{-1}} (8 TeV)".format(19.7)
       caption3 = ""
       caption4 = ""
-      title = "Standard Model H #rightarrow e^{+}e^{-}"
+      title = ""
       incPlot = RelativePlot(data,canvas,legend,title,caption2=caption2,ylimits=ylimits,energyStr=energyStrWrite,xlabel=xlabel,caption3=caption3,showObs=True,xlimits=xlimits,vertLines = vertLines,ylabel=ylabel,caption4=caption4)
       saveAs(canvas,outDir+"xsbr_EE_"+energyStr)
