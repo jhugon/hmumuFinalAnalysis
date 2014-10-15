@@ -154,8 +154,8 @@ class RelativePlot:
     leg.SetLineColor(0)
     leg.AddEntry(obsGraph,"Observed limit","lp")
     leg.AddEntry(expGraph,"Median expected limit","lp")
-    leg.AddEntry(oneSigGraph,"68% CL expected limit","f")
-    leg.AddEntry(twoSigGraph,"95% CL expected limit","f")
+    leg.AddEntry(oneSigGraph,"#pm1 #sigma expected limit","f")
+    leg.AddEntry(twoSigGraph,"#pm2 #sigma expected limit","f")
     self.legPos = legPos
     self.leg = leg
     leg.Draw()
