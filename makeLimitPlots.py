@@ -819,6 +819,8 @@ if __name__ == "__main__":
         xlabel="m_{H} [GeV]"
         if args.xs:
           ylimits = [0,0.14]
+        elif energyStr == "7P8TeV" and plotName=="CombSplitAll":
+          ylimits = [0,60.]
       #elif period == "14TeV":
       #  title = "Standard Model H#rightarrow#mu#mu"
       title = titleMap[plotName]
