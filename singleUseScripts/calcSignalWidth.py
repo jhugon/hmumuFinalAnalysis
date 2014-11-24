@@ -47,11 +47,17 @@ def getMinWidth(x,prob=0.683):
     widthList.append(width)
   return numpy.amin(widthList)
 
-inputFileName = getDataStage2Directory()+"/ggHmumu125_8TeV.root"
-tree = root.TChain("outtree")
-tree.AddFile(inputFileName)
-tree.SetCacheSize(10000000);
-tree.AddBranchToCache("*");
+inputFileNameGF = getDataStage2Directory()+"/ggHmumu125_8TeV.root"
+treeGF = root.TChain("outtree")
+treeGF.AddFile(inputFileNameGF)
+treeGF.SetCacheSize(10000000);
+treeGF.AddBranchToCache("*");
+
+inputFileNameVBF = getDataStage2Directory()+"/vbfHmumu125_8TeV.root"
+treeVBF = root.TChain("outtree")
+treeVBF.AddFile(inputFileNameVBF)
+treeVBF.SetCacheSize(10000000);
+treeVBF.AddBranchToCache("*");
 
 analyses = []
 jet2PtCuts = " && jetLead_pt > 40. && jetSub_pt > 30. && ptMiss < 40."
@@ -63,16 +69,22 @@ analyses += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]
 analyses += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 analyses += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
 
+print "{0:30} {1:4} {2:4}".format("","GF","VBF")
 for analysis in analyses:
   analysisName = analysis[0]
   selectionString = analysis[1]
   fullSelectionString = treeCut(analysisName,selectionString,eventWeights=False,muonRequirements=True)
-  massList = getListOfVarFromTree(  tree,
+  massListGF = getListOfVarFromTree(  treeGF,
                                     "dimuonMass",
                                     fullSelectionString
                                  )
-  #print "{0:30} {1:4.1%} {2:4.1%}".format(analysisName,getQuantileWidth(massList)/125.0,0.5*getMinWidth(massList)/125.0)
-  print "{0:30} {1:4.1%}".format(analysisName,0.5*getMinWidth(massList)/125.0)
+  massListVBF = getListOfVarFromTree(  treeVBF,
+                                    "dimuonMass",
+                                    fullSelectionString
+                                 )
+  relWidthGF = 0.5*getMinWidth(massListGF)/125.0
+  relWidthVBF = 0.5*getMinWidth(massListVBF)/125.0
+  print "{0:30} {1:4.1%} {2:4.1%}".format(analysisName,relWidthGF,relWidthVBF)
 
 
 
