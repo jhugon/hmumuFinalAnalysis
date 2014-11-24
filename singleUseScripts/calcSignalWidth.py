@@ -30,6 +30,23 @@ def getQuantileWidth(data,sigmas=1.):
   #print quantiles, quantiles[2]-quantiles[0]
   return (quantiles[2]-quantiles[0])/2.
 
+def getMinWidth(x,prob=0.683):
+  """
+  Find the width of the minimum interval containing "prob" fraction
+  of values of the array "x"
+  """
+  xTmp = sorted(x)
+  xLen = len(xTmp)
+  widthList = []
+  nPoints = int(numpy.floor(prob*xLen))
+  #print "Points: ",nPoints
+  for i in range(xLen-nPoints+1):
+    width = xTmp[i+nPoints-1]-xTmp[i]
+    #print i,xTmp[i+nPoints],xTmp[i],width
+    #print i,i+nPoints-1,xTmp[i],xTmp[i+nPoints-1],width
+    widthList.append(width)
+  return numpy.amin(widthList)
+
 inputFileName = getDataStage2Directory()+"/ggHmumu125_8TeV.root"
 tree = root.TChain("outtree")
 tree.AddFile(inputFileName)
@@ -54,7 +71,8 @@ for analysis in analyses:
                                     "dimuonMass",
                                     fullSelectionString
                                  )
-  print "{0:30} {1:4.1%}".format(analysisName,getQuantileWidth(massList)/125.0)
+  #print "{0:30} {1:4.1%} {2:4.1%}".format(analysisName,getQuantileWidth(massList)/125.0,0.5*getMinWidth(massList)/125.0)
+  print "{0:30} {1:4.1%}".format(analysisName,0.5*getMinWidth(massList)/125.0)
 
 
 
