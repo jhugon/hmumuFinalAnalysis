@@ -3475,6 +3475,7 @@ class RooModelPlotter:
 
     sumOfPulls2 = 0.
     iBin = 1
+    ndf = 0
     for i in range(1,self.binning.numBins()+1):
       hist.GetPoint(i-1,x,y)
       pull = float(y)
@@ -3510,13 +3511,13 @@ class RooModelPlotter:
       pullsHist.SetBinContent(iBin,pull)
       sumOfPulls2 += pull**2
       iBin += 1
+      ndf += 1
 
     self.myCurveHist = myCurveHist
     self.myDataHist = myDataHist
     self.myCurveGraph = myCurveGraph
 
     pdfParams = rooArgSet2List(self.pdf.getParameters(self.data))
-    ndf = self.xVar.getBinning().numBins()
     for p in pdfParams:
       if not p.isConstant():
         ndf -= 1
