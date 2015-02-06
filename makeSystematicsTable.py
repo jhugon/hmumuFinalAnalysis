@@ -33,7 +33,7 @@ combNames = [
   #"_j",
 ]
 combNameMap = {
-  "QCDscale":"QCD Scale",
+  "QCDscale":"Quantum Corrections",
   "pdf_":"PDF",
   #"_j":"Jet Energy",
   "PU":"Pileup",
