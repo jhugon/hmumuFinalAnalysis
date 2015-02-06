@@ -17,9 +17,6 @@ energies=[
 massCut = "dimuonMass > 110. && dimuonMass < 170."
 jet01Cuts = " && !(jetLead_pt>40. && jetSub_pt>30. && ptMiss<40.)"
 jet2Cuts = " && jetLead_pt>40. && jetSub_pt>30. && ptMiss<40."
-errors = ["JES","JER","PUID","MCStat"]
-
-effReader = EfficiencyReader()
 
 datasets = ["gg","vbf"]
 categories = [
@@ -29,27 +26,13 @@ categories = [
   "Jet2CutsGFPass",
   "Jet2CutsFailVBFGF"
 ]
-labels = [
-  "Non-VBF Presel. Tight",
-  "Non-VBF Presel. Loose",
-  "VBF-Presel. VBF Tight",
-  "VBF-Presel. GF Tight",
-  "VBF-Presel. Loose"
-]
 
-class ErrorStruct(object):
-  def __init__(self):
-    self.contents = []
-  def __setattr__(self,name,value):
-    if hasattr(self,"contents"):
-      #print("In my overloaded function!! name: %s value: %s" %(name,value))
-      #if len(self.contents) < 5:
-        self.contents.append(name)
-    super(ErrorStruct,self).__setattr__(name,value)
-  def __getitem__(self,key):
-    return self.__getattribute__(key)
-
-errors = ErrorStruct()
+combNames = ["QCDscale","pdf_","_j"]
+combNameMap = {
+  "QCDscale":"Scale",
+  "pdf_":"PDF",
+  "_j":"Jet",
+}
 
 ######################################
 ######################################
@@ -57,562 +40,88 @@ errors = ErrorStruct()
 ######################################
 ######################################
 
-errors.MCStat = {
-  'gg' : {
-    '7TeV' : {
-      'Jet2CutsFailVBFGF' : 1.0244,
-      'Jet2CutsGFPass' : 1.0485,
-      'Jet2CutsVBFPass' : 1.1019,
-      'Jets01FailPtG10' : 1.0110,
-      'Jets01PassPtG10' : 1.0042,
-      },
-    '8TeV' : {
-      'Jet2CutsFailVBFGF' : 1.0222,
-      'Jet2CutsGFPass' : 1.0429,
-      'Jet2CutsVBFPass' : 1.0732,
-      'Jets01FailPtG10' : 1.0109,
-      'Jets01PassPtG10' : 1.0043,
-      },
-    },
-  'vbf' : {
-    '7TeV' : {
-      'Jet2CutsFailVBFGF' : 1.0136,
-      'Jet2CutsGFPass' : 1.0115,
-      'Jet2CutsVBFPass' : 1.0110,
-      'Jets01FailPtG10' : 1.0447,
-      'Jets01PassPtG10' : 1.0052,
-      },
-    '8TeV' : {
-      'Jet2CutsFailVBFGF' : 1.0127,
-      'Jet2CutsGFPass' : 1.0112,
-      'Jet2CutsVBFPass' : 1.0096,
-      'Jets01FailPtG10' : 1.0456,
-      'Jets01PassPtG10' : 1.0054,
-      },
-    },
-  'w' : {
-    '7TeV' : {
-      'Jet2CutsFailVBFGF' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jets01FailPtG10' : None,
-      'Jets01PassPtG10' : None,
-      },
-    '8TeV' : {
-      'Jet2CutsFailVBFGF' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jets01FailPtG10' : None,
-      'Jets01PassPtG10' : None,
-      },
-    },
-  'z' : {
-    '7TeV' : {
-      'Jet2CutsFailVBFGF' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jets01FailPtG10' : None,
-      'Jets01PassPtG10' : None,
-      },
-    '8TeV' : {
-      'Jet2CutsFailVBFGF' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jets01FailPtG10' : None,
-      'Jets01PassPtG10' : None,
-      },
-    },
-  }
-
-errors.JES = {
-  'gg' : {
-    '7TeV' : {
-      'Jet2CutsFailVBFGF' : 1.0832,
-      'Jet2CutsGFPass' : 1.0585,
-      'Jet2CutsVBFPass' : 1.0759,
-      'Jets01FailPtG10' : -1.0006,
-      'Jets01PassPtG10' : -1.0054,
-      },
-    '8TeV' : {
-      'Jet2CutsFailVBFGF' : 1.0799,
-      'Jet2CutsGFPass' : 1.0477,
-      'Jet2CutsVBFPass' : 1.0606,
-      'Jets01FailPtG10' : -1.0006,
-      'Jets01PassPtG10' : -1.0060,
-      },
-    },
-  'vbf' : {
-    '7TeV' : {
-      'Jet2CutsFailVBFGF' : 1.0572,
-      'Jet2CutsGFPass' : 1.0381,
-      'Jet2CutsVBFPass' : 1.0358,
-      'Jets01FailPtG10' : -1.0321,
-      'Jets01PassPtG10' : -1.0308,
-      },
-    '8TeV' : {
-      'Jet2CutsFailVBFGF' : 1.0482,
-      'Jet2CutsGFPass' : 1.0249,
-      'Jet2CutsVBFPass' : 1.0185,
-      'Jets01FailPtG10' : -1.0278,
-      'Jets01PassPtG10' : -1.0250,
-      },
-    },
-  'w' : {
-    '7TeV' : {
-      'Jet2CutsFailVBFGF' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jets01FailPtG10' : None,
-      'Jets01PassPtG10' : None,
-      },
-    '8TeV' : {
-      'Jet2CutsFailVBFGF' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jets01FailPtG10' : None,
-      'Jets01PassPtG10' : None,
-      },
-    },
-  'z' : {
-    '7TeV' : {
-      'Jet2CutsFailVBFGF' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jets01FailPtG10' : None,
-      'Jets01PassPtG10' : None,
-      },
-    '8TeV' : {
-      'Jet2CutsFailVBFGF' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jets01FailPtG10' : None,
-      'Jets01PassPtG10' : None,
-      },
-    },
-  }
-errors.JER = {
-  'gg' : {
-    '7TeV' : {
-      'Jet2CutsFailVBFGF' : -1.0166,
-      'Jet2CutsGFPass' : -1.0126,
-      'Jet2CutsVBFPass' : 1.0321,
-      'Jets01FailPtG10' : -1.0004,
-      'Jets01PassPtG10' : 1.0012,
-      },
-    '8TeV' : {
-      'Jet2CutsFailVBFGF' : -1.0131,
-      'Jet2CutsGFPass' : -1.0101,
-      'Jet2CutsVBFPass' : -1.0273,
-      'Jets01FailPtG10' : 1.0003,
-      'Jets01PassPtG10' : 1.0009,
-      },
-    },
-  'vbf' : {
-    '7TeV' : {
-      'Jet2CutsFailVBFGF' : -1.0111,
-      'Jet2CutsGFPass' : -1.0074,
-      'Jet2CutsVBFPass' : -1.0074,
-      'Jets01FailPtG10' : -1.0167,
-      'Jets01PassPtG10' : 1.0049,
-      },
-    '8TeV' : {
-      'Jet2CutsFailVBFGF' : -1.0081,
-      'Jet2CutsGFPass' : -1.0063,
-      'Jet2CutsVBFPass' : -1.0054,
-      'Jets01FailPtG10' : -1.0162,
-      'Jets01PassPtG10' : 1.0052,
-      },
-    },
-  'w' : {
-    '7TeV' : {
-      'Jet2CutsFailVBFGF' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jets01FailPtG10' : None,
-      'Jets01PassPtG10' : None,
-      },
-    '8TeV' : {
-      'Jet2CutsFailVBFGF' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jets01FailPtG10' : None,
-      'Jets01PassPtG10' : None,
-      },
-    },
-  'z' : {
-    '7TeV' : {
-      'Jet2CutsFailVBFGF' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jets01FailPtG10' : None,
-      'Jets01PassPtG10' : None,
-      },
-    '8TeV' : {
-      'Jet2CutsFailVBFGF' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jets01FailPtG10' : None,
-      'Jets01PassPtG10' : None,
-      },
-    },
-  }
-errors.PU = {
-  'gg' : {
-    '7TeV' : {
-      'Jet2CutsFailVBFGF' : 1.00,
-      'Jet2CutsGFPass' : 1.00,
-      'Jet2CutsVBFPass' : 1.00,
-      'Jets01FailPtG10' : 1.00,
-      'Jets01PassPtG10' : 1.00,
-      },
-    '8TeV' : {
-      'Jet2CutsFailVBFGF' : 1.0112,
-      'Jet2CutsGFPass' : 1.0103,
-      'Jet2CutsVBFPass' : 1.0222,
-      'Jets01FailPtG10' : 1.051,
-      'Jets01PassPtG10' : 1.0032,
-      },
-    },
-  'vbf' : {
-    '7TeV' : {
-      'Jet2CutsFailVBFGF' : 1.00,
-      'Jet2CutsGFPass' : 1.00,
-      'Jet2CutsVBFPass' : 1.00,
-      'Jets01FailPtG10' : 1.00,
-      'Jets01PassPtG10' : 1.00,
-      },
-    '8TeV' : {
-      'Jet2CutsFailVBFGF' : 1.0089,
-      'Jet2CutsGFPass' : 1.0049,
-      'Jet2CutsVBFPass' : 1.006,
-      'Jets01FailPtG10' : 1.0207,
-      'Jets01PassPtG10' : 1.0027,
-      },
-    }
-  }
-errors.PUID = {
-  'gg' : {
-    '7TeV' : {
-      'Jet2CutsFailVBFGF' : 1.0109,
-      'Jet2CutsGFPass' : 1.0158,
-      'Jet2CutsVBFPass' : 1.0368,
-      'Jets01FailPtG10' : 1.0007,
-      'Jets01PassPtG10' : 1.0034,
-      },
-    '8TeV' : {
-      'Jet2CutsFailVBFGF' : 1.0142,
-      'Jet2CutsGFPass' : 1.0174,
-      'Jet2CutsVBFPass' : 1.0386,
-      'Jets01FailPtG10' : 1.0022,
-      'Jets01PassPtG10' : 1.0050,
-      },
-    },
-  'vbf' : {
-    '7TeV' : {
-      'Jet2CutsFailVBFGF' : 1.0134,
-      'Jet2CutsGFPass' : 1.0160,
-      'Jet2CutsVBFPass' : 1.0324,
-      'Jets01FailPtG10' : 1.0115,
-      'Jets01PassPtG10' : 1.0108,
-      },
-    '8TeV' : {
-      'Jet2CutsFailVBFGF' : 1.0155,
-      'Jet2CutsGFPass' : 1.0168,
-      'Jet2CutsVBFPass' : 1.0328,
-      'Jets01FailPtG10' : 1.0129,
-      'Jets01PassPtG10' : 1.0128,
-      },
-    },
-  'w' : {
-    '7TeV' : {
-      'Jet2CutsFailVBFGF' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jets01FailPtG10' : None,
-      'Jets01PassPtG10' : None,
-      },
-    '8TeV' : {
-      'Jet2CutsFailVBFGF' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jets01FailPtG10' : None,
-      'Jets01PassPtG10' : None,
-      },
-    },
-  'z' : {
-    '7TeV' : {
-      'Jet2CutsFailVBFGF' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jets01FailPtG10' : None,
-      'Jets01PassPtG10' : None,
-      },
-    '8TeV' : {
-      'Jet2CutsFailVBFGF' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jets01FailPtG10' : None,
-      'Jets01PassPtG10' : None,
-      },
-    },
-  }
-
-errors.QCDScale = {
-      'gg' : {
-        '8TeV' : {
-          'Jets01PassPtG10' : -1.0121,
-          'Jets01FailPtG10' : 1.0450,
-          'Jet2CutsVBFPass' : -1.1585,
-          'Jet2CutsGFPass' : 1.1515,
-          'Jet2CutsFailVBFGF' : -1.0662,
-          },
-        '7TeV' : {
-          'Jets01PassPtG10' : 1.0104,
-          'Jets01FailPtG10' : 1.0417,
-          'Jet2CutsVBFPass' : -1.2424,
-          'Jet2CutsGFPass' : -1.1608,
-          'Jet2CutsFailVBFGF' : 1.0626,
-          },
-        },
-      'vbf' : {
-        '8TeV' : {
-          'Jets01PassPtG10' : -1.0139,
-          'Jets01FailPtG10' : -1.1598,
-          'Jet2CutsVBFPass' : 1.0313,
-          'Jet2CutsGFPass' : -1.0372,
-          'Jet2CutsFailVBFGF' : -1.0427,
-          },
-        '7TeV' : {
-          'Jets01PassPtG10' : 1.0101,
-          'Jets01FailPtG10' : 1.0571,
-          'Jet2CutsVBFPass' : -1.0489,
-          'Jet2CutsGFPass' : -1.0380,
-          'Jet2CutsFailVBFGF' : 1.0653,
-          },
-        },
-      'w' : {
-        '8TeV' : {
-          'Jets01PassPtG10' : None,
-          'Jets01FailPtG10' : None,
-          'Jet2CutsVBFPass' : None,
-          'Jet2CutsGFPass' : None,
-          'Jet2CutsFailVBFGF' : None,
-          },
-        '7TeV' : {
-          'Jets01PassPtG10' : None,
-          'Jets01FailPtG10' : None,
-          'Jet2CutsVBFPass' : None,
-          'Jet2CutsGFPass' : None,
-          'Jet2CutsFailVBFGF' : None,
-          },
-        },
-      'z' : {
-        '8TeV' : {
-          'Jets01PassPtG10' : None,
-          'Jets01FailPtG10' : None,
-          'Jet2CutsVBFPass' : None,
-          'Jet2CutsGFPass' : None,
-          'Jet2CutsFailVBFGF' : None,
-          },
-        '7TeV' : {
-          'Jets01PassPtG10' : None,
-          'Jets01FailPtG10' : None,
-          'Jet2CutsVBFPass' : None,
-          'Jet2CutsGFPass' : None,
-          'Jet2CutsFailVBFGF' : None,
-          },
-        },
-      }
-
-errors.UE = {
-      'gg' : {
-        '8TeV' : {
-          'Jets01PassPtG10' : -1.0618,
-          'Jets01FailPtG10' : 1.1698,
-          'Jet2CutsVBFPass' : 1.4228,
-          'Jet2CutsGFPass' : 1.2317,
-          'Jet2CutsFailVBFGF' : -1.0847,
-          },
-        '7TeV' : {
-          'Jets01PassPtG10' : -1.0658,
-          'Jets01FailPtG10' : 1.1715,
-          'Jet2CutsVBFPass' : 1.6606,
-          'Jet2CutsGFPass' : 1.2570,
-          'Jet2CutsFailVBFGF' : -1.0669,
-          },
-        },
-      'vbf' : {
-        '8TeV' : {
-          'Jets01PassPtG10' : -1.0309,
-          'Jets01FailPtG10' : -1.0794,
-          'Jet2CutsVBFPass' : -1.1030,
-          'Jet2CutsGFPass' : -1.0585,
-          'Jet2CutsFailVBFGF' : 1.0432,
-          },
-        '7TeV' : {
-          'Jets01PassPtG10' : -1.0515,
-          'Jets01FailPtG10' : 1.0953,
-          'Jet2CutsVBFPass' : -1.1421,
-          'Jet2CutsGFPass' : -1.1014,
-          'Jet2CutsFailVBFGF' : 1.0763,
-          },
-        },
-      'w' : {
-        '8TeV' : {
-          'Jets01PassPtG10' : None,
-          'Jets01FailPtG10' : None,
-          'Jet2CutsVBFPass' : None,
-          'Jet2CutsGFPass' : None,
-          'Jet2CutsFailVBFGF' : None,
-          },
-        '7TeV' : {
-          'Jets01PassPtG10' : None,
-          'Jets01FailPtG10' : None,
-          'Jet2CutsVBFPass' : None,
-          'Jet2CutsGFPass' : None,
-          'Jet2CutsFailVBFGF' : None,
-          },
-        },
-      'z' : {
-        '8TeV' : {
-          'Jets01PassPtG10' : None,
-          'Jets01FailPtG10' : None,
-          'Jet2CutsVBFPass' : None,
-          'Jet2CutsGFPass' : None,
-          'Jet2CutsFailVBFGF' : None,
-          },
-        '7TeV' : {
-          'Jets01PassPtG10' : None,
-          'Jets01FailPtG10' : None,
-          'Jet2CutsVBFPass' : None,
-          'Jet2CutsGFPass' : None,
-          'Jet2CutsFailVBFGF' : None,
-          },
-        },
-      }
-
-
-errors.PDF = {
-  'gg' : {
-    '8TeV' : {
-      'Jets01PassPtG10' : 1.0799,
-      'Jets01FailPtG10' : 1.0844,
-      'Jet2CutsVBFPass' : 1.0578,
-      'Jet2CutsGFPass' : 1.0715,
-      'Jet2CutsFailVBFGF' : 1.0809,
-      },
-    '7TeV' : {
-      'Jets01PassPtG10' : 1.0830,
-      'Jets01FailPtG10' : 1.0868,
-      'Jet2CutsVBFPass' : 1.0593,
-      'Jet2CutsGFPass' : 1.0743,
-      'Jet2CutsFailVBFGF' : 1.0801,
-      },
-    },
-  'vbf' : {
-    '8TeV' : {
-      'Jets01PassPtG10' : 1.0197,
-      'Jets01FailPtG10' : 1.0186,
-      'Jet2CutsVBFPass' : 1.0378,
-      'Jet2CutsGFPass' : 1.0212,
-      'Jet2CutsFailVBFGF' : 1.0196,
-      },
-    '7TeV' : {
-      'Jets01PassPtG10' : 1.0220,
-      'Jets01FailPtG10' : 1.0214,
-      'Jet2CutsVBFPass' : 1.0448,
-      'Jet2CutsGFPass' : 1.0299,
-      'Jet2CutsFailVBFGF' : 1.0204,
-      },
-    },
-  'w' : {
-    '8TeV' : {
-      'Jets01PassPtG10' : None,
-      'Jets01FailPtG10' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsFailVBFGF' : None,
-      },
-    '7TeV' : {
-      'Jets01PassPtG10' : None,
-      'Jets01FailPtG10' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsFailVBFGF' : None,
-      },
-    },
-  'z' : {
-    '8TeV' : {
-      'Jets01PassPtG10' : None,
-      'Jets01FailPtG10' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsFailVBFGF' : None,
-      },
-    '7TeV' : {
-      'Jets01PassPtG10' : None,
-      'Jets01FailPtG10' : None,
-      'Jet2CutsVBFPass' : None,
-      'Jet2CutsGFPass' : None,
-      'Jet2CutsFailVBFGF' : None,
-      },
-    },
-  }
-
-
-######################################
-######################################
-######################################
-######################################
-######################################
+allNuisanceKeys = sorted(nuisanceMap.keys())
+#allNuisanceKeys.remove(allNuisanceKeys.find("QCDscale_VH"))
+allNuisanceKeys.remove("QCDscale_VH")
 
 # Now for a tables
-for iTable in range(2):
-  errorList = errors.contents
-  nErrors = 4
-  errorList = errorList[iTable*nErrors:min((iTable+1)*nErrors,len(errorList))]
+for iTable in range(1):
+  nErrors = 20
+  nuisanceKeys = allNuisanceKeys[iTable*nErrors:min((iTable+1)*nErrors,len(allNuisanceKeys))]
   tableStr = ""
-  extraCols = len(errorList)
+  extraCols = len(nuisanceKeys)
   tableStr += r"\begin{tabular}{|c|l|c|"+"c|"*extraCols+r"} \hline" + "\n"
   tableStr += r"\multicolumn{3}{|c|}{} & \multicolumn{"+str(extraCols)+r"}{|c|}{Systematic Error (Relative Systematic Error)} \\ \hline" + "\n"
   #tableStr += r"\begin{tabular}{|c|l|c|"+"cc|"*extraCols+r"} \hline" + "\n"
   #tableStr += r"\multicolumn{3}{|c|}{} & \multicolumn{"+str(2*extraCols)+r"}{|c|}{Systematic Error (Relative Systematic Error)} \\ \hline" + "\n"
-  tableStr += r"Sample & Category & Efficiency"
-  for error in errorList:
-    if error == "MCStat":
-      error = "MC Statistics"
-    elif error == "QCDScale":
-      error = "QCD Scale"
-    tableStr += r" & %s" % error
-    #tableStr += r" & \multicolumn{2}{%s}" % error
+  tableStr += r"Sample & Category"
+  combNamesInTitleSet = set()
+  for error in nuisanceKeys:
+    foundCombName = False
+    for combName in combNames:
+      if combName in error:
+        foundCombName = True
+        if not combName in combNamesInTitleSet:
+          combNamesInTitleSet.add(combName)
+          combNameTitle = combNameMap[combName]
+          tableStr += r" & %s" % nuisanceMap.getTitle(combNameTitle)
+        break
+    if not foundCombName:
+      tableStr += r" & %s" % nuisanceMap.getTitle(error)
   tableStr += r"\\ \hline"+ "\n"
   for energy in energies:
     for ds in datasets:
+      dsLong = ds+"Hmumu{0}_{1}".format(mass,energy)
       dsLabel = "GF"
       if "vbf" in ds:
         dsLabel = "VBF"
       tableStr += "\multirow{"+str(len(categories))+"}{*}"
       tableStr += "{%s %s} \n" % (dsLabel,energy.replace("TeV"," TeV"))
       # now on to normal stuff
-      for cat,label in zip(categories,labels):
-        beginLineLen = len(tableStr)
-        tableStr += " & "+label + " &"
-        efficiency,efficiencyErr = effReader(energy,ds,cat,mass)
-        tableStr += (r" %.2f\%%" % (efficiency*100.)) + " &"
-        for error in errorList:
-          tableStr += "\n    "
-          if error == "MCStat":
-            tableStr +=  r" $\pm$%.2f\%% (%.2f\%%) " % (efficiencyErr*100.,efficiencyErr/efficiency*100.)
-            #tableStr +=  r" $\pm$%.2f\%% & (%.2f\%%) " % (efficiencyErr*100.,efficiencyErr/efficiency*100.)
-          else:
-            err = errors[error][ds][energy][cat]
-            err = abs(err)-1.
-            tableStr +=  r" $\pm$%.2f\%% (%.2f\%%) " % (err*efficiency*100.,err*100.)
-            #tableStr +=  r" $\pm$%.2f\%% & (%.2f\%%) " % (err*efficiency*100.,err*100.)
-          if error != errorList[-1]:
-            tableStr += "&"
-          tableStr += "    % "+error+"  "
-        tableStr += "\n"+r"    \\ "+ "\n"
+      for cat in categories:
+        lineStr = ""
+        label = TITLEMAP[cat]
+        lineStr += " & "+label + " &"
+        varianceCombMap = {}
+        for error in nuisanceKeys:
+          foundCombName = False
+          for combName in combNames:
+            if combName in error:
+              foundCombName = True
+              if not varianceCombMap.has_key(combName):
+                varianceCombMap[combName] = 0.
+                lineStr += "\n    "
+                lineStr +=  r" {"+combName+"}\%"
+                if error != nuisanceKeys[-1]:
+                  lineStr += " &"
+                lineStr += "    % "+combName+"  "
+              err = nuisanceMap(error,dsLong,cat,mass)
+              if err:
+                err = abs(abs(err)-1.)
+                varianceCombMap[combName] += err**2
+              break
+          if not foundCombName:
+            err = nuisanceMap(error,dsLong,cat,mass)
+            lineStr += "\n    "
+            if err:
+              err = abs(abs(err)-1.)
+              lineStr +=  r" {0:.0f}\%".format(err*100)
+            else: 
+              lineStr +=  r" $<1$\%"
+            if error != nuisanceKeys[-1]:
+              lineStr += " &"
+            lineStr += "    % "+error+"  "
+        formatArgs = {}
+        for combName in varianceCombMap.keys():
+            err = sqrt(varianceCombMap[combName])
+            if err >= 0.01:
+              err = "{0:.0f}".format(err*100)
+            else:
+              err = "$<1$"
+            formatArgs[combName] = err
+        lineStr = lineStr.format(**formatArgs)
+        lineStr += "\n"+r"    \\ "+ "\n"
+        tableStr += lineStr
       tableStr = tableStr[:-1] + r" \hline "+ "\n"
   tableStr += r"\end{tabular}" + "\n"
   

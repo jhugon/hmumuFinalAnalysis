@@ -800,8 +800,34 @@ class NuisanceMap:
     for i in self._keys:
       if not i in self.keysEnergyCorr and not i in self.keysNotCatCorr:
         self.keysNotEnergyCorr.append(i)
+
+    self.titleMap = {
+        "QCDscale_ggH": "QCD Scale",
+        "QCDscale_qqH": "QCD Scale",
+        "QCDscale_VH": "QCD Scale",
+        "pdf_gg": "PDF",
+        "pdf_qqbar": "PDF",
+        "lumi": "Luminosity",
+        "pdf_gg_ACCEPT": "PDF",
+        "pdf_qqbar_ACCEPT": "PDF",
+        "CMS_scale_j": "Jet Energy Scale",
+        "CMS_res_j": "Jet Energy Resolution",
+        "MCStat": "MC Statistics",
+        "UEPS": "UE/PS",
+        "QCDscale_ggH_ACCEPT": "QCD Scale",
+        "QCDscale_qqH_ACCEPT": "QCD Scale",
+        "CMS_eff_m": "Muon Efficiency",
+        "CMS_eff_j": "Jet Efficiency",
+        "br_Hmm": r"\BF(\hmm{})",
+    }
+    # The list of systematics which are correlated between energies
   def keys(self):
     return self.data.keys() + self._keys
+  def getTitle(self,key):
+    if self.titleMap.has_key(key):
+      return self.titleMap[key]
+    else:
+      return key
   def __setitem__(self,key,value):
     self.data[key] = value
   def __call__(self,nu,ds,category,mass):
@@ -914,6 +940,9 @@ def getPeriod(datasetName):
 ##################################################
 
 TITLEMAP = {
+  "Jets01PassPtG10": "0,1-Jet Tight",
+  "Jets01FailPtG10": "0,1-Jet Loose",
+
   "Jets01PassPtG10BB": "0,1-Jet Tight BB",
   "Jets01PassPtG10BO": "0,1-Jet Tight BO",
   "Jets01PassPtG10BE": "0,1-Jet Tight BE",
