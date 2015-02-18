@@ -206,6 +206,7 @@ class ShapePlotter:
                           legEntrySignal=legEntrySignal,
                           RangeName="plotRange",
                           preliminaryString=PRELIMINARYSTRING,
+                          preliminaryString2=None,
                           #yMax = stupidData.GetMaximum()*1.1,
                           yMax = yMax,
                           #sigHist = sigHist,

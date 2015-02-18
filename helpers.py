@@ -2849,6 +2849,7 @@ class RooModelPlotter:
                 legEntryData="Data",legEntryModel="Background model",legEntrySignal="Signal",
                 pullsYLabel="#frac{Data-Fit}{#sigma_{Fit}}",
                 preliminaryString=PRELIMINARYSTRING,
+                preliminaryString2=None,
                 extraPDFs=[],
                 extraLegEntries=[],
                 extraPDFDotLineNames=[],
@@ -2888,6 +2889,7 @@ class RooModelPlotter:
     self.extraPDFDotLineNames = extraPDFDotLineNames
     self.doLinearErrs = doLinearErrs
     self.preliminaryString = preliminaryString
+    self.preliminaryString2 = preliminaryString2
 
     self.legEntryData = legEntryData
     self.legEntryModel = legEntryModel
@@ -3207,10 +3209,20 @@ class RooModelPlotter:
   
     # Text
     self.pad1.cd()
-    self.tlatex.SetTextAlign(33)
-    self.tlatex.SetTextFont(62)
-    self.tlatex.SetTextSize(0.08)
-    self.tlatex.DrawLatex(0.91,0.88,self.preliminaryString)
+    if self.preliminaryString2:
+      self.tlatex.SetTextAlign(33)
+      self.tlatex.SetTextFont(62)
+      self.tlatex.SetTextSize(0.075)
+      self.tlatex.DrawLatex(0.915,0.895,self.preliminaryString)
+      self.tlatex.SetTextAlign(33)
+      self.tlatex.SetTextFont(52)
+      self.tlatex.SetTextSize(0.055)
+      self.tlatex.DrawLatex(0.915,0.827,self.preliminaryString2)
+    else:
+      self.tlatex.SetTextAlign(33)
+      self.tlatex.SetTextFont(62)
+      self.tlatex.SetTextSize(0.08)
+      self.tlatex.DrawLatex(0.91,0.88,self.preliminaryString)
     self.tlatex.SetTextAlign(11)
     self.tlatex.SetTextFont(42)
     self.tlatex.SetTextSize(0.06)

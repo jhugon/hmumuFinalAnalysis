@@ -134,7 +134,8 @@ class ShapePlotter:
                             channelTitle,self.energyStr.replace("TeV"," TeV"),self.lumi,
                             nSignal=nSignal,signalPdf=sigPDF,
                             legEntrySignal=legEntrySignal,
-                            preliminaryString=PRELIMINARYSTRING
+                            preliminaryString=PRELIMINARYSTRING,
+                            preliminaryString2=None
                             )
       rmp.draw(saveName)
       #rmp.drawWithParams(saveName+"_params",["mixParam","bwWidth","bwmZ","expParam"])
