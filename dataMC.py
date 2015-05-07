@@ -92,7 +92,7 @@ anotateText = "M(#mu#mu) #in [110,160] GeV"
 #if args.n2JetMassOnly or args.n2JetVBFTight or args.n2JetGFTight or args.n2JetVBFLoose or args.n01JetMassOnly:
 #  anotateText = ""
 
-urLegendPos = [0.70,0.67,0.9,0.9]
+urLegendPos = [0.50,0.55,0.92,0.9]
 ulLegendPos = [0.20,0.67,0.4,0.9]
 ucLegendPos = [0.46,0.67,0.64,0.9]
 lcLegendPos = [0.46,0.35,0.64,0.63]
@@ -455,8 +455,11 @@ for ds in bkgDatasetList:
 for ds in sigDatasetList:
   for hname in ds.hists:
     if ds.legendEntry not in uniqueLegendEntries:
-      leg.AddEntry(ds.hists[hname],ds.legendEntry,"l")
-      uniqueLegendEntries.add(ds.legendEntry)
+      legEntry = ds.legendEntry
+      if args.scaleHiggsBy != None and args.scaleHiggsBy != 1.:
+        legEntry += " #times {0:.0f}".format(args.scaleHiggsBy)
+      leg.AddEntry(ds.hists[hname],legEntry,"l")
+      uniqueLegendEntries.add(legEntry)
     break
 for ds in realDatasetList:
   for hname in ds.hists:
@@ -525,8 +528,9 @@ for histName in bkgDatasetList[0].hists:
   else:
     setLegPos(leg,stdLegendPos)
   # For Auto y-limits
-  yMaxVals = [legBotPos,0.75]
+  yMaxVals = [legBotPos]
   yMaxXRanges = [[legLeftPos,legRightPos]]
+  yMaxVals += [0.75]
   if scaleHiggsPos == "ul":
     yMaxXRanges += [[legRightPos,0.7]]
   else:
@@ -537,10 +541,6 @@ for histName in bkgDatasetList[0].hists:
   leg.Draw("same")
 
   if scaleHiggsPos == "lc":
-    if scaleHiggsBy != 1.0:
-      tlatex.SetTextSize(0.07)
-      tlatex.SetTextAlign(22)
-      tlatex.DrawLatex(0.55,0.7,"Higgs #times %.0f" % (scaleHiggsBy))
 
     tlatex.SetTextSize(0.03)
     tlatex.SetTextAlign(22)
@@ -549,10 +549,6 @@ for histName in bkgDatasetList[0].hists:
     tlatex.DrawLatex(0.55,0.55,anotateText2)
     tlatex.DrawLatex(0.55,0.6,anotateText3)
   elif scaleHiggsPos == "ll" or scaleHiggsPos == "ul":
-    if scaleHiggsBy != 1.0:
-      tlatex.SetTextSize(0.07)
-      tlatex.SetTextAlign(22)
-      tlatex.DrawLatex(0.55,0.82,"Higgs #times %.0f" % (scaleHiggsBy))
 
     tlatex.SetTextSize(0.04)
     tlatex.SetTextAlign(23)
@@ -561,21 +557,12 @@ for histName in bkgDatasetList[0].hists:
     tlatex.DrawLatex(0.55,0.72,anotateText2)
     tlatex.DrawLatex(0.55,0.77,anotateText3)
   else:
-    if scaleHiggsBy != 1.0:
-      tlatex.SetTextSize(0.07)
-      tlatex.SetTextAlign(32)
-      tlatex.DrawLatex(legLeftPos-0.02,0.82,"Higgs #times %.0f" % (scaleHiggsBy))
-
-    tlatex.SetTextSize(0.04)
+    tlatex.SetTextSize(0.05)
     tlatex.SetTextAlign(33)
-    tlatex.SetTextSize(0.035)
     if histBaseName != "dimuonMass":
-      tlatex.DrawLatex(legLeftPos-0.02,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
-    tlatex.SetTextSize(0.04)
-    tlatex.DrawLatex(legLeftPos-0.02,0.77,anotateText2)
-    tlatex.DrawLatex(legLeftPos-0.02,0.72,anotateText3)
-    #tlatex.SetTextAlign(23)
-    #tlatex.DrawLatex(0.55,0.77,anotateText3)
+      tlatex.DrawLatex(legLeftPos,1.0-gStyle.GetPadTopMargin()-0.03,anotateText)
+    tlatex.DrawLatex(legLeftPos,1.0-gStyle.GetPadTopMargin()-0.10,anotateText2)
+    tlatex.DrawLatex(legLeftPos,1.0-gStyle.GetPadTopMargin()-0.17,anotateText3)
 
   vertLine = None
   arrow = None

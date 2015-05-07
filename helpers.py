@@ -1089,7 +1089,7 @@ class DataMCStack:
     elif self.logy:
       histForAxis = root.TH2F(dataHist.GetName()+"ForAxis","",1,xlimits[0],xlimits[1],1,0.1,ymax*2.0)
     else:
-      histForAxis = root.TH2F(dataHist.GetName()+"ForAxis","",1,xlimits[0],xlimits[1],1,1e-3,ymax*1.05)
+      histForAxis = root.TH2F(dataHist.GetName()+"ForAxis","",1,xlimits[0],xlimits[1],1,0.,ymax*1.05)
     self.histForAxis = histForAxis
     self.histForAxis.Draw()
     self.mcSumHist.Draw("e1same")
