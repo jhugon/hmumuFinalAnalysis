@@ -19,9 +19,8 @@ import time
 import datetime
 #import matplotlib.pyplot as mpl
 
-PRELIMINARYSTRING="CMS Internal"
 #PRELIMINARYSTRING="CMS Preliminary"
-#PRELIMINARYSTRING="CMS"
+PRELIMINARYSTRING="CMS"
 
 def getDataStage2Directory():
   hostname = os.uname()[1]
@@ -868,7 +867,30 @@ def makeWeightHist(f1,canvas,leg):
   leg.Draw("same")
 
 class DataMCStack:
-  def __init__(self, mcHistList, dataHist, canvas, xtitle, ytitle="", drawStack=True,nDivX=7,xlimits=[],showOverflow=False,lumi=5.0,logy=False,signalsNoStack=[],showCompatabilityTests=True,integralPlot=False,energyStr="8TeV",ylimits=[],ylimitsRatio=[],pullType="",doMCErrors=False,showPullStats=False,yMaxVals=[],yMaxXRanges=[],mcVariations=None,scaleMC2Data=False):
+  def __init__(self, mcHistList, dataHist, canvas, xtitle, 
+                ytitle="", 
+                drawStack=True,
+                nDivX=7,
+                xlimits=[],
+                showOverflow=False,
+                lumi=5.0,
+                logy=False,
+                signalsNoStack=[],
+                showCompatabilityTests=True,
+                integralPlot=False,
+                energyStr="8TeV",
+                ylimits=[],
+                ylimitsRatio=[],
+                pullType="",
+                doMCErrors=False,
+                showPullStats=False,
+                yMaxVals=[],
+                yMaxXRanges=[],
+                mcVariations=None,
+                scaleMC2Data=False,
+                preliminaryString=PRELIMINARYSTRING,
+                preliminaryString2=None
+              ):
     nBinsX = dataHist.GetNbinsX()
     self.xlimits = xlimits
     self.ylimits = ylimits
@@ -1079,7 +1101,8 @@ class DataMCStack:
     self.histForAxis.GetXaxis().SetLabelSize(0)
     self.histForAxis.GetYaxis().SetTitle(ytitle)
     self.histForAxis.GetYaxis().SetLabelSize(0.050)
-    self.histForAxis.GetYaxis().SetTitleSize(0.055)
+    self.histForAxis.GetYaxis().SetTitleSize(0.055*1.2)
+    self.histForAxis.GetYaxis().SetTitleOffset(1.25)
     self.histForAxis.GetXaxis().SetNdivisions(nDivX)
     self.histForAxis.GetXaxis().SetTitleColor(0)
     self.histForAxis.GetXaxis().SetLabelColor(0)
@@ -1116,16 +1139,16 @@ class DataMCStack:
     self.pullHist.SetLineStyle(1)
     self.pullHist.SetLineWidth(2)
     if pullType=="adrian1":
-      self.pullHist.GetYaxis().SetTitle("#frac{Data-MC}{Data}")
+      self.pullHist.GetYaxis().SetTitle(r"#frac{Data-MC}{Data}")
     elif pullType=="pullMC":
-      self.pullHist.GetYaxis().SetTitle("#frac{Data-MC}{\sigma_{MC}}")
+      self.pullHist.GetYaxis().SetTitle(r"#frac{Data-MC}{#sigma_{MC}}")
     else:
-      self.pullHist.GetYaxis().SetTitle("#frac{Data-MC}{\sigma_{Data}}")
-    self.pullHist.GetYaxis().SetTitleSize(0.040*pad1ToPad2FontScalingFactor)
-    self.pullHist.GetYaxis().SetLabelSize(0.040*pad1ToPad2FontScalingFactor)
-    self.pullHist.GetYaxis().CenterTitle(1)
+      self.pullHist.GetYaxis().SetTitle(r"#frac{Data-MC}{#sigma_{Data}}")
     self.pullHist.GetXaxis().SetTitleOffset(0.75*self.pullHist.GetXaxis().GetTitleOffset())
-    self.pullHist.GetYaxis().SetTitleOffset(0.70)
+    self.pullHist.GetYaxis().CenterTitle(1)
+    self.pullHist.GetYaxis().SetTitleSize(0.097*1.25)
+    self.pullHist.GetYaxis().SetLabelSize(0.097*1.05)
+    self.pullHist.GetYaxis().SetTitleOffset(0.55)
     self.pullHist.SetFillColor(856)
     self.pullHist.SetFillStyle(1001)
     if len(ylimitsRatio) == 2:
@@ -1157,10 +1180,32 @@ class DataMCStack:
     pad2.Update()
     pad2.GetFrame().DrawClone()
     pad2.RedrawAxis() # Updates Axis Lines
-  
-    canvas.cd()
-    self.tlatex.DrawLatex(0.33,0.96,PRELIMINARYSTRING)
-    self.tlatex.DrawLatex(0.75,0.96,"#sqrt{s}=%s, L=%.1f fb^{-1}" % (energyStr,lumi))
+
+    lumiStr = ""
+    if energyStr != "":
+      if re.search(r"[\d]TeV",energyStr):
+        energyStr = energyStr.replace("TeV"," TeV")
+      if lumi != "":
+        lumiStr = "{0:.1f} fb^{{-1}} ({1})".format(lumi,energyStr)
+      else:
+        lumiStr = "{0}".format(energyStr)
+
+    self.pad1.cd()
+    self.tlatex.SetTextAlign(11)
+    self.tlatex.SetTextFont(62)
+    self.tlatex.SetTextSize(0.08)
+    self.tlatex.DrawLatex(0.15,0.94,preliminaryString)
+    if preliminaryString2:
+      self.tlatex.SetTextAlign(11)
+      self.tlatex.SetTextFont(52)
+      self.tlatex.SetTextSize(0.065)
+      self.tlatex.DrawLatex(0.27,0.94,preliminaryString2)
+    self.tlatex.SetTextFont(42)
+    self.tlatex.SetTextSize(0.06)
+    self.tlatex.SetTextAlign(31)
+    self.tlatex.DrawLatex(0.95,0.94,lumiStr)
+    #self.tlatex.SetTextAlign(32)
+    #self.tlatex.DrawLatex(0.475,0.85,title)
 
   def getPullDistributionParams(self,pullList):
     pull = root.RooRealVar("pull","pull",-20,20)
