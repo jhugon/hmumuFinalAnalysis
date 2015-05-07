@@ -124,7 +124,7 @@ class ShapePlotter:
         if not "bak" in key:
           nSignal += self.processNameMap[channelNameOrig][key]
       nSignal *= signalInject
-      legEntrySignal = "SM Higgs#times{0:.0f}".format(signalInject)
+      legEntrySignal = "SM Higgs boson #times {0:.0f}".format(signalInject)
 
       #Set the PDF pars value from the FitResults
       setPDFfromFR(fr,bakPDF,data_obs)
@@ -134,7 +134,8 @@ class ShapePlotter:
                             channelTitle,self.energyStr.replace("TeV"," TeV"),self.lumi,
                             nSignal=nSignal,signalPdf=sigPDF,
                             legEntrySignal=legEntrySignal,
-                            preliminaryString=PRELIMINARYSTRING
+                            preliminaryString=PRELIMINARYSTRING,
+                            preliminaryString2=None
                             )
       rmp.draw(saveName)
       #rmp.drawWithParams(saveName+"_params",["mixParam","bwWidth","bwmZ","expParam"])
