@@ -551,29 +551,29 @@ for histName in bkgDatasetList[0].hists:
 
   leg.Draw("same")
 
-  if scaleHiggsPos == "lc":
+  anotationList = []
+  if anotateText != "" and histBaseName != "dimuonMass":
+    anotationList.append(anotateText)
+  if anotateText2 != "":
+    anotationList.append(anotateText2)
+  if anotateText3 != "":
+    anotationList.append(anotateText3)
 
+  if scaleHiggsPos == "lc":
     tlatex.SetTextSize(0.03)
     tlatex.SetTextAlign(22)
-    if histBaseName != "dimuonMass":
-      tlatex.DrawLatex(0.55,0.75,anotateText)
-    tlatex.DrawLatex(0.55,0.55,anotateText2)
-    tlatex.DrawLatex(0.55,0.6,anotateText3)
+    for iAno, anoText in enumerate(anotationList):
+      tlatex.DrawLatex(0.55,0.75-iAno*0.07,anoText)
   elif scaleHiggsPos == "ll" or scaleHiggsPos == "ul":
-
     tlatex.SetTextSize(0.04)
     tlatex.SetTextAlign(23)
-    if histBaseName != "dimuonMass":
-      tlatex.DrawLatex(0.55,1.0-gStyle.GetPadTopMargin()-0.02,anotateText)
-    tlatex.DrawLatex(0.55,0.72,anotateText2)
-    tlatex.DrawLatex(0.55,0.77,anotateText3)
+    for iAno, anoText in enumerate(anotationList):
+      tlatex.DrawLatex(0.55,1.0-gStyle.GetPadTopMargin()-0.03-iAno*0.07,anoText)
   else:
     tlatex.SetTextSize(0.05)
     tlatex.SetTextAlign(33)
-    if histBaseName != "dimuonMass":
-      tlatex.DrawLatex(legLeftPos,1.0-gStyle.GetPadTopMargin()-0.03,anotateText)
-    tlatex.DrawLatex(legLeftPos,1.0-gStyle.GetPadTopMargin()-0.10,anotateText2)
-    tlatex.DrawLatex(legLeftPos,1.0-gStyle.GetPadTopMargin()-0.17,anotateText3)
+    for iAno, anoText in enumerate(anotationList):
+      tlatex.DrawLatex(legLeftPos,1.0-gStyle.GetPadTopMargin()-0.03-iAno*0.07,anoText)
 
   vertLine = None
   arrow = None
