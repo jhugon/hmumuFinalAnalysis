@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
 import optparse
+DEFAULTHIGGSSF=1000.
 parser = optparse.OptionParser(description="Makes data and MC comparison plots.")
-parser.add_option("--scaleHiggsBy", help="Scale Factor For Higgs Samples",type=float,default=1000.0)
+parser.add_option("--scaleHiggsBy", help="Scale Factor For Higgs Samples",type=float,default=DEFAULTHIGGSSF)
 parser.add_option("--energy", help="Energy to Use, either 7TeV or 8TeV",default="8TeV")
+parser.add_option("--logy", help="Use log scale for y-axis",action="store_true",default=False)
 parser.add_option("--disableMCErrors", help="Energy to Use, either 7TeV or 8TeV",action="store_true",default=False)
 parser.add_option("--outPrefix", help="Output filename prefix",default="")
 parser.add_option("--n01Jet", help="Preset to run 0,1 Jet Presel Plots",action="store_true",default=False)
@@ -11,45 +13,53 @@ parser.add_option("--n01JetMassOnly", help="Preset to run 0,1 Jet Presel Mass Pl
 parser.add_option("--n2Jet", help="Preset to run 2 Jet Presel Plots",action="store_true",default=False)
 parser.add_option("--n2JetMassOnly", help="Preset to run 2 Jet Presel Mass Plot",action="store_true",default=False)
 parser.add_option("--n2JetVBFTight", help="Preset to run 2 Jet VBF Tight Plots",action="store_true",default=False)
-parser.add_option("--n2JetVBFLoose", help="Preset to run 2 Jet VBF Loose Plots",action="store_true",default=False)
 parser.add_option("--n2JetGFTight", help="Preset to run 2 Jet GF Tight Plots",action="store_true",default=False)
+parser.add_option("--n2JetLoose", help="Preset to run 2 Jet Loose Plots",action="store_true",default=False)
 args, fakeargs = parser.parse_args()
 
 if args.n01Jet:
-  args.scaleHiggsBy = 500.
-  args.outPrefix = "nonVBFPresel"
+  if args.scaleHiggsBy == DEFAULTHIGGSSF:
+    args.scaleHiggsBy = 500.
+  args.outPrefix = "01J"
   args.disableMCErrors = True
   print("Running 01Jet Presel")
 
 if args.n01JetMassOnly:
-  args.scaleHiggsBy = 500.
-  args.outPrefix = "nonVBFPresel"
+  if args.scaleHiggsBy == DEFAULTHIGGSSF:
+    args.scaleHiggsBy = 500.
+  args.outPrefix = "01J"
   args.disableMCErrors = True
   print("Running 01Jet Presel Mass Only")
 
 if args.n2Jet:
-  args.scaleHiggsBy = 1000.
-  args.outPrefix = ""
+  if args.scaleHiggsBy == DEFAULTHIGGSSF:
+    args.scaleHiggsBy = 1000.
+  args.outPrefix = "2J"
   print("Running 2Jet Presel")
 
 if args.n2JetMassOnly:
-  args.scaleHiggsBy = 200.
-  args.outPrefix = "presel"
+  if args.scaleHiggsBy == DEFAULTHIGGSSF:
+    args.scaleHiggsBy = 200.
+  args.outPrefix = "2J"
   print("Running 2Jet Presel Mass Only")
 
 if args.n2JetVBFTight:
-  args.scaleHiggsBy = 50.
+  if args.scaleHiggsBy == DEFAULTHIGGSSF:
+    args.scaleHiggsBy = 50.
   args.outPrefix = "vbfTight"
+  args.outPrefix = "2JVBF"
   print("Running 2Jet VBF Tight")
 
-if args.n2JetVBFLoose:
-  args.scaleHiggsBy = 50.
-  args.outPrefix = "loose"
+if args.n2JetLoose:
+  if args.scaleHiggsBy == DEFAULTHIGGSSF:
+    args.scaleHiggsBy = 50.
+  args.outPrefix = "2JL"
   print("Running 2Jet Loose")
 
 if args.n2JetGFTight:
-  args.scaleHiggsBy = 50.
-  args.outPrefix = "gfTight"
+  if args.scaleHiggsBy == DEFAULTHIGGSSF:
+    args.scaleHiggsBy = 50.
+  args.outPrefix = "2JGF"
   print("Running 2Jet GF Tight")
 
 from xsec import *
@@ -69,7 +79,7 @@ scaleHiggsBy = args.scaleHiggsBy
 
 SCALEMC2DATA=True
 JETErrors=True
-LOGY=False
+LOGY=args.logy
 integralPlot=False
 MCErrors=True
 #PULLTYPE="adrian1"
@@ -89,7 +99,7 @@ anotateText2 = ""
 anotateText3 = "" #"Analysis A"
 
 anotateText = "M(#mu#mu) #in [110,160] GeV"
-#if args.n2JetMassOnly or args.n2JetVBFTight or args.n2JetGFTight or args.n2JetVBFLoose or args.n01JetMassOnly:
+#if args.n2JetMassOnly or args.n2JetVBFTight or args.n2JetGFTight or args.n2JetLoose or args.n01JetMassOnly:
 #  anotateText = ""
 
 urLegendPos = [0.50,0.55,0.92,0.9]
@@ -119,7 +129,7 @@ if args.n2JetVBFTight:
   anotateText2 = "2-Jet VBF Tight"
   CUTS+=" && jetLead_pt>40. && jetSub_pt>30. && ptMiss<40. && dijetMass > 650. && deltaEtaJets>3.5"
 
-if args.n2JetVBFLoose:
+if args.n2JetLoose:
   anotateText2 = "2-Jet Loose"
   CUTS+=" && jetLead_pt>40. && jetSub_pt>30. && ptMiss<40. && !(dijetMass > 650. && deltaEtaJets>3.5) && !(dijetMass>250. && dimuonPt>50.)"
 
@@ -132,11 +142,11 @@ GLOBALCOUNTER=0
 
 histNames = {}
 if True:
-    if args.n2JetVBFTight or args.n2JetGFTight or args.n2JetVBFLoose:
+    if args.n2JetVBFTight or args.n2JetGFTight or args.n2JetLoose:
       histNames["dimuonMass"] = {"xlabel":"M(#mu#mu) [GeV]","xlimits":[110.0,160.],"nbins":20}#,"ylimits":[0.1,5e5]}
     elif not args.n2Jet:
       histNames["dimuonMass"] = {"xlabel":"M(#mu#mu) [GeV]","xlimits":[110.0,160.],"nbins":50}#,"ylimits":[0.1,5e5]}
-    if not ( args.n2JetVBFTight or args.n2JetGFTight or args.n2JetVBFLoose or args.n2JetMassOnly or args.n01JetMassOnly):
+    if not ( args.n2JetVBFTight or args.n2JetGFTight or args.n2JetLoose or args.n2JetMassOnly or args.n01JetMassOnly):
       histNames["dimuonPt"] = {"xlabel":"p_{T}(#mu#mu) [GeV]","xlimits":[0.0,200.0],"nbins":20}#,"ylimits":[0.1,1e5]}
 #    histNames["dimuonY"] = {"xlabel":"y_{#mu#mu}","xlimits":[-2.2,2.2],"nbins":22}#,"ylimits":[0.1,3e6]}
 #    histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1,1],"nbins":20}#,"ylimits":[0.1,3e6]}
@@ -145,9 +155,10 @@ if True:
     #histNames["muonLead_eta"] = {"xlabel":"Leading Muon #eta","xlimits":[-2.1,2.1],"nbins":25}#,"ylimits":[0.1,3e6]}
     #histNames["muonSub_eta"] = {"xlabel":"Sub-Leading Muon #eta","xlimits":[-2.1,2.1],"nbins":10}#,"ylimits":[0.1,3e6]}
 
-    #histNames["nJets"] = {"xlabel":"N_{jets}","xlimits":[-0.5,5.5],"nbins":6}#,"ylimits":[0.1,3e6]}
-    #histNames["ptMiss"] = {"xlabel":"Missing p_{T} [GeV]","xlimits":[0.0,300.0],"nbins":12}#,"ylimits":[0.1,3e6]}
-    if not (args.n01Jet or args.n2JetMassOnly or args.n2JetVBFTight or args.n2JetGFTight or args.n2JetVBFLoose or args.n01JetMassOnly):
+    if not (args.n01Jet or args.n2JetMassOnly or args.n2JetVBFTight or args.n2JetGFTight or args.n2JetLoose or args.n01JetMassOnly or args.n2Jet):
+      histNames["ptMiss"] = {"xlabel":"p_{T}^{Miss} [GeV]","xlimits":[0.0,300.0],"nbins":12}#,"ylimits":[0.1,3e6]}
+      histNames["nJets"] = {"xlabel":"N_{jets}","xlimits":[-0.5,5.5],"nbins":6}#,"ylimits":[0.1,3e6]}
+    if not (args.n01Jet or args.n2JetMassOnly or args.n2JetVBFTight or args.n2JetGFTight or args.n2JetLoose or args.n01JetMassOnly):
       histNames["deltaEtaJets"] = {"xlabel":"|#Delta#eta(jj)|","xlimits":[0.0,7.0],"nbins":14}#,"ylimits":[0.1,3e6]}
 
       histNames["dijetMass"] = {"xlabel":"M(jj) [GeV]","xlimits":[0.,1000.],"nbins":20}#,"ylimits":[0.1,5e5]}
@@ -622,6 +633,8 @@ for histName in bkgDatasetList[0].hists:
   saveName = saveName.replace("/","_")
   if integralPlot:
     saveName += "_IntPlot"
+  if LOGY:
+    saveName += "_LOGY"
   saveAs(canvas,outDir+saveName+"_"+RUNPERIOD)
 
   dataMCRatioStr += "%-10s Data/MC Ratio: %.3f\n" % (histName,float(stack.nDataEvents)/stack.nMCEvents)

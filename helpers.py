@@ -904,7 +904,6 @@ class DataMCStack:
     self.tlatex.SetTextSize(0.05)
     self.tlatex.SetTextAlign(22)
     self.mcVarHist = None
-    setYLimitsAuto = getattr(self,"setYLimitsAuto")
     if ytitle=="":
       ytitle="Events/%s" % (getBinWidthStr(dataHist))
     for mcHist in mcHistList:
@@ -966,10 +965,12 @@ class DataMCStack:
     self.nMCEvents = self.mcSumHist.Integral(0,self.mcSumHist.GetNbinsX()+1)
 
     # Get chi^2 Prob Data/MC
+    self.chi2 = dataHist.Chi2Test(self.mcSumHist,"UW CHI2")
     self.normchi2 = dataHist.Chi2Test(self.mcSumHist,"UW CHI2/NDF")
     self.chi2Prob = dataHist.Chi2Test(self.mcSumHist,"UW")
     self.KSProb = dataHist.KolmogorovTest(self.mcSumHist)
     if self.mcVarHist != None:
+      self.chi2 = dataHist.Chi2Test(self.mcVarHist,"UW CHI2")
       self.normchi2 = dataHist.Chi2Test(self.mcVarHist,"UW CHI2/NDF")
       self.chi2Prob = dataHist.Chi2Test(self.mcVarHist,"UW")
       self.KSProb = dataHist.KolmogorovTest(self.mcVarHist)
@@ -1087,15 +1088,15 @@ class DataMCStack:
       ylimits[0] += 1e-3
       histForAxis = root.TH2F(dataHist.GetName()+"ForAxis","",1,xlimits[0],xlimits[1],1,self.ylimits[0],self.ylimits[1])
     elif self.logy:
-      histForAxis = root.TH2F(dataHist.GetName()+"ForAxis","",1,xlimits[0],xlimits[1],1,0.1,ymax*2.0)
+      self.setYLimitsAuto()
+      histForAxis = root.TH2F(dataHist.GetName()+"ForAxis","",1,xlimits[0],xlimits[1],1,self.yBotOfFrame,self.yTopOfFrame)
     else:
-      histForAxis = root.TH2F(dataHist.GetName()+"ForAxis","",1,xlimits[0],xlimits[1],1,0.,ymax*1.05)
+      self.setYLimitsAuto()
+      histForAxis = root.TH2F(dataHist.GetName()+"ForAxis","",1,xlimits[0],xlimits[1],1,self.yBotOfFrame,self.yTopOfFrame)
     self.histForAxis = histForAxis
     self.histForAxis.Draw()
     self.mcSumHist.Draw("e1same")
     #self.canvas.SaveAs("debug.png")
-    if len(self.ylimits)!=2:
-      setYLimitsAuto(yMaxXRanges,yMaxVals,self.ymax)
     self.histForAxis.Draw()
     self.histForAxis.GetXaxis().SetTitle("")
     self.histForAxis.GetXaxis().SetLabelSize(0)
@@ -1173,9 +1174,7 @@ class DataMCStack:
       self.problatex.SetTextAlign(12)
       yToDraw = 0.41 #bottom
       yToDraw = 0.92 #top
-      #self.problatex.DrawLatex(0.18,yToDraw,"KS Prob: {0:.3g}".format(self.KSProb))
-      self.problatex.DrawLatex(0.18,yToDraw,"#chi^{2}/NDF: %.3g" % (self.normchi2))
-      self.problatex.DrawLatex(0.18,yToDraw-0.08,"#chi^{2}  Prob: %.3g" % (self.chi2Prob))
+      self.problatex.DrawLatex(0.18,yToDraw,"#chi^{{2}}/NDF = {0:.1f}/{1:.0f} = {2:.3g}; p-value: {3:.3g}".format(self.chi2,self.dataHist.GetNbinsX(),self.normchi2,self.chi2Prob))
 
     pad2.Update()
     pad2.GetFrame().DrawClone()
@@ -1253,65 +1252,42 @@ class DataMCStack:
     #print "  maxY: %.2f" % maxY
     #print "  result: %.2f" % result
     return result
-  def setYLimitsAuto(self,rangesNDC,yNDCLimits,yMaxCurrent):
-    #self.canvas.SaveAs("before_"+str(int(time.time()*100))+".png")
-    #print("Running setYLimitsAuto...")
-    self.pad1.Update()
-    self.canvas.Update()
-    getXUser = getattr(self,"getXUser")
-    getYUser = getattr(self,"getYUser")
-    setYLimitsAuto = getattr(self,"setYLimitsAuto")
-    self.pad1.cd()
-    ranges = [[getXUser(i[0]),getXUser(i[1])] for i in rangesNDC]
-    yLimitsScaleFactor = 1.0
+
+  def setYLimitsAuto(self):
+    yTopOfFrame = 0.
+    yBotOfFrame = 0.
+    frameSF = 1.2
+    frameRightSideSF = 1.5
     if self.logy:
-      yLimitsScaleFactor = 0.75
-    yLimits = [getYUser(i)*yLimitsScaleFactor for i in yNDCLimits]
-    maxPoints = []
-    xAxis = self.mcSumHist.GetXaxis()
-    #print("yMaxCurrent: %.2f " % (yMaxCurrent))
-    for r,yLim in zip(ranges,yLimits):
-      maxY = 0.0
-      for i in range(1,xAxis.GetNbins()+1):
-        if xAxis.GetBinUpEdge(i) >= r[0] and xAxis.GetBinLowEdge(i) <= r[1]:
-          y = self.mcSumHist.GetBinContent(i)
-          yErrTmp = self.mcSumHist.GetBinError(i)
-          yErr2Tmp = 0.
-          if self.mcVarHist != None:
-            yErr2Tmp = self.mcVarHist.GetBinError(i)
-          y += max(yErrTmp,yErr2Tmp)
-          maxY = max(y,maxY)
-      maxPoints += [maxY]
-    rescale = 0.0
-    if self.logy:
-      newMaxPoints = []
-      for x in maxPoints:
-        if x>0.:
-          newMaxPoints += [log10(x)]
-        else:
-          newMaxPoints += [0.]
-      maxPoints = newMaxPoints
-    for yLim,maxY in zip(yLimits,maxPoints):
-      #print("yLim: %.2f maxY: %.2f" % (yLim, maxY))
-      if maxY > yLim:
-        rescaleTmp = (maxY/yLim)
-        if rescaleTmp > rescale:
-          rescale = rescaleTmp
-    if rescale == 0.0:
-        self.ymax = yMaxCurrent*1.1
-        return
-    if self.logy:
-      rescale = 10**rescale*5.
-    #print(rescale)
-    newYMax = yMaxCurrent*rescale*1.5
-    newYMin = 1e-3
-    if self.logy:
-      newYMin = 0.1
-    self.histForAxis = root.TH2F(self.histForAxis.GetName()+"ForAxis","",1,self.xlimits[0],self.xlimits[1],1,newYMin,newYMax)
-    self.histForAxis.Draw("")
-    self.mcSumHist.Draw("e1 same")
-    #self.canvas.SaveAs("after_"+str(int(time.time()*100))+".png")
-    setYLimitsAuto(rangesNDC,yNDCLimits,newYMax)
+      yBotOfFrame = 1e-1
+      frameSF = 1.5
+      frameRightSideSF = 5.
+
+    nBins = self.mcSumHist.GetNbinsX()
+    xMidFrame = self.dataHist.GetXaxis().GetBinLowEdge(nBins/2)
+    if self.xlimits and len(self.xlimits)==2:
+      xMidFrame = abs(self.xlimits[1]-self.xlimits[0])
+    for iBin in range(1,nBins+1):
+      yMaxThisBin = self.dataHist.GetBinContent(iBin)+self.dataHist.GetBinError(iBin)
+      yMCThisBin = None
+      if self.mcVarHist:
+        yMCThisBin = self.mcVarHist.GetBinContent(iBin)+self.mcVarHist.GetBinError(iBin) 
+      else:
+        yMCThisBin = self.mcSumHist.GetBinContent(iBin)
+      yMaxThisBin = max(yMaxThisBin,yMCThisBin)
+      if self.logy:
+        yTopOfFrameTry = yMaxThisBin**frameSF
+        if self.dataHist.GetXaxis().GetBinUpEdge(iBin) >= xMidFrame:
+          yTopOfFrameTry = max(yTopOfFrameTry,yMaxThisBin**frameRightSideSF)
+        yTopOfFrame = max(yTopOfFrame,yTopOfFrameTry)
+      else:
+        yTopOfFrameTry = frameSF*yMaxThisBin
+        if self.dataHist.GetXaxis().GetBinUpEdge(iBin) >= xMidFrame:
+          yTopOfFrameTry = max(yTopOfFrameTry,frameRightSideSF*yMaxThisBin)
+        yTopOfFrame = max(yTopOfFrame,yTopOfFrameTry)
+      
+    self.yTopOfFrame = yTopOfFrame
+    self.yBotOfFrame = yBotOfFrame
 
   def doMCVariations(self,mcVariations):
     self.mcVarHist = None
