@@ -195,10 +195,10 @@ dataDict["7TeV"] = [
 ]
 
 legendEntries = {}
-legendEntries["DYJetsToLL"] = "DY+Jets"
-legendEntries["DY2JetsToLL"] = "DY+Jets"
-legendEntries["DY3JetsToLL"] = "DY+Jets"
-legendEntries["DY4JetsToLL"] = "DY+Jets"
+legendEntries["DYJetsToLL"] = "Drell-Yan"
+legendEntries["DY2JetsToLL"] = "Drell-Yan"
+legendEntries["DY3JetsToLL"] = "Drell-Yan"
+legendEntries["DY4JetsToLL"] = "Drell-Yan"
 legendEntries["DYToMuMu"] = "DY#rightarrow#mu#mu"
 legendEntries["WJetsToLNu"] = "W#rightarrow#ell#nu+Jets"
 legendEntries["ttbar"] = "t#bar{t}"
@@ -215,8 +215,8 @@ legendEntries["WZ"] = "VV"
 legendEntries["ZZ"] = "VV"
 legendEntries["QCD"] = "QCD"
 
-legendEntries["7TeV"] = "CMS Data 2011"
-legendEntries["8TeV"] = "CMS Data 2012"
+legendEntries["7TeV"] = "Data"
+legendEntries["8TeV"] = "Data"
 
 colors = {}
 colors["DYJetsToLL"] = root.kOrange

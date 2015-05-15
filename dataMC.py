@@ -19,7 +19,7 @@ args, fakeargs = parser.parse_args()
 
 if args.n01Jet:
   if args.scaleHiggsBy == DEFAULTHIGGSSF:
-    args.scaleHiggsBy = 500.
+    args.scaleHiggsBy = 1000.
   args.outPrefix = "01J"
   args.disableMCErrors = True
   print("Running 01Jet Presel")
@@ -147,7 +147,8 @@ if True:
     elif not args.n2Jet:
       histNames["dimuonMass"] = {"xlabel":"M(#mu#mu) [GeV]","xlimits":[110.0,160.],"nbins":50}#,"ylimits":[0.1,5e5]}
     if not ( args.n2JetVBFTight or args.n2JetGFTight or args.n2JetLoose or args.n2JetMassOnly or args.n01JetMassOnly):
-      histNames["dimuonPt"] = {"xlabel":"p_{T}(#mu#mu) [GeV]","xlimits":[0.0,200.0],"nbins":20}#,"ylimits":[0.1,1e5]}
+      #histNames["dimuonPt"] = {"xlabel":"p_{T}(#mu#mu) [GeV]","xlimits":[0.0,200.0],"nbins":20}#,"ylimits":[0.1,1e5]}
+      histNames["dimuonPt"] = {"xlabel":"p_{T}(#mu#mu) [GeV]","xlimits":[0.0,100.0],"nbins":10}#,"ylimits":[0.1,1e5]}
 #    histNames["dimuonY"] = {"xlabel":"y_{#mu#mu}","xlimits":[-2.2,2.2],"nbins":22}#,"ylimits":[0.1,3e6]}
 #    histNames["cosThetaStar"] = {"xlabel":"cos(#theta^{*})","xlimits":[-1,1],"nbins":20}#,"ylimits":[0.1,3e6]}
     #histNames["muonLead_pt"] = {"xlabel":"Leading Muon p_{T} [GeV]","xlimits":[25.,150.],"nbins":25}#,"ylimits":[0.1,3e6]}
@@ -156,7 +157,7 @@ if True:
     #histNames["muonSub_eta"] = {"xlabel":"Sub-Leading Muon #eta","xlimits":[-2.1,2.1],"nbins":10}#,"ylimits":[0.1,3e6]}
 
     if not (args.n01Jet or args.n2JetMassOnly or args.n2JetVBFTight or args.n2JetGFTight or args.n2JetLoose or args.n01JetMassOnly or args.n2Jet):
-      histNames["ptMiss"] = {"xlabel":"p_{T}^{Miss} [GeV]","xlimits":[0.0,300.0],"nbins":12}#,"ylimits":[0.1,3e6]}
+      histNames["ptMiss"] = {"xlabel":"p_{T}^{Miss} [GeV]","xlimits":[0.0,200.0],"nbins":10}#,"ylimits":[0.1,3e6]}
       histNames["nJets"] = {"xlabel":"N_{jets}","xlimits":[-0.5,5.5],"nbins":6}#,"ylimits":[0.1,3e6]}
     if not (args.n01Jet or args.n2JetMassOnly or args.n2JetVBFTight or args.n2JetGFTight or args.n2JetLoose or args.n01JetMassOnly):
       histNames["deltaEtaJets"] = {"xlabel":"|#Delta#eta(jj)|","xlimits":[0.0,7.0],"nbins":14}#,"ylimits":[0.1,3e6]}
