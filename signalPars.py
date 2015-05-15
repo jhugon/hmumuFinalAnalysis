@@ -12,6 +12,29 @@ gSystem.Load('libRooFit')
 import ROOT as root
 from helpers import *
 
+#######################################
+############# Example #################
+#######################################
+
+#
+#   s = signalPars('fitresults',
+#                  'gg',
+#                  '8TeV',
+#                  'IncPreselPtG10BB')
+#
+#   #example with one parameter
+#   parameter = s.getPar('meanG1')
+#   massrange = drange(115.0, 150.5, 0.5)
+#   for mass in massrange:
+#      print mass, parameter[ '%s' % mass ]
+#      
+#   # example with all the parameters
+#   #par_meanG1, par_widthG1, par_meanG2, par_widthG2, par_mixGG = s.getPars()
+#   #for mass in par_meanG1.keys():
+#   #   print mass, par_meanG1[mass], par_widthG1[mass], par_meanG2[mass], par_widthG2[mass], par_mixGG[mass] 
+#
+#   # example to draw signal templates every 5 GeV/c2
+#   s.draw(5)
 
 
 #######################################
@@ -208,6 +231,21 @@ class signalPars:
 
 if __name__ == "__main__":
 
+  import optparse
+  parser = optparse.OptionParser(description="Loads signal parameters")
+  parser.add_option("--draw",help="draw plots",action="store_true",default=False)
+  parser.add_option("--list",help="list parameters",action="store_true",default=False)
+  parser.add_option("--table",help="make latex table",action="store_true",default=False)
+  args, fakeargs = parser.parse_args()
+
+  if not (args.draw or args.list or args.table):
+    print("Must supply an option. exiting.")
+    sys.exit(1)
+  if args.draw and args.list or args.draw and args.table or args.list and args.table:
+    print("Must supply only one option. exiting.")
+    sys.exit(1)
+
+  if args.draw:
    s = signalPars('fitresults',
                   'gg',
                   '8TeV',
@@ -234,24 +272,54 @@ if __name__ == "__main__":
    # example to draw signal templates every 5 GeV/c2
    s.draw(5)
 
+  categories = [
+  "Jets01PassPtG10BB",
+  "Jets01PassPtG10BO",
+  "Jets01PassPtG10BE",
+  "Jets01PassPtG10OO",
+  "Jets01PassPtG10OE",
+  "Jets01PassPtG10EE",
+                        
+  "Jets01FailPtG10BB",
+  "Jets01FailPtG10BO",
+  "Jets01FailPtG10BE",
+  "Jets01FailPtG10OO",
+  "Jets01FailPtG10OE",
+  "Jets01FailPtG10EE",
 
-#
-#   s = signalPars('fitresults',
-#                  'gg',
-#                  '8TeV',
-#                  'IncPreselPtG10BB')
-#
-#   #example with one parameter
-#   parameter = s.getPar('meanG1')
-#   massrange = drange(115.0, 150.5, 0.5)
-#   for mass in massrange:
-#      print mass, parameter[ '%s' % mass ]
-#      
-#   # example with all the parameters
-#   #par_meanG1, par_widthG1, par_meanG2, par_widthG2, par_mixGG = s.getPars()
-#   #for mass in par_meanG1.keys():
-#   #   print mass, par_meanG1[mass], par_widthG1[mass], par_meanG2[mass], par_widthG2[mass], par_mixGG[mass] 
-#
-#   # example to draw signal templates every 5 GeV/c2
-#   s.draw(5)
+  "Jet2CutsVBFPass",
+  "Jet2CutsGFPass",
+  "Jet2CutsFailVBFGF",
+  ]
+
+  if args.list:
+    import xsec
+    print "{5:<17} {0:<6} {1:<5} {2:<5} {3:<5} {4:<5}".format("m_n","sig_n", "m_w","sig_w", "f","Category")
+    for cat in categories:
+      prodMode = 'gg'
+      if cat[:4] == "Jet2":
+        prodMode = 'vbf'
+      s = signalPars('fitresults',
+                     prodMode,
+                     '8TeV',
+                     cat)
+      par_meanG1, par_widthG1, par_meanG2, par_widthG2, par_mixGG = s.getPars()
+      mass = "125.0"
+      print "{5:<17} {0:<6.2f} {1:<5.2f} {2:<5.2f} {3:<5.2f} {4:<5.3f}".format(par_meanG1[mass], par_widthG1[mass], par_meanG2[mass], par_widthG2[mass], 1.-par_mixGG[mass],xsec.TITLEMAP[cat])
+
+  if args.table:
+    import xsec
+    print r"{5} & {0} & {1} & {2} & {3} & {4} \\".format(r"$m_\mathrm{n}$",r"$\sigma_\mathrm{n}",r"$m_\mathrm{w}$",r"$\sigma_\mathrm{w}","","")
+    print r"{5} & {0} & {1} & {2} & {3} & {4} \\ \hline".format(r"[\si{\GeVcc{}}]",r"[\si{\GeVcc{}}]",r"[\si{\GeVcc{}}]",r"[\si{\GeVcc{}}]",r"$f$",r"Category")
+    for cat in categories:
+      prodMode = 'gg'
+      if cat[:4] == "Jet2":
+        prodMode = 'vbf'
+      s = signalPars('fitresults',
+                     prodMode,
+                     '8TeV',
+                     cat)
+      par_meanG1, par_widthG1, par_meanG2, par_widthG2, par_mixGG = s.getPars()
+      mass = "125.0"
+      print r"{5:<17} & {0:<6.2f} & {1:<5.2f} & {2:<5.2f} & {3:<5.2f} & {4:<5.3f} \\".format(par_meanG1[mass], par_widthG1[mass], par_meanG2[mass], par_widthG2[mass], 1.-par_mixGG[mass],xsec.TITLEMAP[cat])
 
