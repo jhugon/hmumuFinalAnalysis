@@ -147,9 +147,20 @@ if __name__ == "__main__":
       hstack.Draw("same")
 
       frame = dimuonMass.frame()
-      rooHist.plotOn(frame)
+      rooHist.plotOn(frame,root.RooFit.Invisible())
       pdf.plotOn(frame,root.RooFit.LineColor(1))
       frame.Draw("same")
+
+      #legPos = [gStyle.GetPadLeftMargin()+0.03,0.55,0.68,0.93-gStyle.GetPadTopMargin()]
+      #leg = root.TLegend(*legPos)
+      #leg.SetFillColor(0)
+      #leg.SetLineColor(0)
+      #leg.AddEntry(expGraph,"Median Expected Limit","lp")
+      #leg.AddEntry(oneSigGraph,"#pm1 #sigma Expected Limit","f")
+      #leg.AddEntry(twoSigGraph,"#pm2 #sigma Expected Limit","f")
+      #self.legPos = legPos
+      #self.leg = leg
+      #leg.Draw()
 
       canvas.RedrawAxis()
       energyStr = energy
@@ -157,4 +168,4 @@ if __name__ == "__main__":
         energyStr = energyStr.replace("TeV"," TeV")
       lumiStr = "{0:.1f} fb^{{-1}} ({1})".format(lumiDict[energy],energyStr)
       drawStandardCaptions(canvas,lumiStr,TITLEMAP[category[0]],preliminaryString="Simulated Background Data")
-      canvas.SaveAs("test.png")
+      canvas.SaveAs(outdir+"bkgTTCheck_"+category[0]+energy+".png")
