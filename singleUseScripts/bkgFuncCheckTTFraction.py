@@ -169,3 +169,55 @@ if __name__ == "__main__":
       lumiStr = "{0:.1f} fb^{{-1}} ({1})".format(lumiDict[energy],energyStr)
       drawStandardCaptions(canvas,lumiStr,TITLEMAP[category[0]],preliminaryString="Simulated Background Data")
       canvas.SaveAs(outdir+"bkgTTCheck_"+category[0]+energy+".png")
+
+      #####################################################3
+      #####################################################3
+      origHistTotals = []
+      for orighist in hists:
+        origHistTotals.append(orighist.Integral(1,orighist.GetNbinsX()))
+      total = sum(origHistTotals)
+      origHistFractions = [float(x)/total for x in origHistTotals]
+
+      for frac in [0.2,0.5,0.9]:
+        #print "Justin: frac:         ",frac
+        #print "Justin: total:        ",total
+        #print "Justin: ttbar before: ",hists[0].Integral(1,hists[0].GetNbinsX())
+        #print "Justin: DY before:    ",hists[1].Integral(1,hists[1].GetNbinsX())
+        hstackfrac = root.THStack()
+        hsumfrac = None
+        for iorig, orighist in enumerate(hists):
+          hist = orighist.Clone(energy+category[0]+"frac{0}".format(frac))
+          if iorig == 0: # ttbar
+            #print "Justin: ttbar before: ",hist.Integral(1,hist.GetNbinsX())
+            hist.Scale(float(frac)/origHistFractions[iorig])
+            #print "Justin: ttbar after:  ",hist.Integral(1,hist.GetNbinsX())
+          else: # others
+            #print "Justin: DY before:    ",hist.Integral(1,hist.GetNbinsX())
+            hist.Scale(float(1.0-frac)/origHistFractions[iorig])
+            #print "Justin: DY after:     ",hist.Integral(1,hist.GetNbinsX())
+          hstackfrac.Add(hist)
+          if hsumfrac == None:
+            hsumfrac = hist.Clone(energy+category[0]+"frac{0}sumHist".format(frac))
+          else:
+            hsumfrac.Add(hist)
+        rooHistFrac = root.RooDataHist(rooHistName+"frac{0}sumHist".format(frac),rooHistName+"frac{0}sumHist".format(frac),root.RooArgList(dimuonMass),hsumfrac)
+        pdf.fitTo(rooHistFrac)
+
+        canvas.Clear()
+        axisHist.Draw()
+        hstackfrac.Draw("same")
+
+        frameFrac = dimuonMass.frame()
+        rooHistFrac.plotOn(frameFrac,root.RooFit.Invisible())
+        pdf.plotOn(frameFrac,root.RooFit.LineColor(1))
+        frameFrac.Draw("same")
+
+        #leg.Draw()
+
+        canvas.RedrawAxis()
+        energyStr = energy
+        if re.search(r"[\d]TeV",energyStr):
+          energyStr = energyStr.replace("TeV"," TeV")
+        lumiStr = "{0:.1f} fb^{{-1}} ({1})".format(lumiDict[energy],energyStr)
+        drawStandardCaptions(canvas,lumiStr,TITLEMAP[category[0]],preliminaryString="Simulated Background Data")
+        canvas.SaveAs(outdir+"bkgTTCheck_"+category[0]+energy+"_TTPerc{0:.0f}".format(frac*100)+".png")
