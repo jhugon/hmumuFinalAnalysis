@@ -98,7 +98,7 @@ if __name__ == "__main__":
   }
   
   periods = ["7TeV","8TeV"]
-  #periods = ["8TeV"]
+  periods = ["8TeV"]
   #periods = ["7TeV"]
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
   
@@ -107,14 +107,17 @@ if __name__ == "__main__":
 
   categories = []
   
+  #categories += [["All",  "1"]]
+  categories += [["Jets01",  "1" +jet01PtCuts]]
+  categories += [["Jet2",  "1" +jet2PtCuts]]
   #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
   ####categories += [["Jets01FailPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   
-  categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
-  categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
+  #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   
   canvas = root.TCanvas("canvas")
   minMass = 110.
@@ -159,6 +162,12 @@ if __name__ == "__main__":
         else:
           zhsum.Add(hist)
 
+      origHistTotals = []
+      for orighist in hists:
+        origHistTotals.append(orighist.Integral(1,orighist.GetNbinsX()))
+      total = sum(origHistTotals)
+      origHistFractions = [float(x)/total for x in origHistTotals]
+
       workspace = root.RooWorkspace(energy+category[0]+"workspace")
       wImport = getattr(workspace,"import")
       rooHistName = "bkg"
@@ -173,6 +182,8 @@ if __name__ == "__main__":
       axisHist = root.TH2F("axisHist"+energy+category[0],"",1,110,160,1,0,ymax)
       setHistTitles(axisHist,"m_{#mu#mu} [GeV]","Entries/{0:0.1f} GeV".format(binSize))
       axisHist.GetXaxis().CenterTitle(True)
+      #axisHist.GetYaxis().SetLabelSize(0.038)
+      axisHist.GetYaxis().SetTitleOffset(1.8)
       axisHist.Draw()
       hstack.Draw("same")
 
@@ -189,21 +200,17 @@ if __name__ == "__main__":
       if re.search(r"[\d]TeV",energyStr):
         energyStr = energyStr.replace("TeV"," TeV")
       lumiStr = "{0:.1f} fb^{{-1}} ({1})".format(lumiDict[energy],energyStr)
-      drawStandardCaptions(canvas,lumiStr,TITLEMAP[category[0]],preliminaryString="Simulated Background Data")
-      canvas.SaveAs(outdir+"bkgTTCheck_"+category[0]+energy+".png")
+      fracStr = "Background Normal"
+      drawStandardCaptions(canvas,lumiStr,TITLEMAP[category[0]],fracStr,preliminaryString="Simulated Background Data")
+      saveAs(canvas,outdir+"bkgTTCheck_"+category[0]+energy)
 
       #####################################################3
       #####################################################3
-      origHistTotals = []
-      for orighist in hists:
-        origHistTotals.append(orighist.Integral(1,orighist.GetNbinsX()))
-      total = sum(origHistTotals)
-      origHistFractions = [float(x)/total for x in origHistTotals]
 
       if origHistFractions[0]==0:
         continue
 
-      for frac in [0.2,0.5,0.9]:
+      for frac in [0.25,0.5,0.75,0.9]:
         #print "Justin: frac:         ",frac
         #print "Justin: total:        ",total
         #print "Justin: ttbar before: ",hists[0].Integral(1,hists[0].GetNbinsX())
@@ -244,5 +251,6 @@ if __name__ == "__main__":
         if re.search(r"[\d]TeV",energyStr):
           energyStr = energyStr.replace("TeV"," TeV")
         lumiStr = "{0:.1f} fb^{{-1}} ({1})".format(lumiDict[energy],energyStr)
-        drawStandardCaptions(canvas,lumiStr,TITLEMAP[category[0]],preliminaryString="Simulated Background Data")
-        canvas.SaveAs(outdir+"bkgTTCheck_"+category[0]+energy+"_TTPerc{0:.0f}".format(frac*100)+".png")
+        fracStr = " {0:.0%} t#bar{{t}}".format(frac)
+        drawStandardCaptions(canvas,lumiStr,TITLEMAP[category[0]],fracStr,preliminaryString="Simulated Background Data")
+        saveAs(canvas,outdir+"bkgTTCheck_"+category[0]+energy+"_TTPerc{0:.0f}".format(frac*100))

@@ -940,6 +940,8 @@ def getPeriod(datasetName):
 ##################################################
 
 TITLEMAP = {
+  "All": "Muon Selection Only",
+  "Jets01": "0,1-Jet",
   "Jets01PassPtG10": "0,1-Jet Tight",
   "Jets01FailPtG10": "0,1-Jet Loose",
 
@@ -959,6 +961,7 @@ TITLEMAP = {
   "Jets01FailPtG10EE": "0,1-Jet Loose EE",
   "Jets01FailCatAll" : "0,1-Jet Loose Combination",
 
+  "Jet2" : "2-Jet",
   "Jet2CutsVBFPass":"2-Jet VBF Tight",
   "Jet2CutsGFPass":"2-Jet GF Tight",
   "Jet2CutsFailVBFGF":"2-Jet Loose",
