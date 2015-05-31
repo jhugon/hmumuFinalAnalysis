@@ -56,6 +56,36 @@ def setupHistogram(hist,sample,energy):
   hist.SetFillColor(colors[sample])
   hist.SetLineColor(colors[sample])
 
+class LegendBuilder(object):
+  def __init__(self):
+    legPos = [0.55,0.6,0.95-gStyle.GetPadRightMargin(),1.0-gStyle.GetPadTopMargin()]
+    leg = root.TLegend(*legPos)
+    leg.SetFillColor(0)
+    leg.SetLineColor(0)
+    self.legPos = legPos
+    self.leg = leg
+
+    fit = root.TGraph()
+    fit.SetLineWidth(3)
+    leg.AddEntry(fit,"Background Fit","l")
+
+    dy = root.TH1F("dyleg","",1,0,1)
+    dy.SetFillColor(colors["DYJetsToLL"])
+    dy.SetLineColor(colors["DYJetsToLL"])
+    leg.AddEntry(dy,"Drell-Yan","f")
+
+    ttbar = root.TH1F("ttbarleg","",1,0,1)
+    ttbar.SetFillColor(colors["ttbar"])
+    ttbar.SetLineColor(colors["ttbar"])
+    leg.AddEntry(ttbar,"t#bar{t}","f")
+    
+    self.fit = fit
+    self.dy = dy
+    self.ttbar = ttbar
+
+  def Draw(self):
+    self.leg.Draw()
+
 if __name__ == "__main__":
   root.gROOT.SetBatch(True)
 
@@ -68,7 +98,7 @@ if __name__ == "__main__":
   }
   
   periods = ["7TeV","8TeV"]
-  periods = ["8TeV"]
+  #periods = ["8TeV"]
   #periods = ["7TeV"]
   categoriesAll = ["BB","BO","BE","OO","OE","EE"]
   
@@ -77,14 +107,14 @@ if __name__ == "__main__":
 
   categories = []
   
-  categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
+  #categories += [["Jets01PassPtG10BB",  "dimuonPt>10." +jet01PtCuts]]
   ####categories += [["Jets01FailPtG10BO",  "dimuonPt>10." +jet01PtCuts]]
   
-  #categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
-  #categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
-  #categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
-  #categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
-  #categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jets01PassPtG10"+x,  "dimuonPt>10." +jet01PtCuts] for x in categoriesAll]
+  categories += [["Jets01FailPtG10"+x,"!(dimuonPt>10.)"+jet01PtCuts] for x in categoriesAll]
+  categories += [["Jet2CutsVBFPass","deltaEtaJets>3.5 && dijetMass>650."+jet2PtCuts]]
+  categories += [["Jet2CutsGFPass","!(deltaEtaJets>3.5 && dijetMass>650.) && (dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
+  categories += [["Jet2CutsFailVBFGF","!(deltaEtaJets>3.5 && dijetMass>650.) && !(dijetMass>250. && dimuonPt>50.)"+jet2PtCuts]]
   
   canvas = root.TCanvas("canvas")
   minMass = 110.
@@ -151,16 +181,8 @@ if __name__ == "__main__":
       pdf.plotOn(frame,root.RooFit.LineColor(1))
       frame.Draw("same")
 
-      #legPos = [gStyle.GetPadLeftMargin()+0.03,0.55,0.68,0.93-gStyle.GetPadTopMargin()]
-      #leg = root.TLegend(*legPos)
-      #leg.SetFillColor(0)
-      #leg.SetLineColor(0)
-      #leg.AddEntry(expGraph,"Median Expected Limit","lp")
-      #leg.AddEntry(oneSigGraph,"#pm1 #sigma Expected Limit","f")
-      #leg.AddEntry(twoSigGraph,"#pm2 #sigma Expected Limit","f")
-      #self.legPos = legPos
-      #self.leg = leg
-      #leg.Draw()
+      leg = LegendBuilder()
+      leg.Draw()
 
       canvas.RedrawAxis()
       energyStr = energy
@@ -177,6 +199,9 @@ if __name__ == "__main__":
         origHistTotals.append(orighist.Integral(1,orighist.GetNbinsX()))
       total = sum(origHistTotals)
       origHistFractions = [float(x)/total for x in origHistTotals]
+
+      if origHistFractions[0]==0:
+        continue
 
       for frac in [0.2,0.5,0.9]:
         #print "Justin: frac:         ",frac
@@ -212,7 +237,7 @@ if __name__ == "__main__":
         pdf.plotOn(frameFrac,root.RooFit.LineColor(1))
         frameFrac.Draw("same")
 
-        #leg.Draw()
+        leg.Draw()
 
         canvas.RedrawAxis()
         energyStr = energy
